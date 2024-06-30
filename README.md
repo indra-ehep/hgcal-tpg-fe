@@ -3,6 +3,11 @@
 Emulation of the Trigger Primitive Generation (TPG) by HGCAL frontend ASICS.
 ## Download and Setup
 Run the setup code to download additional dependencies and seup. This setup is prepared for lxplus machines.
+
+```
+./setup.sh
+```
+
 ## Compile and excution
 To process the test-beam binary files for the BC results
 ```
