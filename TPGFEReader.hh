@@ -625,6 +625,7 @@ namespace TPGFEReader{
     uint32_t trig_linkNumber = TMath::FloorNint((linkNumber-1)/2);
     r = new Hgcal10gLinkReceiver::RecordT<4095>;
     _fileReader.setDirectory(std::string("dat/Relay")+std::to_string(relayNumber));
+    //_fileReader.setDirectory(std::string("/Relay")+std::to_string(relayNumber));
     _fileReader.openRun(runNumber,trig_linkNumber);
     isMSB = (linkNumber%2==0) ? true : false;
   }

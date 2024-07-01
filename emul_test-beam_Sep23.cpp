@@ -204,7 +204,7 @@ int main(int argc, char** argv)
   uint64_t nofTrigEvents = 0;
   uint64_t nofDAQEvents = 0;
   uint64_t nofMatchedDAQEvents = 0;
-  long double nloopEvent = 4e5 ;
+  long double nloopEvent = 4e4 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   //if(econDReader.getCheckMode()) nloop = 1;
   //nloop = 1;
@@ -224,7 +224,8 @@ int main(int argc, char** argv)
 		     const std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&,   //to plot the ECONT ASIC results or compare with the emulation
 		     const std::vector<uint64_t>& /*eventlist*/, const uint32_t& , TDirectory*& /*directory containing the histograms*/, bool /*isSTC4*/);
   
-  std::map<uint32_t,TPGFEDataformat::HalfHgcrocData> rocdata; 
+  std::map<uint32_t,TPGFEDataformat::HalfHgcrocData> rocdata;
+  std::map<uint32_t,TPGFEDataformat::ModuleTcData> moddata;
   for(int ieloop=0;ieloop<nloop;ieloop++){
     
     //===============================================================================================================================
@@ -249,12 +250,11 @@ int main(int argc, char** argv)
     //===============================================================================================================================
     //Read Link0, Link1/Link2 files
     //===============================================================================================================================
-    eventList.clear();
-    econtarray.clear();
-
     uint32_t zside = 0, sector = 0, link = 0, det = 0;
     uint32_t econt = 0, selTC4 = 1, module = 0;
 
+    eventList.clear();
+    econtarray.clear();
     econTReader.init(relayNumber,runNumber,linkNumber);
     std::cout<<"TRIG Before Link"<<trig_linkNumber<<" size : " << econtarray.size() <<std::endl;
     econTReader.getEvents(minEventTrig, maxEventTrig, econtarray, eventList);
@@ -287,7 +287,6 @@ int main(int argc, char** argv)
       if(econtarray.find(event) == econtarray.end()) continue;
       
       std::pair<uint32_t,TPGFEDataformat::ModuleTcData> modTcdata; 
-      std::map<uint32_t,TPGFEDataformat::ModuleTcData> moddata;
       std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawdata;
       
       rocdata.clear();
@@ -300,13 +299,13 @@ int main(int argc, char** argv)
       
       modarray[event].push_back(modTcdata);
       
+      moddata.clear();
       for(const auto& data : modarray.at(event))
 	moddata[data.first] = data.second ;
       
       econtEmul.Emulate(isSim, event, moduleId, moddata, TcRawdata);
       
       econtemularray[event].push_back(TcRawdata);
-
       
       //std::cout << "Processing Event : " << event << std::endl;
       if(event==1){
@@ -339,6 +338,14 @@ int main(int argc, char** argv)
     
   }//loop over event group
 
+  moddata.clear();
+  rocdata.clear();
+  eventList.clear();
+  econtarray.clear();
+  econtemularray.clear();
+  modarray.clear();
+  hrocarray.clear();
+  
   fout->cd();
   dir_diff->Write();
   fout->Close();

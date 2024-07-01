@@ -12,7 +12,7 @@ common/*
 log/*
 log*
 log_old*
-*.txt
+*.xlsx
 *.csv
 *.root 
 output*
