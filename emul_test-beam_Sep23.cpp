@@ -112,8 +112,8 @@ int main(int argc, char** argv)
   //Read channel mapping
   //===============================================================================================================================
   TPGFEConfiguration::Configuration cfgs;
-  cfgs.setSiChMapFile("input/WaferCellMapTraces.txt");
-  cfgs.setSciChMapFile("input/channels_sipmontile_HDtypes.hgcal.txt");
+  cfgs.setSiChMapFile("cfgmap/WaferCellMapTraces.txt");
+  cfgs.setSciChMapFile("cfgmap/channels_sipmontile_HDtypes.hgcal.txt");
   cfgs.initId();
   cfgs.readSiChMapping();
   cfgs.readSciChMapping();
@@ -132,10 +132,10 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Read ECON-D and ECON-T setting
   //===============================================================================================================================
-  cfgs.setEconDFile(Form("input/init_econd.yaml",relayNumber));
+  cfgs.setEconDFile(Form("cfgmap/init_econd.yaml",relayNumber));
   cfgs.readEconDConfigYaml();
   
-  cfgs.setEconTFile(Form("input/init_econt.yaml",relayNumber));
+  cfgs.setEconTFile(Form("cfgmap/init_econt.yaml",relayNumber));
   cfgs.readEconTConfigYaml();
   
   //===============================================================================================================================
