@@ -1,9 +1,18 @@
 #!/bin/bash
 
 CURRDIR="$PWD"
-cd /tmp/$USER
-git clone https://gitlab.cern.ch/pdauncey/hgcal10glinkreceiver.git
+
+if [ ! -d /tmp/$USER/hgcal10glinkreceiver ] ; then
+    cd /tmp/$USER
+    git clone https://gitlab.cern.ch/pdauncey/hgcal10glinkreceiver.git
+else
+    cd /tmp/$USER/hgcal10glinkreceiver
+    git pull
+fi
+
 cd $CURRDIR
 rsync -avP /tmp/$USER/hgcal10glinkreceiver/common .
-ln -s /eos/cms/store/group/dpg_hgcal/tb_hgcal/2023/BeamTestSep/HgcalBeamtestSep2023 dat
 
+if [ ! -L dat ] ; then
+    ln -s /eos/cms/store/group/dpg_hgcal/tb_hgcal/2023/BeamTestSep/HgcalBeamtestSep2023 dat
+fi

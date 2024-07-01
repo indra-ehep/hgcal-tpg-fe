@@ -1,8 +1,10 @@
 # hgcal-tpg-fe
+
 ## Motivation
 Emulation of the Trigger Primitive Generation (TPG) by HGCAL frontend ASICS.
+
 ## Download and Setup
-Run the setup code to download additional dependencies and seup. This setup is prepared for lxplus machines.
+Run the setup code to download additional dependencies and setup. This setup is prepared for lxplus machines.
 
 ```
 ./setup.sh
