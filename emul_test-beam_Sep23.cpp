@@ -165,15 +165,23 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Read adc pedestal and threshold from yaml module file
   //===============================================================================================================================
+  uint32_t zside = 0, sector = 0, link = 0, det = 0;
+  uint32_t econt = 0, selTC4 = 1, module = 0;
+
+  TPGFEConfiguration::TPGFEIdPacking pck;
+  uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = cfgs.getModIdxToName();
+  const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
+
   if(linkNumber==1){
     cfgs.setRocFile(Form("dat/Relay%u/Run%u_Module00c87fff.yaml",relayNumber, runNumber));
     cfgs.setTrainEWIndices(1, 'e', 0);
-    cfgs.readRocConfigYaml();
+    cfgs.readRocConfigYaml(modName);
   }
   if(linkNumber==2){
     cfgs.setRocFile( Form("dat/Relay%u/Run%u_Module00c43fff.yaml",relayNumber, runNumber));
     cfgs.setTrainEWIndices(0, 'w', 0);
-    cfgs.readRocConfigYaml();
+    cfgs.readRocConfigYaml(modName);
   }
   //===============================================================================================================================
 
@@ -204,7 +212,7 @@ int main(int argc, char** argv)
   uint64_t nofTrigEvents = 0;
   uint64_t nofDAQEvents = 0;
   uint64_t nofMatchedDAQEvents = 0;
-  long double nloopEvent = 4e4 ;
+  long double nloopEvent = 4e5 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   //if(econDReader.getCheckMode()) nloop = 1;
   //nloop = 1;
@@ -250,11 +258,9 @@ int main(int argc, char** argv)
     //===============================================================================================================================
     //Read Link0, Link1/Link2 files
     //===============================================================================================================================
-    uint32_t zside = 0, sector = 0, link = 0, det = 0;
-    uint32_t econt = 0, selTC4 = 1, module = 0;
-
     eventList.clear();
     econtarray.clear();
+    
     econTReader.init(relayNumber,runNumber,linkNumber);
     std::cout<<"TRIG Before Link"<<trig_linkNumber<<" size : " << econtarray.size() <<std::endl;
     econTReader.getEvents(minEventTrig, maxEventTrig, econtarray, eventList);
@@ -299,13 +305,13 @@ int main(int argc, char** argv)
       
       modarray[event].push_back(modTcdata);
       
-      moddata.clear();
       for(const auto& data : modarray.at(event))
 	moddata[data.first] = data.second ;
       
       econtEmul.Emulate(isSim, event, moduleId, moddata, TcRawdata);
       
       econtemularray[event].push_back(TcRawdata);
+
       
       //std::cout << "Processing Event : " << event << std::endl;
       if(event==1){
@@ -350,6 +356,7 @@ int main(int argc, char** argv)
   dir_diff->Write();
   fout->Close();
   delete fout;
+
   
   return true;
 }
