@@ -101,17 +101,18 @@ namespace TPGFEModuleEmulation{
 	if(ievent==refEvent) chdata.print();
 	if(!isSim){ //if not simulation, assumed beamtest data
 	  const TPGFEConfiguration::ConfigHfROC& rocpara = configs.getRocPara().at(rocid);
+	  uint32_t ped = configs.getChPara().at(pck.packChId(rocid,rocpin)).getAdcpedestal();
 	  if(ievent==refEvent) rocpara.print();
 	  if(!chdata.isTot()){
-	    uint32_t ped = configs.getChPara().at(pck.packChId(rocid,rocpin)).getAdcpedestal();
 	    unsigned thr = rocpara.getAdcTH();
 	    uint32_t adc = chdata.getAdc();
-	    adc = (adc>(ped+thr) and !(rocpara.isChMasked(rocpin)) and (ped<0xFF) ) ? adc-ped : 0 ;
+	    adc = (adc>(ped+thr) and !(rocpara.isChMasked(rocpin)) and (ped<0xFF)) ? adc-ped : 0 ;
 	    totadc += adc;
 	    if(ievent==refEvent) std::cout<<"\t ped: " << ped << ", thr: " << thr <<", adc : "<<adc<<", rocpara.isChMasked(rocpin): "<< rocpara.isChMasked(rocpin) <<std::endl;
 	  }else{
 	    uint32_t tot1 = (chdata.getTot()>rocpara.getTotTH(rocpin)) ? (chdata.getTot()-rocpara.getTotP(rocpin)) : (rocpara.getTotTH(rocpin)-rocpara.getTotP(rocpin)) ;
-	    uint32_t totlin = (!(rocpara.isChMasked(rocpin)))?tot1*rocpara.getMultFactor():0;
+	    //ideally ped<255 condition should only be restricted for ADC case, however TOT signal triggers in emulation for event 146245 of relay 1695829026 and link 1, which is not that seen by ECONT data
+	    uint32_t totlin = (!(rocpara.isChMasked(rocpin)) and (ped<0xFF))?tot1*rocpara.getMultFactor():0; 
 	    totadc += totlin;
 	    isTot = true;
 	    if(ievent==refEvent) std::cout<<"\t tot1: " << tot1 << ", tot: " << chdata.getTot() <<", thr : "<< rocpara.getTotTH(rocpin) <<", ped: "<< rocpara.getTotP(rocpin) << ", totlin : "<< totlin <<std::endl;
@@ -164,7 +165,25 @@ namespace TPGFEModuleEmulation{
     
       return decomp;
     }
+
+    uint32_t DecompressEcontSTC(uint16_t compressed, bool isldm){
+      //4E+3M with midpoint correction
+      uint32_t mant = compressed & 0x7;
+      uint32_t expo = (compressed>>3) & 0xF;
+      
+      if(expo==0) 
+	return (isldm) ? (mant<<1)+1 : (mant<<3)+4 ;
     
+      uint32_t shift = expo+3;
+      uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
+      uint32_t mpdeco = 1<<(shift-4);
+      decomp = decomp | (mant<<(shift-3));
+      decomp = decomp | mpdeco;
+      decomp = (isldm) ? (decomp<<0) : (decomp<<2) ;
+    
+      return decomp;
+    }
+
     uint16_t CompressEcontStc4E3M(uint32_t val, bool isldm){
       //4E+3M
       //The following is probably driven by drop_LSB setting, to be tested with a standalone run as no LSB drop is expected for STC
@@ -193,7 +212,7 @@ namespace TPGFEModuleEmulation{
 	shift = 0;
 	mant = val & 0x7;
       }
-
+      
       sub = sub & 0xF;
       mant = mant & 0x7;
 
@@ -353,7 +372,7 @@ namespace TPGFEModuleEmulation{
 	uint32_t *energy = new uint32_t[tclist.size()];
 	for(const auto& itc : tclist){
 	  //std::cout<<" modName: "<<modName<<", istc : "<< istc <<", tclist.size() " << tclist.size() << ", itc: "<< itc <<std::endl;
-	  uint32_t decompressed = DecompressEcont(mdata.getTC(itc).getCdata(),pck.getSelTC4());
+	  uint32_t decompressed = DecompressEcontSTC(mdata.getTC(itc).getCdata(),pck.getSelTC4());
 	  ////apply calibration //uint32_t calib = 0x800;
 	  decompressed *= configs.getEconTPara().at(moduleId).getCalibration() ;
 	  decompressed =  decompressed >> 11;
@@ -364,7 +383,7 @@ namespace TPGFEModuleEmulation{
 	uint16_t compressed_stc = (outputType==TPGFEDataformat::TcRawData::STC4A)? CompressEcontStc4E3M(decompressedSTC,pck.getSelTC4()) : CompressEcontStc5E4M(decompressedSTC,pck.getSelTC4());
 	stcOut.push_back(TPGFEDataformat::TcRawData(outputType, max_loc, compressed_stc));
 	delete []energy ;
-      }
+      }//stc loop
       econtOut = std::make_pair(moduleId,stcOut);
     }
     

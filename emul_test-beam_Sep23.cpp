@@ -30,14 +30,33 @@
 
 #include "TPGFEDataformat.hh"
 #include "TPGFEConfiguration.hh"
-#include "TPGFEReader.hh"
+#include "TPGFEReader2023.hh"
 #include "TPGFEModuleEmulation.hh"
 
-const long double maxEvent = 7e6; //6e5
+const long double maxEvent = 2e6; //6e5
 
-//1395761; //iloop:3
-//1710962; iloop:4
-const uint64_t refPrE = 1710962; //iloop:3
+
+//////////////////////////////////// Issues with the Relay-1695829026 Run-1695829027 /////////////////////////////////
+//link1 : special case
+//ideally ADC_ped<255 condition should only be restricted for ADC case, however TOT signal triggers in emulation for event 146245 of relay 1695829026 and link 1, which is not that seen by ECONT data
+//146245 has problem for (TOT) modsum emul: 65, econt: 64 //Check for TC 31 and associated  
+
+//link1
+//Event: 4058243 has problem for (TOT) modsum emul: 89, econt: 88     //Why TC 47 is not considered ? Is that a feature of ECONT selection, three TCs 35,41,47 have same energy value 57, the batchers selection only selects the first two and not the last one + 3 TOTs in a single TC
+
+//link2
+// Event: 2587757 has problem in (ADC)modsum emul:57, econt : 56      //No valid reason found all looks normal
+// Event: 3619913 has problem for (ADC)TC channel: 7, emul: 18, econt: 50 //No valid reason found all looks normal apart from few TcTp==1 in other chip
+// Event: 5276372 has problem for (ADC)TC channel: 32, emul: 19, econt: 18 //No valid reason found apart from there is limitation in batcher sorting many TC with values near 17,18,19
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////// Issues with the Relay-1695829376 Run-1695829376 /////////////////////////////////
+//link2
+// Event: 1303018 has problem for (TOT)TC channel: 25, emul: 58, econt: 57 // no valid reason found
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool isDebug = 1;
+const uint64_t refPrE = 10; 
 
 int main(int argc, char** argv)
 {
@@ -177,6 +196,7 @@ int main(int argc, char** argv)
   //Set and Initialize the ECOND reader
   //===============================================================================================================================
   TPGFEReader::ECONDReader econDReader(cfgs);
+  econDReader.setTotUp(0);
   //econDReader.checkEvent(1);
   //econDReader.showFirstEvents(10);
   //===============================================================================================================================
@@ -200,7 +220,7 @@ int main(int argc, char** argv)
   uint64_t nofTrigEvents = 0;
   uint64_t nofDAQEvents = 0;
   uint64_t nofMatchedDAQEvents = 0;
-  long double nloopEvent = 4e5 ;
+  long double nloopEvent = (isDebug) ? 123 : 4e5 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   //if(econDReader.getCheckMode()) nloop = 1;
   //nloop = 1;
@@ -241,9 +261,12 @@ int main(int argc, char** argv)
       maxEventDAQ =  econDReader.getCheckedEvent() + 10 ;
     }
     
+    if(!(refPrE>=minEventTrig and refPrE<=maxEventTrig) and isDebug) continue;
+    //if(ieloop!=0) continue;
+    
     printf("iloop : %d, minEventTrig = %lu, maxEventTrig = %lu, minEventDAQ = %lu, maxEventDAQ = %lu\n",ieloop,minEventTrig, maxEventTrig, minEventDAQ, maxEventDAQ);
 
-    //if(ieloop!=0) continue;
+    
     //===============================================================================================================================
     //Read Link0, Link1/Link2 files
     //===============================================================================================================================
@@ -277,6 +300,8 @@ int main(int argc, char** argv)
     uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);    
     std::cout<<"modarray : Before Link"<<linkNumber<<" size : " << modarray.size() << ", modId : "<< moduleId <<std::endl;
     for(const auto& event : eventList){
+
+      if(event!=refPrE and isDebug) continue;
       
       //first check that both econd and econt data has the same eventid otherwise skip the event
       if(econtarray.find(event) == econtarray.end()) continue;
@@ -428,7 +453,38 @@ void BookHistograms(TDirectory*& dir_diff, bool isSTC4){
     hBC9TCMissedTOT->GetXaxis()->SetTitle("Missed TCs in emulation");
     hBC9TCMissedTOT->SetLineColor(kAzure);
     hBC9TCMissedTOT->SetDirectory(dir_diff);
-    TH1F *hEventCount = new TH1F("hEventCount","Event count", 11, -0.5, 10.5);
+    
+  }else{
+    
+    TH1F *hCompressDiffSTCADC[48],*hCompressDiffSTCTOT[48];
+    for(int istc=0;istc<12;istc++){
+      hCompressDiffSTCADC[istc] = new TH1F(Form("hCompressDiffSTCADC_%d",istc),Form("Difference in (Emulator - ECONT) compression for STC4A : %d with totflag==0",istc), 200, -99, 101);
+      hCompressDiffSTCADC[istc]->SetMinimum(1.e-1);
+      hCompressDiffSTCADC[istc]->GetXaxis()->SetTitle("Difference in (Emulator - ECONT)");
+      hCompressDiffSTCADC[istc]->SetLineColor(kRed);
+      hCompressDiffSTCADC[istc]->SetDirectory(dir_diff);
+    }
+    for(int istc=0;istc<12;istc++){
+      hCompressDiffSTCTOT[istc] = new TH1F(Form("hCompressDiffSTCTOT_%d",istc),Form("Difference in (Emulator - ECONT) compression for STC4A : %d with totflag==3",istc), 200, -99, 101);
+      hCompressDiffSTCTOT[istc]->SetMinimum(1.e-1);
+      hCompressDiffSTCTOT[istc]->GetXaxis()->SetTitle("Difference in (Emulator - ECONT)");
+      hCompressDiffSTCTOT[istc]->SetLineColor(kBlue);
+      hCompressDiffSTCTOT[istc]->SetDirectory(dir_diff);
+    }
+    TH1F *hSTC4TCMissedADC = new TH1F("hSTC4TCMissedADC","Channels not present in emulation but in ECONT for STC4A (4E+3M) with totflag==0", 52, -2, 50);
+    hSTC4TCMissedADC->SetMinimum(1.e-1);
+    hSTC4TCMissedADC->GetXaxis()->SetTitle("Missed TCs in emulation");
+    hSTC4TCMissedADC->SetLineColor(kAzure);
+    hSTC4TCMissedADC->SetDirectory(dir_diff);
+    TH1F *hSTC4TCMissedTOT = new TH1F("hSTC4TCMissedTOT","Channels not present in emulation but in ECONT for STC4A (4E+3M) with totflag==3", 52, -2, 50);
+    hSTC4TCMissedTOT->SetMinimum(1.e-1);
+    hSTC4TCMissedTOT->GetXaxis()->SetTitle("Missed TCs in emulation");
+    hSTC4TCMissedTOT->SetLineColor(kAzure);
+    hSTC4TCMissedTOT->SetDirectory(dir_diff);
+    
+  }
+
+      TH1F *hEventCount = new TH1F("hEventCount","Event count", 11, -0.5, 10.5);
     hEventCount->SetMinimum(1.e-1);
     hEventCount->SetLineColor(kRed);
     hEventCount->GetXaxis()->SetBinLabel(2,"Total");
@@ -498,37 +554,6 @@ void BookHistograms(TDirectory*& dir_diff, bool isSTC4){
     hAbsRocpinTcTp1->SetLineColor(kAzure);
     hAbsRocpinTcTp1->SetDirectory(dir_diff);
 
-    
-  }else{
-    
-    TH1F *hCompressDiffSTCADC[48],*hCompressDiffSTCTOT[48];
-    for(int istc=0;istc<12;istc++){
-      hCompressDiffSTCADC[istc] = new TH1F(Form("hCompressDiffSTCADC_%d",istc),Form("Difference in (Emulator - ECONT) compression for STC4A : %d with totflag==0",istc), 200, -99, 101);
-      hCompressDiffSTCADC[istc]->SetMinimum(1.e-1);
-      hCompressDiffSTCADC[istc]->GetXaxis()->SetTitle("Difference in (Emulator - ECONT)");
-      hCompressDiffSTCADC[istc]->SetLineColor(kRed);
-      hCompressDiffSTCADC[istc]->SetDirectory(dir_diff);
-    }
-    for(int istc=0;istc<12;istc++){
-      hCompressDiffSTCTOT[istc] = new TH1F(Form("hCompressDiffSTCTOT_%d",istc),Form("Difference in (Emulator - ECONT) compression for STC4A : %d with totflag==3",istc), 200, -99, 101);
-      hCompressDiffSTCTOT[istc]->SetMinimum(1.e-1);
-      hCompressDiffSTCTOT[istc]->GetXaxis()->SetTitle("Difference in (Emulator - ECONT)");
-      hCompressDiffSTCTOT[istc]->SetLineColor(kBlue);
-      hCompressDiffSTCTOT[istc]->SetDirectory(dir_diff);
-    }
-    TH1F *hSTC4TCMissedADC = new TH1F("hSTC4TCMissedADC","Channels not present in emulation but in ECONT for STC4A (4E+3M) with totflag==0", 52, -2, 50);
-    hSTC4TCMissedADC->SetMinimum(1.e-1);
-    hSTC4TCMissedADC->GetXaxis()->SetTitle("Missed TCs in emulation");
-    hSTC4TCMissedADC->SetLineColor(kAzure);
-    hSTC4TCMissedADC->SetDirectory(dir_diff);
-    TH1F *hSTC4TCMissedTOT = new TH1F("hSTC4TCMissedTOT","Channels not present in emulation but in ECONT for STC4A (4E+3M) with totflag==3", 52, -2, 50);
-    hSTC4TCMissedTOT->SetMinimum(1.e-1);
-    hSTC4TCMissedTOT->GetXaxis()->SetTitle("Missed TCs in emulation");
-    hSTC4TCMissedTOT->SetLineColor(kAzure);
-    hSTC4TCMissedTOT->SetDirectory(dir_diff);
-    
-  }
-  
 }
 
 //FillHistogram(cfg, hrocarray, modarray, econtemularray, econtarray, eventList, dir_diff, isSTC4);
@@ -557,6 +582,7 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
   
   for(const auto& event : eventList){
 
+    if(event!=refPrE and isDebug) continue;
     if(econtarray.find(event) == econtarray.end()) continue;
     
     const std::vector<std::pair<uint32_t,TPGFEDataformat::ModuleTcData>>& modtcs = modarray.at(event);
@@ -580,10 +606,13 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	if(econtemulmodId!=moduleId) continue;
 	const std::vector<TPGFEDataformat::TcRawData>& econtemulTcRawdata = econtemulpair.second ;
 	const TPGFEDataformat::ModuleTcData& modtcdata = moddata.at(moduleId);
-
+	
 	bool isTotMod = false;
 	bool isModTcTp12 = false;
-	uint32_t nofTcTp1 = 0, nofTcTp2 = 0, nofSat = 0, nofUndsht = 0;
+	const uint32_t nofTcs = modtcdata.getNofTCs();
+	uint32_t nofTcTp1[nofTcs], nofTcTp2[nofTcs], nofSat[nofTcs], nofUndsht[nofTcs];
+	for(uint32_t itc=0;itc<modtcdata.getNofTCs();itc++) nofTcTp1[itc] =  nofTcTp2[itc] =  nofSat[itc] =  nofUndsht[itc] = 0;
+	uint32_t nofTcTp1_evt = 0, nofTcTp2_evt = 0, nofSat_evt = 0, nofUndsht_evt = 0;
 	bool *isTcTp12 = new bool[modtcdata.getNofTCs()];
 	///////////////////// Fill the ADC/TOT ////////////////////////////////////////////
 	for(uint32_t itc=0;itc<modtcdata.getNofTCs();itc++){
@@ -600,13 +629,15 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	      isTcTp12[itc] = true;
 	      isModTcTp12 = true;
 	      if(chdata.getTcTp()==1){
-		((TH1F *) list->FindObject("hAbsRocpinTcTp1"))->Fill(float( tcch ));
-		((TH1F *) list->FindObject("hSeqTcTp1"))->Fill(float( absseq ));
-		if(!chdata.isTot() and chdata.getAdc()>1020) nofSat++;
-		if(!chdata.isTot() and chdata.getAdc()<4) nofUndsht++;
-		nofTcTp1++;
+	       	((TH1F *) list->FindObject("hAbsRocpinTcTp1"))->Fill(float( tcch ));
+	       	((TH1F *) list->FindObject("hSeqTcTp1"))->Fill(float( absseq ));
+		if(!chdata.isTot() and chdata.getAdc()>1020) {nofSat[itc]++; nofSat_evt++;}
+		if(!chdata.isTot() and chdata.getAdc()<4) {nofUndsht[itc]++; nofUndsht_evt++;}
+		nofTcTp1[itc]++;
+		nofTcTp1_evt++;
 	      }else{
-		nofTcTp2++;
+		nofTcTp2[itc]++;
+		nofTcTp2_evt++;
 	      }
 	    }
 	    if(!chdata.isTot()){
@@ -622,7 +653,7 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	  }//rocpin loop
 	}//TC loop for charge histogram
 	
-	//////////////////////////////////////////////////////////////////////////////////
+	
 	if(!isSTC4){ //best choice
 	  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	  //Bestchoice emulation data is already sorted, but the data from econt is not
@@ -682,7 +713,7 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 		  if(TMath::Abs(ediff)>0) std::cerr << "Event: "<<event<<" has problem for (ADC)TC channel: "<< emch << ", emul: "<<emen<<", econt: "<<energy[sorted_idx[itc]]<<std::endl;
 		}else{
 		  ((TH1F *) list->FindObject(Form("hCompressDiffTCTOT_%d",emch)))->Fill(float( ediff ));
-		  if(ediff>=1) std::cerr << "Event: "<<event<<" has problem for (TOT)TC channel: "<< emch << ", emul: "<<emen<<", econt: "<<energy[sorted_idx[itc]]<<std::endl;
+		  if(TMath::Abs(ediff)>0 and ediff!=-1) std::cerr << "Event: "<<event<<" has problem for (TOT)TC channel: "<< emch << ", emul: "<<emen<<", econt: "<<energy[sorted_idx[itc]]<<std::endl;
 		}
 	      }else{
 		if(!isTot)
@@ -692,21 +723,21 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	      }//cdiff condn
 	    }else{
 	      //TcTp=1/2
-	      if(nofTcTp1>0){
-		if(nofTcTp2==0){
+	      if(nofTcTp1[emch]>0){
+		if(nofTcTp2[emch]==0){
 		  ((TH1F *) list->FindObject("hTCvsTcTp1"))->Fill(emch, ediff);
-		  if(nofSat>0 and nofUndsht==0) ((TH1F *) list->FindObject("hTCvsTcTp1Sat"))->Fill(emch, ediff);
-		  if(nofSat==0 and nofUndsht>0) ((TH1F *) list->FindObject("hTCvsTcTp1Ushoot"))->Fill(emch, ediff);
-		  if(nofSat==0 and nofUndsht==0) {
+		  if(nofSat[emch]>0 and nofUndsht[emch]==0) ((TH1F *) list->FindObject("hTCvsTcTp1Sat"))->Fill(emch, ediff);
+		  if(nofSat[emch]==0 and nofUndsht[emch]>0) ((TH1F *) list->FindObject("hTCvsTcTp1Ushoot"))->Fill(emch, ediff);
+		  if(nofSat[emch]==0 and nofUndsht[emch]==0) {
 		    ((TH1F *) list->FindObject("hTCvsTcTp1NoSatUshoot"))->Fill(emch, ediff);
 		    //std::cerr << "Event: "<<event<<" has NoSatUshoot with channel: "<< emch << ", emul: "<<emen<<", econt: "<<energy[sorted_idx[itc]]<<std::endl;
 		  }
-		  if(nofTcTp1==1) ((TH1F *) list->FindObject("hTCvsTcTp1S"))->Fill(emch, ediff);
-		  if(nofTcTp1==2) ((TH1F *) list->FindObject("hTCvsTcTp1D"))->Fill(emch, ediff);
+		  if(nofTcTp1[emch]==1) ((TH1F *) list->FindObject("hTCvsTcTp1S"))->Fill(emch, ediff);
+		  if(nofTcTp1[emch]==2) ((TH1F *) list->FindObject("hTCvsTcTp1D"))->Fill(emch, ediff);
 		}else
 		  ((TH1F *) list->FindObject("hTCvsTcTp1et2"))->Fill(emch, ediff);	
 	      }//TcTp > 0
-	      if(nofTcTp1==0 and nofTcTp2>0) ((TH1F *) list->FindObject("hTCvsTcTp2"))->Fill(emch, ediff);	
+	      if(nofTcTp1[emch]==0 and nofTcTp2[emch]>0) ((TH1F *) list->FindObject("hTCvsTcTp2"))->Fill(emch, ediff);	
 	    }//TcTp condition
 	  }//tc loop
 	  int moddiff = econtemulmodsum - econtmodsum;
@@ -716,21 +747,23 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	      ((TH1F *) list->FindObject("hModSumDiffADC"))->Fill(float( moddiff ));
 	      if(TMath::Abs(moddiff)>0)
 		std::cerr << "Event: "<<event<<" has problem in (ADC)modsum emul:"<<econtemulmodsum<<", econt : "<<econtmodsum<<std::endl;
-	    }else
+	    }else{
 	      ((TH1F *) list->FindObject("hModSumDiffTOT"))->Fill(float( moddiff ));
+	      if(TMath::Abs(moddiff)>0 and moddiff!=-1) std::cerr << "Event: "<<event<<" has problem for (TOT) modsum emul: "<<econtemulmodsum<<", econt: "<<econtmodsum<<std::endl;
+	    }
 	    ((TH1F *) list->FindObject("hEventCount"))->Fill(2);
 	  }else{
 	    ((TH1F *) list->FindObject("hModSumDiffTcTp12"))->Fill(float( moddiff ));
-	    if(nofTcTp1>0){
+	    if(nofTcTp1_evt>0){
 	      ((TH1F *) list->FindObject("hEventCount"))->Fill(3);
-	      if(nofTcTp2==0)
+	      if(nofTcTp2_evt==0)
 		((TH1F *) list->FindObject("hEventCount"))->Fill(4);
 	      else
 		((TH1F *) list->FindObject("hEventCount"))->Fill(5);
 	    }
-	    if(nofTcTp2>0){
+	    if(nofTcTp2_evt>0){
 	      ((TH1F *) list->FindObject("hEventCount"))->Fill(6);
-	      if(nofTcTp1==0)
+	      if(nofTcTp1_evt==0)
 		((TH1F *) list->FindObject("hEventCount"))->Fill(7);
 	      else
 		((TH1F *) list->FindObject("hEventCount"))->Fill(8);
@@ -750,27 +783,34 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	}else{ //STC
 	  /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	  //Bestchoice emulation data is already sorted, but the data from econt is not
+	  
 	  if(econtemulTcRawdata.size()!=econtTcRawdata.size()) continue;
 	  
 	  for(size_t istc = 0 ; istc< econtemulTcRawdata.size() ; istc++){
 	    uint32_t econt_energy = uint32_t(econtTcRawdata.at(istc).energy());
 	    uint32_t econt_loc = uint32_t(econtTcRawdata.at(istc).address());
-	    uint32_t emul_energy = uint32_t(econtemulTcRawdata.at(istc).energy());
+ 	    uint32_t emul_energy = uint32_t(econtemulTcRawdata.at(istc).energy());
 	    uint32_t emul_loc = uint32_t(econtemulTcRawdata.at(istc).address());
-	    int cdiff = emul_loc - econt_loc;
+	    //int cdiff = emul_loc - econt_loc; //for the moment not checking the TC with maximum energy
+	    int cdiff = 0;
 	    int ediff =  emul_energy - econt_energy;
 	    bool isTot = false ;
+	    bool isTcTp1or2 = false;
 	    const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
-	    for (const auto& itc : tclist)
-	      if(modtcdata.getTC(itc%48).isTot())
-		isTot = true ;
+	    for (const auto& itc : tclist){
+	      if(modtcdata.getTC(itc).isTot()) isTot = true ;
+	      if(nofTcTp1[itc]>0 or nofTcTp1[itc]>0) isTcTp1or2 = true;
+	    }
+	    if(isTcTp1or2) continue;
 	    
-	    if(cdiff==0){
-	      if(!isTot)
+	    if(cdiff==0 and (emul_energy!=0 and econt_energy!=0)){
+	      if(!isTot){
 		((TH1F *) list->FindObject(Form("hCompressDiffSTCADC_%d",istc)))->Fill(float( ediff ));
-	      else
+		//if(TMath::Abs(ediff)>0) std::cerr << "Event: "<<event<<" has problem for (ADC)STC channel: "<< istc << ", emul: "<<emul_energy<<", econt: "<<econt_energy<<std::endl;
+	      }else{
 		((TH1F *) list->FindObject(Form("hCompressDiffSTCTOT_%d",istc)))->Fill(float( ediff ));
+		//if(TMath::Abs(ediff)>0 and ediff!=-1) std::cerr << "Event: "<<event<<" has problem for (TOT)STC channel: "<< istc << ", emul: "<<emul_energy<<", econt: "<<econt_energy<<std::endl;
+	      }
 	    }else{
 	      if(!isTot)
 		((TH1F *) list->FindObject("hSTC4TCMissedADC"))->Fill(float( econt_loc ));

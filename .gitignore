@@ -17,3 +17,4 @@ log_old*
 *.root 
 output*
 output/*
+dat
