@@ -63,3 +63,96 @@ then compile again and run as,
 ./compile.sh
 ./findEMax.exe
 ```
+
+### Read a single ECONT event and print
+
+After compilation run as,
+```
+./read_econt_Jul24.exe $relay $run $linknumber
+```
+
+The code has been tested with the files of September 2023 files. The output for a Best Choice run is shown below,
+
+```
+[idas@lxplus915 hgcal-tpg-fe]$ ./read_econt_Jul24.exe 1695829376 1695829376 1
+Configuration::readEconTConfigYaml:: ECONT init config file : cfgmap/init_econt.yaml
+FileReader::open()  opening file dat/Relay1695829376/Run1695829376_Link0_File0000000000.bin
+RecordContinuing::print()
+ RecordHeader::print()  Data = 0x33120002651469ca
+  Pattern = 0x33 = valid
+  State   = Continuing     = valid
+  Sequencer counter = 1695836618
+  Payload length =      2 eight-byte words 
+  Record length   =     24 bytes 
+   Payload word  = 0x0000000065144d80
+   Payload word  = 0x6a55ae48ffffffff
+  Run number       = 1695829376
+  File number      =          0
+  Number of events = 4294967295
+  Number of bytes  = 1784000072
+FileReader::read() closing file Run1695829376_Link0_File0000000000.bin
+FileReader::read() opening file Run1695829376_Link0_File0000000001.bin
+RecordHeader::print()  Data = 0x33120002651469ca
+ Pattern = 0x33 = valid
+ State   = Continuing     = valid
+ Sequencer counter = 1695836618
+ Payload length =      2 eight-byte words 
+ Record length   =     24 bytes 
+Event: 10, Module: 256, size: 10
+TcRawData(0xfee9b0)::print(): Data = 0x167f, type = BestC,   module sum, energy =  89
+TcRawData(0xfee9b2)::print(): Data = 0x0d4a, type = BestC, address = 10, energy =  53
+TcRawData(0xfee9b4)::print(): Data = 0x0da0, type = BestC, address = 32, energy =  54
+TcRawData(0xfee9b6)::print(): Data = 0x0c61, type = BestC, address = 33, energy =  49
+TcRawData(0xfee9b8)::print(): Data = 0x0ee2, type = BestC, address = 34, energy =  59
+TcRawData(0xfee9ba)::print(): Data = 0x1423, type = BestC, address = 35, energy =  80
+TcRawData(0xfee9bc)::print(): Data = 0x0ee4, type = BestC, address = 36, energy =  59
+TcRawData(0xfee9be)::print(): Data = 0x0e26, type = BestC, address = 38, energy =  56
+TcRawData(0xfee9c0)::print(): Data = 0x0d28, type = BestC, address = 40, energy =  52
+TcRawData(0xfee9c2)::print(): Data = 0x0c69, type = BestC, address = 41, energy =  49
+FileReader::close() closing file dat/Relay1695829376/Run1695829376_Link0_File0000000001.bin
+[idas@lxplus915 hgcal-tpg-fe]$
+```
+
+Similarly the output for a STC4A(4E+3M) run looks as
+```
+[idas@lxplus915 hgcal-tpg-fe]$ ./read_econt_Jul24.exe 1695733045 1695733046 1
+Configuration::readEconTConfigYaml:: ECONT init config file : cfgmap/init_econt.yaml
+FileReader::open()  opening file dat/Relay1695733045/Run1695733046_Link0_File0000000000.bin
+RecordContinuing::print()
+ RecordHeader::print()  Data = 0x331200026512f197
+  Pattern = 0x33 = valid
+  State   = Continuing     = valid
+  Sequencer counter = 1695740311
+  Payload length =      2 eight-byte words 
+  Record length   =     24 bytes 
+   Payload word  = 0x000000006512d536
+   Payload word  = 0x6a55ae48ffffffff
+  Run number       = 1695733046
+  File number      =          0
+  Number of events = 4294967295
+  Number of bytes  = 1784000072
+FileReader::read() closing file Run1695733046_Link0_File0000000000.bin
+FileReader::read() opening file Run1695733046_Link0_File0000000001.bin
+RecordHeader::print()  Data = 0x331200026512f197
+ Pattern = 0x33 = valid
+ State   = Continuing     = valid
+ Sequencer counter = 1695740311
+ Payload length =      2 eight-byte words 
+ Record length   =     24 bytes 
+Event: 10, Module: 256, size: 12
+TcRawData(0xdbb9b0)::print(): Data = 0x4643, type = STC4A, address =  3, energy =  25
+TcRawData(0xdbb9b2)::print(): Data = 0x4083, type = STC4A, address =  3, energy =   2
+TcRawData(0xdbb9b4)::print(): Data = 0x4d02, type = STC4A, address =  2, energy =  52
+TcRawData(0xdbb9b6)::print(): Data = 0x4940, type = STC4A, address =  0, energy =  37
+TcRawData(0xdbb9b8)::print(): Data = 0x4903, type = STC4A, address =  3, energy =  36
+TcRawData(0xdbb9ba)::print(): Data = 0x4303, type = STC4A, address =  3, energy =  12
+TcRawData(0xdbb9bc)::print(): Data = 0x4f02, type = STC4A, address =  2, energy =  60
+TcRawData(0xdbb9be)::print(): Data = 0x47c0, type = STC4A, address =  0, energy =  31
+TcRawData(0xdbb9c0)::print(): Data = 0x4803, type = STC4A, address =  3, energy =  32
+TcRawData(0xdbb9c2)::print(): Data = 0x4083, type = STC4A, address =  3, energy =   2
+TcRawData(0xdbb9c4)::print(): Data = 0x5202, type = STC4A, address =  2, energy =  72
+TcRawData(0xdbb9c6)::print(): Data = 0x4801, type = STC4A, address =  1, energy =  32
+FileReader::close() closing file dat/Relay1695733045/Run1695733046_Link0_File0000000001.bin
+[idas@lxplus915 hgcal-tpg-fe]$
+
+```
