@@ -406,13 +406,13 @@ int main(int argc, char** argv)
       }//event==reference Event
       
     }//event loop
-    FillHistogram(cfgs, hrocarray, modarray, econtemularray, econtarray, eventList, moduleId, dir_diff, dir_charge, isSTC4);
+    //FillHistogram(cfgs, hrocarray, modarray, econtemularray, econtarray, eventList, moduleId, dir_diff, dir_charge, isSTC4);
     std::cout<<"modarray : After Link"<<linkNumber<<" size : " << modarray.size() <<std::endl;
     
   }//loop over event group
 
-  void FillSummaryHistogram(TFile*&,TDirectory*&, TDirectory*&, bool);
-  FillSummaryHistogram(fout,dir_diff, dir_charge, isSTC4);
+  // void FillSummaryHistogram(TFile*&,TDirectory*&, TDirectory*&, bool);
+  // FillSummaryHistogram(fout,dir_diff, dir_charge, isSTC4);
   
   moddata.clear();
   rocdata.clear();
@@ -974,10 +974,10 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	  uint32_t *sorted_idx = new uint32_t[nofBCTcs];
 	  uint32_t *energy = new uint32_t[nofBCTcs];
 	  uint32_t *channel = new uint32_t[nofBCTcs];
-	  // uint32_t *emul_energy = new uint32_t[nofBCTcs];
-	  // uint32_t *emul_channel = new uint32_t[nofBCTcs];
-	  uint32_t *emul_energy = new uint32_t[(econtemulTcRawdata.size()-1)];
-	  uint32_t *emul_channel = new uint32_t[(econtemulTcRawdata.size()-1)];
+	  uint32_t *emul_energy = new uint32_t[nofBCTcs];
+	  uint32_t *emul_channel = new uint32_t[nofBCTcs];
+	  // uint32_t *emul_energy = new uint32_t[(econtemulTcRawdata.size()-1)];
+	  // uint32_t *emul_channel = new uint32_t[(econtemulTcRawdata.size()-1)];
 	  uint32_t ibc = 0;
 	  uint32_t econtmodsum = 0,  econtemulmodsum = 0;
 	  for(const auto& econtdata : econtTcRawdata){

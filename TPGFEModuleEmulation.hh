@@ -459,20 +459,19 @@ namespace TPGFEModuleEmulation{
       decompressed =  decompressed >> 11;
       decompressedMS += decompressed ;
       uint16_t compressed_bc = CompressEcontBc(decompressed,pck.getSelTC4());
-      //tcrawlist.push_back(TPGFEDataformat::TcRawData(outputType, itc, compressed_bc));
       energy[itc] = compressed_bc;
     }
     uint16_t compressed_modsum = CompressEcontModsum(decompressedMS,pck.getSelTC4());
     tcrawlist.push_back(TPGFEDataformat::TcRawData(compressed_modsum));
     
     uint32_t nofBCTcs = configs.getEconTPara().at(moduleId).getBCType();
-    // TMath::Sort(uint32_t(tclist.size()), energy, sorted_idx);
-    // //The following line should be modified when we have access to the BC mode defined for a given ECONT of a motherboard in the config file
-    // for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++)
-    //   tcrawlist.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
+    TMath::Sort(uint32_t(tclist.size()), energy, sorted_idx);
+    //The following line should be modified when we have access to the BC mode defined for a given ECONT of a motherboard in the config file
+    for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++)
+      tcrawlist.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
     
-    for(uint32_t itc = 0 ; itc<uint32_t(tclist.size()) ; itc++)
-      tcrawlist.push_back(TPGFEDataformat::TcRawData(outputType, itc, energy[itc]));
+    // for(uint32_t itc = 0 ; itc<uint32_t(tclist.size()) ; itc++)
+    //   tcrawlist.push_back(TPGFEDataformat::TcRawData(outputType, itc, energy[itc]));
     
       
     //econtOut = std::make_pair(moduleId,tcrawlist);
