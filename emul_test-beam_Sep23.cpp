@@ -33,8 +33,7 @@
 #include "TPGFEReader2023.hh"
 #include "TPGFEModuleEmulation.hh"
 
-const long double maxEvent = 8e6; //6e5
-
+const long double maxEvent = 3e6; //6e5
 
 //////////////////////////////////// Issues with the Relay-1695829026 Run-1695829027 /////////////////////////////////
 //link1 : special case
@@ -67,6 +66,7 @@ const long double maxEvent = 8e6; //6e5
 // Event: 219 has Undershoot with channel: 35, emul: 44, econt: 52
 // Event: 228 has Undershoot with channel: 40, emul: 44, econt: 50
 // Event: 260 has Undershoot with channel: 11, emul: 36, econt: 51
+//......
 
 //undershoot energy > 40 [see all four channels are zero]
 // Event: 962 has Undershoot with channel: 35, emul: 0, econt: 43
@@ -79,6 +79,7 @@ const long double maxEvent = 8e6; //6e5
 // Event: 5927 has Undershoot with channel: 35, emul: 0, econt: 42
 // Event: 6154 has Undershoot with channel: 35, emul: 0, econt: 46
 // Event: 6593 has Undershoot with channel: 35, emul: 0, econt: 47
+//..........
 //=======================================
 
 
@@ -92,10 +93,10 @@ const long double maxEvent = 8e6; //6e5
 // Event: 24754 has problem for (ADC)STC channel: 9, emul: 29, econt: 31
 // Event: 26829 has problem for (ADC)STC channel: 10, emul: 43, econt: 107
 // Event: 27744 has problem for (ADC)STC channel: 9, emul: 9, econt: 11
-
+//.................
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-bool isDebug = 1;
-const uint64_t refPrE = 10; 
+bool isDebug = 0;
+const uint64_t refPrE = 40; 
 bool isEcontEmulNew = 1;
 
 int main(int argc, char** argv)
@@ -302,7 +303,7 @@ int main(int argc, char** argv)
     }
     
     if(!(refPrE>=minEventTrig and refPrE<=maxEventTrig) and isDebug) continue;
-    //if(ieloop!=0) continue;
+    if(ieloop!=0) continue;
     
     printf("iloop : %d, minEventTrig = %lu, maxEventTrig = %lu, minEventDAQ = %lu, maxEventDAQ = %lu\n",ieloop,minEventTrig, maxEventTrig, minEventDAQ, maxEventDAQ);
 
@@ -386,7 +387,7 @@ int main(int argc, char** argv)
 	modtcdata.print();
 
 	std::string emulmethod = (isEcontEmulNew)? "New" : "Old" ; 
-	std::cout <<"1: ECONT emulation method: "<< emulmethod <<",  Module " << TcRawdata.first << ", size : " << TcRawdata.second.size() << std::endl;
+	std::cout <<"Event: "<<event << ", 1: ECONT emulation method: "<< emulmethod <<",  Module " << TcRawdata.first << ", size : " << TcRawdata.second.size() << std::endl;
 	const std::vector<TPGFEDataformat::TcRawData>& tcarr = TcRawdata.second ;
 	for(size_t itc=0 ; itc < tcarr.size() ; itc++){
 	  const TPGFEDataformat::TcRawData& tcdata = tcarr.at(itc);
@@ -397,7 +398,7 @@ int main(int argc, char** argv)
 	for(const auto& modpair : vecont){
 	  const uint32_t& modnum = modpair.first;
 	  const std::vector<TPGFEDataformat::TcRawData>& econtlist = modpair.second;
-	  std::cout <<"2: Module " << modnum << ", size : " << econtlist.size() << std::endl;
+	  std::cout <<"Event: "<<event <<", 2: Module " << modnum << ", size : " << econtlist.size() << std::endl;
 	  for(size_t itc=0 ; itc < econtlist.size() ; itc++){
 	    const TPGFEDataformat::TcRawData& tcedata = econtlist.at(itc);
 	    tcedata.print();
@@ -966,7 +967,6 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	  }//rocpin loop
 	}//TC loop for charge histogram
 	
-	
 	if(!isSTC4){ //best choice
 	  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	  //Bestchoice emulation data is already sorted, but the data from econt is not
@@ -1013,10 +1013,10 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	    int ediff =  emen - energy[sorted_idx[itc]];
 	    
 	    if(event==refPrE){
-	      std::cout << "ibc: "<<itc<<", emul_channel: "<<emch<<", channel: "<<channel[sorted_idx[itc]]
+	      std::cout <<"Event: "<<event << ", ibc: "<<itc<<", emul_channel: "<<emch<<", channel: "<<channel[sorted_idx[itc]]
 			<<", emul_energy: "<< emen << ", energy: "<<energy[sorted_idx[itc]]<<std::endl;
 	    }
-
+	    
 	    if(!isTcTp12[channel[sorted_idx[itc]]]){ 
 	      //TcTp=0/3
 	      bool isTot = modtcdata.getTC(emch).isTot();
