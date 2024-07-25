@@ -6,6 +6,17 @@
 #include <cstdint>
 #include <cstring>
 #include <cassert>
+#include <map>
+
+#include <yaml-cpp/yaml.h>
+
+#include "TMath.h"
+#include "TProfile.h"
+#include "TSystem.h"
+#include "TCanvas.h"
+#include "TFile.h"
+
+#include "TPGFEDataformat.hh"
 
 namespace TPGFEConfiguration{
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -7,6 +7,8 @@
 #include <cassert>
 #include <cstddef>
 
+#include "TPGFEConfiguration.hh"
+
 namespace TPGFEModuleEmulation{
 
 
@@ -150,13 +152,30 @@ namespace TPGFEModuleEmulation{
     void EmulateBC(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
 
     void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
-    const TPGFEDataformat::TcRawDataPacket& getTcRawDataPacket() {return emulOut;}
+    const TPGFEDataformat::TcRawDataPacket& getTcRawDataPacket() const {return emulOut;}
+    TPGFEDataformat::TcRawDataPacket& accessTcRawDataPacket() {return emulOut;}
 
     //const std::vector<TPGFEDataformat::TcRawData>& getTcRawDataList() {return emulOut.second;} Never use this as it will break when changing to TcRawDataPacket; use getTcRawDataPacket().second in calling code instead to make it clear which needs changing
     
     // BX here may be absorbed into TcRawDataPacket?
     static void convertToElinkData(unsigned bx, const TPGFEDataformat::TcRawDataPacket &tcrdp, uint32_t *ve);
-    void getElinkData(unsigned bx, uint32_t *ptr);
+    void getElinkData(unsigned bx, uint32_t *ptr) const;
+
+    void fillRandomTcRawData(unsigned bx);
+    void fillZeroEnergyTcRawData(unsigned bx);
+    
+    static void generateTcRawData(bool zero, unsigned bx,
+				  TPGFEDataformat::TcRawData::Type type,
+				  unsigned nTc,
+				  TPGFEDataformat::TcRawDataPacket &vtcrp);
+    static void generateRandomTcRawData(unsigned bx,
+					TPGFEDataformat::TcRawData::Type type,
+					unsigned nTc,
+					TPGFEDataformat::TcRawDataPacket &vtcrp);
+    static void generateZeroEnergyTcRawData(unsigned bx,
+					    TPGFEDataformat::TcRawData::Type type,
+					    unsigned nTc,
+					    TPGFEDataformat::TcRawDataPacket &vtcrp);
     
   private:
     
@@ -344,12 +363,8 @@ namespace TPGFEModuleEmulation{
       return packed;
     }
 
-    
-
-    
     TPGFEConfiguration::Configuration& configs;
     TPGFEConfiguration::TPGFEIdPacking pck;
-    //std::vector<TPGFEDataformat::TcRawData> tcrawlist;
     TPGFEDataformat::TcRawDataPacket emulOut;
   };
 
@@ -550,10 +565,74 @@ namespace TPGFEModuleEmulation{
     ve[nVe++]=data>>32;
   }
   
-  void ECONTEmulation::getElinkData(unsigned bx, uint32_t *ptr) {
+  void ECONTEmulation::getElinkData(unsigned bx, uint32_t *ptr) const {
     convertToElinkData(bx,emulOut,ptr);
   }
+
+  void ECONTEmulation::fillRandomTcRawData(unsigned bx) {
+    // FIXME - HOW TO GET TYPE AND NUMBER OF TCS?
+    //generateRandomTcRawData(bx,configs.getEconTPara().at(moduleId).getOutType(),9,emulOut);
+  }
+
+  void ECONTEmulation::fillZeroEnergyTcRawData(unsigned bx) {
+    // FIXME - HOW TO GET TYPE AND NUMBER OF TCS?
+    //generateZeroEnergyTcRawData(bx,configs.getEconTPara().at(moduleId).getOutType(),9,emulOut);
+  }
+
+  void ECONTEmulation::generateRandomTcRawData(unsigned bx,
+					       TPGFEDataformat::TcRawData::Type type,
+					       unsigned nTc,
+					       TPGFEDataformat::TcRawDataPacket &vtcrp) {
+    generateTcRawData(false,bx,type,nTc,vtcrp);
+  }
+  
+  void ECONTEmulation::generateZeroEnergyTcRawData(unsigned bx,
+						   TPGFEDataformat::TcRawData::Type type,
+						   unsigned nTc,
+						   TPGFEDataformat::TcRawDataPacket &vtcrp) {
+    generateTcRawData(true,bx,type,nTc,vtcrp);
+  }
+  
+  void ECONTEmulation::generateTcRawData(bool zero, unsigned bx,
+					 TPGFEDataformat::TcRawData::Type type,
+					 unsigned nTc,
+					 TPGFEDataformat::TcRawDataPacket &vtcrp) {
     
+    std::vector<TPGFEDataformat::TcRawData> &vtc(vtcrp.second);
+  
+    if(type==TPGFEDataformat::TcRawData::BestC) {
+      vtc.resize(nTc+1);
+      vtc[0].setModuleSum(zero?0:rand()&0xff);
+    
+      unsigned step(48/nTc);
+      for(unsigned i(1);i<vtc.size();i++) {
+	vtc[i].setTriggerCell(type,step*(i-1)+(rand()%step),zero?0:rand()&0x7f);
+      }
+    
+    } else if(type==TPGFEDataformat::TcRawData::STC4A) {
+      vtc.resize(nTc);
+      for(unsigned i(0);i<vtc.size();i++) {
+	vtc[i].setTriggerCell(type,rand()&0x3,zero?0:rand()&0x7f);
+      }
+    
+    } else if(type==TPGFEDataformat::TcRawData::STC4B) {
+      vtc.resize(nTc);
+      for(unsigned i(0);i<vtc.size();i++) {
+	vtc[i].setTriggerCell(type,rand()&0x3,zero?0:rand()&0x1ff);
+      }
+    
+    } else if(type==TPGFEDataformat::TcRawData::STC16) {
+      vtc.resize(nTc);
+      for(unsigned i(0);i<vtc.size();i++) {
+	vtc[i].setTriggerCell(type,rand()&0xf,zero?0:rand()&0x1ff);
+      }
+    
+    } else {
+      assert(false);
+    }
+  }
+
+  
 }//end of namespace
 
 #endif
