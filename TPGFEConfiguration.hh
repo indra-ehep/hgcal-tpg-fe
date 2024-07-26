@@ -735,7 +735,7 @@ namespace TPGFEConfiguration{
       for(uint32_t ich=0;ich<nchs;ich++){
 	uint32_t ihalf = (ich<TPGFEDataformat::HalfHgcrocData::NumberOfChannels)?0:1;
 	uint32_t chnl = ich%TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
-	uint32_t ped = node["Configuration"]["roc"][rocname]["cfg"]["ch"][*(Form("%u",ich))]["Adc_pedestal"].as<uint32_t>() ;
+	uint32_t ped = node["Configuration"]["roc"][rocname]["cfg"]["ch"][Form("%u",ich)]["Adc_pedestal"].as<uint32_t>() ;
 	if(ihalf==0){
 	  TPGFEConfiguration::ConfigCh ch_0;
 	  ch_0.setAdcpedestal(ped);
