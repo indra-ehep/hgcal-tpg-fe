@@ -31,14 +31,12 @@ public:
 
     bool doPrint(true);
 
-    if(doPrint) {
-      /*
-      for(unsigned i(0);i<v.size();i++) {
-	std::cout << "Elink " << i << " = "
-		  << std::hex << std::setw(8) << v[i]
-		  << std::dec << std::endl;
-      }
-      */
+    if(doPrint) {      
+      // for(unsigned i(0);i<v.size();i++) {
+      // 	std::cout << "Elink " << i << " = "
+      // 		  << std::hex << std::setw(8) << v[i]
+      // 		  << std::dec << std::endl;
+      // }
     }
     
     //if(v.size()==0) return;

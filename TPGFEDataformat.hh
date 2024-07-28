@@ -154,7 +154,7 @@ namespace TPGFEDataformat{
       if(!isModuleSum()) return 0;
       return (_data>>6)&0x00ff;
     }
-
+      
     bool isModuleSum() const {
       return (_data&0xc03f)==0x003f;
     }

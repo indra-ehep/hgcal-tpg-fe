@@ -4,6 +4,7 @@
 #include "common/inc/FileReader.h"
 
 #include "TPGFEDataformat.hh"
+#include "TPGFEModuleEmulation.hh"
 #include "Stage1IO.hh"
 
 // Author : Indranil Das
@@ -167,7 +168,8 @@ int main(int argc, char** argv){
 	cout<< std::hex   ;
 	cout<<"0th : 0x"<< std::setfill('0') << setw(16) << p64[0] << endl;
 	cout<<"1st : 0x" << p64[1] << endl;
-	cout<<"2nd : 0x" << p64[2] << endl;	
+	cout<<"2nd : 0x" << p64[2] << endl;
+	cout<< std::dec << std::setfill(' ') ;
       }
 
       ////////////// First find the block details from header //////////
@@ -212,7 +214,7 @@ int main(int argc, char** argv){
       }
       /////////////////////////////////////////////////////////////////
 
-      //////////////// Print the energy/location and stage1 input//////
+      ////// Print the energy/location and stage1 input also check back elink//////
       if(nEvents<=2)
 	for(int iel=0;iel<7;iel++)
 	  cout<<"elIndx: "<< iel
@@ -224,9 +226,18 @@ int main(int argc, char** argv){
       TPGBEDataformat::UnpackerOutputStreamPair up;
       if(nEvents<=2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
       if(nEvents<=2) {
-	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(0, vTcrdp, up);
+	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(0, vTcrdp, up); //send the actual bx%8 modulo number--todo
 	up.print();
       }
+      uint32_t elpckt0_test[3];
+      if(nEvents<=2) TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(2, vTcrdp, elpckt0_test); //send the actual bx number--todo
+      if(nEvents<=2)
+	for(int iel=0;iel<3;iel++)
+	  cout<<"iel: "<< iel
+	      << std::hex
+	      <<", word : 0x" << std::setfill('0') << setw(8) << elpckt0_test[iel]
+	      << std::dec << std::setfill(' ')
+	      <<endl;
       /////////////////////////////////////////////////////////////////
       
       //////////// Print unpacker output for ch 1 /////////////////////

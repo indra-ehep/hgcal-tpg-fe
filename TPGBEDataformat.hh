@@ -81,12 +81,12 @@ public:
 
     return pack5E4MFromUnsigned(u);
     */
-    //return pack5E4MFromUnsigned(unpack4E3MToUnsigned(flt));
+    return pack5E4MFromUnsigned(unpack4E3MToUnsigned(flt));
 
-    if(flt<16) return flt;
-    uint16_t e54((flt>>3)-1);
-    uint16_t m54(2*(flt&0x7));
-    return e54<<4|m54;
+    // if(flt<16) return flt;
+    // uint16_t e54((flt>>3)-1);
+    // uint16_t m54(2*(flt&0x7));
+    // return e54<<4|m54;
   }
   
   void setZero() {
