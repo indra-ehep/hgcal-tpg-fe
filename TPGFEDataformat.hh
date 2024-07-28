@@ -9,6 +9,8 @@
 
 namespace TPGFEDataformat{
 
+  typedef std::array<uint32_t,14> OrderedElinkPacket;
+  
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////// Data Formats by Paul Dauncey /////////////////////////////////
   ///provision for tctp is added by Indra (without altering the existing functionalitites)
@@ -125,7 +127,8 @@ namespace TPGFEDataformat{
       BestC=0x0000, // 4E3M
       STC4A=0x4000, // 4E3M
       STC4B=0x8000, // 5E4M
-      STC16=0xc000  // 5E4M
+      STC16=0xc000, // 5E4M
+      Unconnected // Cludge until class restructered
     };
   
     TcRawData() : _data(0) {
@@ -170,6 +173,10 @@ namespace TPGFEDataformat{
   
     const std::string& typeName() const {
       return _typeName[_data>>14];
+    }
+
+    static const std::string& typeName(Type t) {
+      return _typeName[t>>14];
     }
 
     void setModuleSum(uint8_t e) {
