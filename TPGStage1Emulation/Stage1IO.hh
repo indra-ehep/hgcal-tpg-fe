@@ -22,7 +22,7 @@ class Stage1IO {
 public:
   Stage1IO() : _runCall(0) {
   }
-
+  
   static void convertElinksToTcRawData(TPGFEDataformat::TcRawData::Type type, unsigned nTc,
 				       const uint32_t *v,
 				       TPGFEDataformat::TcRawDataPacket &vTcrdp) {
