@@ -96,8 +96,9 @@ public:
 		<< ",     BX = " << std::setw(2) << bxid_econt0[ib]
 		<< std::endl;
       
-      for(unsigned i(0);i<3;i++) {
-	std::cout << type << "  STC16 " << i 
+      //for(unsigned i(0);i<3;i++) {//STC16
+      for(unsigned i(0);i<6;i++) {
+	std::cout << type << "  TC " << i 
 		  << " channel, energy packed = "
 		  << std::setw(5) << econt0_bc6_energy[ib][i]
 	          << ", number = " << std::setw(2) << econt0_bc6_channel[ib][i]
@@ -246,9 +247,9 @@ int main(int argc, char** argv){
       for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	uint32_t wMSB = (p64[iw] >> 32) & 0xFFFFFFFF ;
 	uint32_t wLSB = p64[iw] & 0xFFFFFFFF ;
-	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%4==2) {
-	  //bx = (wMSB>>28) & 0xF ;
-	  bx = (wLSB>>28) & 0xF ; //with (elIndx-elBgnOffset)%4==1 for STC4A and STC16
+	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%4==0) {
+	  bx = (wMSB>>28) & 0xF ;
+	  //bx = (wLSB>>28) & 0xF ; //with (elIndx-elBgnOffset)%4==1,2 for STC4A and STC16
 	  elinkData[ievent].bxid_econt0[ibx] = bx;
 	}
 	if((elIndx-elBgnOffset)%4==0) iel = 0;
@@ -283,14 +284,14 @@ int main(int argc, char** argv){
       for(int ib=0;ib<7;ib++){
 	TPGFEDataformat::TcRawDataPacket vTcrdp;
 	TPGBEDataformat::UnpackerOutputStreamPair up;
-	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt[ib], vTcrdp);
+	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt[ib], vTcrdp);
 	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, 6, &elpckt[ib][3], vTcrdp);
-	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, 3, &elpckt[ib][5], vTcrdp);
+	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, 3, &elpckt[ib][5], vTcrdp);
 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ievent].bxid_econt0[ib], vTcrdp, up);
 	elinkData[ievent].econt0_bc6_modsum[ib] = uint32_t(up.moduleSum(0));
 	elinkData[ievent].bxid_econt0[ib] = uint32_t(up.bx(0));
-	//for(int itc=0;itc<6;itc++){ //for BC and STC4A
-	for(int itc=0;itc<3;itc++){
+	for(int itc=0;itc<6;itc++){ //for BC and STC4A
+	//for(int itc=0;itc<3;itc++){
 	  elinkData[ievent].econt0_bc6_energy[ib][itc] = uint32_t(up.channelEnergy(0,itc));
 	  elinkData[ievent].econt0_bc6_channel[ib][itc] = uint32_t(up.channelNumber(0,itc));
 	}//itc
@@ -328,7 +329,9 @@ int main(int argc, char** argv){
 	uint32_t col3 = p64[iw] & 0xFFFF ;
 	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	if(unpkIndx>=unpkBgnOffset){
-	  unpackedWord[ibx][iunpkw] = col1;
+	  unpackedWord[ibx][iunpkw] = col3; //BC6
+	  // unpackedWord[ibx][iunpkw] = col2; //STC4A
+	  // unpackedWord[ibx][iunpkw] = col1; //STC16
 	  iunpkw++;
 	}
 	if(nEvents<=maxShowEvent)
@@ -349,8 +352,8 @@ int main(int argc, char** argv){
       uint32_t isValid = 0;
       uint32_t energy, channel;
       for(int ib=0;ib<7;ib++){
-	//for(int iupw=0;iupw<7;iupw++){ //BC6 and STC4A
-	for(int iupw=0;iupw<4;iupw++){ //STC16
+	for(int iupw=0;iupw<7;iupw++){ //BC6 and STC4A
+	//for(int iupw=0;iupw<4;iupw++){ //STC16
 	  isValid = (unpackedWord[ib][iupw] >> 15) & 0x1;
 	  if(iupw==0){
 	    modsum = (unpackedWord[ib][iupw] >> 6) & 0xFF ;
