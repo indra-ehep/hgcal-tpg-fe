@@ -193,23 +193,28 @@ int main(int argc, char** argv){
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
       int iblock = 1;
-      int elBeginIndx = 3;
+      int elBgnOffset = 3;
       int elIndx = 0;
       uint32_t elpckt0[7];
+      uint32_t bx = 0xF;
+      uint32_t refBx ;
       int iel = 0;
       for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	uint32_t wMSB = (p64[iw] >> 32) & 0xFFFFFFFF ;
 	uint32_t wLSB = p64[iw] & 0xFFFFFFFF ;
+	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%7==0) bx = (wLSB>>28) & 0xF ;
+	if(elIndx>=elBgnOffset and elIndx<elBgnOffset+7){
+	  elpckt0[iel] = wLSB;
+	  if(iel==0) refBx = bx;
+	  iel++;
+	}//pick the first elink
 	if(nEvents<=2)
-	  cout<<"iloc: "<< iw
+	  cout<<"iloc: "<< iw << ", bx: " << bx
 	      << std::hex
 	      <<", word : 0x" << std::setfill('0') << setw(8) << wLSB
 	      << std::dec << std::setfill(' ')
 	      <<endl;
-	if(elIndx>=elBeginIndx and elIndx<elBeginIndx+7){
-	  elpckt0[iel] = wLSB;
-	  iel++;
-	}//pick the first elink
+
 	elIndx++;
       }
       /////////////////////////////////////////////////////////////////
@@ -226,11 +231,11 @@ int main(int argc, char** argv){
       TPGBEDataformat::UnpackerOutputStreamPair up;
       if(nEvents<=2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
       if(nEvents<=2) {
-	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(0, vTcrdp, up); //send the actual bx%8 modulo number--todo
+	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(refBx, vTcrdp, up); 
 	up.print();
       }
       uint32_t elpckt0_test[3];
-      if(nEvents<=2) TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(2, vTcrdp, elpckt0_test); //send the actual bx number--todo
+      if(nEvents<=2) TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(refBx, vTcrdp, elpckt0_test); 
       if(nEvents<=2)
 	for(int iel=0;iel<3;iel++)
 	  cout<<"iel: "<< iel
@@ -242,11 +247,19 @@ int main(int argc, char** argv){
       
       //////////// Print unpacker output for ch 1 /////////////////////
       iblock = 3;
+      int unpkBgnOffset = 4;
+      int unpkIndx = 0;
+      uint32_t unpackedWord[7];
+      uint32_t iunpkw = 0;
       for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
 	uint32_t col3 = p64[iw] & 0xFFFF ;
+	if(unpkIndx>=unpkBgnOffset and unpkIndx<unpkBgnOffset+7){
+	  unpackedWord[iunpkw] = col1;
+	  iunpkw++;
+	}
 	if(nEvents<=2)
 	  cout<<"iloc: "<< iw
 	      << std::hex
@@ -256,6 +269,31 @@ int main(int argc, char** argv){
 	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
 	      << std::dec << std::setfill(' ')
 	      <<endl;
+	
+	unpkIndx++;
+      }
+      uint32_t modsum = 0xFF;
+      uint32_t unpkBx = 0xF;
+      uint32_t isValid = 0;
+      uint32_t energy, channel;
+      for(int iupw=0;iupw<7;iupw++){
+	isValid = (unpackedWord[iupw] >> 15) & 0x1;
+	if(iupw==0){
+	  modsum = (unpackedWord[iupw] >> 6) & 0xFF ;
+	  unpkBx = unpackedWord[iupw] & 0xF ;
+	}else{
+	  energy = (unpackedWord[iupw] >> 6) & 0x1FF ;
+	  channel = unpackedWord[iupw]  & 0x3F ;
+	}
+      if(nEvents<=2)
+	if(iupw==0)
+	  cout<<"iupw: "<< iupw
+	      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[iupw] << std::dec << std::setfill(' ')
+	      <<", bx: " << unpkBx <<", modsum: "<<modsum << endl;
+	else
+	  cout<<"iupw: "<< iupw
+	      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[iupw] << std::dec << std::setfill(' ')
+	      <<", energy: " << energy <<", channel: "<<channel << endl;
       }
       /////////////////////////////////////////////////////////////////
       
