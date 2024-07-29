@@ -29,14 +29,14 @@ public:
     
     std::vector<TPGFEDataformat::TcRawData> &vTc(vTcrdp.second);
 
-    bool doPrint(true);
+    bool doPrint(false);
 
     if(doPrint) {      
-      // for(unsigned i(0);i<v.size();i++) {
-      // 	std::cout << "Elink " << i << " = "
-      // 		  << std::hex << std::setw(8) << v[i]
-      // 		  << std::dec << std::endl;
-      // }
+      for(unsigned i(0);i<7;i++) {
+	std::cout << "Elink " << i << " = "
+		  << std::hex << std::setw(8) << v[i]
+		  << std::dec << std::endl;
+      }
     }
     
     //if(v.size()==0) return;
@@ -73,6 +73,11 @@ public:
 	unsigned mult(0);
 	if(type==TPGFEDataformat::TcRawData::BestC) {
 	  lastBit-=6;
+	  // std::cout<< std::hex
+	  // 	   <<", d-word : 0x" << std::setfill('0') << std::setw(8) << (d>>lastBit)
+	  // 	   <<", masked-d-word : 0x" << std::setfill('0') << std::setw(8) << ((d>>lastBit)&0x3f)
+	  // 	   << std::dec << std::setfill(' ')
+	  // 	   <<std::endl;
 	  vTc.push_back(TPGFEDataformat::TcRawData(type,mult*tc+((d>>lastBit)&0x3f),0));
 	}
 	if(type==TPGFEDataformat::TcRawData::STC4A) {

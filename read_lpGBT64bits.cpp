@@ -73,6 +73,40 @@ int find_cafe_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int n, int
   }
 }
 
+// typedef struct{
+// } BCEventData;
+
+class BCEventData {
+public:
+  uint32_t econt0_bc6_modsum[7];
+  uint32_t econt0_bc6_energy[7][6];
+  uint32_t econt0_bc6_channel[7][6];
+  uint32_t bxid_econt0[7];
+
+  void print(const char* type = "") {
+    std::cout << "BCEventData(" << this << ")::print("<< type <<"), format = " << std::endl;
+    
+    for(unsigned ib(0);ib<7;ib++) {
+      std::cout << " ib " << ib << std::endl
+		<< "  MS  " << " = 0x"
+		<< std::hex << ::std::setfill('0')
+		<< std::setw(4) << econt0_bc6_modsum[ib]
+		<< std::dec << ::std::setfill(' ')
+		<< "  sum packed = " << std::setw(5) << econt0_bc6_modsum[ib]
+		<< ",     BX = " << std::setw(2) << bxid_econt0[ib]
+		<< std::endl;
+      
+      for(unsigned i(0);i<3;i++) {
+	std::cout << type << "  STC16 " << i 
+		  << " channel, energy packed = "
+		  << std::setw(5) << econt0_bc6_energy[ib][i]
+	          << ", number = " << std::setw(2) << econt0_bc6_channel[ib][i]
+		  << std::endl;
+      }
+    }
+  }
+
+};
 
 int main(int argc, char** argv){
   //int econt_data_validation(unsigned relayNumber=1695822887, unsigned runNumber=1695822887){
@@ -110,8 +144,8 @@ int main(int argc, char** argv){
   const Hgcal10gLinkReceiver::RecordRunning  *rEvent((Hgcal10gLinkReceiver::RecordRunning*) r);
   _fileReader.setDirectory(std::string("dat/Relay")+argv[1]);
   _fileReader.openRun(runNumber,linkNumber);
-
   
+  uint64_t maxShowEvent = 2;
   uint64_t nEvents = 0;    
   //Keep a record of status of last 100 events
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
@@ -119,6 +153,11 @@ int main(int argc, char** argv){
   uint64_t nofEoEE = 0;
   uint64_t nofL1aE = 0;
 
+  const int maxEvents = 10;
+  BCEventData elinkData[maxEvents];
+  BCEventData unpackerData[maxEvents];
+
+  int ievent = 0;
   //Use the fileReader to read the records
   while(_fileReader.read(r)) {
     //Check the state of the record and print the record accordingly
@@ -156,6 +195,9 @@ int main(int argc, char** argv){
 
       //Increment event counter and reset error state
       nEvents++;
+      if(nEvents==1) continue;
+      if(ievent>(maxEvents-1)) continue;
+      cout<<"iEvent: " << ievent << endl;
       
       if(boe->boeHeader()!=boe->BoePattern) { nofBoEE++; continue;}
       if(eoe->eoeHeader()!=eoe->EoePattern) { nofEoEE++; continue;}
@@ -164,7 +206,7 @@ int main(int argc, char** argv){
      
       const uint64_t *p64(((const uint64_t*)rEvent)+1);
       
-      if(nEvents<=2){
+      if(nEvents<=maxShowEvent){
 	cout<<"========= event : "<< nEvents << "=================="<< endl;
 	cout<< std::hex   ;
 	cout<<"0th : 0x"<< std::setfill('0') << setw(16) << p64[0] << endl;
@@ -183,7 +225,7 @@ int main(int argc, char** argv){
 	int chid = (p64[loc[iloc]] >> 8) & 0xFF ;
 	int bufstat = (p64[loc[iloc]] >> 16) & 0xF ;
 	int nofwd_perbx = (p64[loc[iloc]] >> 20) & 0xF ;
-	if(nEvents<=2)
+	if(nEvents<=maxShowEvent)
 	  cout<<"iloc: "<< iloc
 	      << std::hex
 	      <<", word : 0x" << std::setfill('0') << setw(16) << p64[loc[iloc]]
@@ -194,74 +236,102 @@ int main(int argc, char** argv){
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
       int iblock = 1;
-      int elBgnOffset = 3;
+      int elBgnOffset = 0;
       int elIndx = 0;
-      uint32_t elpckt0[7];
+      uint32_t elpckt[7][7]; //the first 7 is for bx and second one for number of elinks
       uint32_t bx = 0xF;
       uint32_t refBx ;
       int iel = 0;
+      int ibx = 0;
       for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	uint32_t wMSB = (p64[iw] >> 32) & 0xFFFFFFFF ;
 	uint32_t wLSB = p64[iw] & 0xFFFFFFFF ;
-	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%7==0) bx = (wLSB>>28) & 0xF ;
-	if(elIndx>=elBgnOffset and elIndx<elBgnOffset+7){
-	  elpckt0[iel] = wLSB;
+	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%4==2) {
+	  //bx = (wMSB>>28) & 0xF ;
+	  bx = (wLSB>>28) & 0xF ; //with (elIndx-elBgnOffset)%4==1 for STC4A and STC16
+	  elinkData[ievent].bxid_econt0[ibx] = bx;
+	}
+	if((elIndx-elBgnOffset)%4==0) iel = 0;
+	if(elIndx>=elBgnOffset){
+	  elpckt[ibx][iel] = wMSB;
+	  if(iel<=6) elpckt[ibx][iel+1] = wLSB;
 	  if(iel==0) refBx = bx;
-	  iel++;
+	  iel += 2;
 	}//pick the first elink
-	if(nEvents<=2)
-	  cout<<"iloc: "<< iw << ", bx: " << bx
+	if(nEvents<=maxShowEvent)
+	  cout<<"iloc: "<< iw << ", bx: " << bx << ", ibx: " << ibx
 	      << std::hex
-	      <<", word : 0x" << std::setfill('0') << setw(8) << wLSB
+	      <<", MSB-word : 0x" << std::setfill('0') << setw(8) << wMSB
+	      <<", LSB-word : 0x" << std::setfill('0') << setw(8) << wLSB
 	      << std::dec << std::setfill(' ')
 	      <<endl;
-
 	elIndx++;
+	if((elIndx-elBgnOffset)%4==0) ibx++;
       }
       /////////////////////////////////////////////////////////////////
-
+      
       ////// Print the energy/location and stage1 input also check back elink//////
-      if(nEvents<=2)
-	for(int iel=0;iel<7;iel++)
-	  cout<<"elIndx: "<< iel
-	      << std::hex
-	      <<", word : 0x" << std::setfill('0') << setw(8) << elpckt0[iel]
-	      << std::dec << std::setfill(' ')
-	      <<endl;
-      TPGFEDataformat::TcRawDataPacket vTcrdp;
-      TPGBEDataformat::UnpackerOutputStreamPair up;
-      if(nEvents<=2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
-      if(nEvents<=2) {
-	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(refBx, vTcrdp, up); 
-	up.print();
-      }
-      uint32_t elpckt0_test[3];
-      if(nEvents<=2) TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(refBx, vTcrdp, elpckt0_test); 
-      if(nEvents<=2)
-	for(int iel=0;iel<3;iel++)
-	  cout<<"iel: "<< iel
-	      << std::hex
-	      <<", word : 0x" << std::setfill('0') << setw(8) << elpckt0_test[iel]
-	      << std::dec << std::setfill(' ')
-	      <<endl;
-      /////////////////////////////////////////////////////////////////
+      if(nEvents<=maxShowEvent)
+	for(int ib=0;ib<7;ib++)
+	  for(int iel=0;iel<7;iel++)
+	    cout<<"ibx: "<< ib <<", elIndx: "<< iel
+		<< std::hex
+		<<", word : 0x" << std::setfill('0') << setw(8) << elpckt[ib][iel]
+		<< std::dec << std::setfill(' ')
+		<<endl;
+      
+      for(int ib=0;ib<7;ib++){
+	TPGFEDataformat::TcRawDataPacket vTcrdp;
+	TPGBEDataformat::UnpackerOutputStreamPair up;
+	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt[ib], vTcrdp);
+	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, 6, &elpckt[ib][3], vTcrdp);
+	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, 3, &elpckt[ib][5], vTcrdp);
+	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ievent].bxid_econt0[ib], vTcrdp, up);
+	elinkData[ievent].econt0_bc6_modsum[ib] = uint32_t(up.moduleSum(0));
+	elinkData[ievent].bxid_econt0[ib] = uint32_t(up.bx(0));
+	//for(int itc=0;itc<6;itc++){ //for BC and STC4A
+	for(int itc=0;itc<3;itc++){
+	  elinkData[ievent].econt0_bc6_energy[ib][itc] = uint32_t(up.channelEnergy(0,itc));
+	  elinkData[ievent].econt0_bc6_channel[ib][itc] = uint32_t(up.channelNumber(0,itc));
+	}//itc
+	if(nEvents<=maxShowEvent) up.print();
+      }//ib
+      if(nEvents<=maxShowEvent) elinkData[ievent].print("elinks");
+      
+      // if(nEvents<=maxShowEvent) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
+      // if(nEvents<=maxShowEvent) {
+      // 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(refBx, vTcrdp, up); 
+      // 	up.print();
+      // }
+      // uint32_t elpckt0_test[3];
+      // if(nEvents<=maxShowEvent) TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(refBx, vTcrdp, elpckt0_test); 
+      // if(nEvents<=maxShowEvent)
+      // 	for(int iel=0;iel<3;iel++)
+      // 	  cout<<"iel: "<< iel
+      // 	      << std::hex
+      // 	      <<", word : 0x" << std::setfill('0') << setw(8) << elpckt0_test[iel]
+      // 	      << std::dec << std::setfill(' ')
+      // 	      <<endl;
+      // /////////////////////////////////////////////////////////////////
       
       //////////// Print unpacker output for ch 1 /////////////////////
       iblock = 3;
-      int unpkBgnOffset = 4;
+      int unpkBgnOffset = 0;
       int unpkIndx = 0;
-      uint32_t unpackedWord[7];
+      uint32_t unpackedWord[7][7];
       uint32_t iunpkw = 0;
+      ibx = 0;
       for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
 	uint32_t col3 = p64[iw] & 0xFFFF ;
-	if(unpkIndx>=unpkBgnOffset and unpkIndx<unpkBgnOffset+7){
-	  unpackedWord[iunpkw] = col1;
+	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
+	if(unpkIndx>=unpkBgnOffset){
+	  unpackedWord[ibx][iunpkw] = col1;
 	  iunpkw++;
 	}
-	if(nEvents<=2)
+	if(nEvents<=maxShowEvent)
 	  cout<<"iloc: "<< iw
 	      << std::hex
 	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
@@ -272,36 +342,58 @@ int main(int argc, char** argv){
 	      <<endl;
 	
 	unpkIndx++;
+	if((unpkIndx-unpkBgnOffset)%8==0) ibx++;
       }
       uint32_t modsum = 0xFF;
       uint32_t unpkBx = 0xF;
       uint32_t isValid = 0;
       uint32_t energy, channel;
-      for(int iupw=0;iupw<7;iupw++){
-	isValid = (unpackedWord[iupw] >> 15) & 0x1;
-	if(iupw==0){
-	  modsum = (unpackedWord[iupw] >> 6) & 0xFF ;
-	  unpkBx = unpackedWord[iupw] & 0xF ;
-	}else{
-	  energy = (unpackedWord[iupw] >> 6) & 0x1FF ;
-	  channel = unpackedWord[iupw]  & 0x3F ;
-	}
-      if(nEvents<=2)
-	if(iupw==0)
-	  cout<<"iupw: "<< iupw
-	      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[iupw] << std::dec << std::setfill(' ')
-	      <<", bx: " << unpkBx <<", modsum: "<<modsum << endl;
-	else
-	  cout<<"iupw: "<< iupw
-	      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[iupw] << std::dec << std::setfill(' ')
-	      <<", energy: " << energy <<", channel: "<<channel << endl;
-      }
+      for(int ib=0;ib<7;ib++){
+	//for(int iupw=0;iupw<7;iupw++){ //BC6 and STC4A
+	for(int iupw=0;iupw<4;iupw++){ //STC16
+	  isValid = (unpackedWord[ib][iupw] >> 15) & 0x1;
+	  if(iupw==0){
+	    modsum = (unpackedWord[ib][iupw] >> 6) & 0xFF ;
+	    unpkBx = unpackedWord[ib][iupw] & 0xF ;
+	    unpackerData[ievent].bxid_econt0[ib] = unpkBx;
+	    unpackerData[ievent].econt0_bc6_modsum[ib] = modsum;
+	  }else{
+	    energy = (unpackedWord[ib][iupw] >> 6) & 0x1FF ;
+	    channel = unpackedWord[ib][iupw]  & 0x3F ;
+	    unpackerData[ievent].econt0_bc6_energy[ib][iupw-1] = energy;
+	    unpackerData[ievent].econt0_bc6_channel[ib][iupw-1] = channel;
+	  }
+	  if(nEvents<=maxShowEvent)
+	    if(iupw==0)
+	      cout<<"iupw: "<< iupw
+		  <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ib][iupw] << std::dec << std::setfill(' ')
+		  <<", bx: " << unpkBx <<", modsum: "<<modsum << endl;
+	    else
+	      cout<<"iupw: "<< iupw
+		  <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ib][iupw] << std::dec << std::setfill(' ')
+		  <<", energy: " << energy <<", channel: "<<channel << endl;
+	}//itc
+      }//ib
+      if(nEvents<=maxShowEvent) unpackerData[ievent].print("unpacked");
       /////////////////////////////////////////////////////////////////
       
-      if(nEvents<=2) cout<<"========= End of event : "<< nEvents << "============="<< endl;
+      if(nEvents<=maxShowEvent) cout<<"========= End of event : "<< nEvents << "============="<< endl;
+      ievent++;
     }//loop event  
+  }//while read r
+
+  for(int iev=0 ; iev < maxEvents ; iev++){
+    cout<<"========= Compare event "<< iev << " elinks ============="<< endl;
+    elinkData[iev].print(Form("Elinks: event: %d",iev));
+    cout<<"========= Compare event "<< iev << " elinks ============="<< endl;
   }
   
+  for(int iev=0 ; iev < maxEvents ; iev++){
+    cout<<"========= Compare event "<< iev << " unpacker ============="<< endl;
+    unpackerData[iev].print(Form("Unpacker: event: %d",iev));
+    cout<<"========= Compare event "<< iev << " unpacker ============="<< endl;
+  }
+
   delete r;
   
   return 0;
