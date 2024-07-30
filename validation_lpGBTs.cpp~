@@ -236,7 +236,7 @@ int main(int argc, char** argv){
       /////////////////////////////////////////////////////////////////
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
-      int iblock = 2;
+      int iblock = 1;
       int elBgnOffset = 0;
       int elIndx = 0;
       uint32_t elpckt[7][7]; //the first 7 is for bx and second one for number of elinks
@@ -316,7 +316,7 @@ int main(int argc, char** argv){
       // /////////////////////////////////////////////////////////////////
       
       //////////// Print unpacker output for ch 1 /////////////////////
-      iblock = 4;
+      iblock = 3;
       int unpkBgnOffset = 0;
       int unpkIndx = 0;
       uint32_t unpackedWord[7][7];
