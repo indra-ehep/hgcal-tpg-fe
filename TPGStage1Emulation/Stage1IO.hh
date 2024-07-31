@@ -32,7 +32,7 @@ public:
     bool doPrint(false);
 
     if(doPrint) {      
-      for(unsigned i(0);i<7;i++) {
+      for(unsigned i(0);i<2;i++) {
 	std::cout << "Elink " << i << " = "
 		  << std::hex << std::setw(8) << v[i]
 		  << std::dec << std::endl;
@@ -299,7 +299,9 @@ public:
 
 	  unsigned tc(0);
 	  if(vTc[nUos].second[0].isModuleSum()) {
-	    _vUos[lp][up].setModuleSum(bx,vTc[nUos].second[0].moduleSum());
+	    unsigned modsum = vTc[nUos].second[0].moduleSum();
+	    if(vTc[nUos].second[0].type()==TPGFEDataformat::TcRawData::STC16) modsum = 1;
+	    _vUos[lp][up].setModuleSum(bx,modsum);
 	    //if(doubleUos) _vUos[lp][up][1].setModuleSum(bx,vTc[nUos][0].moduleSum());
 	    tc++;
 	    

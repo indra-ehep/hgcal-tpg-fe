@@ -98,7 +98,7 @@ public:
       
       //for(unsigned i(0);i<3;i++) {//STC16
       for(unsigned i(0);i<6;i++) {
-	std::cout << type << "  TC " << i 
+	std::cout << type << "  STC4A " << i 
 		  << " channel, energy packed = "
 		  << std::setw(5) << econt0_bc6_energy[ib][i]
 	          << ", number = " << std::setw(2) << econt0_bc6_channel[ib][i]
@@ -196,7 +196,7 @@ int main(int argc, char** argv){
 
       //Increment event counter and reset error state
       nEvents++;
-      if(nEvents==1) continue;
+      //if(nEvents==1) continue;
       if(ievent>(maxEvents-1)) continue;
       cout<<"iEvent: " << ievent << endl;
       
@@ -236,7 +236,7 @@ int main(int argc, char** argv){
       /////////////////////////////////////////////////////////////////
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
-      int iblock = 2;
+      int iblock = 1;
       int elBgnOffset = 0;
       int elIndx = 0;
       uint32_t elpckt[7][7]; //the first 7 is for bx and second one for number of elinks
@@ -247,9 +247,9 @@ int main(int argc, char** argv){
       for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	uint32_t wMSB = (p64[iw] >> 32) & 0xFFFFFFFF ;
 	uint32_t wLSB = p64[iw] & 0xFFFFFFFF ;
-	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%4==0) {
-	  bx = (wMSB>>28) & 0xF ;
-	  //bx = (wLSB>>28) & 0xF ; //with (elIndx-elBgnOffset)%4==1,2 for STC4A and STC16
+	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%4==1) {
+	  //bx = (wMSB>>28) & 0xF ;
+	  bx = (wLSB>>28) & 0xF ; //with (elIndx-elBgnOffset)%4==1,2 for STC4A and STC16
 	  elinkData[ievent].bxid_econt0[ibx] = bx;
 	}
 	if((elIndx-elBgnOffset)%4==0) iel = 0;
@@ -284,8 +284,8 @@ int main(int argc, char** argv){
       for(int ib=0;ib<7;ib++){
 	TPGFEDataformat::TcRawDataPacket vTcrdp;
 	TPGBEDataformat::UnpackerOutputStreamPair up;
-	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt[ib], vTcrdp);
-	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, 6, &elpckt[ib][3], vTcrdp);
+	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt[ib], vTcrdp);
+	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, 6, &elpckt[ib][3], vTcrdp);
 	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, 3, &elpckt[ib][5], vTcrdp);
 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ievent].bxid_econt0[ib], vTcrdp, up);
 	elinkData[ievent].econt0_bc6_modsum[ib] = uint32_t(up.moduleSum(0));
@@ -316,7 +316,7 @@ int main(int argc, char** argv){
       // /////////////////////////////////////////////////////////////////
       
       //////////// Print unpacker output for ch 1 /////////////////////
-      iblock = 4;
+      iblock = 3;
       int unpkBgnOffset = 0;
       int unpkIndx = 0;
       uint32_t unpackedWord[7][7];
@@ -329,8 +329,8 @@ int main(int argc, char** argv){
 	uint32_t col3 = p64[iw] & 0xFFFF ;
 	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	if(unpkIndx>=unpkBgnOffset){
-	  unpackedWord[ibx][iunpkw] = col3; //BC6
-	  // unpackedWord[ibx][iunpkw] = col2; //STC4A
+	  //unpackedWord[ibx][iunpkw] = col3; //BC6
+	   unpackedWord[ibx][iunpkw] = col2; //STC4A
 	  // unpackedWord[ibx][iunpkw] = col1; //STC16
 	  iunpkw++;
 	}

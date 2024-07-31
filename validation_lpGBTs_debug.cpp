@@ -106,6 +106,50 @@ int find_cafe_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int n, int
   }
 }
 
+bool is_ref_word(const uint64_t word, const uint64_t refword) {
+  if((word & 0xFFFFFFFFFFFFF000) == refword)
+    return true; 
+  else
+    return false;
+}
+   
+
+// returns location in this event of the n'th reference... line
+int find_ref_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, const uint64_t refword, int n, int ref_word_loc = -1) {
+  
+  const uint64_t *p64(((const uint64_t*)rEvent)+1);
+  
+  if (ref_word_loc > 0) {
+    if (is_ref_word(p64[ref_word_loc],refword)) {
+      return ref_word_loc;
+    }else
+      return ref_word_loc;
+  } 
+  else {
+    ;;//std::cout << "oops" << std::endl;
+  }
+  
+  int ref_counter = 0;
+  int ref_word_idx = -1;
+  for(unsigned i(0);i<rEvent->payloadLength();i++){
+    const uint64_t word = p64[i];            
+    if (is_ref_word(word,refword)) { 
+      ref_counter++;       
+      if (ref_counter == n){                                                                                    
+        ref_word_idx = i;
+        break;
+      }
+    }
+  }
+  
+  if (ref_word_idx == -1) {
+    //std::cerr << "Could not find cafe word" << std::endl;
+    return 0;
+  }else {
+    return ref_word_idx;
+  }
+}
+
 
 class BCEventData {
 public:
@@ -194,6 +238,7 @@ int main(int argc, char** argv){
   uint64_t nofEventIdErrs = 0;
   uint64_t nofExcessFECAFEErrors = 0;  
   uint64_t nofFirstFECAFEErrors = 0;
+  uint64_t nofBlockSizeErrors = 0;
   
   uint64_t total_phys_events = 0;
   uint64_t total_coinc_events = 0;
@@ -300,10 +345,25 @@ int main(int argc, char** argv){
 	nofFirstFECAFEErrors++ ;
 	continue;
       }
-      
-      if(eventId==1002670) Event_Dump(eventId, rEvent);
-      
+
       const uint64_t *p64(((const uint64_t*)rEvent)+1);
+      
+      //if(eventId==1){
+	const uint64_t refword = 0x12345678dead1000;
+	int first_ref_word_loc = find_ref_word(rEvent,refword,1);
+	if(first_ref_word_loc>0)
+	  std::cout << "Event : "<< eventId << ", l1aType : " << l1atype << ", first_ref_word_loc: " << first_ref_word_loc
+		    << std::hex
+		    <<", refword : 0x" << std::setfill('0')
+		    << setw(16) << refword 
+		    <<", p64 : 0x" << (p64[3] & 0xFFFFFFFFFFFFF000)
+		    << std::dec << std::setfill(' ')
+		    << std::endl;
+	//}
+      
+      if(eventId==4294866) Event_Dump(eventId, rEvent);
+      
+      
       
       if(nEvents<=maxShowEvent){
 	cout<<"========= event : "<< nEvents << "=================="<< endl;
@@ -331,6 +391,26 @@ int main(int argc, char** argv){
 	      << std::dec << std::setfill(' ')
 	      << ", location : " << loc[iloc] << ", size: " << size[iloc] <<", ch_id : "<< chid << ", bufstat: " << bufstat << ", nofwd_perbx: "<< nofwd_perbx << endl;
       }
+
+      bool isExpectedBlockSize = true;
+      for(int iloc = 0 ; iloc < 6 ; iloc++) {
+	bool checksize = false;
+	if(iloc==5){
+	  int totsize = loc[iloc] + size[iloc] + 1 + 2 ;
+	  checksize = (totsize==242);
+	}else{
+	  int totsize = loc[iloc] + size[iloc] + 1;
+	  checksize = (totsize==loc[iloc+1]);
+	}
+	if(!checksize) isExpectedBlockSize = false;
+      }
+      if(!isExpectedBlockSize){
+	std::cerr << "Event : "<< eventId << ", l1aType : " << l1atype << " has block size and location mismatch."<< std::endl;
+	//Event_Dump(eventId, rEvent);
+	nofBlockSizeErrors++ ;
+	continue;
+      }
+
       /////////////////////////////////////////////////////////////////
 
       //if(nEvents==1) continue;
