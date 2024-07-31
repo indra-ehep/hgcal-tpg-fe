@@ -184,7 +184,7 @@ int main(int argc, char** argv){
   uint16_t bxId = 0;
   uint16_t l1atype = 0;
   
-  uint64_t maxShowEvent = 0;
+  uint64_t maxShowEvent = 3;
   uint64_t nEvents = 0;    
   
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
@@ -301,7 +301,13 @@ int main(int argc, char** argv){
       if(l1atype==0x0010)
       	total_regular_events++;
       if(nEvents<=maxShowEvent) cout << "L1aType : " << l1atype << ", bxId: " << bxId << endl;
-      if(l1atype==0) { nofL1aE++; continue;}      
+      if(l1atype==0) {
+	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << ", l1aType : " << l1atype << std::endl;
+	Event_Dump(eventId, rEvent);
+	nofL1aE++;
+	//continue;
+      }
+      
 
       if((Abs64(eventId,prevEvent) != Abs32(sequenceId, prevSequence)) and Abs64(eventId,prevEvent)>=2){
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << ", l1aType : " << l1atype << ", and prevEvent  "<< prevEvent << ", nEvents : " << nEvents << " differs by "<< Abs64(eventId,prevEvent) <<" (sequence differs by [ "<< sequenceId << " - "<< prevSequence << " ] = " << Abs32(sequenceId, prevSequence) << "), EventID_Diff is more than 2 " << std::endl;
@@ -368,8 +374,8 @@ int main(int argc, char** argv){
       for(int iloc = 0 ; iloc < 6 ; iloc++) {
 	bool checksize = false;
 	if(iloc==5){
-	  int totsize = loc[iloc] + size[iloc] + 1 + 2 ;
-	  checksize = (totsize==242);
+	  int totsize = loc[iloc] + size[iloc] + 1 + 3 ;
+	  checksize = (totsize==rEvent->payloadLength());
 	}else{
 	  int totsize = loc[iloc] + size[iloc] + 1;
 	  checksize = (totsize==loc[iloc+1]);

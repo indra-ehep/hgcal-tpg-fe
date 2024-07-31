@@ -743,7 +743,7 @@ int main(int argc, char** argv){
 
 
 
-  TFile *fout = new TFile("out.root","recreate");
+  TFile *fout = new TFile(Form("out_%u.root",runNumber),"recreate");
   bx_IdmodvsBC->Write();
   bx_IdmodvsSTC4A->Write();
   bx_IdmodvsSTC16->Write();
