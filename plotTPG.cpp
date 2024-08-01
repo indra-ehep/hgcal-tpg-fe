@@ -188,6 +188,8 @@ int main(int argc, char** argv){
   
   uint64_t maxShowEvent = 0;
   uint64_t nEvents = 0;    
+  //uint64_t maxCAFESep = 6;
+  const int maxCAFESeps = 7;
   
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
   uint64_t nofBoEE = 0;
@@ -326,13 +328,13 @@ int main(int argc, char** argv){
       prevEvent = eventId;
       prevSequence = sequenceId;
       
-      int seventh_cafe_word_loc = find_cafe_word(rEvent, 7);
-      if(seventh_cafe_word_loc!=0){
-	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: " << eventId << " seventh CAFE separator" << std::endl;
+      int extra_cafe_word_loc = find_cafe_word(rEvent,(maxCAFESeps+1));
+      if(extra_cafe_word_loc!=0){
+	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: " << eventId << " excess CAFE separator of " <<(maxCAFESeps+1)<< std::endl;
 	nofExcessFECAFEErrors++ ;
 	continue;
       }
-      
+
       int first_cafe_word_loc = find_cafe_word(rEvent,1);
       if( first_cafe_word_loc != 2){
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: " << eventId << ", first_cafe_word_loc  "<< first_cafe_word_loc << std::endl;
@@ -353,10 +355,10 @@ int main(int argc, char** argv){
       }
       
       ////////////// First find the block details from header //////////
-      int loc[6], size[6];
-      for(int iloc = 0 ; iloc < 6 ; iloc++) {loc[iloc] = size[iloc] = -1;}
+      int loc[maxCAFESeps], size[maxCAFESeps];
+      for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {loc[iloc] = size[iloc] = -1;}
       cout<< std::dec << std::setfill(' ');
-      for(int iloc = 0 ; iloc < 6 ; iloc++){
+      for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++){
 	loc[iloc] = find_cafe_word(rEvent, iloc+1);
 	size[iloc] = p64[loc[iloc]] & 0xFF ;
 	int chid = (p64[loc[iloc]] >> 8) & 0xFF ;
@@ -372,26 +374,39 @@ int main(int argc, char** argv){
       /////////////////////////////////////////////////////////////////
       
       bool isExpectedBlockSize = true;
-      for(int iloc = 0 ; iloc < 6 ; iloc++) {
+      for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {
 	bool checksize = false;
-	if(iloc==5){
-	  int totsize = loc[iloc] + size[iloc] + 1 + 2 ;
-	  checksize = (totsize==242);
+	if(iloc==(maxCAFESeps-1)){
+	  int totsize = loc[iloc] + size[iloc] + 3 ;
+	  checksize = (totsize==rEvent->payloadLength());
+	  if(!checksize){
+	    std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << " has mismatch in last cafe position : " << iloc << ", size from block " << totsize << ", payload size " << rEvent->payloadLength() << std::endl;
+	    // rEvent->RecordHeader::print();
+	    // boe->print();
+	    // eoe->print();
+	    // Event_Dump(eventId, rEvent);
+	    continue;
+	  }
 	}else{
 	  int totsize = loc[iloc] + size[iloc] + 1;
 	  checksize = (totsize==loc[iloc+1]);
+	  if(!checksize){
+	    std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << " has mismatch in cafe position : " << iloc << std::endl;
+	    //Event_Dump(eventId, rEvent);
+	    continue;
+	  }
 	}
 	if(!checksize) isExpectedBlockSize = false;
       }
       if(!isExpectedBlockSize){
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << " has block size and location mismatch."<< std::endl;
-	Event_Dump(eventId, rEvent);
+	//Event_Dump(eventId, rEvent);
 	nofBlockSizeErrors++ ;
 	continue;
       }
       
       //if(nEvents==1) continue;
-      if(ievent>(maxEvents-1)) continue;
+      //if(ievent>(maxEvents-1)) continue;
       if(nEvents<=maxShowEvent) cout<<"iEvent: " << ievent << endl;
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
@@ -478,10 +493,12 @@ int main(int argc, char** argv){
 	bx_BCvsSTC4A->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][1].econt_bxid[ib]));
 	bx_BCvsSTC16->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
 	bx_STC4AvsSTC16->Fill(float(elinkData[0][1].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
-	uint32_t bxmodulo = (bxId==3564) ? 0xF : (bxId%8) ;
-	bx_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[0][0].econt_bxid[ib]));
-	bx_IdmodvsSTC4A->Fill(float(bxmodulo), float(elinkData[0][1].econt_bxid[ib]));
-	bx_IdmodvsSTC16->Fill(float(bxmodulo), float(elinkData[0][2].econt_bxid[ib]));
+	if(ib==3){
+	  uint32_t bxmodulo = (bxId==3564) ? 0xF : (bxId%8) ;
+	  bx_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[0][0].econt_bxid[ib]));
+	  bx_IdmodvsSTC4A->Fill(float(bxmodulo), float(elinkData[0][1].econt_bxid[ib]));
+	  bx_IdmodvsSTC16->Fill(float(bxmodulo), float(elinkData[0][2].econt_bxid[ib]));
+	}
       }
       
       // /////////////////////////////////////////////////////////////////

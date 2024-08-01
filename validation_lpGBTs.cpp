@@ -185,6 +185,8 @@ int main(int argc, char** argv){
   uint16_t l1atype = 0;
   
   uint64_t maxShowEvent = 3;
+  //uint64_t maxCAFESep = 6;
+  const int maxCAFESeps = 7;
   uint64_t nEvents = 0;    
   
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
@@ -303,15 +305,15 @@ int main(int argc, char** argv){
       if(nEvents<=maxShowEvent) cout << "L1aType : " << l1atype << ", bxId: " << bxId << endl;
       if(l1atype==0) {
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << ", l1aType : " << l1atype << std::endl;
-	Event_Dump(eventId, rEvent);
+	//Event_Dump(eventId, rEvent);
 	nofL1aE++;
-	//continue;
+	continue;
       }
       
 
       if((Abs64(eventId,prevEvent) != Abs32(sequenceId, prevSequence)) and Abs64(eventId,prevEvent)>=2){
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << ", l1aType : " << l1atype << ", and prevEvent  "<< prevEvent << ", nEvents : " << nEvents << " differs by "<< Abs64(eventId,prevEvent) <<" (sequence differs by [ "<< sequenceId << " - "<< prevSequence << " ] = " << Abs32(sequenceId, prevSequence) << "), EventID_Diff is more than 2 " << std::endl;
-	event_dump(rEvent);
+	//Event_Dump(eventId, rEvent);
 	rEvent->RecordHeader::print();
 	boe->print();
 	eoe->print();
@@ -324,10 +326,10 @@ int main(int argc, char** argv){
       
       prevEvent = eventId;
       prevSequence = sequenceId;
-      
-      int seventh_cafe_word_loc = find_cafe_word(rEvent, 7);
-      if(seventh_cafe_word_loc!=0){
-	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: " << eventId << " seventh CAFE separator" << std::endl;
+
+      int extra_cafe_word_loc = find_cafe_word(rEvent,(maxCAFESeps+1));
+      if(extra_cafe_word_loc!=0){
+	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: " << eventId << " excess CAFE separator of " <<(maxCAFESeps+1)<< std::endl;
 	nofExcessFECAFEErrors++ ;
 	continue;
       }
@@ -352,10 +354,10 @@ int main(int argc, char** argv){
       }
       
       ////////////// First find the block details from header //////////
-      int loc[6], size[6];
-      for(int iloc = 0 ; iloc < 6 ; iloc++) {loc[iloc] = size[iloc] = -1;}
+      int loc[maxCAFESeps], size[maxCAFESeps];
+      for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {loc[iloc] = size[iloc] = -1;}
       cout<< std::dec << std::setfill(' ');
-      for(int iloc = 0 ; iloc < 6 ; iloc++){
+      for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++){
 	loc[iloc] = find_cafe_word(rEvent, iloc+1);
 	size[iloc] = p64[loc[iloc]] & 0xFF ;
 	int chid = (p64[loc[iloc]] >> 8) & 0xFF ;
@@ -371,24 +373,37 @@ int main(int argc, char** argv){
       /////////////////////////////////////////////////////////////////
       
       bool isExpectedBlockSize = true;
-      for(int iloc = 0 ; iloc < 6 ; iloc++) {
+      for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {
 	bool checksize = false;
-	if(iloc==5){
-	  int totsize = loc[iloc] + size[iloc] + 1 + 3 ;
+	if(iloc==(maxCAFESeps-1)){
+	  int totsize = loc[iloc] + size[iloc] + 3 ;
 	  checksize = (totsize==rEvent->payloadLength());
+	  if(!checksize){
+	    std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << " has mismatch in last cafe position : " << iloc << ", size from block " << totsize << ", payload size " << rEvent->payloadLength() << std::endl;
+	    // rEvent->RecordHeader::print();
+	    // boe->print();
+	    // eoe->print();
+	    // Event_Dump(eventId, rEvent);
+	    continue;
+	  }
 	}else{
 	  int totsize = loc[iloc] + size[iloc] + 1;
 	  checksize = (totsize==loc[iloc+1]);
+	  if(!checksize){
+	    std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << " has mismatch in cafe position : " << iloc << std::endl;
+	    //Event_Dump(eventId, rEvent);
+	    continue;
+	  }
 	}
 	if(!checksize) isExpectedBlockSize = false;
       }
       if(!isExpectedBlockSize){
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << " has block size and location mismatch."<< std::endl;
-	Event_Dump(eventId, rEvent);
+	//Event_Dump(eventId, rEvent);
 	nofBlockSizeErrors++ ;
 	continue;
       }
-      
+
       //if(nEvents==1) continue;
       //if(ievent>(maxEvents-1)) continue;
       if(nEvents<=maxShowEvent) cout<<"iEvent: " << ievent << endl;
