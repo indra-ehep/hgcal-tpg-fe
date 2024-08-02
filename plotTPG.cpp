@@ -1,4 +1,5 @@
 #include <iostream>
+#include "TH1.h"
 #include "TH2.h"
 
 #include "TFile.h"
@@ -237,13 +238,28 @@ int main(int argc, char** argv){
       nofCBxErrors[ilp][iecon] = 0 ;
     }
   }
-  TH2F *bx_BCvsSTC4A = new TH2F("bx_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
-  TH2F *bx_BCvsSTC16 = new TH2F("bx_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
-  TH2F *bx_STC4AvsSTC16 = new TH2F("bx_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
-  TH2F *bx_IdmodvsBC = new TH2F("bx_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
-  TH2F *bx_IdmodvsSTC4A = new TH2F("bx_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
-  TH2F *bx_IdmodvsSTC16 = new TH2F("bx_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
-  
+  TH2F *bx_lp0_BCvsSTC4A = new TH2F("bx_lp0_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
+  TH2F *bx_lp0_BCvsSTC16 = new TH2F("bx_lp0_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
+  TH2F *bx_lp0_STC4AvsSTC16 = new TH2F("bx_lp0_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
+  TH2F *bx_lp0_IdmodvsBC = new TH2F("bx_lp0_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
+  TH2F *bx_lp0_IdmodvsSTC4A = new TH2F("bx_lp0_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
+  TH2F *bx_lp0_IdmodvsSTC16 = new TH2F("bx_lp0_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
+
+  TH2F *bx_lp1_BCvsSTC4A = new TH2F("bx_lp1_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
+  TH2F *bx_lp1_BCvsSTC16 = new TH2F("bx_lp1_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
+  TH2F *bx_lp1_STC4AvsSTC16 = new TH2F("bx_lp1_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
+  TH2F *bx_lp1_IdmodvsBC = new TH2F("bx_lp1_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
+  TH2F *bx_lp1_IdmodvsSTC4A = new TH2F("bx_lp1_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
+  TH2F *bx_lp1_IdmodvsSTC16 = new TH2F("bx_lp1_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
+
+  TH1F *en_unpacked_lp0BC6 = new TH1F("en_unpacked_lp0BC6","en_unpacked_lp0BC6",1000,0,1000);
+  TH1F *en_unpacked_lp0STC4 = new TH1F("en_unpacked_lp0STC4","en_unpacked_lp0STC4",1000,0,1000);
+  TH1F *en_unpacked_lp0STC16 = new TH1F("en_unpacked_lp0STC16","en_unpacked_lp0STC16",1000,0,1000);
+
+  TH1F *en_unpacked_lp1BC6 = new TH1F("en_unpacked_lp1BC6","en_unpacked_lp1BC6",1000,0,1000);
+  TH1F *en_unpacked_lp1STC4 = new TH1F("en_unpacked_lp1STC4","en_unpacked_lp1STC4",1000,0,1000);
+  TH1F *en_unpacked_lp1STC16 = new TH1F("en_unpacked_lp1STC16","en_unpacked_lp1STC16",1000,0,1000);
+
   int ievent = 0;
   //Use the fileReader to read the records
   while(_fileReader.read(r)) {
@@ -449,7 +465,7 @@ int main(int argc, char** argv){
 	if((elIndx-elBgnOffset)%4==0) ibx++;
       }
       /////////////////////////////////////////////////////////////////
-
+      
       //////////// Read raw elink inputs for ch 2 /////////////////////
       iblock = 2;
       elBgnOffset = 0;
@@ -490,14 +506,24 @@ int main(int argc, char** argv){
       }
       
       for(int ib = 0; ib < 7 ;ib++){
-	bx_BCvsSTC4A->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][1].econt_bxid[ib]));
-	bx_BCvsSTC16->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
-	bx_STC4AvsSTC16->Fill(float(elinkData[0][1].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
+	bx_lp0_BCvsSTC4A->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][1].econt_bxid[ib]));
+	bx_lp0_BCvsSTC16->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
+	bx_lp0_STC4AvsSTC16->Fill(float(elinkData[0][1].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
+
+	bx_lp1_BCvsSTC4A->Fill(float(elinkData[1][0].econt_bxid[ib]), float(elinkData[1][1].econt_bxid[ib]));
+	bx_lp1_BCvsSTC16->Fill(float(elinkData[1][0].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
+	bx_lp1_STC4AvsSTC16->Fill(float(elinkData[1][1].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
+
 	if(ib==3){
 	  uint32_t bxmodulo = (bxId==3564) ? 0xF : (bxId%8) ;
-	  bx_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[0][0].econt_bxid[ib]));
-	  bx_IdmodvsSTC4A->Fill(float(bxmodulo), float(elinkData[0][1].econt_bxid[ib]));
-	  bx_IdmodvsSTC16->Fill(float(bxmodulo), float(elinkData[0][2].econt_bxid[ib]));
+	  bx_lp0_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[0][0].econt_bxid[ib]));
+	  bx_lp0_IdmodvsSTC4A->Fill(float(bxmodulo), float(elinkData[0][1].econt_bxid[ib]));
+	  bx_lp0_IdmodvsSTC16->Fill(float(bxmodulo), float(elinkData[0][2].econt_bxid[ib]));
+
+	  bx_lp1_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[1][0].econt_bxid[ib]));
+	  bx_lp1_IdmodvsSTC4A->Fill(float(bxmodulo), float(elinkData[1][1].econt_bxid[ib]));
+	  bx_lp1_IdmodvsSTC16->Fill(float(bxmodulo), float(elinkData[1][2].econt_bxid[ib]));
+
 	}
       }
       
@@ -584,72 +610,72 @@ int main(int argc, char** argv){
       // // 	      <<endl;
       // // /////////////////////////////////////////////////////////////////
       
-      // //////////// Print unpacker output for ch 1 /////////////////////
-      // iblock = 3;
-      // int unpkBgnOffset = 0;
-      // int unpkIndx = 0;
-      // uint32_t unpackedWord[2][3][7][8]; //2:lpGBT, 3:ECON-T, 7:bxs,8:words
-      // uint32_t iunpkw = 0;
-      // ibx = 0;
-      // for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
-      // 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-      // 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-      // 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-      // 	uint32_t col3 = p64[iw] & 0xFFFF ;
-      // 	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
-      // 	if(unpkIndx>=unpkBgnOffset){
-      // 	  unpackedWord[0][0][ibx][iunpkw] = col3; //BC6
-      // 	  unpackedWord[0][1][ibx][iunpkw] = col2; //STC4A
-      // 	  unpackedWord[0][2][ibx][iunpkw] = col1; //STC16
-      // 	  iunpkw++;
-      // 	}
-      // 	if(nEvents<=maxShowEvent)
-      // 	  cout<<"iloc: "<< iw
-      // 	      << std::hex
-      // 	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
-      // 	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
-      // 	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
-      // 	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
-      // 	      << std::dec << std::setfill(' ')
-      // 	      <<endl;
+      //////////// Print unpacker output for ch 1 /////////////////////
+      iblock = 3;
+      int unpkBgnOffset = 0;
+      int unpkIndx = 0;
+      uint32_t unpackedWord[2][3][7][8]; //2:lpGBT, 3:ECON-T, 7:bxs,8:words
+      uint32_t iunpkw = 0;
+      ibx = 0;
+      for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
+	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+	uint32_t col3 = p64[iw] & 0xFFFF ;
+	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
+	if(unpkIndx>=unpkBgnOffset){
+	  unpackedWord[0][0][ibx][iunpkw] = col3; //BC6
+	  unpackedWord[0][1][ibx][iunpkw] = col2; //STC4A
+	  unpackedWord[0][2][ibx][iunpkw] = col1; //STC16
+	  iunpkw++;
+	}
+	if(nEvents<=maxShowEvent)
+	  cout<<"iloc: "<< iw
+	      << std::hex
+	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
+	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
+	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
+	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
+	      << std::dec << std::setfill(' ')
+	      <<endl;
 	
-      // 	unpkIndx++;
-      // 	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
-      // }
-      // /////////////////////////////////////////////////////////////////
+	unpkIndx++;
+	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
+      }
+      /////////////////////////////////////////////////////////////////
 
-      // //////////// Print unpacker output for ch 2 /////////////////////
-      // iblock = 4;
-      // unpkBgnOffset = 0;
-      // unpkIndx = 0;
-      // iunpkw = 0;
-      // ibx = 0;
-      // for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
-      // 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-      // 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-      // 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-      // 	uint32_t col3 = p64[iw] & 0xFFFF ;
-      // 	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
-      // 	if(unpkIndx>=unpkBgnOffset){
-      // 	  unpackedWord[1][0][ibx][iunpkw] = col3; //BC6
-      // 	  unpackedWord[1][1][ibx][iunpkw] = col2; //STC4A
-      // 	  unpackedWord[1][2][ibx][iunpkw] = col1; //STC16
-      // 	  iunpkw++;
-      // 	}
-      // 	if(nEvents<=maxShowEvent)
-      // 	  cout<<"iloc: "<< iw
-      // 	      << std::hex
-      // 	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
-      // 	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
-      // 	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
-      // 	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
-      // 	      << std::dec << std::setfill(' ')
-      // 	      <<endl;
+      //////////// Print unpacker output for ch 2 /////////////////////
+      iblock = 4;
+      unpkBgnOffset = 0;
+      unpkIndx = 0;
+      iunpkw = 0;
+      ibx = 0;
+      for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
+	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+	uint32_t col3 = p64[iw] & 0xFFFF ;
+	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
+	if(unpkIndx>=unpkBgnOffset){
+	  unpackedWord[1][0][ibx][iunpkw] = col3; //BC6
+	  unpackedWord[1][1][ibx][iunpkw] = col2; //STC4A
+	  unpackedWord[1][2][ibx][iunpkw] = col1; //STC16
+	  iunpkw++;
+	}
+	if(nEvents<=maxShowEvent)
+	  cout<<"iloc: "<< iw
+	      << std::hex
+	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
+	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
+	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
+	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
+	      << std::dec << std::setfill(' ')
+	      <<endl;
 	
-      // 	unpkIndx++;
-      // 	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
-      // }
-      // /////////////////////////////////////////////////////////////////
+	unpkIndx++;
+	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
+      }
+      /////////////////////////////////////////////////////////////////
       // for(int ilp=0;ilp<2;ilp++){
       // 	for(int iecon=0;iecon<3;iecon++){
       // 	  for(int ib=0;ib<7;ib++){
@@ -671,45 +697,55 @@ int main(int argc, char** argv){
       // 	  cout<<"ilp: "<<ilp<< ", Diff20 "<<econt20Diff[ilp]<<endl;
       // 	}
       // }
-      // uint32_t modsum = 0xFF;
-      // uint32_t unpkBx = 0xF;
-      // uint32_t isValid = 0;
-      // uint32_t energy, channel;
-      // for(int ilp=0;ilp<2;ilp++){
-      // 	for(int iecon=0;iecon<3;iecon++){
-      // 	for(int ib=0;ib<7;ib++){
-      // 	    for(int iupw=0;iupw<8;iupw++){ //BC6 and STC4A
-      // 	      //for(int iupw=0;iupw<4;iupw++){ //STC16
-      // 	      //if(iupw > (nTC[iecon]+1)) continue;
-      // 	      isValid = (unpackedWord[ilp][iecon][ib][iupw] >> 15) & 0x1;
-      // 	      if(iupw==0){
-      // 		modsum = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0xFF ;
-      // 		unpkBx = unpackedWord[ilp][iecon][ib][iupw] & 0xF ;
-      // 		if(isValid){
-      // 		  unpackerData[ilp][iecon].econt_bxid[ib] = unpkBx;
-      // 		  unpackerData[ilp][iecon].econt_modsum[ib] = modsum;
-      // 		}
-      // 	      }else{
-      // 		energy = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0x1FF ;
-      // 		channel = unpackedWord[ilp][iecon][ib][iupw]  & 0x3F ;
-      // 		if(isValid){
-      // 		  unpackerData[ilp][iecon].econt_energy[ib][iupw-1] = energy;
-      // 		  unpackerData[ilp][iecon].econt_channel[ib][iupw-1] = channel;
-      // 		}
-      // 	      }
-      // 	      if(nEvents<=maxShowEvent)
-      // 		if(iupw==0)
-      // 		  cout<<"iupw: "<< iupw
-      // 		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
-      // 		      <<", bx: " << unpkBx <<", modsum: "<<modsum << ", isValid: "<< isValid << endl;
-      // 		else
-      // 		  cout<<"iupw: "<< iupw
-      // 		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
-      // 		      <<", energy: " << energy <<", channel: "<<channel << ", isValid: "<< isValid << endl;
-      // 	    }//itc
-      // 	  }//ib
-      // 	}//iecon
-      // }//ilp
+      uint32_t modsum = 0xFF;
+      uint32_t unpkBx = 0xF;
+      uint32_t isValid = 0;
+      uint32_t energy, channel;
+      for(int ilp=0;ilp<2;ilp++){
+	for(int iecon=0;iecon<3;iecon++){
+	for(int ib=0;ib<7;ib++){
+	    for(int iupw=0;iupw<8;iupw++){ //BC6 and STC4A
+	      //for(int iupw=0;iupw<4;iupw++){ //STC16
+	      //if(iupw > (nTC[iecon]+1)) continue;
+	      isValid = (unpackedWord[ilp][iecon][ib][iupw] >> 15) & 0x1;
+	      if(iupw==0){
+		modsum = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0xFF ;
+		unpkBx = unpackedWord[ilp][iecon][ib][iupw] & 0xF ;
+		if(isValid){
+		  unpackerData[ilp][iecon].econt_bxid[ib] = unpkBx;
+		  unpackerData[ilp][iecon].econt_modsum[ib] = modsum;
+		}
+	      }else{
+		energy = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0x1FF ;
+		channel = unpackedWord[ilp][iecon][ib][iupw]  & 0x3F ;
+		if(isValid){
+		  unpackerData[ilp][iecon].econt_energy[ib][iupw-1] = energy;
+		  unpackerData[ilp][iecon].econt_channel[ib][iupw-1] = channel;
+		  if(ilp==0){
+		    if(iecon==0) en_unpacked_lp0BC6->Fill(energy);
+		    if(iecon==1) en_unpacked_lp0STC4->Fill(energy);
+		    if(iecon==2) en_unpacked_lp0STC16->Fill(energy);
+		  }
+		  if(ilp==1){
+		    if(iecon==0) en_unpacked_lp1BC6->Fill(energy);
+		    if(iecon==1) en_unpacked_lp1STC4->Fill(energy);
+		    if(iecon==2) en_unpacked_lp1STC16->Fill(energy);
+		  }
+		}
+	      }
+	      if(nEvents<=maxShowEvent)
+		if(iupw==0)
+		  cout<<"iupw: "<< iupw
+		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
+		      <<", bx: " << unpkBx <<", modsum: "<<modsum << ", isValid: "<< isValid << endl;
+		else
+		  cout<<"iupw: "<< iupw
+		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
+		      <<", energy: " << energy <<", channel: "<<channel << ", isValid: "<< isValid << endl;
+	    }//itc
+	  }//ib
+	}//iecon
+      }//ilp
       // if(nEvents<=maxShowEvent) {
       // 	unpackerData[0][0].print(nTC[0],"TC","unpacked");
       // 	unpackerData[0][1].print(nTC[1],"STC4A","unpacked");
@@ -761,67 +797,27 @@ int main(int argc, char** argv){
 
 
   TFile *fout = new TFile(Form("out_%u.root",runNumber),"recreate");
-  bx_IdmodvsBC->Write();
-  bx_IdmodvsSTC4A->Write();
-  bx_IdmodvsSTC16->Write();
-  bx_BCvsSTC4A->Write();
-  bx_BCvsSTC16->Write();
-  bx_STC4AvsSTC16->Write();
+  bx_lp0_IdmodvsBC->Write();
+  bx_lp0_IdmodvsSTC4A->Write();
+  bx_lp0_IdmodvsSTC16->Write();
+  bx_lp0_BCvsSTC4A->Write();
+  bx_lp0_BCvsSTC16->Write();
+  bx_lp0_STC4AvsSTC16->Write();  
+  en_unpacked_lp0BC6->Write();
+  en_unpacked_lp0STC4->Write();
+  en_unpacked_lp0STC16->Write();
+  bx_lp1_IdmodvsBC->Write();
+  bx_lp1_IdmodvsSTC4A->Write();
+  bx_lp1_IdmodvsSTC16->Write();
+  bx_lp1_BCvsSTC4A->Write();
+  bx_lp1_BCvsSTC16->Write();
+  bx_lp1_STC4AvsSTC16->Write();
+  en_unpacked_lp1BC6->Write();
+  en_unpacked_lp1STC4->Write();
+  en_unpacked_lp1STC16->Write();
   fout->Close();
   delete fout;
 
-// cout <<"Relay| Run| NofEvts| NofPhysT| NofCalT| NofCoinT| NofRandT| NofSoftT| NofRegT| RStrtE| RStpE| BoeE| EoeE| L1aE| EvtIdE| xscafeE| 1stcafeE| blksizeE| S0E0Bx| S0E0MS|  S0E0En| S0E0Ch| S0E1Bx| S0E1MS|  S0E1En| S0E1Ch| S0E2Bx| S0E2MS|  S0E2En| S0E2Ch| S1E0Bx| S1E0MS|  S1E0En| S1E0Ch| S1E1Bx| S1E1MS|  S1E1En| S1E1Ch| S1E2Bx| S1E2MS|  S1E2En| S1E2Ch|"<<endl;
-// cout << relayNumber << "|"
-//      << runNumber << "|"
-  //      << nEvents << "|"
-  //      << total_phys_events << "|"
-  //      << total_calib_events << "|"
-  //      << total_coinc_events << "|"
-  //      << total_random_events << "|"
-  //      << total_soft_events << "|"
-  //      << total_regular_events << "|"
-  //      << nofRStartErrors << "|"
-  //      << nofRStopErrors << "|"
-  //      << nofBoEE << "|"
-  //      << nofEoEE << "|"
-  //      << nofL1aE << "|"
-  //      << nofEventIdErrs << "|"
-  //      << nofExcessFECAFEErrors << "|"
-  //      << nofFirstFECAFEErrors << "|"
-  //      << nofBlockSizeErrors << "|"
-  //      // << nofEcon012BxElinksErrors[0] << "|"
-  //      // << nofEcon012BxElinksErrors[1] << "|"
-  //      // << nofCBxErrors[0][0] << "| "
-  //      << nofBxErrors[0][0] << "| "
-  //      << nofMSErrors[0][0] << "| "
-  //      << nofEnErrors[0][0] << "| "
-  //      << nofChErrors[0][0] << "| "
-  //      // << nofCBxErrors[0][1] << "| "
-  //      << nofBxErrors[0][1] << "| "
-  //      << nofMSErrors[0][1] << "| "
-  //      << nofEnErrors[0][1] << "| "
-  //      << nofChErrors[0][1] << "| "
-  //      // << nofCBxErrors[0][2] << "| "
-  //      << nofBxErrors[0][2] << "| "
-  //      << nofMSErrors[0][2] << "| "
-  //      << nofEnErrors[0][2] << "| "
-  //      << nofChErrors[0][2] << "| "
-  //      // << nofCBxErrors[1][0] << "| "
-  //      << nofBxErrors[1][0] << "| "
-  //      << nofMSErrors[1][0] << "| "
-  //      << nofEnErrors[1][0] << "| "
-  //      << nofChErrors[1][0] << "| "
-  //      // << nofCBxErrors[1][1] << "| "
-  //      << nofBxErrors[1][1] << "| "
-  //      << nofMSErrors[1][1] << "| "
-  //      << nofEnErrors[1][1] << "| "
-  //      << nofChErrors[1][1] << "| "
-  //      // << nofCBxErrors[1][2] << "| "
-  //      << nofBxErrors[1][2] << "| "
-  //      << nofMSErrors[1][2] << "| "
-  //      << nofEnErrors[1][2] << "| "
-  //      << nofChErrors[1][2] << "| "
-  //      <<endl;
 
   delete r;
   
