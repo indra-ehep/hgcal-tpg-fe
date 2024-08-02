@@ -258,7 +258,6 @@ int main(int argc, char** argv){
   TH1F *bxen_lp1BC6 = new TH1F("bxen_lp1BC6","bxen_lp1BC6 (4E+3M)",7,-3,4);
   TH1F *bxen_lp1STC4 = new TH1F("bxen_lp1STC4","bxen_lp1STC4 (4E+3M)",7,-3,4);
   TH1F *bxen_lp1STC16 = new TH1F("bxen_lp1STC16","bxen_lp1STC16 (4E+3M)",7,-3,4);
-
   
   TH1F *en_unpacked_lp0BC6 = new TH1F("en_unpacked_lp0BC6","en_unpacked_lp0BC6",1000,0,1000);
   TH1F *en_unpacked_lp0STC4 = new TH1F("en_unpacked_lp0STC4","en_unpacked_lp0STC4",1000,0,1000);
@@ -266,6 +265,10 @@ int main(int argc, char** argv){
   TH1F *en_unpacked_lp1BC6 = new TH1F("en_unpacked_lp1BC6","en_unpacked_lp1BC6",1000,0,1000);
   TH1F *en_unpacked_lp1STC4 = new TH1F("en_unpacked_lp1STC4","en_unpacked_lp1STC4",1000,0,1000);
   TH1F *en_unpacked_lp1STC16 = new TH1F("en_unpacked_lp1STC16","en_unpacked_lp1STC16",1000,0,1000);
+  
+  TH2F *bx_BC6_lp0vs1 = new TH2F("bx_BC6_lp0vs1","BC6 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
+  TH2F *bx_STC4_lp0vs1 = new TH2F("bx_STC4_lp0vs1","STC4 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
+  TH2F *bx_STC16_lp0vs1 = new TH2F("bx_STC16_lp0vs1","STC16 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
   
   int ievent = 0;
   //Use the fileReader to read the records
@@ -520,7 +523,7 @@ int main(int argc, char** argv){
 	bx_lp1_BCvsSTC4A->Fill(float(elinkData[1][0].econt_bxid[ib]), float(elinkData[1][1].econt_bxid[ib]));
 	bx_lp1_BCvsSTC16->Fill(float(elinkData[1][0].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
 	bx_lp1_STC4AvsSTC16->Fill(float(elinkData[1][1].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
-
+	
 	if(ib==3){
 	  uint32_t bxmodulo = (bxId==3564) ? 0xF : (bxId%8) ;
 	  bx_lp0_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[0][0].econt_bxid[ib]));
@@ -530,7 +533,10 @@ int main(int argc, char** argv){
 	  bx_lp1_IdmodvsBC->Fill(float(bxmodulo), float(elinkData[1][0].econt_bxid[ib]));
 	  bx_lp1_IdmodvsSTC4A->Fill(float(bxmodulo), float(elinkData[1][1].econt_bxid[ib]));
 	  bx_lp1_IdmodvsSTC16->Fill(float(bxmodulo), float(elinkData[1][2].econt_bxid[ib]));
-
+	  
+	  bx_BC6_lp0vs1->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[1][0].econt_bxid[ib]));
+	  bx_STC4_lp0vs1->Fill(float(elinkData[0][1].econt_bxid[ib]), float(elinkData[1][1].econt_bxid[ib]));
+	  bx_STC16_lp0vs1->Fill(float(elinkData[0][2].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
 	}
       }
       
@@ -570,7 +576,7 @@ int main(int argc, char** argv){
 	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][2].econt_bxid[ib], vTC3, up3);
 	  
 	  //TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(, vTcrdp);
-
+	  
 	  const std::vector<TPGFEDataformat::TcRawData> &vTc1(vTC1.second);
 	  const std::vector<TPGFEDataformat::TcRawData> &vTc2(vTC2.second);
 	  const std::vector<TPGFEDataformat::TcRawData> &vTc3(vTC3.second);
@@ -600,7 +606,7 @@ int main(int argc, char** argv){
 	      bxen_lp1STC4->SetBinContent(ib+1,bxen_lp1STC4->GetBinContent(ib+1)+ (vTc2[itc+1].energy()));
 	    }
 	  }//itc
-	
+	  
 	  elinkData[ilp][2].econt_modsum[ib] = 1;//uint32_t(up3.moduleSum(0));
 	  elinkData[ilp][2].econt_bxid[ib] = uint32_t(up3.bx(0));
 	  for(int itc=0;itc<nTC[2];itc++){
@@ -612,7 +618,7 @@ int main(int argc, char** argv){
 	      bxen_lp1STC16->SetBinContent(ib+1,bxen_lp1STC16->GetBinContent(ib+1)+(vTc3[itc+1].energy()));
 	    }
 	  }//itc
-
+	  
 	  if(nEvents<=maxShowEvent) {
 	    up1.print();
 	    up2.print();
@@ -843,6 +849,13 @@ int main(int argc, char** argv){
   bxen_lp0STC4->GetYaxis()->SetTitle("Energy(4E+3M)");
   bxen_lp0STC16->GetYaxis()->SetTitle("Energy(4E+3M)");
 
+  bx_BC6_lp0vs1->GetXaxis()->SetTitle("Bx (BC6 of lpGBT0)");
+  bx_BC6_lp0vs1->GetYaxis()->SetTitle("Bx (BC6 of lpGBT1)");
+  bx_STC4_lp0vs1->GetXaxis()->SetTitle("Bx (STC4 of lpGBT0)");
+  bx_STC4_lp0vs1->GetYaxis()->SetTitle("Bx (STC4 of lpGBT1)");
+  bx_STC16_lp0vs1->GetXaxis()->SetTitle("Bx (STC16 of lpGBT0)");
+  bx_STC16_lp0vs1->GetYaxis()->SetTitle("Bx (STC16 of lpGBT1)");
+  
   bx_lp1_IdmodvsBC->GetXaxis()->SetTitle("Bx mod 8");
   bx_lp1_IdmodvsSTC4A->GetXaxis()->SetTitle("Bx mod 8");
   bx_lp1_IdmodvsSTC16->GetXaxis()->SetTitle("Bx mod 8");
@@ -884,6 +897,11 @@ int main(int argc, char** argv){
   bxen_lp0BC6->Write();
   bxen_lp0STC4->Write();
   bxen_lp0STC16->Write();
+  
+  bx_BC6_lp0vs1->Write();
+  bx_STC4_lp0vs1->Write();
+  bx_STC16_lp0vs1->Write();
+  
   bx_lp1_IdmodvsBC->Write();
   bx_lp1_IdmodvsSTC4A->Write();
   bx_lp1_IdmodvsSTC16->Write();
