@@ -251,15 +251,22 @@ int main(int argc, char** argv){
   TH2F *bx_lp1_IdmodvsBC = new TH2F("bx_lp1_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
   TH2F *bx_lp1_IdmodvsSTC4A = new TH2F("bx_lp1_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
   TH2F *bx_lp1_IdmodvsSTC16 = new TH2F("bx_lp1_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
+  
+  TH1F *bxen_lp0BC6 = new TH1F("bxen_lp0BC6","bxen_lp0BC6 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp0STC4 = new TH1F("bxen_lp0STC4","bxen_lp0STC4 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp0STC16 = new TH1F("bxen_lp0STC16","bxen_lp0STC16 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp1BC6 = new TH1F("bxen_lp1BC6","bxen_lp1BC6 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp1STC4 = new TH1F("bxen_lp1STC4","bxen_lp1STC4 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp1STC16 = new TH1F("bxen_lp1STC16","bxen_lp1STC16 (4E+3M)",7,-3,4);
 
+  
   TH1F *en_unpacked_lp0BC6 = new TH1F("en_unpacked_lp0BC6","en_unpacked_lp0BC6",1000,0,1000);
   TH1F *en_unpacked_lp0STC4 = new TH1F("en_unpacked_lp0STC4","en_unpacked_lp0STC4",1000,0,1000);
-  TH1F *en_unpacked_lp0STC16 = new TH1F("en_unpacked_lp0STC16","en_unpacked_lp0STC16",1000,0,1000);
-
+  TH1F *en_unpacked_lp0STC16 = new TH1F("en_unpacked_lp0STC16","en_unpacked_lp0STC16",1000,0,1000);  
   TH1F *en_unpacked_lp1BC6 = new TH1F("en_unpacked_lp1BC6","en_unpacked_lp1BC6",1000,0,1000);
   TH1F *en_unpacked_lp1STC4 = new TH1F("en_unpacked_lp1STC4","en_unpacked_lp1STC4",1000,0,1000);
   TH1F *en_unpacked_lp1STC16 = new TH1F("en_unpacked_lp1STC16","en_unpacked_lp1STC16",1000,0,1000);
-
+  
   int ievent = 0;
   //Use the fileReader to read the records
   while(_fileReader.read(r)) {
@@ -422,7 +429,7 @@ int main(int argc, char** argv){
       }
       
       //if(nEvents==1) continue;
-      //if(ievent>(maxEvents-1)) continue;
+      if(ievent>(maxEvents-1)) continue;
       if(nEvents<=maxShowEvent) cout<<"iEvent: " << ievent << endl;
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
@@ -539,59 +546,80 @@ int main(int argc, char** argv){
       // }
       // /////////////////////////////////////////////////////////////////
       
-      // ////// Print the energy/location and stage1 input also check back elink//////
-      // if(nEvents<=maxShowEvent)
-      // 	for(int ib=0;ib<7;ib++)
-      // 	  for(int iel=0;iel<7;iel++)
-      // 	    cout<<"ibx: "<< ib <<", elIndx: "<< iel
-      // 		<< std::hex
-      // 		<<", word : 0x" << std::setfill('0') << setw(8) << elpckt[0][ib][iel]
-      // 		<< std::dec << std::setfill(' ')
-      // 		<<endl;
-      // for(int ilp=0;ilp<2;ilp++){
-      // 	for(int ib=0;ib<7;ib++){
-      // 	  TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
-      // 	  TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
+      ////// Print the energy/location and stage1 input also check back elink//////
+      if(nEvents<=maxShowEvent)
+	for(int ib=0;ib<7;ib++)
+	  for(int iel=0;iel<7;iel++)
+	    cout<<"ibx: "<< ib <<", elIndx: "<< iel
+		<< std::hex
+		<<", word : 0x" << std::setfill('0') << setw(8) << elpckt[0][ib][iel]
+		<< std::dec << std::setfill(' ')
+		<<endl;
+      for(int ilp=0;ilp<2;ilp++){
+	for(int ib=0;ib<7;ib++){
+	  TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
+	  TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
 
-      // 	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, nTC[0], elpckt[ilp][ib], vTC1);
-      // 	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][0].econt_bxid[ib], vTC1, up1);
+	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, nTC[0], elpckt[ilp][ib], vTC1);
+	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][0].econt_bxid[ib], vTC1, up1);
 
-      // 	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, nTC[1], &elpckt[ilp][ib][3], vTC2);
-      // 	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][1].econt_bxid[ib], vTC2, up2);
+	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, nTC[1], &elpckt[ilp][ib][3], vTC2);
+	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][1].econt_bxid[ib], vTC2, up2);
 	
-      // 	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, nTC[2], &elpckt[ilp][ib][5], vTC3);
-      // 	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][2].econt_bxid[ib], vTC3, up3);
+	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, nTC[2], &elpckt[ilp][ib][5], vTC3);
+	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ilp][2].econt_bxid[ib], vTC3, up3);
+	  
+	  //TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(, vTcrdp);
 
-      // 	  //TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(, vTcrdp);
+	  const std::vector<TPGFEDataformat::TcRawData> &vTc1(vTC1.second);
+	  const std::vector<TPGFEDataformat::TcRawData> &vTc2(vTC2.second);
+	  const std::vector<TPGFEDataformat::TcRawData> &vTc3(vTC3.second);
+	  elinkData[ilp][0].econt_modsum[ib] = uint32_t(up1.moduleSum(0));
+	  elinkData[ilp][0].econt_bxid[ib] = uint32_t(up1.bx(0));
+	  for(int itc=0;itc<nTC[0];itc++){ //for BC and STC4A
+	    elinkData[ilp][0].econt_energy[ib][itc] = uint32_t(up1.channelEnergy(0,itc));
+	    elinkData[ilp][0].econt_channel[ib][itc] = uint32_t(up1.channelNumber(0,itc));
+	    // TH1F *bxen_lp0BC6 = new TH1F("bxen_lp0BC6","bxen_lp0BC6 (4E+3M)",7,-3,4);
+	    // TH1F *bxen_lp0STC4 = new TH1F("bxen_lp0STC4","bxen_lp0STC4 (4E+3M)",7,-3,4);
+	    // TH1F *bxen_lp0STC166 = new TH1F("bxen_lp0STC166","bxen_lp0STC166 (4E+3M)",7,-3,4);
+	    if(ilp==0){
+	      bxen_lp0BC6->SetBinContent(ib+1,bxen_lp0BC6->GetBinContent(ib+1)+ (vTc1[itc+1].energy()));
+	    }else{
+	      bxen_lp1BC6->SetBinContent(ib+1,bxen_lp1BC6->GetBinContent(ib+1)+ (vTc1[itc+1].energy()));
+	    }
+	  }//itc
+
+	  elinkData[ilp][1].econt_modsum[ib] = uint32_t(up2.moduleSum(0));
+	  elinkData[ilp][1].econt_bxid[ib] = uint32_t(up2.bx(0));
+	  for(int itc=0;itc<nTC[1];itc++){ //for BC and STC4A
+	    elinkData[ilp][1].econt_energy[ib][itc] = uint32_t(up2.channelEnergy(0,itc));
+	    elinkData[ilp][1].econt_channel[ib][itc] = uint32_t(up2.channelNumber(0,itc));
+	    if(ilp==0){
+	      bxen_lp0STC4->SetBinContent(ib+1,bxen_lp0STC4->GetBinContent(ib+1)+ (vTc2[itc+1].energy()));
+	    }else{
+	      bxen_lp1STC4->SetBinContent(ib+1,bxen_lp1STC4->GetBinContent(ib+1)+ (vTc2[itc+1].energy()));
+	    }
+	  }//itc
 	
-      // 	  elinkData[ilp][0].econt_modsum[ib] = uint32_t(up1.moduleSum(0));
-      // 	  elinkData[ilp][0].econt_bxid[ib] = uint32_t(up1.bx(0));
-      // 	  for(int itc=0;itc<nTC[0];itc++){ //for BC and STC4A
-      // 	    elinkData[ilp][0].econt_energy[ib][itc] = uint32_t(up1.channelEnergy(0,itc));
-      // 	    elinkData[ilp][0].econt_channel[ib][itc] = uint32_t(up1.channelNumber(0,itc));
-      // 	  }//itc
+	  elinkData[ilp][2].econt_modsum[ib] = 1;//uint32_t(up3.moduleSum(0));
+	  elinkData[ilp][2].econt_bxid[ib] = uint32_t(up3.bx(0));
+	  for(int itc=0;itc<nTC[2];itc++){
+	    elinkData[ilp][2].econt_energy[ib][itc] = uint32_t(up3.channelEnergy(0,itc));
+	    elinkData[ilp][2].econt_channel[ib][itc] = uint32_t(up3.channelNumber(0,itc));
+	    if(ilp==0){
+	      bxen_lp0STC16->SetBinContent(ib+1,bxen_lp0STC16->GetBinContent(ib+1)+(vTc3[itc+1].energy()));
+	    }else{
+	      bxen_lp1STC16->SetBinContent(ib+1,bxen_lp1STC16->GetBinContent(ib+1)+(vTc3[itc+1].energy()));
+	    }
+	  }//itc
 
-      // 	  elinkData[ilp][1].econt_modsum[ib] = uint32_t(up2.moduleSum(0));
-      // 	  elinkData[ilp][1].econt_bxid[ib] = uint32_t(up2.bx(0));
-      // 	  for(int itc=0;itc<nTC[1];itc++){ //for BC and STC4A
-      // 	    elinkData[ilp][1].econt_energy[ib][itc] = uint32_t(up2.channelEnergy(0,itc));
-      // 	    elinkData[ilp][1].econt_channel[ib][itc] = uint32_t(up2.channelNumber(0,itc));
-      // 	  }//itc
-	
-      // 	  elinkData[ilp][2].econt_modsum[ib] = 1;//uint32_t(up3.moduleSum(0));
-      // 	  elinkData[ilp][2].econt_bxid[ib] = uint32_t(up3.bx(0));
-      // 	  for(int itc=0;itc<nTC[2];itc++){
-      // 	    elinkData[ilp][2].econt_energy[ib][itc] = uint32_t(up3.channelEnergy(0,itc));
-      // 	    elinkData[ilp][2].econt_channel[ib][itc] = uint32_t(up3.channelNumber(0,itc));
-      // 	  }//itc
-
-      // 	  if(nEvents<=maxShowEvent) {
-      // 	    up1.print();
-      // 	    up2.print();
-      // 	    up3.print();
-      // 	  }
-      // 	}//ib
-      // }//lpGBT loop
+	  if(nEvents<=maxShowEvent) {
+	    up1.print();
+	    up2.print();
+	    up3.print();
+	  }
+	}//ib
+      }//lpGBT loop
       
       // if(nEvents<=maxShowEvent) {
       // 	elinkData[0][0].print(nTC[0], "TC", "elinks");
@@ -794,7 +822,54 @@ int main(int argc, char** argv){
     }//loop event  
   }//while read r
 
+  bx_lp0_IdmodvsBC->GetXaxis()->SetTitle("Bx mod 8");
+  bx_lp0_IdmodvsSTC4A->GetXaxis()->SetTitle("Bx mod 8");
+  bx_lp0_IdmodvsSTC16->GetXaxis()->SetTitle("Bx mod 8");
+  bx_lp0_IdmodvsBC->GetYaxis()->SetTitle("Bx (BC6 of lpGBT0)");
+  bx_lp0_IdmodvsSTC4A->GetYaxis()->SetTitle("Bx (STC4 of lpGBT0)");
+  bx_lp0_IdmodvsSTC16->GetYaxis()->SetTitle("Bx (STC16 of lpGBT0)");
+  
+  bx_lp0_BCvsSTC4A->GetXaxis()->SetTitle("Bx (BC6 of lpGBT0)");
+  bx_lp0_BCvsSTC16->GetXaxis()->SetTitle("Bx (BC6 of lpGBT0)");
+  bx_lp0_STC4AvsSTC16->GetXaxis()->SetTitle("Bx (STC4 of lpGBT0)");
+  bx_lp0_BCvsSTC4A->GetYaxis()->SetTitle("Bx (STC4 of lpGBT0)");
+  bx_lp0_BCvsSTC16->GetYaxis()->SetTitle("Bx (STC16 of lpGBT0)");
+  bx_lp0_STC4AvsSTC16->GetYaxis()->SetTitle("Bx (STC16 of lpGBT0)");
+  
+  bxen_lp0BC6->GetXaxis()->SetTitle("Bx (lpGBT0)");
+  bxen_lp0STC4->GetXaxis()->SetTitle("Bx (lpGBT0)");
+  bxen_lp0STC16->GetXaxis()->SetTitle("Bx (lpGBT0)");
+  bxen_lp0BC6->GetYaxis()->SetTitle("Energy(4E+3M)");
+  bxen_lp0STC4->GetYaxis()->SetTitle("Energy(4E+3M)");
+  bxen_lp0STC16->GetYaxis()->SetTitle("Energy(4E+3M)");
 
+  bx_lp1_IdmodvsBC->GetXaxis()->SetTitle("Bx mod 8");
+  bx_lp1_IdmodvsSTC4A->GetXaxis()->SetTitle("Bx mod 8");
+  bx_lp1_IdmodvsSTC16->GetXaxis()->SetTitle("Bx mod 8");
+  bx_lp1_IdmodvsBC->GetYaxis()->SetTitle("Bx (BC6 of lpGBT1)");
+  bx_lp1_IdmodvsSTC4A->GetYaxis()->SetTitle("Bx (STC4 of lpGBT1)");
+  bx_lp1_IdmodvsSTC16->GetYaxis()->SetTitle("Bx (STC16 of lpGBT1)");
+  
+  bx_lp1_BCvsSTC4A->GetXaxis()->SetTitle("Bx (BC6 of lpGBT1)");
+  bx_lp1_BCvsSTC16->GetXaxis()->SetTitle("Bx (BC6 of lpGBT1)");
+  bx_lp1_STC4AvsSTC16->GetXaxis()->SetTitle("Bx (STC4 of lpGBT1)");
+  bx_lp1_BCvsSTC4A->GetYaxis()->SetTitle("Bx (STC4 of lpGBT1)");
+  bx_lp1_BCvsSTC16->GetYaxis()->SetTitle("Bx (STC16 of lpGBT1)");
+  bx_lp1_STC4AvsSTC16->GetYaxis()->SetTitle("Bx (STC16 of lpGBT1)");
+
+  bxen_lp1BC6->GetXaxis()->SetTitle("Bx (lpGBT1)");
+  bxen_lp1STC4->GetXaxis()->SetTitle("Bx (lpGBT1)");
+  bxen_lp1STC16->GetXaxis()->SetTitle("Bx (lpGBT1)");
+  bxen_lp1BC6->GetYaxis()->SetTitle("Energy(4E+3M)");
+  bxen_lp1STC4->GetYaxis()->SetTitle("Energy(4E+3M)");
+  bxen_lp1STC16->GetYaxis()->SetTitle("Energy(4E+3M)");
+  
+  en_unpacked_lp0BC6->GetXaxis()->SetTitle("Energy (BC6 of lpGBT0 [5E+4M])");
+  en_unpacked_lp0STC4->GetXaxis()->SetTitle("Energy (STC4A of lpGBT0 [5E+4M])");
+  en_unpacked_lp0STC16->GetXaxis()->SetTitle("Energy (STC16 of lpGBT0 [5E+4M])");
+  en_unpacked_lp1BC6->GetXaxis()->SetTitle("Energy (BC6 of lpGBT1 [5E+4M])");
+  en_unpacked_lp1STC4->GetXaxis()->SetTitle("Energy (STC4A of lpGBT1 [5E+4M])");
+  en_unpacked_lp1STC16->GetXaxis()->SetTitle("Energy (STC16 of lpGBT1 [5E+4M])");
 
   TFile *fout = new TFile(Form("out_%u.root",runNumber),"recreate");
   bx_lp0_IdmodvsBC->Write();
@@ -806,6 +881,9 @@ int main(int argc, char** argv){
   en_unpacked_lp0BC6->Write();
   en_unpacked_lp0STC4->Write();
   en_unpacked_lp0STC16->Write();
+  bxen_lp0BC6->Write();
+  bxen_lp0STC4->Write();
+  bxen_lp0STC16->Write();
   bx_lp1_IdmodvsBC->Write();
   bx_lp1_IdmodvsSTC4A->Write();
   bx_lp1_IdmodvsSTC16->Write();
@@ -815,6 +893,9 @@ int main(int argc, char** argv){
   en_unpacked_lp1BC6->Write();
   en_unpacked_lp1STC4->Write();
   en_unpacked_lp1STC16->Write();
+  bxen_lp1BC6->Write();
+  bxen_lp1STC4->Write();
+  bxen_lp1STC16->Write();
   fout->Close();
   delete fout;
 
