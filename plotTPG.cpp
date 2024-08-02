@@ -429,7 +429,7 @@ int main(int argc, char** argv){
       }
       
       //if(nEvents==1) continue;
-      if(ievent>(maxEvents-1)) continue;
+      //if(ievent>(maxEvents-1)) continue;
       if(nEvents<=maxShowEvent) cout<<"iEvent: " << ievent << endl;
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
