@@ -34,6 +34,7 @@ namespace TPGFEReader{
     
     void init(uint32_t, uint32_t, uint32_t);
     void getEvents(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>&, std::vector<uint64_t>&);
+    void getModuleEvents(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>&, std::vector<uint64_t>&);
     void terminate();
     
   private:
@@ -166,105 +167,253 @@ namespace TPGFEReader{
     _fileReader.openRun(runNumber,linkNumber);  
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void ECONDReader::getEvents(uint64_t& minEventDAQ, uint64_t& maxEventDAQ, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>& hrocarray, std::vector<uint64_t>& events){
-    
-    //Set up specific records to interpet the formats
-    const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
-    const Hgcal10gLinkReceiver::RecordStopping *rStop ((Hgcal10gLinkReceiver::RecordStopping*)r);
-    const Hgcal10gLinkReceiver::RecordRunning  *rEvent((Hgcal10gLinkReceiver::RecordRunning*) r);
-    uint64_t nEvents = 0;
-    
-    std::map<uint32_t,TPGFEConfiguration::ConfigEconD>& econDPar = configs.getEconDPara();
-    uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-    const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
-    std::string modName = modNameMap.at(std::make_tuple(det, selTC4, module));
-    const std::map<std::pair<std::string,std::tuple<uint32_t,uint32_t,uint32_t>>,uint32_t>&seqToRocpin = (pck.getDetType()==0)?configs.getSiSeqToROCpin():configs.getSciSeqToROCpin();
-    
-    int nRx = int(econDPar[idx].getNeRx());
-    
-    //Use the fileReader to read the records
-    while(_fileReader.read(r)) {
-      //Check the state of the record and print the record accordingly
-      if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
-	if(!(rStart->valid())){
-	  std::cerr << " FsmState::Starting validadity fails : rStart->valid() " << rStart->valid() << std::endl;
-	  continue;
-	}
-      }
-    
-      else if(r->state()==Hgcal10gLinkReceiver::FsmState::Stopping){
-	if(!(rStop->valid())){
-	  std::cerr << " FsmState::Stopping validadity fails : rStop->valid() " << rStop->valid() << std::endl;
-	  continue;
-	}
-      }
-      //Else we have an event record 
-      else{
+  void getModuleEvents(uint64_t& minEventDAQ, uint64_t& maxEventDAQ, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>& hrocarray, std::vector<uint64_t>& events){
 
-	const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
-	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
-	eventId = boe->eventId();
-	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
-	  event_dump(rEvent);
-	  rEvent->RecordHeader::print();
-	  boe->print();
-	  eoe->print();
-	  std::cout<<"Payload length : "<< rEvent->payloadLength() << std::endl;
-	}
+    // int isMSB[6];
+    // int ffsep_word_loc[6];
+    // bool is_ff_sep_notfound = false;
+    // for(int iloc=0;iloc<6;iloc++){
+    //   isMSB[iloc] = -1;
+    //   ffsep_word_loc[iloc] = find_ffsep_word(rEvent, isMSB[iloc], iloc+1);
+    //   if(isMSB[iloc] == -1) is_ff_sep_notfound = true;
+    //   if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
+    //     if(iloc==0)
+    //       std::cout << "\nEvent : " << nEvents << ": " <<iloc+1 <<"-st 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
+    //     else if(iloc==1)
+    //       std::cout << "Event : " << nEvents << ": " <<iloc+1 <<"-nd 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
+    //     else if(iloc==2)
+    //       std::cout << "Event : " << nEvents << ": " <<iloc+1 <<"-rd 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
+    //     else
+    //       std::cout << "Event : " << nEvents << ": " <<iloc+1 <<"-th 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
+    //   }
+    // }
 	
-	int isMSB[6];
-	int ffsep_word_loc[6];
-	bool is_ff_sep_notfound = false;
-	for(int iloc=0;iloc<6;iloc++){
+    // int expctd_empty_word_loc = ffsep_word_loc[5]+19; //19 is valid only for full ROCs, in case of partials this will be different, but could be calculated from mapping (here floor(37/2)+1 = 19)
+    // int empty_isMSB = -1;
+    // bool hasfound_emptry_word = found_empty_word(rEvent, empty_isMSB, expctd_empty_word_loc) ;
+    // if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
+    //   std::cout << "Event : " << nEvents << ": 0x0000 0x0000 closing separator word at location : " << expctd_empty_word_loc << " hasfound_emptry_word : "<< hasfound_emptry_word << ",  and isMSB : " << empty_isMSB << std::endl;
+      
+    // if(!hasfound_emptry_word) continue;
+    // if(is_ff_sep_notfound) continue;
+    // //if(nEvents>maxEvent) continue;
+      
+    // int ichip = 0;
+    // const uint64_t *p64(((const uint64_t*)rEvent)+1);
+      
+    // uint32_t wordH = ((p64[ffsep_word_loc[0]-1] >> 32) & 0xFFFFFFFF) ;
+    // int daq_header_payload_length = int(((wordH>>14) & 0x1FF));
+    // daq_header_payload_length -= 1 ; //1 for DAQ header
+    // if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
+    //   std::cout << std::hex << std::setfill('0');
+    //   std::cout << "Event : " << nEvents << ", WordH : 0x" << wordH  ;
+    //   std::cout << std::dec << std::setfill(' ');
+    //   std::cout<<", Size in ECON-D header : " << daq_header_payload_length << std::endl;
+    // }
+      
+    // int record_header_sizeinfo = int(rEvent->payloadLength()); //in 64-bit format
+    // int reduced_record_header_sizeinfo = record_header_sizeinfo - (4+2+1) ; //exclude 4 64-bit words for slink header/trailer + 2 DAQ header + 1 for DAQ trailer
+    // int record_header_sizeinfo_32bit = 2*reduced_record_header_sizeinfo ; //change to 32-bit format
+
+    // if(record_header_sizeinfo_32bit!=daq_header_payload_length) continue;
+      
+    // if(boe->eventId()>=minEventDAQ and boe->eventId()<maxEventDAQ){
+
+	
+    //   for(int iloc=0;iloc<nRx;iloc++){ //For full LD/HD modules : 6/12 respectively
+    //     uint32_t max_sep_word = (iloc==5) ? expctd_empty_word_loc : ffsep_word_loc[iloc+1] ;
+    //     bool ishalf = (iloc%2==0) ? false : true ;
+    //     if(isMSB[iloc]==1) max_sep_word++;
+    //     int index = 0;
+    //     uint32_t ch = 0;
+    //     uint32_t rocpin = 0;
+    //     int adcmL = 0, adcL = 0, toaL = 0, totL = 0;
+    //     int adcmM = 0, adcM = 0, toaM = 0, totM = 0;
+    //     rocn = uint32_t(ichip);
+    //     half = uint32_t(ishalf);
+    //     TPGFEDataformat::HalfHgcrocChannelData chdata[36];
+    //     for(uint32_t i = ffsep_word_loc[iloc]+1 ; i< max_sep_word ; i++){	  //For 37 seqs for full half ROC
+	    
+    //       uint32_t wordL = 0;
+    //       uint32_t wordM = 0;
+    //       uint32_t seqL = 0;		
+    //       uint32_t seqM = 0;
+    //       if(isMSB[iloc]==0){
+    // 	wordL = (p64[i] & 0xFFFFFFFF) ;
+    // 	wordM = ((p64[i] >> 32) & 0xFFFFFFFF) ;
+    // 	seqM = 2*index;
+    // 	seqL = 2*index+1;		
+    //       }else if(isMSB[iloc]==1){
+    // 	wordL = (p64[i-1] & 0xFFFFFFFF) ;	  
+    // 	wordM = ((p64[i] >> 32) & 0xFFFFFFFF) ;
+    // 	seqL = 2*index;
+    // 	seqM = 2*index+1;		
+    //       }
+    //       adcmL = 0; adcL = 0; toaL = 0; totL = 0;
+    //       adcmM = 0; adcM = 0; toaM = 0; totM = 0;
+
+    //       const uint16_t trigflagL = (wordL>>30) & 0x3;
+    //       if(trigflagL<=1){ //0 or 1
+    // 	adcmL = (wordL>>20) & 0x3FF;
+    // 	adcL = (wordL>>10) & 0x3FF;
+    // 	toaL = wordL & 0x3FF;
+    //       }else if(trigflagL==2){
+    // 	adcmL = (wordL>>20) & 0x3FF;
+    // 	totL = (wordL>>10) & 0x3FF;
+    // 	toaL = wordL & 0x3FF;	    
+    //       }else if(trigflagL==3){
+    // 	adcmL = (wordL>>20) & 0x3FF;
+    // 	totL = (wordL>>10) & 0x3FF;
+    // 	toaL = wordL & 0x3FF;
+    //       }
+    //       if(totL>>0x9==1)  totL = (totL & 0x1ff) << 0x3 ; //10-bit to 12-bit conversion
+    //       if(isTOTUP) totL += 0x7;
+	      
+    //       const uint16_t trigflagM = (wordM>>30) & 0x3;
+    //       if(trigflagM<=1){ //0 or 1
+    // 	adcmM = (wordM>>20) & 0x3FF;
+    // 	adcM = (wordM>>10) & 0x3FF;
+    // 	toaM = wordM & 0x3FF;
+    //       }else if(trigflagM==2){
+    // 	adcmM = (wordM>>20) & 0x3FF;
+    // 	totM = (wordM>>10) & 0x3FF;
+    // 	toaM = wordM & 0x3FF;	    
+    //       }else if(trigflagM==3){
+    // 	adcmM = (wordM>>20) & 0x3FF;
+    // 	totM = (wordM>>10) & 0x3FF;
+    // 	toaM = wordM & 0x3FF;
+    //       }
+    //       if(totM>>0x9==1)  totM = (totM & 0x1ff) << 0x3 ; //10-bit to 12-bit conversion
+    //       if(isTOTUP) totM += 0x7;
+	      
+    //       if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
+    // 	if(isMSB[iloc]==0){
+    // 	  std::cout<<"\ti : "<<i<<", index : "<<index<<std::endl;
+    // 	  std::cout << std::hex << std::setfill('0');
+    // 	  std::cout<<"\tWordM : 0x" << std::setw(8) << wordM <<", wordL : 0x" << std::setw(8) << wordL<< std::endl;
+    // 	  std::cout << std::dec << std::setfill(' ');
+    // 	  std::cout<<"\tM:(flag,adc,tot,toa) : (" << trigflagM <<", " << adcM << ", " << totM <<", " << toaM << "), \t"
+    // 		   <<"L:(flag,adc,tot,toa) : (" << trigflagL <<", " << adcL << ", " << totL <<", " << toaL << ")" << std::endl;
+    // 	}else{
+    // 	  std::cout<<"\ti : "<<i<<", index : "<<index<<std::endl;
+    // 	  std::cout << std::hex << std::setfill('0');
+    // 	  std::cout<<"\tWordL[i-1] : 0x" << std::setw(8) << wordL<<", wordM : 0x" << std::setw(8) << wordM << std::endl;
+    // 	  std::cout << std::dec << std::setfill(' ');
+    // 	  std::cout<<"\tL:(flag,adc,tot,toa)[i-1] : (" << trigflagL <<", " << adcL << ", " << totL <<", " << toaL << "), \t"
+    // 		   <<"M:(flag,adc,tot,toa) : (" << trigflagM <<", " << adcM << ", " << totM <<", " << toaM << ")" << std::endl;
+    // 	}
+    //       }
+	      
+    //       if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqM)))!=seqToRocpin.end()){
+    // 	uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqM))) ;
+    // 	ch = rocpin%36 ; //36 for halfroc
+    // 	if(trigflagM>=0x2)
+    // 	  chdata[ch].setTot(uint16_t(totM),uint16_t(trigflagM));
+    // 	else if(trigflagM==0)
+    // 	  chdata[ch].setAdc(uint16_t(adcM),uint16_t(trigflagM));
+    // 	else if(trigflagM==0x1)
+    // 	  chdata[ch].setAdc(0,uint16_t(trigflagM)); //uint16_t(adcM)
+    // 	else
+    // 	  chdata[ch].setZero();
+    //       }
+    //       if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqL)))!=seqToRocpin.end()){
+    // 	uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqL))) ;
+    // 	ch = rocpin%36 ; //36 for halfroc
+    // 	if(trigflagL>=0x2)
+    // 	  chdata[ch].setTot(uint16_t(totL),uint16_t(trigflagL));
+    // 	else if(trigflagL==0)
+    // 	  chdata[ch].setAdc(uint16_t(adcL),uint16_t(trigflagL));
+    // 	else if(trigflagL==0x1)
+    // 	  chdata[ch].setAdc(0,uint16_t(trigflagL)); //uint16_t(adcL)
+    // 	else
+    // 	  chdata[ch].setZero();
+    //       }
+    //       index++;
+    //     }//end of loop for 37 seq channels
+    //     TPGFEDataformat::HalfHgcrocData hrocdata;
+    //     hrocdata.setChannels(chdata);
+    //     pck.setZero();
+    //     hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half),hrocdata));
+    //     //std::cout<<std::endl;
+    //     if(iloc%2==1)ichip++;
+    //   }
+    //   events.push_back(boe->eventId());
+    // }
+
+      const uint64_t *p64(((const uint64_t*)rEvent)+1);
+  const uint32_t *p32(((const uint32_t*)rEvent)+2);
+  int index = 3;
+  int nRx = 6;
+  bool isTOTUP = false;
+  uint32_t rocn = 0;
+  uint32_t half = 0;
+  if(nEvents<=maxShowEvent){
+    cout<< std::hex   ;
+    cout<<"word-64 0th : 0x"<< std::setfill('0') << setw(16) << p64[index] ;
+    cout<<", word-32 0th : 0x"<< std::setfill('0') << setw(8) << p32[2*index+1] ;
+    cout<<", 0x" << p32[2*index] << endl;
+    cout<< std::dec << std::setfill(' ') ;
+  }
+  for (const auto&  econhpos : econheaderpos_lst){
+    uint32_t icapblk = econhpos.first;
+    vector<uint32_t> econhloc = econhpos.second;
+    for(uint32_t iecond = 0 ; iecond < econhloc.size() ; iecond++){
+      cout<< std::hex ;
+      if(nEvents<=maxShowEvent) cout<<"For econ " << iecond << ", word is 0x"<< std::setfill('0') << setw(16) <<p64[econhloc.at(iecond)]<<endl;
+      if(nEvents<=maxShowEvent) cout<<"For econ " << iecond << ", zero word is 0x"<< std::setfill('0') << setw(16) <<p64[zeropos_lst[icapblk].at(iecond)]<<endl;
+      cout<< std::dec << std::setfill(' ') ;
+      if(nEvents<=maxShowEvent) cout<<"econd words position for econ " << iecond << ", is "<< std::setfill('0') << setw(2) <<econhloc.at(iecond)<<endl;
+      if(nEvents<=maxShowEvent) cout<<"zero words position for econ " << iecond << ", is "<< std::setfill('0') << setw(2) << zeropos_lst[icapblk].at(iecond)  <<endl;
+      for(int iw=econhloc.at(iecond)+1 ; iw <= zeropos_lst[icapblk].at(iecond) and iecond == 0 and nEvents<=maxShowEvent ; iw++ ){
+	cout<<"word-64 "<< iw << std::hex <<"-th : 0x"<< std::setfill('0') << setw(16) << p64[iw] ;
+	cout<<",       word-32 0th : 0x"<< std::setfill('0') << setw(8) << p32[2*iw+1] ;
+	cout<<", 0x" << std::setfill('0') << setw(8) << p32[2*iw] << endl;
+	cout<< std::dec << std::setfill(' ') ;
+
+	int isMSB[12];
+	int ffsep_word_loc[12];
+	bool is_ff_sep_notfound[12];
+	bool has_all_sep_found = true;;
+	for(int iloc=0;iloc<nRx;iloc++){
 	  isMSB[iloc] = -1;
+	  is_ff_sep_notfound[iloc] = false;
 	  ffsep_word_loc[iloc] = find_ffsep_word(rEvent, isMSB[iloc], iloc+1);
-	  if(isMSB[iloc] == -1) is_ff_sep_notfound = true;
-	  if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
-	    if(iloc==0)
-	      std::cout << "\nEvent : " << nEvents << ": " <<iloc+1 <<"-st 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
-	    else if(iloc==1)
-	      std::cout << "Event : " << nEvents << ": " <<iloc+1 <<"-nd 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
-	    else if(iloc==2)
-	      std::cout << "Event : " << nEvents << ": " <<iloc+1 <<"-rd 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
-	    else
-	      std::cout << "Event : " << nEvents << ": " <<iloc+1 <<"-th 0xffff 0xffff separator word at location : " << ffsep_word_loc[iloc] << " word and isMSB : " << isMSB[iloc] << std::endl;
+	  if(isMSB[iloc] == -1) {
+	    is_ff_sep_notfound[iloc] = true;
+	    has_all_sep_found = false ;
 	  }
 	}
-	
-	int expctd_empty_word_loc = ffsep_word_loc[5]+19; //19 is valid only for full ROCs, in case of partials this will be different, but could be calculated from mapping (here floor(37/2)+1 = 19)
+
+	int expctd_empty_word_loc = zeropos_lst[icapblk].at(iecond);
 	int empty_isMSB = -1;
-	bool hasfound_emptry_word = found_empty_word(rEvent, empty_isMSB, expctd_empty_word_loc) ;
-	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
-	  std::cout << "Event : " << nEvents << ": 0x0000 0x0000 closing separator word at location : " << expctd_empty_word_loc << " hasfound_emptry_word : "<< hasfound_emptry_word << ",  and isMSB : " << empty_isMSB << std::endl;
-      
+	bool hasfound_emptry_word = found_empty_word(rEvent, empty_isMSB, expctd_empty_word_loc) ;      
 	if(!hasfound_emptry_word) continue;
-	if(is_ff_sep_notfound) continue;
-	//if(nEvents>maxEvent) continue;
+	if(!has_all_sep_found) continue;
       
 	int ichip = 0;
-	const uint64_t *p64(((const uint64_t*)rEvent)+1);
+	// const uint64_t *p64(((const uint64_t*)rEvent)+1);
       
-	uint32_t wordH = ((p64[ffsep_word_loc[0]-1] >> 32) & 0xFFFFFFFF) ;
-	int daq_header_payload_length = int(((wordH>>14) & 0x1FF));
-	daq_header_payload_length -= 1 ; //1 for DAQ header
-	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
-	  std::cout << std::hex << std::setfill('0');
-	  std::cout << "Event : " << nEvents << ", WordH : 0x" << wordH  ;
-	  std::cout << std::dec << std::setfill(' ');
-	  std::cout<<", Size in ECON-D header : " << daq_header_payload_length << std::endl;
-	}
+	// uint32_t wordH = ((p64[ffsep_word_loc[0]-1] >> 32) & 0xFFFFFFFF) ;
+	// int daq_header_payload_length = int(((wordH>>14) & 0x1FF));
+	// daq_header_payload_length -= 1 ; //1 for DAQ header
+	// if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
+	//   std::cout << std::hex << std::setfill('0');
+	//   std::cout << "Event : " << nEvents << ", WordH : 0x" << wordH  ;
+	//   std::cout << std::dec << std::setfill(' ');
+	//   std::cout<<", Size in ECON-D header : " << daq_header_payload_length << std::endl;
+	// }
       
-	int record_header_sizeinfo = int(rEvent->payloadLength()); //in 64-bit format
-	int reduced_record_header_sizeinfo = record_header_sizeinfo - (4+2+1) ; //exclude 4 64-bit words for slink header/trailer + 2 DAQ header + 1 for DAQ trailer
-	int record_header_sizeinfo_32bit = 2*reduced_record_header_sizeinfo ; //change to 32-bit format
+	// int record_header_sizeinfo = int(rEvent->payloadLength()); //in 64-bit format
+	// int reduced_record_header_sizeinfo = record_header_sizeinfo - (4+2+1) ; //exclude 4 64-bit words for slink header/trailer + 2 DAQ header + 1 for DAQ trailer
+	// int record_header_sizeinfo_32bit = 2*reduced_record_header_sizeinfo ; //change to 32-bit format
 
-	if(record_header_sizeinfo_32bit!=daq_header_payload_length) continue;
+	// if(record_header_sizeinfo_32bit!=daq_header_payload_length) continue;
       
-	if(boe->eventId()>=minEventDAQ and boe->eventId()<maxEventDAQ){
+	// if(boe->eventId()>=minEventDAQ and boe->eventId()<maxEventDAQ){
 
 	
-	  for(int iloc=0;iloc<nRx;iloc++){ //For full LD/HD modules : 6/12 respectively
-	    uint32_t max_sep_word = (iloc==5) ? expctd_empty_word_loc : ffsep_word_loc[iloc+1] ;
+	for(int iloc=0;iloc<nRx;iloc++){ //For full LD/HD modules : 6/12 respectively
+	  uint32_t max_sep_word = (iloc==(nRx-1)) ? expctd_empty_word_loc : ffsep_word_loc[iloc+1] ;
 	    bool ishalf = (iloc%2==0) ? false : true ;
 	    if(isMSB[iloc]==1) max_sep_word++;
 	    int index = 0;
@@ -274,7 +423,8 @@ namespace TPGFEReader{
 	    int adcmM = 0, adcM = 0, toaM = 0, totM = 0;
 	    rocn = uint32_t(ichip);
 	    half = uint32_t(ishalf);
-	    TPGFEDataformat::HalfHgcrocChannelData chdata[36];
+	    cout<<"iloc : " << iloc << endl;
+	    //TPGFEDataformat::HalfHgcrocChannelData chdata[36];
 	    for(uint32_t i = ffsep_word_loc[iloc]+1 ; i< max_sep_word ; i++){	  //For 37 seqs for full half ROC
 	    
 	      uint32_t wordL = 0;
@@ -294,7 +444,7 @@ namespace TPGFEReader{
 	      }
 	      adcmL = 0; adcL = 0; toaL = 0; totL = 0;
 	      adcmM = 0; adcM = 0; toaM = 0; totM = 0;
-
+	      
 	      const uint16_t trigflagL = (wordL>>30) & 0x3;
 	      if(trigflagL<=1){ //0 or 1
 		adcmL = (wordL>>20) & 0x3FF;
@@ -329,7 +479,7 @@ namespace TPGFEReader{
 	      if(totM>>0x9==1)  totM = (totM & 0x1ff) << 0x3 ; //10-bit to 12-bit conversion
 	      if(isTOTUP) totM += 0x7;
 	      
-	      if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
+	      if ( nEvents<=maxShowEvent ){ 
 		if(isMSB[iloc]==0){
 		  std::cout<<"\ti : "<<i<<", index : "<<index<<std::endl;
 		  std::cout << std::hex << std::setfill('0');
@@ -347,41 +497,162 @@ namespace TPGFEReader{
 		}
 	      }
 	      
-	      if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqM)))!=seqToRocpin.end()){
-		uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqM))) ;
-		ch = rocpin%36 ; //36 for halfroc
-		if(trigflagM>=0x2)
-		  chdata[ch].setTot(uint16_t(totM),uint16_t(trigflagM));
-		else if(trigflagM==0)
-		  chdata[ch].setAdc(uint16_t(adcM),uint16_t(trigflagM));
-		else if(trigflagM==0x1)
-		  chdata[ch].setAdc(0,uint16_t(trigflagM)); //uint16_t(adcM)
-		else
-		  chdata[ch].setZero();
-	      }
-	      if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqL)))!=seqToRocpin.end()){
-		uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqL))) ;
-		ch = rocpin%36 ; //36 for halfroc
-		if(trigflagL>=0x2)
-		  chdata[ch].setTot(uint16_t(totL),uint16_t(trigflagL));
-		else if(trigflagL==0)
-		  chdata[ch].setAdc(uint16_t(adcL),uint16_t(trigflagL));
-		else if(trigflagL==0x1)
-		  chdata[ch].setAdc(0,uint16_t(trigflagL)); //uint16_t(adcL)
-		else
-		  chdata[ch].setZero();
-	      }
+	      // if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqM)))!=seqToRocpin.end()){
+	      // 	uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqM))) ;
+	      // 	ch = rocpin%36 ; //36 for halfroc
+	      // 	if(trigflagM>=0x2)
+	      // 	  chdata[ch].setTot(uint16_t(totM),uint16_t(trigflagM));
+	      // 	else if(trigflagM==0)
+	      // 	  chdata[ch].setAdc(uint16_t(adcM),uint16_t(trigflagM));
+	      // 	else if(trigflagM==0x1)
+	      // 	  chdata[ch].setAdc(0,uint16_t(trigflagM)); //uint16_t(adcM)
+	      // 	else
+	      // 	  chdata[ch].setZero();
+	      // }
+	      // if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqL)))!=seqToRocpin.end()){
+	      // 	uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqL))) ;
+	      // 	ch = rocpin%36 ; //36 for halfroc
+	      // 	if(trigflagL>=0x2)
+	      // 	  chdata[ch].setTot(uint16_t(totL),uint16_t(trigflagL));
+	      // 	else if(trigflagL==0)
+	      // 	  chdata[ch].setAdc(uint16_t(adcL),uint16_t(trigflagL));
+	      // 	else if(trigflagL==0x1)
+	      // 	  chdata[ch].setAdc(0,uint16_t(trigflagL)); //uint16_t(adcL)
+	      // 	else
+	      // 	  chdata[ch].setZero();
+	      // }
 	      index++;
 	    }//end of loop for 37 seq channels
-	    TPGFEDataformat::HalfHgcrocData hrocdata;
-	    hrocdata.setChannels(chdata);
-	    pck.setZero();
-	    hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half),hrocdata));
+	    // TPGFEDataformat::HalfHgcrocData hrocdata;
+	    // hrocdata.setChannels(chdata);
+	    // pck.setZero();
+	    // hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half),hrocdata));
 	    //std::cout<<std::endl;
 	    if(iloc%2==1)ichip++;
 	  }
-	  events.push_back(boe->eventId());
+	//   events.push_back(boe->eventId());
+	// }
+
+
+      }
+    }
+
+  }
+
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void ECONDReader::getEvents(uint64_t& minEventDAQ, uint64_t& maxEventDAQ, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>& hrocarray, std::vector<uint64_t>& events){
+    
+    //Set up specific records to interpet the formats
+    const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
+    const Hgcal10gLinkReceiver::RecordStopping *rStop ((Hgcal10gLinkReceiver::RecordStopping*)r);
+    const Hgcal10gLinkReceiver::RecordRunning  *rEvent((Hgcal10gLinkReceiver::RecordRunning*) r);
+    uint64_t nEvents = 0;
+    
+    std::map<uint32_t,TPGFEConfiguration::ConfigEconD>& econDPar = configs.getEconDPara();
+    uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+    const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
+    std::string modName = modNameMap.at(std::make_tuple(det, selTC4, module));
+    const std::map<std::pair<std::string,std::tuple<uint32_t,uint32_t,uint32_t>>,uint32_t>&seqToRocpin = (pck.getDetType()==0)?configs.getSiSeqToROCpin():configs.getSciSeqToROCpin();
+
+    // vector<uint64_t> captureheader_lst;
+    // map<uint32_t,vector<uint64_t>> econheader_lst; //
+    // vector<uint32_t> captureheaderpos_lst;
+    // map<uint32_t,vector<uint32_t>> econheaderpos_lst;
+    // map<uint32_t,vector<uint32_t>> zeropos_lst;
+    
+    int nRx = int(econDPar[idx].getNeRx());
+    
+    //Use the fileReader to read the records
+    while(_fileReader.read(r)) {
+      //Check the state of the record and print the record accordingly
+      if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
+	if(!(rStart->valid())){
+	  std::cerr << " FsmState::Starting validadity fails : rStart->valid() " << rStart->valid() << std::endl;
+	  continue;
 	}
+      }
+    
+      else if(r->state()==Hgcal10gLinkReceiver::FsmState::Stopping){
+	if(!(rStop->valid())){
+	  std::cerr << " FsmState::Stopping validadity fails : rStop->valid() " << rStop->valid() << std::endl;
+	  continue;
+	}
+      }
+      //Else we have an event record 
+      else{
+
+	const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
+	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
+	eventId = boe->eventId();
+	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
+	  event_dump(rEvent);
+	  rEvent->RecordHeader::print();
+	  boe->print();
+	  eoe->print();
+	  std::cout<<"Payload length : "<< rEvent->payloadLength() << std::endl;
+	}
+	      /////////////////////////////////////////////////////////////////
+      captureheader_lst.clear();
+      econheader_lst.clear();
+      captureheaderpos_lst.clear();
+      econheaderpos_lst.clear();
+      zeropos_lst.clear();
+      
+      uint32_t icapblk = 0;
+      uint32_t capturepos = 2;
+      while( (capturepos+2) < rEvent->payloadLength()){
+	uint64_t captureblkheader = p64[capturepos];
+	captureheader_lst.push_back(captureblkheader);
+	captureheaderpos_lst.push_back(capturepos);
+      
+	bool isEcondp[maxEcons];
+	bool isPassthrough[maxEcons];
+	uint32_t zeroloc[maxEcons];
+	int nofecons = 0;
+	for(int iecon=0;iecon<maxEcons;iecon++) {
+	  isEcondp[iecon] = false;
+	  isPassthrough[iecon]  = false;
+	  zeroloc[iecon] = 0;
+	}
+	for(int iecon=0;iecon<maxEcons;iecon++){
+	  uint8_t stat = (p64[capturepos] >> uint8_t(iecon*3)) & 0x7;
+	  if(stat==0b000 or stat==0b010 or stat==0b011) {
+	    isEcondp[iecon] = true ;
+	    nofecons++;
+	  }
+	}
+	//assert(nofecons!=0);
+	if(nofecons==0) {
+	  continue;
+	} //update the feedback from Martim
+	
+	uint32_t next_econd_pos = capturepos + 1;
+	for(int iecond = 0 ; iecond < nofecons ; iecond++){
+	  uint32_t econpos = next_econd_pos;
+	  uint32_t econh0 = (p64[econpos] >> 32) & 0xFFFFFFFF ;
+	  uint32_t econh1 = p64[econpos] & 0xFFFFFFFF ;
+	  econheader_lst[icapblk].push_back(p64[econpos]); 
+	  econheaderpos_lst[icapblk].push_back(econpos);
+	  isPassthrough[iecond] = (econh0 >> 13 ) & 0x1 ;
+	  uint32_t econsize = (econh0 >> 14 ) & 0x1FF ; //specifies length in 32b-words+1 of eRx sub-packets and CRC trailer
+	  assert(econsize>1);
+	  zeroloc[iecond] = (econsize-1)/2 + (econpos+1) ; //(econ0pos+1): +1 to start from first eRx header
+	  zeropos_lst[icapblk].push_back(zeroloc[iecond]);
+	  next_econd_pos = zeroloc[iecond]+1 ;
+	}
+	for(int iecond = 0 ; iecond < nofecons ; iecond++){
+	  if(nEvents<=maxShowEvent) cout<<"icapblk: "<<icapblk<<" zero position for econ " << iecond << ", "<<zeroloc[iecond]<<endl;
+	}
+	capturepos = zeroloc[nofecons-1] + 1;
+	icapblk++;
+      }//find the block positions
+      
+      //getEvents(uint64_t& minEventDAQ, uint64_t& maxEventDAQ, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>& hrocarray, std::vector<uint64_t>& events){
+      //printEconDEvents(nEvents, maxShowEvent, econheaderpos_lst, rEvent);
+      //printEconDEvents(nEvents, maxShowEvent, econheaderpos_lst, zeropos_lst, rEvent);
+
+
 	//Increment event counter
 	nEvents++;	
       }

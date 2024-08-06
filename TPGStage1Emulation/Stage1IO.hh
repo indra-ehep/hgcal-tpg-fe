@@ -197,6 +197,13 @@ public:
     }
   
     assert(up.checkFormat());
+    // if(!up.checkFormat()) {
+    //   up.print();
+    //   for(tc=0;tc<vTc.size();tc++) {
+    // 	std::cout << "Tc: " << tc << " ";
+    // 	vTc[tc].print();
+    //   }
+    // }
     //assert(up[1].checkFormat());
   }
 

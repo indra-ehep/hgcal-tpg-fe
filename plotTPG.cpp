@@ -15,8 +15,8 @@
 // Affiliation : Imperial College, London
 
 //Command to execute : 1. ./compile.sh
-//                     2. ./read_lpGBT.exe $Relay $rname
-//                     3. ./read_lpGBT.exe 1722081291 1722081291
+//                     2. ./plotTPG.exe $Relay $rname
+//                     3. ./plotTPG.exe 1722081291 1722081291
 
 using namespace std;
 
@@ -91,7 +91,7 @@ int find_cafe_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int n, int
   int cafe_counter = 0;
   int cafe_word_idx = -1;
   for(unsigned i(0);i<rEvent->payloadLength();i++){
-    const uint64_t word = p64[i];                                                                                // Is it advisable to convert 64 bit to 32 this way without masking ?
+    const uint64_t word = p64[i];                                                                                
     if (is_cafe_word(word)) { // if word == 0xfeca
       cafe_counter++;       
       if (cafe_counter == n){                                                                                    
@@ -208,7 +208,8 @@ int main(int argc, char** argv){
   uint64_t total_soft_events = 0;
   uint64_t total_regular_events = 0;
   
-  const int maxEvents = 200;
+  //const int maxEvents = 359132; // problem with run 1722603879
+  const int maxEvents = 0;
   const int nofEcontT = 3;
   const int noflpGBT = 2;
   BCEventData elinkData[noflpGBT][nofEcontT];
@@ -254,10 +255,10 @@ int main(int argc, char** argv){
   
   TH1F *bxen_lp0BC6 = new TH1F("bxen_lp0BC6","bxen_lp0BC6 (4E+3M)",7,-3,4);
   TH1F *bxen_lp0STC4 = new TH1F("bxen_lp0STC4","bxen_lp0STC4 (4E+3M)",7,-3,4);
-  TH1F *bxen_lp0STC16 = new TH1F("bxen_lp0STC16","bxen_lp0STC16 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp0STC16 = new TH1F("bxen_lp0STC16","bxen_lp0STC16 (5E+4M)",7,-3,4);
   TH1F *bxen_lp1BC6 = new TH1F("bxen_lp1BC6","bxen_lp1BC6 (4E+3M)",7,-3,4);
   TH1F *bxen_lp1STC4 = new TH1F("bxen_lp1STC4","bxen_lp1STC4 (4E+3M)",7,-3,4);
-  TH1F *bxen_lp1STC16 = new TH1F("bxen_lp1STC16","bxen_lp1STC16 (4E+3M)",7,-3,4);
+  TH1F *bxen_lp1STC16 = new TH1F("bxen_lp1STC16","bxen_lp1STC16 (5E+4M)",7,-3,4);
   
   TH1F *en_unpacked_lp0BC6 = new TH1F("en_unpacked_lp0BC6","en_unpacked_lp0BC6",1000,0,1000);
   TH1F *en_unpacked_lp0STC4 = new TH1F("en_unpacked_lp0STC4","en_unpacked_lp0STC4",1000,0,1000);
@@ -269,6 +270,20 @@ int main(int argc, char** argv){
   TH2F *bx_BC6_lp0vs1 = new TH2F("bx_BC6_lp0vs1","BC6 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
   TH2F *bx_STC4_lp0vs1 = new TH2F("bx_STC4_lp0vs1","STC4 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
   TH2F *bx_STC16_lp0vs1 = new TH2F("bx_STC16_lp0vs1","STC16 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
+
+  TH2F *bx_lp0_IdvsBC6 = new TH2F("bx_lp0_IdvsBC6","bx_lp0_IdvsBC6",3600,0,3600, 7,-3,4);
+  TH2F *bx_lp0_IdvsSTC4 = new TH2F("bx_lp0_IdvsSTC4","bx_lp0_IdvsSTC4",3600,0,3600, 7,-3,4);
+  TH2F *bx_lp0_IdvsSTC16 = new TH2F("bx_lp0_IdvsSTC16","bx_lp0_IdvsSTC16",3600,0,3600, 7,-3,4);
+  TH2F *bx_lp1_IdvsBC6 = new TH2F("bx_lp1_IdvsBC6","bx_lp1_IdvsBC6",3600,0,3600, 7,-3,4);
+  TH2F *bx_lp1_IdvsSTC4 = new TH2F("bx_lp1_IdvsSTC4","bx_lp1_IdvsSTC4",3600,0,3600, 7,-3,4);
+  TH2F *bx_lp1_IdvsSTC16 = new TH2F("bx_lp1_IdvsSTC16","bx_lp1_IdvsSTC16",3600,0,3600, 7,-3,4);
+
+  TH2F *lp0_BC6vsBx = new TH2F("lp0_BC6vsBx","lpGBT0 BC6 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2F *lp0_STC4vsBx = new TH2F("lp0_STC4vsBx","lpGBT0 STC4 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2F *lp0_STC16vsBx = new TH2F("lp0_STC16vsBx","lpGBT0 STC16 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2F *lp1_BC6vsBx = new TH2F("lp1_BC6vsBx","lpGBT1 BC6 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2F *lp1_STC4vsBx = new TH2F("lp1_STC4vsBx","lpGBT1 STC4 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2F *lp1_STC16vsBx = new TH2F("lp1_STC16vsBx","lpGBT1 STC16 Energy vs Bx",1000,0,1000, 7,-3,4);
   
   int ievent = 0;
   //Use the fileReader to read the records
@@ -299,7 +314,7 @@ int main(int argc, char** argv){
       const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
       const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
       
-      if (nEvents < 2) {
+      if (nEvents < 2 ) {
 	rEvent->RecordHeader::print();
 	boe->print();
   	eoe->print();
@@ -320,6 +335,11 @@ int main(int argc, char** argv){
       }
       
       eventId = boe->eventId();
+      //cout<<"eventId: " << eventId << endl;
+      // if(eventId==359133) Event_Dump(eventId, rEvent);
+      // if(eventId==359134) Event_Dump(eventId, rEvent);
+      // if(eventId==359135) Event_Dump(eventId, rEvent);
+      
       bxId = eoe->bxId();
       sequenceId = rEvent->RecordHeader::sequenceCounter(); 
       l1atype = boe->l1aType();
@@ -337,7 +357,7 @@ int main(int argc, char** argv){
       	total_regular_events++;
       if(nEvents<=maxShowEvent) cout << "L1aType : " << l1atype << ", bxId: " << bxId << endl;
       if(l1atype==0) { nofL1aE++; continue;}      
-
+      
       if((Abs64(eventId,prevEvent) != Abs32(sequenceId, prevSequence)) and Abs64(eventId,prevEvent)>=2){
 	std::cerr <<"Relay: " << relayNumber << ", Run: "<< runNumber << " Event: "<< eventId << ", l1aType : " << l1atype << ", and prevEvent  "<< prevEvent << ", nEvents : " << nEvents << " differs by "<< Abs64(eventId,prevEvent) <<" (sequence differs by [ "<< sequenceId << " - "<< prevSequence << " ] = " << Abs32(sequenceId, prevSequence) << "), EventID_Diff is more than 2 " << std::endl;
 	event_dump(rEvent);
@@ -433,7 +453,9 @@ int main(int argc, char** argv){
       
       //if(nEvents==1) continue;
       //if(ievent>(maxEvents-1)) continue;
-      if(nEvents<=maxShowEvent) cout<<"iEvent: " << ievent << endl;
+      //if(nEvents<=maxShowEvent)
+      //cout<<"iEvent: " << ievent << endl;
+      
       
       //////////// Read raw elink inputs for ch 1 /////////////////////
       int iblock = 1;
@@ -519,7 +541,7 @@ int main(int argc, char** argv){
 	bx_lp0_BCvsSTC4A->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][1].econt_bxid[ib]));
 	bx_lp0_BCvsSTC16->Fill(float(elinkData[0][0].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
 	bx_lp0_STC4AvsSTC16->Fill(float(elinkData[0][1].econt_bxid[ib]), float(elinkData[0][2].econt_bxid[ib]));
-
+	
 	bx_lp1_BCvsSTC4A->Fill(float(elinkData[1][0].econt_bxid[ib]), float(elinkData[1][1].econt_bxid[ib]));
 	bx_lp1_BCvsSTC16->Fill(float(elinkData[1][0].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
 	bx_lp1_STC4AvsSTC16->Fill(float(elinkData[1][1].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
@@ -538,7 +560,15 @@ int main(int argc, char** argv){
 	  bx_STC4_lp0vs1->Fill(float(elinkData[0][1].econt_bxid[ib]), float(elinkData[1][1].econt_bxid[ib]));
 	  bx_STC16_lp0vs1->Fill(float(elinkData[0][2].econt_bxid[ib]), float(elinkData[1][2].econt_bxid[ib]));
 	}
+	if(elinkData[0][0].econt_bxid[ib]==0xF) bx_lp0_IdvsBC6->Fill(float(bxId), float(ib-3));	
+	if(elinkData[0][1].econt_bxid[ib]==0xF) bx_lp0_IdvsSTC4->Fill(float(bxId), float(ib-3));	
+	if(elinkData[0][2].econt_bxid[ib]==0xF) bx_lp0_IdvsSTC16->Fill(float(bxId), float(ib-3));	
+	
+	if(elinkData[1][0].econt_bxid[ib]==0xF) bx_lp1_IdvsBC6->Fill(float(bxId), float(ib-3));
+	if(elinkData[1][1].econt_bxid[ib]==0xF) bx_lp1_IdvsSTC4->Fill(float(bxId), float(ib-3));
+	if(elinkData[1][2].econt_bxid[ib]==0xF) bx_lp1_IdvsSTC16->Fill(float(bxId), float(ib-3));
       }
+
       
       // /////////////////////////////////////////////////////////////////
       // //Find the bx diffrence between the 
@@ -561,6 +591,7 @@ int main(int argc, char** argv){
 		<<", word : 0x" << std::setfill('0') << setw(8) << elpckt[0][ib][iel]
 		<< std::dec << std::setfill(' ')
 		<<endl;
+      
       for(int ilp=0;ilp<2;ilp++){
 	for(int ib=0;ib<7;ib++){
 	  TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
@@ -585,9 +616,6 @@ int main(int argc, char** argv){
 	  for(int itc=0;itc<nTC[0];itc++){ //for BC and STC4A
 	    elinkData[ilp][0].econt_energy[ib][itc] = uint32_t(up1.channelEnergy(0,itc));
 	    elinkData[ilp][0].econt_channel[ib][itc] = uint32_t(up1.channelNumber(0,itc));
-	    // TH1F *bxen_lp0BC6 = new TH1F("bxen_lp0BC6","bxen_lp0BC6 (4E+3M)",7,-3,4);
-	    // TH1F *bxen_lp0STC4 = new TH1F("bxen_lp0STC4","bxen_lp0STC4 (4E+3M)",7,-3,4);
-	    // TH1F *bxen_lp0STC166 = new TH1F("bxen_lp0STC166","bxen_lp0STC166 (4E+3M)",7,-3,4);
 	    if(ilp==0){
 	      bxen_lp0BC6->SetBinContent(ib+1,bxen_lp0BC6->GetBinContent(ib+1)+ (vTc1[itc+1].energy()));
 	    }else{
@@ -735,6 +763,10 @@ int main(int argc, char** argv){
       uint32_t unpkBx = 0xF;
       uint32_t isValid = 0;
       uint32_t energy, channel;
+      bool isHighBC6 = false;
+      bool isHighSTC4 = false;
+      uint32_t highbc6_En = 160;
+      uint32_t highstc4_En = 170;
       for(int ilp=0;ilp<2;ilp++){
 	for(int iecon=0;iecon<3;iecon++){
 	for(int ib=0;ib<7;ib++){
@@ -756,14 +788,34 @@ int main(int argc, char** argv){
 		  unpackerData[ilp][iecon].econt_energy[ib][iupw-1] = energy;
 		  unpackerData[ilp][iecon].econt_channel[ib][iupw-1] = channel;
 		  if(ilp==0){
-		    if(iecon==0) en_unpacked_lp0BC6->Fill(energy);
-		    if(iecon==1) en_unpacked_lp0STC4->Fill(energy);
-		    if(iecon==2) en_unpacked_lp0STC16->Fill(energy);
+		    if(iecon==0){
+		      en_unpacked_lp0BC6->Fill(energy);
+		      lp0_BC6vsBx->Fill(energy,ib-3);
+		      if(energy>highbc6_En and (ib-3)==1) isHighBC6 = true;
+		    }
+		    if(iecon==1) {
+		      en_unpacked_lp0STC4->Fill(energy);
+		      lp0_STC4vsBx->Fill(energy,ib-3);
+		      if(energy>highstc4_En and (ib-3)==-1) isHighSTC4 = true;
+		    }
+		    if(iecon==2) {
+		      en_unpacked_lp0STC16->Fill(energy);
+		      lp0_STC16vsBx->Fill(energy,ib-3);
+		    }
 		  }
 		  if(ilp==1){
-		    if(iecon==0) en_unpacked_lp1BC6->Fill(energy);
-		    if(iecon==1) en_unpacked_lp1STC4->Fill(energy);
-		    if(iecon==2) en_unpacked_lp1STC16->Fill(energy);
+		    if(iecon==0) {
+		      en_unpacked_lp1BC6->Fill(energy);
+		      lp1_BC6vsBx->Fill(energy,ib-3);
+		    }
+		    if(iecon==1) {
+		      en_unpacked_lp1STC4->Fill(energy);
+		      lp1_STC4vsBx->Fill(energy,ib-3);
+		    }
+		    if(iecon==2) {
+		      en_unpacked_lp1STC16->Fill(energy);
+		      lp1_STC16vsBx->Fill(energy,ib-3);
+		    }
 		  }
 		}
 	      }
@@ -780,6 +832,8 @@ int main(int argc, char** argv){
 	  }//ib
 	}//iecon
       }//ilp
+      if(isHighSTC4 and isHighBC6) cout << "Both STC and BC high (" << highstc4_En << ", " << highbc6_En <<") in lpGBT0 for Hgcal10gLinkReceiver::SlinkBoe::eventId(): " << eventId << endl;
+
       // if(nEvents<=maxShowEvent) {
       // 	unpackerData[0][0].print(nTC[0],"TC","unpacked");
       // 	unpackerData[0][1].print(nTC[1],"STC4A","unpacked");
@@ -845,9 +899,9 @@ int main(int argc, char** argv){
   bxen_lp0BC6->GetXaxis()->SetTitle("Bx (lpGBT0)");
   bxen_lp0STC4->GetXaxis()->SetTitle("Bx (lpGBT0)");
   bxen_lp0STC16->GetXaxis()->SetTitle("Bx (lpGBT0)");
-  bxen_lp0BC6->GetYaxis()->SetTitle("Energy(4E+3M)");
-  bxen_lp0STC4->GetYaxis()->SetTitle("Energy(4E+3M)");
-  bxen_lp0STC16->GetYaxis()->SetTitle("Energy(4E+3M)");
+  bxen_lp0BC6->GetYaxis()->SetTitle("Energy(BC:4E+3M)");
+  bxen_lp0STC4->GetYaxis()->SetTitle("Energy(STC4A:4E+3M)");
+  bxen_lp0STC16->GetYaxis()->SetTitle("Energy(STC16:5E+4M)");
 
   bx_BC6_lp0vs1->GetXaxis()->SetTitle("Bx (BC6 of lpGBT0)");
   bx_BC6_lp0vs1->GetYaxis()->SetTitle("Bx (BC6 of lpGBT1)");
@@ -873,9 +927,9 @@ int main(int argc, char** argv){
   bxen_lp1BC6->GetXaxis()->SetTitle("Bx (lpGBT1)");
   bxen_lp1STC4->GetXaxis()->SetTitle("Bx (lpGBT1)");
   bxen_lp1STC16->GetXaxis()->SetTitle("Bx (lpGBT1)");
-  bxen_lp1BC6->GetYaxis()->SetTitle("Energy(4E+3M)");
-  bxen_lp1STC4->GetYaxis()->SetTitle("Energy(4E+3M)");
-  bxen_lp1STC16->GetYaxis()->SetTitle("Energy(4E+3M)");
+  bxen_lp1BC6->GetYaxis()->SetTitle("Energy(BC:4E+3M)");
+  bxen_lp1STC4->GetYaxis()->SetTitle("Energy(STC4A:4E+3M)");
+  bxen_lp1STC16->GetYaxis()->SetTitle("Energy(STC16:5E+4M)");
   
   en_unpacked_lp0BC6->GetXaxis()->SetTitle("Energy (BC6 of lpGBT0 [5E+4M])");
   en_unpacked_lp0STC4->GetXaxis()->SetTitle("Energy (STC4A of lpGBT0 [5E+4M])");
@@ -884,6 +938,9 @@ int main(int argc, char** argv){
   en_unpacked_lp1STC4->GetXaxis()->SetTitle("Energy (STC4A of lpGBT1 [5E+4M])");
   en_unpacked_lp1STC16->GetXaxis()->SetTitle("Energy (STC16 of lpGBT1 [5E+4M])");
 
+  bx_lp0_IdvsBC6->GetXaxis()->SetTitle("Slink Bx");
+  bx_lp0_IdvsBC6->GetYaxis()->SetTitle("Bx in ECON-T elink (-3<=Bx<=3)");
+  
   TFile *fout = new TFile(Form("out_%u.root",runNumber),"recreate");
   bx_lp0_IdmodvsBC->Write();
   bx_lp0_IdmodvsSTC4A->Write();
@@ -914,6 +971,18 @@ int main(int argc, char** argv){
   bxen_lp1BC6->Write();
   bxen_lp1STC4->Write();
   bxen_lp1STC16->Write();
+  bx_lp0_IdvsBC6->Write();
+  bx_lp0_IdvsSTC4->Write();
+  bx_lp0_IdvsSTC16->Write();
+  bx_lp1_IdvsBC6->Write();
+  bx_lp1_IdvsSTC4->Write();
+  bx_lp1_IdvsSTC16->Write();
+  lp0_BC6vsBx->Write();
+  lp0_STC4vsBx->Write();
+  lp0_STC16vsBx->Write();
+  lp1_BC6vsBx->Write();
+  lp1_STC4vsBx->Write();
+  lp1_STC16vsBx->Write();
   fout->Close();
   delete fout;
 
