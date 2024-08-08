@@ -146,7 +146,7 @@ namespace TPGFEConfiguration{
     uint32_t getNElinks() const { return uint32_t(eporttx_numen);}
     uint32_t getBCType() const {
       uint32_t maxTcs = 0;
-      if(getOutType()==TPGFEDataformat::TcRawData::BestC){	
+      if(getOutType()==TPGFEDataformat::BestC){	
 	switch(getNElinks()){
 	case 1:
 	  maxTcs = 1;
@@ -195,22 +195,46 @@ namespace TPGFEConfiguration{
       return maxTcs;
     }
     uint32_t getCalibration() const { return uint32_t(calv);}
-    ////Some option to be added to TPGFEDataformat::TcRawData enum for a undefined type
-    ////Then add final 'else' with that undefined type to make the function usable
-    TPGFEDataformat::TcRawData::Type getOutType() const {
-      if(select==1){
-	if(stc_type==0)
-	  return TPGFEDataformat::TcRawData::STC4B;
-	else if(stc_type==1)
-	  return TPGFEDataformat::TcRawData::STC16;
-	else if(stc_type==3)
-	  return TPGFEDataformat::TcRawData::STC4A;
-	else
-	  return TPGFEDataformat::TcRawData::Type(0xFFFF);
-      }else if(select==2)
-	return TPGFEDataformat::TcRawData::BestC;
-      else
-	return TPGFEDataformat::TcRawData::Type(0xFFFF);
+    TPGFEDataformat::Type getOutType() const {
+      TPGFEDataformat::Type type;
+      switch(select){
+      case 0:
+	type = TPGFEDataformat::TS;
+	break;
+      case 1:
+	switch(stc_type){
+	case 0:
+	  type = TPGFEDataformat::STC4B;
+	  break;
+	case 1:
+	  type = TPGFEDataformat::STC16;
+	  break;
+	case 2:
+	  type = TPGFEDataformat::CTC4A;
+	  break;
+	case 3:
+	  type = TPGFEDataformat::STC4A;
+	  break;
+	case 4:
+	  type = TPGFEDataformat::CTC4B;
+	  break;
+	default:
+	  type = TPGFEDataformat::Unknown;
+	}
+	break;
+      case 2:
+	type = TPGFEDataformat::BestC;
+	break;
+      case 3:
+	type = TPGFEDataformat::RA;
+	break;
+      case 4:
+	type = TPGFEDataformat::AE;
+	break;
+      default:
+	type = TPGFEDataformat::Unknown;
+      }
+      return type;
     }
     void setDensity(uint32_t den) { density = den;}
     void setDropLSB(uint32_t dLSB) { dropLSB = dLSB;}
@@ -240,7 +264,7 @@ namespace TPGFEConfiguration{
     uint8_t density; //lsb at the input TC from ROC
     uint8_t dropLSB; //lsb at the output during the packing
     uint8_t select; //0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4=Autoencoder (AE).
-    uint8_t stc_type; // 0 : STC4 5E+4M, STC_type=1 : STC16, STC_type=3 : STC4 4E+3M
+    uint8_t stc_type; //0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
     uint8_t eporttx_numen;//number of elinks
     uint16_t calv; //12-bit calibration
   };

@@ -66,7 +66,7 @@ public:
     }
     return 16*(e-1)+erg;
  }
- 
+  
   static uint16_t pack5E4MFrom4E3M(uint8_t flt) {
     /*
     assert(flt<0x80);
@@ -101,6 +101,7 @@ public:
 
   bool checkFormat() const {
 
+    
     for(unsigned s(0);s<2;s++) {
       // Check unused bits
       if(isValidModuleSum(s)) {
@@ -124,15 +125,16 @@ public:
     
     for(unsigned i(0);i<NumberOfTCs;i++) {
       for(unsigned s(0);s<sHi;s++) {
-	
+
+	//Discuss with Paul how to deal for CTC and STC
 	if(isValidChannel(s,i)) {
 	
 	  // Check channel number is in the right order
+	  //std::cout <<"cOld: "<<cOld << ", channelNumber(s,i): " << channelNumber(s,i) << std::endl;
 	  if(i==0 && s==0) cOld=channelNumber(s,i);
 	  else if(cOld>=channelNumber(s,i)) return false;
 	  cOld=channelNumber(s,i);
 	}
-	  
 	// Check all valid channels are before all invalid channels
 	if(validCh && !isValidChannel(s,i)) validCh=false;
 	if(!validCh && isValidChannel(s,i)) return false;

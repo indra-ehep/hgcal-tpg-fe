@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cassert>
+#include <vector>
 
 namespace TPGFEDataformat{
 
@@ -120,106 +121,134 @@ namespace TPGFEDataformat{
     HalfHgcrocChannelData _data[36];
   };
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////// Data Formats by Paul and Indra ///////////////////////////////////////////////
+  enum Type {
+      //select : 0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4 = Autoencoder (AE) Settings of [5,7] revert to the Repeater algorithm
+      //stc_type : 0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
+      BestC, // TC energy format = 4E3M
+      STC4A, // 4E3M
+      STC4B, // 5E4M
+      STC16, // 5E4M
+      CTC4A, // 4E3M
+      CTC4B, // 5E4M
+      TS,    // 4E3M, placeholder
+      RA,    // 4E3M, Repeater algorithm is intended for testing and debugging of ECONT
+      AE,    // blocks of 16b, uses convolutional neural network
+      Unknown
+  };
 
-    class TcRawData {
+  class TcRawData {
   public:
-    enum Type {
-      BestC=0x0000, // 4E3M
-      STC4A=0x4000, // 4E3M
-      STC4B=0x8000, // 5E4M
-      STC16=0xc000, // 5E4M
-      Unconnected // Cludge until class restructered
-    };
   
     TcRawData() : _data(0) {
     }
-
-    TcRawData(uint8_t e) {
-      setModuleSum(e);
-    }
-
-    TcRawData(Type t, uint8_t a, uint16_t e) {
+    
+    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
       setTriggerCell(t,a,e);
     }
-
+    
     uint8_t address() const {
-      return (_data&0x8000)==0?_data&0x3f:_data&0x0f;
+      return (_data & 0x3f);
     }
-
+    
     uint16_t energy() const {
-      return (_data&0x8000)==0?(_data>>6)&0x007f:(_data>>4)&0x01ff;
+      return ((_data >> 6 ) & 0x1ff);
     }
-
-    uint8_t moduleSum() const {
-      if(!isModuleSum()) return 0;
-      return (_data>>6)&0x00ff;
-    }
-      
-    bool isModuleSum() const {
-      return (_data&0xc03f)==0x003f;
-    }
-
-    bool is4E3M() const {
-      return (_data&0x8000)==0;
-    }
-  
-    bool is5E4M() const {
-      return (_data&0x8000)!=0;
-    }
-  
-    Type type() const {
-      return Type(_data&0xc000);
-    }
-  
-    const std::string& typeName() const {
-      return _typeName[_data>>14];
-    }
-
-    static const std::string& typeName(Type t) {
-      return _typeName[t>>14];
-    }
-
-    void setModuleSum(uint8_t e) {
-      _data=BestC|e<<6|0x3f;    
-    }
-
-    void setTriggerCell(Type t, uint8_t a, uint16_t e) {
-      if(t==BestC || t==STC4A) {
-	if(t==BestC) assert(a<48);//47-->48
-	else assert(a<4);
-	assert(e<0x80); //but modsum is 5E+3M 0x80 --> 0x100
-	_data=t|e<<6|a;
-      
-      } else {
-	if(t==STC4B) assert(a<4);
-	else assert(a<16);
-	assert(e<0x200);
-	_data=t|e<<4|a;      
+    
+    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
+      switch(t){
+      case TPGFEDataformat::BestC:
+	assert(a<=47);
+	assert(e<=0x7f);
+	break;
+      case TPGFEDataformat::STC4A:
+	assert(a<=3);
+	assert(e<=0x7f);
+	break;
+      case TPGFEDataformat::STC4B:
+	assert(a<=3);
+	assert(e<=0x1ff);
+	break;
+      case TPGFEDataformat::STC16:
+	assert(a<=15);
+	assert(e<=0x1ff);
+	break;
+      case TPGFEDataformat::CTC4A:
+	assert(e<=0x7f);
+	//a = 0;
+	break;
+      case TPGFEDataformat::CTC4B:
+	assert(e<=0x1ff);
+	//a = 0;
+	break;
+      default:
+	;
       }
+      _data = (e<<6|a);
     }
-  
+    
     void print() const {
       std::cout << "TcRawData(" << this << ")::print(): Data = 0x"
 		<< std::hex << ::std::setfill('0')
 		<< std::setw(4) << _data
 		<< std::dec << ::std::setfill(' ')
-		<< ", type = " << typeName();
-      if(isModuleSum()) std::cout << ",   module sum" << ", energy = "
-				  << std::setw(3) << unsigned(moduleSum())
-				  << std::endl;
-      else std::cout << ", address = " << std::setw(2) << unsigned(address())
-		     << ", energy = " << std::setw(3) << energy() << std::endl;
-    }    
-
+		<< ", address = " << std::setw(2) << unsigned(address())
+		<< ", energy = " << std::setw(3) << energy() << std::endl;
+    }
+    
   private:
-    static std::string _typeName[4];
     uint16_t _data;
   };
 
-  std::string TcRawData::_typeName[4]={"BestC","STC4A","STC4B","STC16"};
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawDataPacket;
+  static std::string tctypeName[10]={"BestC","STC4A","STC4B","STC16", "CTC4A", "CTC4B", "TS", "RA", "AE", "Unknown"};
   
+  class TcRawDataPacket {
+  public:    
+    TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0) { _tcdata.resize(0);}
+    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) : _t(t), _bx(bx), _ms(e) { _tcdata.resize(0);}
+    const std::string& typeName() const { return TPGFEDataformat::tctypeName[type()]; }
+    TPGFEDataformat::Type type() const { return _t;}
+    uint16_t moduleSum() const { return uint16_t(_ms & 0xff);}
+    uint16_t bx() const { return uint16_t(_bx);}
+    const std::vector<TPGFEDataformat::TcRawData>& getTcData() const {return _tcdata;}
+    bool is4E3M() const { return (_t==BestC or _t==STC4A or _t==CTC4A or _t==TS or _t==RA) ? true : false ; }
+    void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _tcdata.resize(0);}
+    
+    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) { _t = t; _bx = bx; _ms = e;}
+    void setType(TPGFEDataformat::Type t) { _t = t;}
+    void setModuleSum(uint8_t e) { _ms = e;}
+    void setBX(uint8_t bx) { _bx = bx;}
+    std::vector<TPGFEDataformat::TcRawData>& setTcData() {return _tcdata;}
+    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
+      TPGFEDataformat::TcRawData tc;
+      tc.setTriggerCell(t, a, e);
+      _tcdata.push_back(tc);
+    }
+    
+    void print() const {
+      std::cout << "TcRawDataPacket(" << this << ")::print(): "
+		<< "type = " << typeName()
+		<< ", bx = " << bx()
+		<< ", ms = " << moduleSum()
+		<< std::endl;
+      for(uint32_t itc(0); itc < _tcdata.size(); itc++) _tcdata.at(itc).print();
+    }    
+    
+  private:
+    TPGFEDataformat::Type _t;
+    uint8_t _bx;
+    uint8_t _ms;
+    std::vector<TPGFEDataformat::TcRawData> _tcdata;
+  };
+
+
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawDataPacket;
+  typedef std::pair<uint32_t,TPGFEDataformat::TcRawDataPacket> TcModulePacket;
+  
+  
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   class HgcrocTcData {
   public:
     HgcrocTcData() {

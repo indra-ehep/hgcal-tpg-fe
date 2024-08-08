@@ -23,18 +23,18 @@ public:
   Stage1IO() : _runCall(0) {
   }
   
-  static void convertElinksToTcRawData(TPGFEDataformat::TcRawData::Type type, unsigned nTc,
+  static void convertElinksToTcRawData(TPGFEDataformat::Type type, unsigned nTc,
 				       const uint32_t *v,
 				       TPGFEDataformat::TcRawDataPacket &vTcrdp) {
     
-    std::vector<TPGFEDataformat::TcRawData> &vTc(vTcrdp.second);
-
+    std::vector<TPGFEDataformat::TcRawData> &vTc(vTcrdp.setTcData());
+    
     bool doPrint(false);
 
     if(doPrint) {      
       for(unsigned i(0);i<2;i++) {
-	std::cout << "Elink " << i << " = "
-		  << std::hex << std::setw(8) << v[i]
+	std::cout << "Elink " << i << " = 0x"
+		  << std::hex << std::setw(8) << std::setfill('0') << v[i]
 		  << std::dec << std::endl;
       }
     }
@@ -43,9 +43,8 @@ public:
     //if(v.size()>=4) return; // FIXME
 
     unsigned bx(v[0]>>28);
-
     bool bitMap(false);
-    if(type==TPGFEDataformat::TcRawData::BestC) bitMap=(nTc>7);
+    if(type==TPGFEDataformat::BestC) bitMap=(nTc>7);
     
     assert(nTc>0);
     vTc.resize(0);
@@ -53,13 +52,14 @@ public:
     unsigned lastWord(0);
     unsigned lastBit(28);
     uint64_t d(v[0]);
-      
-    if(type==TPGFEDataformat::TcRawData::BestC) {
+    
+    if(type==TPGFEDataformat::BestC) {
       lastBit-=8;
-      vTc.push_back(TPGFEDataformat::TcRawData((d>>lastBit)&0xff));
-      if(false) vTc.back().print();
-    }
-      
+      vTcrdp.setTBM(type, bx, ((d>>lastBit)&0xff));
+      if(false) vTcrdp.print();
+    }else
+      vTcrdp.setTBM(type, bx, 0);
+    
     if(!bitMap) {
       for(unsigned tc(0);tc<nTc;tc++) {
 	if(lastBit<6) {
@@ -70,33 +70,26 @@ public:
 	  lastBit+=32;
 	}
 	
-	unsigned mult(0);
-	if(type==TPGFEDataformat::TcRawData::BestC) {
+	if(type==TPGFEDataformat::BestC) {
 	  lastBit-=6;
 	  // std::cout<< std::hex
 	  // 	   <<", d-word : 0x" << std::setfill('0') << std::setw(8) << (d>>lastBit)
 	  // 	   <<", masked-d-word : 0x" << std::setfill('0') << std::setw(8) << ((d>>lastBit)&0x3f)
 	  // 	   << std::dec << std::setfill(' ')
 	  // 	   <<std::endl;
-	  vTc.push_back(TPGFEDataformat::TcRawData(type,mult*tc+((d>>lastBit)&0x3f),0));
+	  vTc.push_back(TPGFEDataformat::TcRawData(type,((d>>lastBit)&0x3f),0));
 	}
-	if(type==TPGFEDataformat::TcRawData::STC4A) {
+	if(type==TPGFEDataformat::STC4A) {
 	  lastBit-=2;
-	  mult=4;
-	  mult=0;
-	  vTc.push_back(TPGFEDataformat::TcRawData(type,mult*tc+((d>>lastBit)&0x03),0));
+	  vTc.push_back(TPGFEDataformat::TcRawData(type,((d>>lastBit)&0x03),0));
 	}
-	if(type==TPGFEDataformat::TcRawData::STC4B) {
+	if(type==TPGFEDataformat::STC4B) {
 	  lastBit-=2;
-	  mult=4;
-	  mult=0;
-	  vTc.push_back(TPGFEDataformat::TcRawData(type,mult*tc+((d>>lastBit)&0x03),0));
+	  vTc.push_back(TPGFEDataformat::TcRawData(type,((d>>lastBit)&0x03),0));
 	}
-	if(type==TPGFEDataformat::TcRawData::STC16) {
+	if(type==TPGFEDataformat::STC16) {
 	  lastBit-=4;
-	  mult=16;
-	  mult=0;
-	  vTc.push_back(TPGFEDataformat::TcRawData(type,mult*tc+((d>>lastBit)&0x0f),0));
+	  vTc.push_back(TPGFEDataformat::TcRawData(type,((d>>lastBit)&0x0f),0));
 	}
       }
 
@@ -117,7 +110,7 @@ public:
 	}
       }
       if(doPrint) std::cout << "vTc.size() = " << vTc.size() << ", nTc = " << nTc << std::endl;
-      assert(vTc.size()==nTc+1);
+      assert(vTc.size()==nTc);
     }
       
     for(unsigned tc(0);tc<nTc;tc++) {
@@ -128,19 +121,25 @@ public:
 	d|=v[lastWord];
 	lastBit+=32;
       }
-
-      if(type==TPGFEDataformat::TcRawData::BestC) {
-	lastBit-=7;
-	vTc[tc+1]=TPGFEDataformat::TcRawData(type,vTc[tc+1].address(),(d>>lastBit)&0x7f);
-      } else if(type==TPGFEDataformat::TcRawData::STC4A) {
+      
+      if(type==TPGFEDataformat::BestC) {
 	lastBit-=7;
 	vTc[tc]=TPGFEDataformat::TcRawData(type,vTc[tc].address(),(d>>lastBit)&0x7f);
+      } else if(type==TPGFEDataformat::STC4A) {
+	lastBit-=7;
+	vTc[tc]=TPGFEDataformat::TcRawData(type,vTc[tc].address(),(d>>lastBit)&0x7f);
+      } else if(type==TPGFEDataformat::CTC4A) {
+	lastBit-=7;
+	vTc.push_back(TPGFEDataformat::TcRawData(type,tc,(d>>lastBit)&0x7f));
+      } else if(type==TPGFEDataformat::CTC4B) {
+	lastBit-=9;
+	vTc.push_back(TPGFEDataformat::TcRawData(type,tc,(d>>lastBit)&0x1ff));
       } else {
 	lastBit-=9;
 	vTc[tc]=TPGFEDataformat::TcRawData(type,vTc[tc].address(),(d>>lastBit)&0x1ff);
       }
     }
-
+    
     //if(bx==0xf && doPrint) {
     if(doPrint) {
       std::cout << "TcRawData words = " << vTc.size() << std::endl;
@@ -150,40 +149,42 @@ public:
     }
     
   }
-
+  
   static void convertTcRawDataToUnpackerOutputStreamPair(unsigned bx,
 							 const TPGFEDataformat::TcRawDataPacket &vTcrdp,
 							 TPGBEDataformat::UnpackerOutputStreamPair &up) {
-
-    const std::vector<TPGFEDataformat::TcRawData> &vTc(vTcrdp.second);
-
+    
+    const std::vector<TPGFEDataformat::TcRawData> &vTc(vTcrdp.getTcData());
+    
     bool doPrint(false);
 
     up.setZero();
 
     bool doubleUos(vTc.size()>7);
-
+    
     unsigned tc(0);
 
-    if(vTc[0].isModuleSum()) {
-      up.setModuleSum(0,bx,vTc[0].moduleSum());
-      if(doubleUos) up.setModuleSum(1,bx,vTc[0].moduleSum());
-      tc++;
-      
+    if(doPrint) vTcrdp.print();
+    
+    //if(vTc[0].isModuleSum()) {
+    if(vTcrdp.type()==TPGFEDataformat::BestC) {
+      up.setModuleSum(0,vTcrdp.bx(),vTcrdp.moduleSum());
+      if(doubleUos) up.setModuleSum(1,vTcrdp.bx(),vTcrdp.moduleSum());
+      //tc++;    
     } else {
       up.setBx(0,bx);
       if(doubleUos) up.setBx(1,bx);
     }
-
+    
     unsigned nTc(0);
     for(;tc<vTc.size();tc++) {
       uint8_t ch(vTc[tc].address());
-      if(vTc[tc].type()==TPGFEDataformat::TcRawData::STC4A) ch+= 4*nTc;
-      if(vTc[tc].type()==TPGFEDataformat::TcRawData::STC4B) ch+= 4*nTc;
-      if(vTc[tc].type()==TPGFEDataformat::TcRawData::STC16) ch+=16*nTc;
+      if(vTcrdp.type()==TPGFEDataformat::STC4A) ch+= 4*nTc;
+      if(vTcrdp.type()==TPGFEDataformat::STC4B) ch+= 4*nTc;
+      if(vTcrdp.type()==TPGFEDataformat::STC16) ch+=16*nTc;
       
       uint16_t en(vTc[tc].energy());
-      if(vTc[tc].is4E3M()) en=TPGBEDataformat::UnpackerOutputStreamPair::pack5E4MFrom4E3M(en);
+      if(vTcrdp.is4E3M()) en=TPGBEDataformat::UnpackerOutputStreamPair::pack5E4MFrom4E3M(en);
       
       if(doubleUos) up.setTriggerCell(nTc%2,nTc/2,ch,en);
       else          up.setTriggerCell(    0,nTc  ,ch,en);
@@ -199,10 +200,11 @@ public:
     assert(up.checkFormat());
     // if(!up.checkFormat()) {
     //   up.print();
-    //   for(tc=0;tc<vTc.size();tc++) {
-    // 	std::cout << "Tc: " << tc << " ";
-    // 	vTc[tc].print();
-    //   }
+    //   vTcrdp.print();
+    //   // for(tc=0;tc<vTc.size();tc++) {
+    //   // 	std::cout << "Tc: " << tc << " ";
+    //   // 	vTc[tc].print();
+    //   // }
     // }
     //assert(up[1].checkFormat());
   }
@@ -222,7 +224,7 @@ public:
     assert(false);
   }
   
-  // Chain X = elinks to TC raw data
+// Chain X = elinks to TC raw data
   unsigned run(const std::vector<TPGFEDataformat::OrderedElinkPacket> &vElink,
 	       std::vector<TPGFEDataformat::TcRawDataPacket> &vTc) {
 
@@ -236,11 +238,11 @@ public:
 
 
     // CONFIG
-    TPGFEDataformat::TcRawData::Type type[5]={TPGFEDataformat::TcRawData::BestC,
-			     TPGFEDataformat::TcRawData::BestC,
-			     TPGFEDataformat::TcRawData::STC4A,
-			     TPGFEDataformat::TcRawData::STC16,
-			     TPGFEDataformat::TcRawData::STC16};
+    TPGFEDataformat::Type type[5]={TPGFEDataformat::BestC,
+			     TPGFEDataformat::BestC,
+			     TPGFEDataformat::STC4A,
+			     TPGFEDataformat::STC16,
+			     TPGFEDataformat::STC16};
     unsigned nTc[5]={9,4,10,3,3};
 
     unsigned nElink(0);
@@ -263,13 +265,13 @@ public:
 				   vElink[nElink].data()+nArray,vTc.back());
 	  //oElink.data(),vTc.back());
 	  nArray+=_cfgPtr->numberOfElinks(lp,up);
-	    
+	  
 	  if(doPrint) {
 	    std::cout << "Loop with lp,up = " << lp << ", " << up
 		      << ", nElink = " << nElink
 		      << std::endl;
-	    for(unsigned j(0);j<vTc.back().second.size() && doPrint;j++) {
-	      vTc.back().second[j].print();
+	    for(unsigned j(0);j<vTc.back().getTcData().size() && doPrint;j++) {
+	      vTc.back().getTcData().at(j).print();
 	    }
 	    std::cout << std::endl;
 	  }
@@ -281,7 +283,7 @@ public:
     
     if(doPrint) std::cout << "nElink = " << nElink << std::endl;
     assert(nElink==vElink.size());
-
+    
     return bx;
   }
   
@@ -302,30 +304,28 @@ public:
 	if(_cfgPtr->connected(lp,up)) {
 	  assert(nUos<vTc.size());
 	  
-	  bool doubleUos(vTc[nUos].second.size()>7);
+	  bool doubleUos(vTc[nUos].getTcData().size()>7);
 
 	  unsigned tc(0);
-	  if(vTc[nUos].second[0].isModuleSum()) {
-	    unsigned modsum = vTc[nUos].second[0].moduleSum();
-	    if(vTc[nUos].second[0].type()==TPGFEDataformat::TcRawData::STC16) modsum = 1;
-	    _vUos[lp][up].setModuleSum(bx,modsum);
-	    //if(doubleUos) _vUos[lp][up][1].setModuleSum(bx,vTc[nUos][0].moduleSum());
-	    tc++;
-	    
+	  //if(vTc[nUos].getTcData()[0].isModuleSum()) {
+	  if(vTc[nUos].type()==TPGFEDataformat::BestC) {
+	    _vUos[lp][up].setModuleSum(bx,vTc[nUos].moduleSum());
+	    if(doubleUos) _vUos[lp][1].setModuleSum(bx,vTc[nUos].moduleSum());
+	    //tc++;  
 	  } else {
 	    _vUos[lp][up].setBx(bx);
-	    //if(doubleUos) _vUos[lp][up][1].setBx(bx);
+	    if(doubleUos) _vUos[lp][1].setBx(bx);
 	  }
-
+	  
 	  unsigned nTc(0);
-	  for(;tc<vTc[nUos].second.size();tc++) {
-	    uint8_t ch(vTc[nUos].second[tc].address());
-	    if(vTc[nUos].second[tc].type()==TPGFEDataformat::TcRawData::STC4A) ch+= 4*nTc;
-	    if(vTc[nUos].second[tc].type()==TPGFEDataformat::TcRawData::STC4B) ch+= 4*nTc;
-	    if(vTc[nUos].second[tc].type()==TPGFEDataformat::TcRawData::STC16) ch+=16*nTc;
+	  for(;tc<vTc[nUos].getTcData().size();tc++) {
+	    uint8_t ch(vTc[nUos].getTcData().at(tc).address());
+	    if(vTc[nUos].type()==TPGFEDataformat::STC4A) ch+= 4*nTc;
+	    if(vTc[nUos].type()==TPGFEDataformat::STC4B) ch+= 4*nTc;
+	    if(vTc[nUos].type()==TPGFEDataformat::STC16) ch+=16*nTc;
 
-	    uint16_t en(vTc[nUos].second[tc].energy());
-	    if(vTc[nUos].second[tc].is4E3M()) en=TPGBEDataformat::UnpackerOutputStreamPair::pack5E4MFrom4E3M(en);
+	    uint16_t en(vTc[nUos].getTcData().at(tc).energy());
+	    if(vTc[nUos].is4E3M()) en=TPGBEDataformat::UnpackerOutputStreamPair::pack5E4MFrom4E3M(en);
 	  
 	    if(doubleUos) {
 	      _vUos[lp][up].setTriggerCell(nTc%2,nTc/2,ch,en);

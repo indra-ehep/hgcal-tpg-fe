@@ -10,8 +10,7 @@
 #include "TPGFEConfiguration.hh"
 
 namespace TPGFEModuleEmulation{
-
-
+  
   //The following emulation work per event per module
   class HGCROCTPGEmulation{
   public:
@@ -147,15 +146,13 @@ namespace TPGFEModuleEmulation{
     ~ECONTEmulation() {}
     
     //The following emulation function performs 1) decompression, 2) calibration, 3) compression
-    void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&, TPGFEDataformat::TcRawDataPacket& );
+    void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&, TPGFEDataformat::TcModulePacket& );
     void EmulateSTC(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
     void EmulateBC(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
 
     void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
-    const TPGFEDataformat::TcRawDataPacket& getTcRawDataPacket() const {return emulOut;}
-    TPGFEDataformat::TcRawDataPacket& accessTcRawDataPacket() {return emulOut;}
-
-    //const std::vector<TPGFEDataformat::TcRawData>& getTcRawDataList() {return emulOut.second;} Never use this as it will break when changing to TcRawDataPacket; use getTcRawDataPacket().second in calling code instead to make it clear which needs changing
+    const TPGFEDataformat::TcModulePacket& getTcRawDataPacket() const {return emulOut;}
+    TPGFEDataformat::TcModulePacket& accessTcRawDataPacket() {return emulOut;}
     
     // BX here may be absorbed into TcRawDataPacket?
     static void convertToElinkData(unsigned bx, const TPGFEDataformat::TcRawDataPacket &tcrdp, uint32_t *ve);
@@ -165,15 +162,15 @@ namespace TPGFEModuleEmulation{
     void fillZeroEnergyTcRawData(unsigned bx);
     
     static void generateTcRawData(bool zero, unsigned bx,
-				  TPGFEDataformat::TcRawData::Type type,
+				  TPGFEDataformat::Type type,
 				  unsigned nTc,
 				  TPGFEDataformat::TcRawDataPacket &vtcrp);
     static void generateRandomTcRawData(unsigned bx,
-					TPGFEDataformat::TcRawData::Type type,
+					TPGFEDataformat::Type type,
 					unsigned nTc,
 					TPGFEDataformat::TcRawDataPacket &vtcrp);
     static void generateZeroEnergyTcRawData(unsigned bx,
-					    TPGFEDataformat::TcRawData::Type type,
+					    TPGFEDataformat::Type type,
 					    unsigned nTc,
 					    TPGFEDataformat::TcRawDataPacket &vtcrp);
     
@@ -291,9 +288,8 @@ namespace TPGFEModuleEmulation{
 
     uint16_t CompressEcontBc(uint32_t val, bool isldm){
       //4E+3M
-      uint32_t maxval = 0x3FFFFF ; //22 bit
       val = (isldm)?val>>1:val>>3;  
-      if(val>maxval) val = maxval;
+      if(val>0x3FFFFF) val = 0x3FFFFF; // maximum energy value is 0x3FFFFF for 22 bit register
 
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
@@ -365,22 +361,22 @@ namespace TPGFEModuleEmulation{
 
     TPGFEConfiguration::Configuration& configs;
     TPGFEConfiguration::TPGFEIdPacking pck;
-    TPGFEDataformat::TcRawDataPacket emulOut;
+    TPGFEDataformat::TcModulePacket emulOut;
   };
 
-  void ECONTEmulation::Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>& moddata, TPGFEDataformat::TcRawDataPacket& econtOut){
+  void ECONTEmulation::Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>& moddata, TPGFEDataformat::TcModulePacket& econtOut){
     Emulate(isSim, ievent, moduleId, moddata);
     econtOut=emulOut;
   }
- 
+  
   void ECONTEmulation::Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>& moddata){
     emulOut.first=moduleId;
-    emulOut.second.resize(0);
+    emulOut.second.reset();
     
-    const TPGFEDataformat::TcRawData::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
-    if(outputType==TPGFEDataformat::TcRawData::BestC)
+    const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+    if(outputType==TPGFEDataformat::BestC)
       EmulateBC(isSim, ievent, moduleId, moddata);
-    else if(outputType==TPGFEDataformat::TcRawData::STC4A or outputType==TPGFEDataformat::TcRawData::STC4B or outputType==TPGFEDataformat::TcRawData::STC16)
+    else if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B or outputType==TPGFEDataformat::STC16 or TPGFEDataformat::CTC4A or TPGFEDataformat::CTC4B)
       EmulateSTC(isSim, ievent, moduleId, moddata);
   }
   
@@ -390,9 +386,12 @@ namespace TPGFEModuleEmulation{
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
     
-    const TPGFEDataformat::TcRawData::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+    const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+
+    //zero bx and zero modulesum is set temporarily, bx to be passed from ECOND header to here, this requires a change in the ModuleTcData and 
+    emulOut.second.setTBM(outputType, 0, 0); 
     
-    if(outputType==TPGFEDataformat::TcRawData::STC4A or outputType==TPGFEDataformat::TcRawData::STC4B){
+    if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B or TPGFEDataformat::CTC4A or TPGFEDataformat::CTC4B){
       
       const std::map<std::string,std::vector<uint32_t>>& modSTClist = (pck.getDetType()==0)?configs.getSiModSTClist():configs.getSciModSTClist();
       const std::vector<uint32_t>& stclist = modSTClist.at(modName) ;
@@ -414,13 +413,14 @@ namespace TPGFEModuleEmulation{
 	  energy[itc%4] = decompressed;
 	}
 	uint8_t max_loc = uint8_t(TMath::LocMax(tclist.size(),energy)) & 0x3; //This line need to be modified to take into account the case with two TCs of same energy
-	uint16_t compressed_stc = (outputType==TPGFEDataformat::TcRawData::STC4A)? CompressEcontStc4E3M(decompressedSTC,pck.getSelTC4()) : CompressEcontStc5E4M(decompressedSTC,pck.getSelTC4());
-	emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, max_loc, compressed_stc));
+	uint16_t compressed_energy = (outputType==TPGFEDataformat::STC4A or TPGFEDataformat::CTC4A) ? CompressEcontStc4E3M(decompressedSTC,pck.getSelTC4()) : CompressEcontStc5E4M(decompressedSTC,pck.getSelTC4());
+	emulOut.second.setTcData(outputType, max_loc, compressed_energy);
 	delete []energy ;
       }//stc loop
+      
     }
     
-    if(outputType==TPGFEDataformat::TcRawData::STC16){
+    if(outputType==TPGFEDataformat::STC16){
       
       const std::map<std::string,std::vector<uint32_t>>& modSTC16list = (pck.getDetType()==0)?configs.getSiModSTC16list():configs.getSciModSTC16list();
       const std::vector<uint32_t>& stc16list = modSTC16list.at(modName) ;
@@ -440,8 +440,8 @@ namespace TPGFEModuleEmulation{
 	  energy16[itc%16] = decompressed;
 	}
 	uint8_t max_loc = uint8_t(TMath::LocMax(tclist.size(),energy16)) & 0xF; //This line need to be modified to take into account the case with two TCs of same energy
-	uint16_t compressed_stc = CompressEcontStc5E4M(decompressedSTC16,pck.getSelTC4());
-	emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, max_loc, compressed_stc));
+	uint16_t compressed_energy = CompressEcontStc5E4M(decompressedSTC16,pck.getSelTC4());
+	emulOut.second.setTcData(outputType, max_loc, compressed_energy);
 	delete []energy16 ;
       }
     }
@@ -455,7 +455,7 @@ namespace TPGFEModuleEmulation{
     const std::map<std::string,std::vector<uint32_t>>& modTClist = (pck.getDetType()==0)?configs.getSiModTClist():configs.getSciModTClist();
     const std::vector<uint32_t>& tclist = modTClist.at(modName) ;
     
-    const TPGFEDataformat::TcRawData::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+    const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
     const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
     
     uint32_t decompressedMS = 0;
@@ -472,13 +472,16 @@ namespace TPGFEModuleEmulation{
       energy[itc] = compressed_bc;
     }
     uint16_t compressed_modsum = CompressEcontModsum(decompressedMS,pck.getSelTC4());
-    emulOut.second.push_back(TPGFEDataformat::TcRawData(compressed_modsum));
+    //emulOut.second.push_back(TPGFEDataformat::TcRawData(compressed_modsum));
+    emulOut.second.setTBM(outputType, 0, compressed_modsum);     //zero bx is set temporarily, bx to be passed from ECOND header to here, this requires a change in the ModuleTcData and 
     
     uint32_t nofBCTcs = configs.getEconTPara().at(moduleId).getBCType();
     TMath::Sort(uint32_t(tclist.size()), energy, sorted_idx);
     //The following line should be modified when we have access to the BC mode defined for a given ECONT of a motherboard in the config file
-    for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++)
-      emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
+    for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++){
+      //emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
+      emulOut.second.setTcData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]);
+    }
     
     // for(uint32_t itc = 0 ; itc<uint32_t(tclist.size()) ; itc++)
     //   emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, itc, energy[itc]));
@@ -486,70 +489,76 @@ namespace TPGFEModuleEmulation{
     delete []energy ;
     delete []sorted_idx ;
   }//Emulate BC
-
+  
   void ECONTEmulation::convertToElinkData(unsigned bx, const TPGFEDataformat::TcRawDataPacket &tcrdp, uint32_t *ve) {
-
-    const std::vector<TPGFEDataformat::TcRawData> &vtc(tcrdp.second);
-
+    
+    const std::vector<TPGFEDataformat::TcRawData>& vtc = tcrdp.getTcData();
+    
     unsigned nVe(0);
     
     assert(vtc.size()>0);
-
+    
     uint64_t data(uint64_t(bx)<<60);
     unsigned last(60);
     unsigned w(0);
     
-    TPGFEDataformat::TcRawData::Type tcType(vtc[0].type());
+    TPGFEDataformat::Type tcType(tcrdp.type());
     bool bcMap(false);
     uint64_t bcBits(0);
     
-    if(tcType==TPGFEDataformat::TcRawData::BestC) {
-      assert(vtc[0].isModuleSum());
-      data|=(uint64_t(vtc[0].moduleSum())<<52);
+    if(tcType==TPGFEDataformat::BestC) {
+      //assert(vtc[0].isModuleSum());
+      data|=(uint64_t(tcrdp.moduleSum())<<52);
       last-=8;
       w++;
-
-      bcMap=(vtc.size()>8);
-
+      
+      bcMap=(vtc.size()>7); //High occupancy if nTC>=8
+      
+      ////////////// construct map for high occupancy ///////////////
       if(bcMap) {
-        for(unsigned i(1);i<vtc.size();i++) {
+        for(unsigned i(0);i<vtc.size();i++) {
           data|=uint64_t(1)<<(51-vtc[i].address());
         }
         last-=48;
       }
+      ////////////////////////////////////////////
     }
-
+    
     if(!bcMap) {
-      for(;w<vtc.size() && !bcMap;w++) {
+      for(w = 0;w<vtc.size() && !bcMap;w++) {
         if(last<32) {
           ve[nVe++]=data>>32;
           data=(data<<32);
           last+=32;
         }
         
-        if     (tcType==TPGFEDataformat::TcRawData::BestC) last-=6;
-        else if(tcType==TPGFEDataformat::TcRawData::STC4A) last-=2;
-        else if(tcType==TPGFEDataformat::TcRawData::STC4B) last-=2;
-        else if(tcType==TPGFEDataformat::TcRawData::STC16) last-=4;
+        if     (tcType==TPGFEDataformat::BestC) last-=6;
+        else if(tcType==TPGFEDataformat::STC4A) last-=2;
+        else if(tcType==TPGFEDataformat::STC4B) last-=2;
+        else if(tcType==TPGFEDataformat::CTC4A) last-=0;
+        else if(tcType==TPGFEDataformat::CTC4B) last-=0;
+        else if(tcType==TPGFEDataformat::STC16) last-=4;
         else assert(false);
-        
-        data|=(uint64_t(vtc[w].address())<<last);
+
+	if(tcType!=TPGFEDataformat::CTC4A and tcType!=TPGFEDataformat::CTC4B)
+	  data|=(uint64_t(vtc[w].address())<<last);
       }
     }
-
-    unsigned wLo(tcType==TPGFEDataformat::TcRawData::BestC?1:0);
-    for(unsigned w(wLo);w<vtc.size();w++) {
+    
+    //unsigned wLo(tcType==TPGFEDataformat::BestC?1:0);
+    for(unsigned w(0);w<vtc.size();w++) {
       if(last<32) {
-        //ve.push_back(data>>32);
         ve[nVe++]=data>>32;
         data=(data<<32);
         last+=32;
       }
 
-      if     (tcType==TPGFEDataformat::TcRawData::BestC) last-=7;
-      else if(tcType==TPGFEDataformat::TcRawData::STC4A) last-=7;
-      else if(tcType==TPGFEDataformat::TcRawData::STC4B) last-=9;
-      else if(tcType==TPGFEDataformat::TcRawData::STC16) last-=9;
+      if     (tcType==TPGFEDataformat::BestC) last-=7;
+      else if(tcType==TPGFEDataformat::STC4A) last-=7;
+      else if(tcType==TPGFEDataformat::STC4B) last-=9;
+      else if(tcType==TPGFEDataformat::CTC4A) last-=7;
+      else if(tcType==TPGFEDataformat::CTC4B) last-=9;
+      else if(tcType==TPGFEDataformat::STC16) last-=9;
       else assert(false);
 
       data|=(uint64_t(vtc[w].energy())<<last);
@@ -566,7 +575,7 @@ namespace TPGFEModuleEmulation{
   }
   
   void ECONTEmulation::getElinkData(unsigned bx, uint32_t *ptr) const {
-    convertToElinkData(bx,emulOut,ptr);
+    convertToElinkData(bx,emulOut.second,ptr);
   }
 
   void ECONTEmulation::fillRandomTcRawData(unsigned bx) {
@@ -580,48 +589,50 @@ namespace TPGFEModuleEmulation{
   }
 
   void ECONTEmulation::generateRandomTcRawData(unsigned bx,
-					       TPGFEDataformat::TcRawData::Type type,
+					       TPGFEDataformat::Type type,
 					       unsigned nTc,
 					       TPGFEDataformat::TcRawDataPacket &vtcrp) {
     generateTcRawData(false,bx,type,nTc,vtcrp);
   }
   
   void ECONTEmulation::generateZeroEnergyTcRawData(unsigned bx,
-						   TPGFEDataformat::TcRawData::Type type,
+						   TPGFEDataformat::Type type,
 						   unsigned nTc,
 						   TPGFEDataformat::TcRawDataPacket &vtcrp) {
     generateTcRawData(true,bx,type,nTc,vtcrp);
   }
   
   void ECONTEmulation::generateTcRawData(bool zero, unsigned bx,
-					 TPGFEDataformat::TcRawData::Type type,
+					 TPGFEDataformat::Type type,
 					 unsigned nTc,
 					 TPGFEDataformat::TcRawDataPacket &vtcrp) {
     
-    std::vector<TPGFEDataformat::TcRawData> &vtc(vtcrp.second);
+    //std::vector<TPGFEDataformat::TcRawData> &vtc(vtcrp.second);
+    std::vector<TPGFEDataformat::TcRawData> &vtc(vtcrp.setTcData());
   
-    if(type==TPGFEDataformat::TcRawData::BestC) {
-      vtc.resize(nTc+1);
-      vtc[0].setModuleSum(zero?0:rand()&0xff);
+    if(type==TPGFEDataformat::BestC) {
+      // vtc.resize(nTc+1);
+      // vtc[0].setModuleSum(zero?0:rand()&0xff);
     
       unsigned step(48/nTc);
-      for(unsigned i(1);i<vtc.size();i++) {
+      //for(unsigned i(1);i<vtc.size();i++) {
+      for(unsigned i(0);i<vtc.size();i++) {
 	vtc[i].setTriggerCell(type,step*(i-1)+(rand()%step),zero?0:rand()&0x7f);
       }
     
-    } else if(type==TPGFEDataformat::TcRawData::STC4A) {
+    } else if(type==TPGFEDataformat::STC4A) {
       vtc.resize(nTc);
       for(unsigned i(0);i<vtc.size();i++) {
 	vtc[i].setTriggerCell(type,rand()&0x3,zero?0:rand()&0x7f);
       }
     
-    } else if(type==TPGFEDataformat::TcRawData::STC4B) {
+    } else if(type==TPGFEDataformat::STC4B) {
       vtc.resize(nTc);
       for(unsigned i(0);i<vtc.size();i++) {
 	vtc[i].setTriggerCell(type,rand()&0x3,zero?0:rand()&0x1ff);
       }
     
-    } else if(type==TPGFEDataformat::TcRawData::STC16) {
+    } else if(type==TPGFEDataformat::STC16) {
       vtc.resize(nTc);
       for(unsigned i(0);i<vtc.size();i++) {
 	vtc[i].setTriggerCell(type,rand()&0xf,zero?0:rand()&0x1ff);
