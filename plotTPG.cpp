@@ -209,7 +209,7 @@ int main(int argc, char** argv){
   uint64_t total_regular_events = 0;
   
   //const int maxEvents = 359132; // problem with run 1722603879
-  const int maxEvents = 0;
+  const int maxEvents = 2000000;
   const int nofEcontT = 3;
   const int noflpGBT = 2;
   BCEventData elinkData[noflpGBT][nofEcontT];
@@ -240,54 +240,54 @@ int main(int argc, char** argv){
       nofCBxErrors[ilp][iecon] = 0 ;
     }
   }
-  TH2F *bx_lp0_BCvsSTC4A = new TH2F("bx_lp0_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
-  TH2F *bx_lp0_BCvsSTC16 = new TH2F("bx_lp0_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
-  TH2F *bx_lp0_STC4AvsSTC16 = new TH2F("bx_lp0_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
-  TH2F *bx_lp0_IdmodvsBC = new TH2F("bx_lp0_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
-  TH2F *bx_lp0_IdmodvsSTC4A = new TH2F("bx_lp0_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
-  TH2F *bx_lp0_IdmodvsSTC16 = new TH2F("bx_lp0_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
+  TH2D *bx_lp0_BCvsSTC4A = new TH2D("bx_lp0_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
+  TH2D *bx_lp0_BCvsSTC16 = new TH2D("bx_lp0_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
+  TH2D *bx_lp0_STC4AvsSTC16 = new TH2D("bx_lp0_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
+  TH2D *bx_lp0_IdmodvsBC = new TH2D("bx_lp0_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
+  TH2D *bx_lp0_IdmodvsSTC4A = new TH2D("bx_lp0_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
+  TH2D *bx_lp0_IdmodvsSTC16 = new TH2D("bx_lp0_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
 
-  TH2F *bx_lp1_BCvsSTC4A = new TH2F("bx_lp1_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
-  TH2F *bx_lp1_BCvsSTC16 = new TH2F("bx_lp1_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
-  TH2F *bx_lp1_STC4AvsSTC16 = new TH2F("bx_lp1_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
-  TH2F *bx_lp1_IdmodvsBC = new TH2F("bx_lp1_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
-  TH2F *bx_lp1_IdmodvsSTC4A = new TH2F("bx_lp1_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
-  TH2F *bx_lp1_IdmodvsSTC16 = new TH2F("bx_lp1_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
+  TH2D *bx_lp1_BCvsSTC4A = new TH2D("bx_lp1_BCvsSTC4A","BC6 vs STC4A",20,0,20, 20,0,20);
+  TH2D *bx_lp1_BCvsSTC16 = new TH2D("bx_lp1_BCvsSTC16","BC6 vs STC16",20,0,20, 20,0,20);
+  TH2D *bx_lp1_STC4AvsSTC16 = new TH2D("bx_lp1_STC4AvsSTC16","STC4A vs STC16",20,0,20, 20,0,20);
+  TH2D *bx_lp1_IdmodvsBC = new TH2D("bx_lp1_IdmodvsBC","BxIdmod8 vs BC6",20,0,20, 20,0,20);
+  TH2D *bx_lp1_IdmodvsSTC4A = new TH2D("bx_lp1_IdmodvsSTC4A","BxIdmod8 vs STC4A",20,0,20, 20,0,20);
+  TH2D *bx_lp1_IdmodvsSTC16 = new TH2D("bx_lp1_IdmodvsSTC16","BxIdmod8 vs STC16",20,0,20, 20,0,20);
   
-  TH1F *bxen_lp0BC6 = new TH1F("bxen_lp0BC6","bxen_lp0BC6 (4E+3M)",7,-3,4);
-  TH1F *bxen_lp0STC4 = new TH1F("bxen_lp0STC4","bxen_lp0STC4 (4E+3M)",7,-3,4);
-  TH1F *bxen_lp0STC16 = new TH1F("bxen_lp0STC16","bxen_lp0STC16 (5E+4M)",7,-3,4);
-  TH1F *bxen_lp1BC6 = new TH1F("bxen_lp1BC6","bxen_lp1BC6 (4E+3M)",7,-3,4);
-  TH1F *bxen_lp1STC4 = new TH1F("bxen_lp1STC4","bxen_lp1STC4 (4E+3M)",7,-3,4);
-  TH1F *bxen_lp1STC16 = new TH1F("bxen_lp1STC16","bxen_lp1STC16 (5E+4M)",7,-3,4);
+  TH1D *bxen_lp0BC6 = new TH1D("bxen_lp0BC6","bxen_lp0BC6 (4E+3M)",7,-3,4);
+  TH1D *bxen_lp0STC4 = new TH1D("bxen_lp0STC4","bxen_lp0STC4 (4E+3M)",7,-3,4);
+  TH1D *bxen_lp0STC16 = new TH1D("bxen_lp0STC16","bxen_lp0STC16 (5E+4M)",7,-3,4);
+  TH1D *bxen_lp1BC6 = new TH1D("bxen_lp1BC6","bxen_lp1BC6 (4E+3M)",7,-3,4);
+  TH1D *bxen_lp1STC4 = new TH1D("bxen_lp1STC4","bxen_lp1STC4 (4E+3M)",7,-3,4);
+  TH1D *bxen_lp1STC16 = new TH1D("bxen_lp1STC16","bxen_lp1STC16 (5E+4M)",7,-3,4);
   
-  TH2F *bxen_lp0_el2_vs_el3STC16 = new TH2F("bxen_lp0_el2_vs_el3STC16","Elink:Total energy elink2 vs elink3(assuming STC16) for lpGBT0",4000,0,4000, 4000,0,4000);
-  TH2F *bxen_lp0_el2_vs_el3CTC4A = new TH2F("bxen_lp0_el2_vs_el3CTC4A","Elink:Total energy elink2 vs elink3(assuming CTC4A) for lpGBT0",4000,0,4000, 4000,0,4000);
+  TH2D *bxen_lp0_el2_vs_el3STC16 = new TH2D("bxen_lp0_el2_vs_el3STC16","Elink:Total energy elink2 vs elink3(assuming STC16) for lpGBT0",1000,0,7000, 1000,0,7000);
+  TH2D *bxen_lp0_el2_vs_el3CTC4A = new TH2D("bxen_lp0_el2_vs_el3CTC4A","Elink:Total energy elink2 vs elink3(assuming CTC4A) for lpGBT0",1000,0,7000, 1000,0,7000);
   
-  TH1F *en_unpacked_lp0BC6 = new TH1F("en_unpacked_lp0BC6","en_unpacked_lp0BC6",1000,0,1000);
-  TH1F *en_unpacked_lp0STC4 = new TH1F("en_unpacked_lp0STC4","en_unpacked_lp0STC4",1000,0,1000);
-  TH1F *en_unpacked_lp0STC16 = new TH1F("en_unpacked_lp0STC16","en_unpacked_lp0STC16",1000,0,1000);  
-  TH1F *en_unpacked_lp1BC6 = new TH1F("en_unpacked_lp1BC6","en_unpacked_lp1BC6",1000,0,1000);
-  TH1F *en_unpacked_lp1STC4 = new TH1F("en_unpacked_lp1STC4","en_unpacked_lp1STC4",1000,0,1000);
-  TH1F *en_unpacked_lp1STC16 = new TH1F("en_unpacked_lp1STC16","en_unpacked_lp1STC16",1000,0,1000);
+  TH1D *en_unpacked_lp0BC6 = new TH1D("en_unpacked_lp0BC6","en_unpacked_lp0BC6",1000,0,1000);
+  TH1D *en_unpacked_lp0STC4 = new TH1D("en_unpacked_lp0STC4","en_unpacked_lp0STC4",1000,0,1000);
+  TH1D *en_unpacked_lp0STC16 = new TH1D("en_unpacked_lp0STC16","en_unpacked_lp0STC16",1000,0,1000);  
+  TH1D *en_unpacked_lp1BC6 = new TH1D("en_unpacked_lp1BC6","en_unpacked_lp1BC6",1000,0,1000);
+  TH1D *en_unpacked_lp1STC4 = new TH1D("en_unpacked_lp1STC4","en_unpacked_lp1STC4",1000,0,1000);
+  TH1D *en_unpacked_lp1STC16 = new TH1D("en_unpacked_lp1STC16","en_unpacked_lp1STC16",1000,0,1000);
   
-  TH2F *bx_BC6_lp0vs1 = new TH2F("bx_BC6_lp0vs1","BC6 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
-  TH2F *bx_STC4_lp0vs1 = new TH2F("bx_STC4_lp0vs1","STC4 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
-  TH2F *bx_STC16_lp0vs1 = new TH2F("bx_STC16_lp0vs1","STC16 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
+  TH2D *bx_BC6_lp0vs1 = new TH2D("bx_BC6_lp0vs1","BC6 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
+  TH2D *bx_STC4_lp0vs1 = new TH2D("bx_STC4_lp0vs1","STC4 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
+  TH2D *bx_STC16_lp0vs1 = new TH2D("bx_STC16_lp0vs1","STC16 lpGBT0 vs lpGBT1",20,0,20, 20,0,20);
 
-  TH2F *bx_lp0_IdvsBC6 = new TH2F("bx_lp0_IdvsBC6","bx_lp0_IdvsBC6",3600,0,3600, 7,-3,4);
-  TH2F *bx_lp0_IdvsSTC4 = new TH2F("bx_lp0_IdvsSTC4","bx_lp0_IdvsSTC4",3600,0,3600, 7,-3,4);
-  TH2F *bx_lp0_IdvsSTC16 = new TH2F("bx_lp0_IdvsSTC16","bx_lp0_IdvsSTC16",3600,0,3600, 7,-3,4);
-  TH2F *bx_lp1_IdvsBC6 = new TH2F("bx_lp1_IdvsBC6","bx_lp1_IdvsBC6",3600,0,3600, 7,-3,4);
-  TH2F *bx_lp1_IdvsSTC4 = new TH2F("bx_lp1_IdvsSTC4","bx_lp1_IdvsSTC4",3600,0,3600, 7,-3,4);
-  TH2F *bx_lp1_IdvsSTC16 = new TH2F("bx_lp1_IdvsSTC16","bx_lp1_IdvsSTC16",3600,0,3600, 7,-3,4);
+  TH2D *bx_lp0_IdvsBC6 = new TH2D("bx_lp0_IdvsBC6","bx_lp0_IdvsBC6",3600,0,3600, 7,-3,4);
+  TH2D *bx_lp0_IdvsSTC4 = new TH2D("bx_lp0_IdvsSTC4","bx_lp0_IdvsSTC4",3600,0,3600, 7,-3,4);
+  TH2D *bx_lp0_IdvsSTC16 = new TH2D("bx_lp0_IdvsSTC16","bx_lp0_IdvsSTC16",3600,0,3600, 7,-3,4);
+  TH2D *bx_lp1_IdvsBC6 = new TH2D("bx_lp1_IdvsBC6","bx_lp1_IdvsBC6",3600,0,3600, 7,-3,4);
+  TH2D *bx_lp1_IdvsSTC4 = new TH2D("bx_lp1_IdvsSTC4","bx_lp1_IdvsSTC4",3600,0,3600, 7,-3,4);
+  TH2D *bx_lp1_IdvsSTC16 = new TH2D("bx_lp1_IdvsSTC16","bx_lp1_IdvsSTC16",3600,0,3600, 7,-3,4);
 
-  TH2F *lp0_BC6vsBx = new TH2F("lp0_BC6vsBx","lpGBT0 BC6 Energy vs Bx",1000,0,1000, 7,-3,4);
-  TH2F *lp0_STC4vsBx = new TH2F("lp0_STC4vsBx","lpGBT0 STC4 Energy vs Bx",1000,0,1000, 7,-3,4);
-  TH2F *lp0_STC16vsBx = new TH2F("lp0_STC16vsBx","lpGBT0 STC16 Energy vs Bx",1000,0,1000, 7,-3,4);
-  TH2F *lp1_BC6vsBx = new TH2F("lp1_BC6vsBx","lpGBT1 BC6 Energy vs Bx",1000,0,1000, 7,-3,4);
-  TH2F *lp1_STC4vsBx = new TH2F("lp1_STC4vsBx","lpGBT1 STC4 Energy vs Bx",1000,0,1000, 7,-3,4);
-  TH2F *lp1_STC16vsBx = new TH2F("lp1_STC16vsBx","lpGBT1 STC16 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2D *lp0_BC6vsBx = new TH2D("lp0_BC6vsBx","lpGBT0 BC6 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2D *lp0_STC4vsBx = new TH2D("lp0_STC4vsBx","lpGBT0 STC4 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2D *lp0_STC16vsBx = new TH2D("lp0_STC16vsBx","lpGBT0 STC16 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2D *lp1_BC6vsBx = new TH2D("lp1_BC6vsBx","lpGBT1 BC6 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2D *lp1_STC4vsBx = new TH2D("lp1_STC4vsBx","lpGBT1 STC4 Energy vs Bx",1000,0,1000, 7,-3,4);
+  TH2D *lp1_STC16vsBx = new TH2D("lp1_STC16vsBx","lpGBT1 STC16 Energy vs Bx",1000,0,1000, 7,-3,4);
   
   int ievent = 0;
   //Use the fileReader to read the records
@@ -456,7 +456,7 @@ int main(int argc, char** argv){
       }
       
       //if(nEvents==1) continue;
-      //if(ievent>(maxEvents-1)) continue;
+      if(ievent>(maxEvents-1)) break ; //continue;
       //if(nEvents<=maxShowEvent)
       //cout<<"iEvent: " << ievent << endl;
       
@@ -640,8 +640,8 @@ int main(int argc, char** argv){
 	    elinkData[ilp][1].econt_channel[ib][itc] = uint32_t(up2.channelNumber(0,itc));
 	    if(ilp==0){
 	      bxen_lp0STC4->SetBinContent(ib+1,bxen_lp0STC4->GetBinContent(ib+1)+ (vTc2[itc+1].energy()));
-	      totuosunpkSTC4AEn += up2.channelEnergy(0,itc);
-	      totuosunpkSTC4AEn += up2.channelEnergy(1,itc);
+	      totuosunpkSTC4AEn += up2.unpackedChannelEnergy(0,itc);
+	      totuosunpkSTC4AEn += up2.unpackedChannelEnergy(1,itc);
 	    }else{
 	      bxen_lp1STC4->SetBinContent(ib+1,bxen_lp1STC4->GetBinContent(ib+1)+ (vTc2[itc+1].energy()));
 	    }
@@ -654,8 +654,8 @@ int main(int argc, char** argv){
 	    elinkData[ilp][2].econt_channel[ib][itc] = uint32_t(up3.channelNumber(0,itc));
 	    if(ilp==0){
 	      bxen_lp0STC16->SetBinContent(ib+1,bxen_lp0STC16->GetBinContent(ib+1)+(vTc3[itc+1].energy()));
-	      totuosunpkCTC4AEn += up3.channelEnergy(0,itc);
-	      totuosunpkCTC4AEn += up3.channelEnergy(1,itc);
+	      totuosunpkCTC4AEn += up3.unpackedChannelEnergy(0,itc);
+	      totuosunpkCTC4AEn += up3.unpackedChannelEnergy(1,itc);
 	    }else{
 	      bxen_lp1STC16->SetBinContent(ib+1,bxen_lp1STC16->GetBinContent(ib+1)+(vTc3[itc+1].energy()));
 	    }
@@ -668,13 +668,17 @@ int main(int argc, char** argv){
 	    elinkData[ilp][2].econt_channel[ib][itc] = uint32_t(up4.channelNumber(0,itc));
 	    if(ilp==0){
 	      bxen_lp0STC16->SetBinContent(ib+1,bxen_lp0STC16->GetBinContent(ib+1)+(vTc4[itc+1].energy()));
-	      totuosunpkSTC16En += up4.channelEnergy(0,itc);
-	      totuosunpkSTC16En += up4.channelEnergy(1,itc);
+	      totuosunpkSTC16En += up4.unpackedChannelEnergy(0,itc);
+	      totuosunpkSTC16En += up4.unpackedChannelEnergy(1,itc);
 	    }else{
 	      bxen_lp1STC16->SetBinContent(ib+1,bxen_lp1STC16->GetBinContent(ib+1)+(vTc4[itc+1].energy()));
 	    }
 	  }//itc
 
+	  totuosunpkSTC4AEn = double(totuosunpkSTC4AEn/nTC[1]);
+	  totuosunpkCTC4AEn = double(totuosunpkCTC4AEn/nTC[2]);
+	  totuosunpkSTC16En = double(totuosunpkSTC16En/12);
+	  
 	  bxen_lp0_el2_vs_el3CTC4A->Fill(totuosunpkSTC4AEn, totuosunpkCTC4AEn);
 	  bxen_lp0_el2_vs_el3STC16->Fill(totuosunpkSTC4AEn, totuosunpkSTC16En);
 	  
@@ -685,6 +689,7 @@ int main(int argc, char** argv){
 	  }
 	}//ib
       }//lpGBT loop
+
       
       // if(nEvents<=maxShowEvent) {
       // 	elinkData[0][0].print(nTC[0], "TC", "elinks");
@@ -703,211 +708,211 @@ int main(int argc, char** argv){
       // 	      <<endl;
       // /////////////////////////////////////////////////////////////////
       
-      //////////// Print unpacker output for ch 1 /////////////////////
-      iblock = 3;
-      int unpkBgnOffset = 0;
-      int unpkIndx = 0;
-      uint32_t unpackedWord[2][3][7][8]; //2:lpGBT, 3:ECON-T, 7:bxs,8:words
-      uint32_t iunpkw = 0;
-      ibx = 0;
-      for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
-	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-	uint32_t col3 = p64[iw] & 0xFFFF ;
-	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
-	if(unpkIndx>=unpkBgnOffset){
-	  unpackedWord[0][0][ibx][iunpkw] = col3; //BC6
-	  unpackedWord[0][1][ibx][iunpkw] = col2; //STC4A
-	  unpackedWord[0][2][ibx][iunpkw] = col1; //STC16
-	  iunpkw++;
-	}
-	if(nEvents<=maxShowEvent)
-	  cout<<"iloc: "<< iw
-	      << std::hex
-	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
-	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
-	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
-	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
-	      << std::dec << std::setfill(' ')
-	      <<endl;
-	
-	unpkIndx++;
-	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
-      }
-      /////////////////////////////////////////////////////////////////
-
-      //////////// Print unpacker output for ch 2 /////////////////////
-      iblock = 4;
-      unpkBgnOffset = 0;
-      unpkIndx = 0;
-      iunpkw = 0;
-      ibx = 0;
-      for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
-	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-	uint32_t col3 = p64[iw] & 0xFFFF ;
-	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
-	if(unpkIndx>=unpkBgnOffset){
-	  unpackedWord[1][0][ibx][iunpkw] = col3; //BC6
-	  unpackedWord[1][1][ibx][iunpkw] = col2; //STC4A
-	  unpackedWord[1][2][ibx][iunpkw] = col1; //STC16
-	  iunpkw++;
-	}
-	if(nEvents<=maxShowEvent)
-	  cout<<"iloc: "<< iw
-	      << std::hex
-	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
-	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
-	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
-	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
-	      << std::dec << std::setfill(' ')
-	      <<endl;
-	
-	unpkIndx++;
-	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
-      }
-      /////////////////////////////////////////////////////////////////
-      // for(int ilp=0;ilp<2;ilp++){
-      // 	for(int iecon=0;iecon<3;iecon++){
-      // 	  for(int ib=0;ib<7;ib++){
-      // 	    for(int iupw=0;iupw<8;iupw++){ //BC6 and STC4A
-      // 	      if(nEvents<=maxShowEvent)
-      // 		cout<<"iloc: ("<<ilp<<"," << iecon << "," << ib << "," << iupw << ")"
-      // 		    << std::hex
-      // 		    <<", unpackedWord: 0x" << std::setfill('0') << setw(4) << unpackedWord[ilp][iecon][ib][iupw] <<", "
-      // 		    << std::dec << std::setfill(' ')
-      // 		    <<endl;
-      // 	    }
-      // 	  }
+      // //////////// Print unpacker output for ch 1 /////////////////////
+      // iblock = 3;
+      // int unpkBgnOffset = 0;
+      // int unpkIndx = 0;
+      // uint32_t unpackedWord[2][3][7][8]; //2:lpGBT, 3:ECON-T, 7:bxs,8:words
+      // uint32_t iunpkw = 0;
+      // ibx = 0;
+      // for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
+      // 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+      // 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+      // 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+      // 	uint32_t col3 = p64[iw] & 0xFFFF ;
+      // 	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
+      // 	if(unpkIndx>=unpkBgnOffset){
+      // 	  unpackedWord[0][0][ibx][iunpkw] = col3; //BC6
+      // 	  unpackedWord[0][1][ibx][iunpkw] = col2; //STC4A
+      // 	  unpackedWord[0][2][ibx][iunpkw] = col1; //STC16
+      // 	  iunpkw++;
       // 	}
-      // }
-      // if(nEvents<=maxShowEvent) {
-      // 	for(int ilp=0;ilp<2;ilp++){
-      // 	  cout<<"ilp: "<<ilp<< ", Diff01 "<<econt01Diff[ilp]<<endl;
-      // 	  cout<<"ilp: "<<ilp<< ", Diff12 "<<econt12Diff[ilp]<<endl;
-      // 	  cout<<"ilp: "<<ilp<< ", Diff20 "<<econt20Diff[ilp]<<endl;
-      // 	}
-      // }
-      uint32_t modsum = 0xFF;
-      uint32_t unpkBx = 0xF;
-      uint32_t isValid = 0;
-      uint32_t energy, channel;
-      bool isHighBC6 = false;
-      bool isHighSTC4 = false;
-      uint32_t highbc6_En = 160;
-      uint32_t highstc4_En = 170;
-      for(int ilp=0;ilp<2;ilp++){
-	for(int iecon=0;iecon<3;iecon++){
-	for(int ib=0;ib<7;ib++){
-	    for(int iupw=0;iupw<8;iupw++){ //BC6 and STC4A
-	      //for(int iupw=0;iupw<4;iupw++){ //STC16
-	      //if(iupw > (nTC[iecon]+1)) continue;
-	      isValid = (unpackedWord[ilp][iecon][ib][iupw] >> 15) & 0x1;
-	      if(iupw==0){
-		modsum = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0xFF ;
-		unpkBx = unpackedWord[ilp][iecon][ib][iupw] & 0xF ;
-		if(isValid){
-		  unpackerData[ilp][iecon].econt_bxid[ib] = unpkBx;
-		  unpackerData[ilp][iecon].econt_modsum[ib] = modsum;
-		}
-	      }else{
-		energy = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0x1FF ;
-		channel = unpackedWord[ilp][iecon][ib][iupw]  & 0x3F ;
-		if(isValid){
-		  unpackerData[ilp][iecon].econt_energy[ib][iupw-1] = energy;
-		  unpackerData[ilp][iecon].econt_channel[ib][iupw-1] = channel;
-		  if(ilp==0){
-		    if(iecon==0){
-		      en_unpacked_lp0BC6->Fill(energy);
-		      lp0_BC6vsBx->Fill(energy,ib-3);
-		      if(energy>highbc6_En and (ib-3)==1) isHighBC6 = true;
-		    }
-		    if(iecon==1) {
-		      en_unpacked_lp0STC4->Fill(energy);
-		      lp0_STC4vsBx->Fill(energy,ib-3);
-		      if(energy>highstc4_En and (ib-3)==-1) isHighSTC4 = true;
-		    }
-		    if(iecon==2) {
-		      en_unpacked_lp0STC16->Fill(energy);
-		      lp0_STC16vsBx->Fill(energy,ib-3);
-		    }
-		  }
-		  if(ilp==1){
-		    if(iecon==0) {
-		      en_unpacked_lp1BC6->Fill(energy);
-		      lp1_BC6vsBx->Fill(energy,ib-3);
-		    }
-		    if(iecon==1) {
-		      en_unpacked_lp1STC4->Fill(energy);
-		      lp1_STC4vsBx->Fill(energy,ib-3);
-		    }
-		    if(iecon==2) {
-		      en_unpacked_lp1STC16->Fill(energy);
-		      lp1_STC16vsBx->Fill(energy,ib-3);
-		    }
-		  }
-		}
-	      }
-	      if(nEvents<=maxShowEvent)
-		if(iupw==0)
-		  cout<<"iupw: "<< iupw
-		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
-		      <<", bx: " << unpkBx <<", modsum: "<<modsum << ", isValid: "<< isValid << endl;
-		else
-		  cout<<"iupw: "<< iupw
-		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
-		      <<", energy: " << energy <<", channel: "<<channel << ", isValid: "<< isValid << endl;
-	    }//itc
-	  }//ib
-	}//iecon
-      }//ilp
-      if(isHighSTC4 and isHighBC6) cout << "Both STC and BC high (" << highstc4_En << ", " << highbc6_En <<") in lpGBT0 for Hgcal10gLinkReceiver::SlinkBoe::eventId(): " << eventId << endl;
-
-      // if(nEvents<=maxShowEvent) {
-      // 	unpackerData[0][0].print(nTC[0],"TC","unpacked");
-      // 	unpackerData[0][1].print(nTC[1],"STC4A","unpacked");
-      // 	unpackerData[0][2].print(nTC[2],"STC16","unpacked");
+      // 	if(nEvents<=maxShowEvent)
+      // 	  cout<<"iloc: "<< iw
+      // 	      << std::hex
+      // 	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
+      // 	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
+      // 	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
+      // 	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
+      // 	      << std::dec << std::setfill(' ')
+      // 	      <<endl;
+	
+      // 	unpkIndx++;
+      // 	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
       // }
       // /////////////////////////////////////////////////////////////////
-      // for(int ilp=0;ilp<noflpGBT;ilp++){
-      // 	for(int iecon=0;iecon<nofEcontT;iecon++){
-      // 	  for(int ib=0;ib<7;ib++){
-      // 	    for(int iupw=0;iupw<=nTC[iecon];iupw++){ //BC6 and STC4A
+
+      // //////////// Print unpacker output for ch 2 /////////////////////
+      // iblock = 4;
+      // unpkBgnOffset = 0;
+      // unpkIndx = 0;
+      // iunpkw = 0;
+      // ibx = 0;
+      // for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
+      // 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+      // 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+      // 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+      // 	uint32_t col3 = p64[iw] & 0xFFFF ;
+      // 	if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
+      // 	if(unpkIndx>=unpkBgnOffset){
+      // 	  unpackedWord[1][0][ibx][iunpkw] = col3; //BC6
+      // 	  unpackedWord[1][1][ibx][iunpkw] = col2; //STC4A
+      // 	  unpackedWord[1][2][ibx][iunpkw] = col1; //STC16
+      // 	  iunpkw++;
+      // 	}
+      // 	if(nEvents<=maxShowEvent)
+      // 	  cout<<"iloc: "<< iw
+      // 	      << std::hex
+      // 	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
+      // 	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
+      // 	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
+      // 	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
+      // 	      << std::dec << std::setfill(' ')
+      // 	      <<endl;
+	
+      // 	unpkIndx++;
+      // 	if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
+      // }
+      // /////////////////////////////////////////////////////////////////
+      // // for(int ilp=0;ilp<2;ilp++){
+      // // 	for(int iecon=0;iecon<3;iecon++){
+      // // 	  for(int ib=0;ib<7;ib++){
+      // // 	    for(int iupw=0;iupw<8;iupw++){ //BC6 and STC4A
+      // // 	      if(nEvents<=maxShowEvent)
+      // // 		cout<<"iloc: ("<<ilp<<"," << iecon << "," << ib << "," << iupw << ")"
+      // // 		    << std::hex
+      // // 		    <<", unpackedWord: 0x" << std::setfill('0') << setw(4) << unpackedWord[ilp][iecon][ib][iupw] <<", "
+      // // 		    << std::dec << std::setfill(' ')
+      // // 		    <<endl;
+      // // 	    }
+      // // 	  }
+      // // 	}
+      // // }
+      // // if(nEvents<=maxShowEvent) {
+      // // 	for(int ilp=0;ilp<2;ilp++){
+      // // 	  cout<<"ilp: "<<ilp<< ", Diff01 "<<econt01Diff[ilp]<<endl;
+      // // 	  cout<<"ilp: "<<ilp<< ", Diff12 "<<econt12Diff[ilp]<<endl;
+      // // 	  cout<<"ilp: "<<ilp<< ", Diff20 "<<econt20Diff[ilp]<<endl;
+      // // 	}
+      // // }
+      // uint32_t modsum = 0xFF;
+      // uint32_t unpkBx = 0xF;
+      // uint32_t isValid = 0;
+      // uint32_t energy, channel;
+      // bool isHighBC6 = false;
+      // bool isHighSTC4 = false;
+      // uint32_t highbc6_En = 160;
+      // uint32_t highstc4_En = 170;
+      // for(int ilp=0;ilp<2;ilp++){
+      // 	for(int iecon=0;iecon<3;iecon++){
+      // 	for(int ib=0;ib<7;ib++){
+      // 	    for(int iupw=0;iupw<8;iupw++){ //BC6 and STC4A
+      // 	      //for(int iupw=0;iupw<4;iupw++){ //STC16
+      // 	      //if(iupw > (nTC[iecon]+1)) continue;
+      // 	      isValid = (unpackedWord[ilp][iecon][ib][iupw] >> 15) & 0x1;
       // 	      if(iupw==0){
-      // 		if(elinkData[ilp][iecon].econt_bxid[ib] != unpackerData[ilp][iecon].econt_bxid[ib]) nofBxErrors[ilp][iecon]++;
-      // 		if(elinkData[ilp][iecon].econt_modsum[ib] != unpackerData[ilp][iecon].econt_modsum[ib]) nofMSErrors[ilp][iecon]++;
+      // 		modsum = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0xFF ;
+      // 		unpkBx = unpackedWord[ilp][iecon][ib][iupw] & 0xF ;
+      // 		if(isValid){
+      // 		  unpackerData[ilp][iecon].econt_bxid[ib] = unpkBx;
+      // 		  unpackerData[ilp][iecon].econt_modsum[ib] = modsum;
+      // 		}
       // 	      }else{
-      // 		if(elinkData[ilp][iecon].econt_energy[ib][iupw-1] != unpackerData[ilp][iecon].econt_energy[ib][iupw-1]) nofEnErrors[ilp][iecon]++;
-      // 		if(elinkData[ilp][iecon].econt_channel[ib][iupw-1] != unpackerData[ilp][iecon].econt_channel[ib][iupw-1]) nofChErrors[ilp][iecon]++;
+      // 		energy = (unpackedWord[ilp][iecon][ib][iupw] >> 6) & 0x1FF ;
+      // 		channel = unpackedWord[ilp][iecon][ib][iupw]  & 0x3F ;
+      // 		if(isValid){
+      // 		  unpackerData[ilp][iecon].econt_energy[ib][iupw-1] = energy;
+      // 		  unpackerData[ilp][iecon].econt_channel[ib][iupw-1] = channel;
+      // 		  if(ilp==0){
+      // 		    if(iecon==0){
+      // 		      en_unpacked_lp0BC6->Fill(energy);
+      // 		      lp0_BC6vsBx->Fill(energy,ib-3);
+      // 		      if(energy>highbc6_En and (ib-3)==1) isHighBC6 = true;
+      // 		    }
+      // 		    if(iecon==1) {
+      // 		      en_unpacked_lp0STC4->Fill(energy);
+      // 		      lp0_STC4vsBx->Fill(energy,ib-3);
+      // 		      if(energy>highstc4_En and (ib-3)==-1) isHighSTC4 = true;
+      // 		    }
+      // 		    if(iecon==2) {
+      // 		      en_unpacked_lp0STC16->Fill(energy);
+      // 		      lp0_STC16vsBx->Fill(energy,ib-3);
+      // 		    }
+      // 		  }
+      // 		  if(ilp==1){
+      // 		    if(iecon==0) {
+      // 		      en_unpacked_lp1BC6->Fill(energy);
+      // 		      lp1_BC6vsBx->Fill(energy,ib-3);
+      // 		    }
+      // 		    if(iecon==1) {
+      // 		      en_unpacked_lp1STC4->Fill(energy);
+      // 		      lp1_STC4vsBx->Fill(energy,ib-3);
+      // 		    }
+      // 		    if(iecon==2) {
+      // 		      en_unpacked_lp1STC16->Fill(energy);
+      // 		      lp1_STC16vsBx->Fill(energy,ib-3);
+      // 		    }
+      // 		  }
+      // 		}
       // 	      }
+      // 	      if(nEvents<=maxShowEvent)
+      // 		if(iupw==0)
+      // 		  cout<<"iupw: "<< iupw
+      // 		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
+      // 		      <<", bx: " << unpkBx <<", modsum: "<<modsum << ", isValid: "<< isValid << endl;
+      // 		else
+      // 		  cout<<"iupw: "<< iupw
+      // 		      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[ilp][iecon][ib][iupw] << std::dec << std::setfill(' ')
+      // 		      <<", energy: " << energy <<", channel: "<<channel << ", isValid: "<< isValid << endl;
       // 	    }//itc
       // 	  }//ib
-      // 	  // if(bxId==3564)
-      // 	  //   if(elinkData[ilp][iecon].econt_bxid[3] != 0xF) nofCBxErrors[ilp][iecon]++ ;
-      // 	  // else
-      // 	  //   if(bxId%8 != elinkData[ilp][iecon].econt_bxid[3]) nofCBxErrors[ilp][iecon]++ ;
       // 	}//iecon
-	
-      // 	// if((elinkData[ilp][0].econt_bxid[0]-elinkData[ilp][1].econt_bxid[0])!=econt01Diff[ilp]
-      // 	//    or
-      // 	//    (elinkData[ilp][1].econt_bxid[0]-elinkData[ilp][2].econt_bxid[0])!=econt12Diff[ilp]
-      // 	//    or
-      // 	//    (elinkData[ilp][2].econt_bxid[0]-elinkData[ilp][0].econt_bxid[0])!=econt01Diff[ilp]
-      // 	//    )
-      // 	//   nofEcon012BxElinksErrors[ilp]++;
       // }//ilp
+      // if(isHighSTC4 and isHighBC6) cout << "Both STC and BC high (" << highstc4_En << ", " << highbc6_En <<") in lpGBT0 for Hgcal10gLinkReceiver::SlinkBoe::eventId(): " << eventId << endl;
+
+      // // if(nEvents<=maxShowEvent) {
+      // // 	unpackerData[0][0].print(nTC[0],"TC","unpacked");
+      // // 	unpackerData[0][1].print(nTC[1],"STC4A","unpacked");
+      // // 	unpackerData[0][2].print(nTC[2],"STC16","unpacked");
+      // // }
+      // // /////////////////////////////////////////////////////////////////
+      // // for(int ilp=0;ilp<noflpGBT;ilp++){
+      // // 	for(int iecon=0;iecon<nofEcontT;iecon++){
+      // // 	  for(int ib=0;ib<7;ib++){
+      // // 	    for(int iupw=0;iupw<=nTC[iecon];iupw++){ //BC6 and STC4A
+      // // 	      if(iupw==0){
+      // // 		if(elinkData[ilp][iecon].econt_bxid[ib] != unpackerData[ilp][iecon].econt_bxid[ib]) nofBxErrors[ilp][iecon]++;
+      // // 		if(elinkData[ilp][iecon].econt_modsum[ib] != unpackerData[ilp][iecon].econt_modsum[ib]) nofMSErrors[ilp][iecon]++;
+      // // 	      }else{
+      // // 		if(elinkData[ilp][iecon].econt_energy[ib][iupw-1] != unpackerData[ilp][iecon].econt_energy[ib][iupw-1]) nofEnErrors[ilp][iecon]++;
+      // // 		if(elinkData[ilp][iecon].econt_channel[ib][iupw-1] != unpackerData[ilp][iecon].econt_channel[ib][iupw-1]) nofChErrors[ilp][iecon]++;
+      // // 	      }
+      // // 	    }//itc
+      // // 	  }//ib
+      // // 	  // if(bxId==3564)
+      // // 	  //   if(elinkData[ilp][iecon].econt_bxid[3] != 0xF) nofCBxErrors[ilp][iecon]++ ;
+      // // 	  // else
+      // // 	  //   if(bxId%8 != elinkData[ilp][iecon].econt_bxid[3]) nofCBxErrors[ilp][iecon]++ ;
+      // // 	}//iecon
+	
+      // // 	// if((elinkData[ilp][0].econt_bxid[0]-elinkData[ilp][1].econt_bxid[0])!=econt01Diff[ilp]
+      // // 	//    or
+      // // 	//    (elinkData[ilp][1].econt_bxid[0]-elinkData[ilp][2].econt_bxid[0])!=econt12Diff[ilp]
+      // // 	//    or
+      // // 	//    (elinkData[ilp][2].econt_bxid[0]-elinkData[ilp][0].econt_bxid[0])!=econt01Diff[ilp]
+      // // 	//    )
+      // // 	//   nofEcon012BxElinksErrors[ilp]++;
+      // // }//ilp
       
-      // if(nEvents<=maxShowEvent) {
-      // 	elinkData[0][0].print(nTC[0], "TC", Form("Elinks0: event: %d",ievent));
-      // 	elinkData[0][1].print(nTC[1], "STC4A", Form("Elinks0: event: %d",ievent));
-      // 	elinkData[0][2].print(nTC[2], "STC16", Form("Elinks0: event: %d",ievent));
-      // 	elinkData[1][0].print(nTC[0], "TC", Form("Elinks1: event: %d",ievent));
-      // 	elinkData[1][1].print(nTC[1], "STC4A", Form("Elinks1: event: %d",ievent));
-      // 	elinkData[1][2].print(nTC[2], "STC16", Form("Elinks1: event: %d",ievent));
-      //}
-      ////////////////// Validate Energy Channel /////////////////////
+      // // if(nEvents<=maxShowEvent) {
+      // // 	elinkData[0][0].print(nTC[0], "TC", Form("Elinks0: event: %d",ievent));
+      // // 	elinkData[0][1].print(nTC[1], "STC4A", Form("Elinks0: event: %d",ievent));
+      // // 	elinkData[0][2].print(nTC[2], "STC16", Form("Elinks0: event: %d",ievent));
+      // // 	elinkData[1][0].print(nTC[0], "TC", Form("Elinks1: event: %d",ievent));
+      // // 	elinkData[1][1].print(nTC[1], "STC4A", Form("Elinks1: event: %d",ievent));
+      // // 	elinkData[1][2].print(nTC[2], "STC16", Form("Elinks1: event: %d",ievent));
+      // //}
+      // ////////////////// Validate Energy Channel /////////////////////
       if(nEvents<=maxShowEvent) cout<<"========= End of event : "<< nEvents << "============="<< endl;
       ievent++;
     }//loop event  
@@ -972,10 +977,10 @@ int main(int argc, char** argv){
   bx_lp0_IdvsBC6->GetXaxis()->SetTitle("Slink Bx");
   bx_lp0_IdvsBC6->GetYaxis()->SetTitle("Bx in ECON-T elink (-3<=Bx<=3)");
 
-  bxen_lp0_el2_vs_el3STC16->GetXaxis()->SetTitle("Energy (STC4A of lpGBT0 [5E+4M])");
-  bxen_lp0_el2_vs_el3STC16->GetYaxis()->SetTitle("Energy (STC16 of lpGBT0 [5E+4M])");
-  bxen_lp0_el2_vs_el3CTC4A->GetXaxis()->SetTitle("Energy (STC4A of lpGBT0 [5E+4M])");
-  bxen_lp0_el2_vs_el3CTC4A->GetYaxis()->SetTitle("Energy (CTC4A of lpGBT0 [5E+4M])");
+  bxen_lp0_el2_vs_el3STC16->GetXaxis()->SetTitle("Energy/STC (STC4A of lpGBT0 [5E+4M])");
+  bxen_lp0_el2_vs_el3STC16->GetYaxis()->SetTitle("Energy/STC (STC16 of lpGBT0 [5E+4M])");
+  bxen_lp0_el2_vs_el3CTC4A->GetXaxis()->SetTitle("Energy/STC (STC4A of lpGBT0 [5E+4M])");
+  bxen_lp0_el2_vs_el3CTC4A->GetYaxis()->SetTitle("Energy/STC (CTC4A of lpGBT0 [5E+4M])");
 
   TFile *fout = new TFile(Form("out_%u.root",runNumber),"recreate");
   bx_lp0_IdmodvsBC->Write();
