@@ -284,9 +284,9 @@ int main(int argc, char** argv){
       for(int ib=0;ib<7;ib++){
 	TPGFEDataformat::TcRawDataPacket vTcrdp;
 	TPGBEDataformat::UnpackerOutputStreamPair up;
-	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt[ib], vTcrdp);
-	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC4A, 6, &elpckt[ib][3], vTcrdp);
-	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::STC16, 3, &elpckt[ib][5], vTcrdp);
+	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, elpckt[ib], vTcrdp);
+	TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, &elpckt[ib][3], vTcrdp);
+	//TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, &elpckt[ib][5], vTcrdp);
 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(elinkData[ievent].bxid_econt0[ib], vTcrdp, up);
 	elinkData[ievent].econt0_bc6_modsum[ib] = uint32_t(up.moduleSum(0));
 	elinkData[ievent].bxid_econt0[ib] = uint32_t(up.bx(0));
@@ -299,7 +299,7 @@ int main(int argc, char** argv){
       }//ib
       if(nEvents<=maxShowEvent) elinkData[ievent].print("elinks");
       
-      // if(nEvents<=maxShowEvent) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
+      // if(nEvents<=maxShowEvent) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, elpckt0, vTcrdp);
       // if(nEvents<=maxShowEvent) {
       // 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(refBx, vTcrdp, up); 
       // 	up.print();

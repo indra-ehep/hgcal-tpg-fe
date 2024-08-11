@@ -230,7 +230,7 @@ int main(int argc, char** argv){
 	      <<endl;
       TPGFEDataformat::TcRawDataPacket vTcrdp;
       TPGBEDataformat::UnpackerOutputStreamPair up;
-      if(nEvents<=2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
+      if(nEvents<=2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, elpckt0, vTcrdp);
       if(nEvents<=2) {
 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(refBx, vTcrdp, up); 
 	up.print();
