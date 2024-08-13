@@ -212,12 +212,12 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   uint32_t zside = 0, sector = 0, link = 0, det = 0;
   uint32_t econt = 0, selTC4 = 1, module = 0;
-
+  
   TPGFEConfiguration::TPGFEIdPacking pck;
   uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);
   const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = cfgs.getModIdxToName();
   const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
-
+  
   if(linkNumber==1){
     cfgs.setRocFile(Form("dat/Relay%u/Run%u_Module00c87fff.yaml",relayNumber, runNumber));
     cfgs.setTrainEWIndices(1, 'e', 0);
@@ -231,7 +231,7 @@ int main(int argc, char** argv)
     cfgs.readRocConfigYaml(modName);
   }
   //===============================================================================================================================
-
+  
   //===============================================================================================================================
   //Set and Initialize the ECOND reader
   //===============================================================================================================================

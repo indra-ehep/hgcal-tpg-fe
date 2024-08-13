@@ -418,6 +418,8 @@ namespace TPGFEConfiguration{
     void readRocConfigYaml(const std::string&);
     void readEconDConfigYaml();
     void readEconTConfigYaml();
+    void readEconDConfigYaml(uint32_t idx);
+    void readEconTConfigYaml(uint32_t idx);
     
     void setPedThZero(); //set the pedestal and thresholds to zero
     
@@ -791,6 +793,23 @@ namespace TPGFEConfiguration{
     
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::readEconDConfigYaml(uint32_t idx)
+  {
+    std::cout<<"Configuration::readEconDConfigYaml:: ECOND init config file : "<<EconDfname<<std::endl;
+    YAML::Node node(YAML::LoadFile(EconDfname));
+    
+    //something like below should loop over ECON-D config(s) for different modules
+    //uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
+    uint32_t pass_thru_mode = node["RocDaqCtrl"]["Global"]["pass_thru_mode"].as<uint32_t>();
+    uint32_t active_erxs = node["RocDaqCtrl"]["Global"]["active_erxs"].as<uint32_t>();
+    bool passTM = (pass_thru_mode==1) ? true : false ; 
+    TPGFEConfiguration::ConfigEconD econd;
+    econd.setPassThrough(passTM);
+    econd.setNeRx(active_erxs);
+    econDcfg[idx] = econd;
+    
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconTConfigYaml()
   {
     std::cout<<"Configuration::readEconTConfigYaml:: ECONT init config file : "<<EconTfname<<std::endl;
@@ -803,6 +822,35 @@ namespace TPGFEConfiguration{
     
     //something like below should loop over ECON-T config(s) for different modules
     uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);  
+    uint32_t select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
+    uint32_t density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
+    uint32_t dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
+    uint32_t stctype = node["FmtBuf"]["Global"]["stc_type"].as<uint32_t>();
+    uint32_t eporttx_numen = node["FmtBuf"]["Global"]["eporttx_numen"].as<uint32_t>();
+    
+    TPGFEConfiguration::ConfigEconT econt;
+    econt.setDensity(density);
+    econt.setDropLSB(dropLSB);
+    econt.setSelect(select); 
+    econt.setSTCType(stctype);
+    econt.setCalibration(dummyCalib);
+    econt.setNElinks(eporttx_numen);
+    econTcfg[idx] = econt;
+    
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::readEconTConfigYaml(uint32_t idx)
+  {
+    std::cout<<"Configuration::readEconTConfigYaml:: ECONT init config file : "<<EconTfname<<std::endl;
+    YAML::Node node(YAML::LoadFile(EconTfname));
+    
+    ///////////////////////////
+    ////probably most important input for physics analysis
+    uint32_t dummyCalib = 1.0;
+    ///////////////////////////
+    
+    //something like below should loop over ECON-T config(s) for different modules
+    //uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);  
     uint32_t select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
     uint32_t density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
     uint32_t dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
