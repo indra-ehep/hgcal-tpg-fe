@@ -344,6 +344,22 @@ namespace TPGFEDataformat{
     uint16_t NumberOfTCs;
   };
 
+  class Trig24Data{
+  public:
+    Trig24Data() : nofElinks(0), nofUnpkdWords(0) {}
+    void setNofElinks(uint32_t nelinks) {nofElinks = uint8_t(nelinks);}
+    void setNofUnpkWords(uint32_t nwords) {nofUnpkdWords = uint8_t(nwords);}
+    uint32_t getNofElinks() const {nofElinks = uint8_t(nelinks);}
+    uint32_t getNofUnpkWords() const {nofUnpkdWords = uint8_t(nwords);}
+    void print(){
+      ;
+    }
+  private:
+    uint8_t nofElinks, nofUnpkdWords;
+    uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
+    uint32_t unpackedWords[7][8]; //7:bxs,8:words
+  };
+
 
 }
 
