@@ -97,23 +97,23 @@ int main(int argc, char** argv)
       
       cfgs.setModulePath(zside, sector, ilink, det, iecond, selTC4, module);
       
-      cfgs.setEconDFile("dat/slow_control_configuration/init_econd.yaml");
+      cfgs.setEconDFile("cfgmap/slow_control_configuration/init_econd.yaml");
       cfgs.readEconDConfigYaml();
       
-      cfgs.setEconTFile("dat/slow_control_configuration/init_econt.yaml");
+      cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt.yaml");
       cfgs.readEconTConfigYaml();
       for(uint32_t iroc=0;iroc<3;iroc++){
 	std::cout<<"ilink: " << ilink << ", iecond: "<<iecond<<", iroc: "<<iroc << ", fname : " << cfgrocname[ilink][iecond][iroc] << std::endl;
 	uint32_t rocid_0 = pck.packRocId(zside, sector, ilink, det, iecond, selTC4, module, iroc, 0);
 	uint32_t rocid_1 = pck.packRocId(zside, sector, ilink, det, iecond, selTC4, module, iroc, 1);
-	//cfgs.setRocFile(Form("dat/slow_control_configuration/configs_with_MasterTDC_and_TPGTRM/%s",cfgrocname[ilink][iecond][iroc].c_str()));
-	cfgs.setRocFile(Form("dat/bt2024-fe-config-trimmed/%s",cfgrocname[ilink][iecond][iroc].c_str()));
+	//cfgs.setRocFile(Form("cfgmap/slow_control_configuration/configs_with_MasterTDC_and_TPGTRM/%s",cfgrocname[ilink][iecond][iroc].c_str()));
+	cfgs.setRocFile(Form("cfgmap/bt2024-fe-config-trimmed/%s",cfgrocname[ilink][iecond][iroc].c_str()));
 	cfgs.readRocConfigYaml(rocid_0, rocid_1);	
       }//roc loop
     }//econd loop
   }//lpGBT loop
-  cfgs.setPedThZero();
-  uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
+  //cfgs.setPedThZero();
+  uint32_t testmodid = pck.packModId(zside, sector, link, det, econt+1, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
   
@@ -254,8 +254,8 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////
   //// The following part should be in a loop over modules
   /////////////////////////////////////////////////////////////
-  zside = 0, sector = 0, link = 0, det = 0;
-  econt = 0, selTC4 = 1, module = 0;
+  zside = 0, sector = 0, link = 1, det = 0;
+  econt = 0, selTC4 = 1, module = 1;
   uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);    
   std::cout<<"modarray : Before Link"<<linkNumber<<" size : " << modarray.size() << ", modId : "<< moduleId <<std::endl;
   for(const auto& event : eventList){
@@ -292,19 +292,22 @@ int main(int argc, char** argv)
     //   TcRawdata.print();
     // }
 
+    std::cout << "Emul: ievent: "<< event << std::endl;
     std::cout<<"Module :: "<<TcRawdata.first << std::endl;
     TcRawdata.second.print();
     uint32_t elinkemul[3];
     TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(112, TcRawdata.second, elinkemul);
+    std::cout << "Emulation: ievent: "<< event << std::endl;
     std::cout<<"Elink emul : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[0] << std::dec << std::endl;
 
     std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>> econtdata =  econtarray[event];
     
     for(const auto& econtit : econtdata){
       if(econtit.first!=TcRawdata.first) continue;
-      std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::Trig24Data trdata = econtit.second ;
-      ktrdata.print();
+      std::cout << "ECONT: ievent: "<< event << std::endl;
+      std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
+      trdata.print();
     }
 
   }//event loop

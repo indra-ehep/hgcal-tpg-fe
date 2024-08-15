@@ -19,3 +19,4 @@ log_old*
 output*
 output/*
 dat
+cfgmap/slow_control_configuration

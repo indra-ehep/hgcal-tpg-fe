@@ -8,6 +8,8 @@
 #include <cassert>
 #include <vector>
 
+#include "TPGBEDataformat.hh"
+
 namespace TPGFEDataformat{
 
   typedef std::array<uint32_t,14> OrderedElinkPacket;
@@ -373,14 +375,27 @@ namespace TPGFEDataformat{
 		    << getElink(ib, iel)
 		    << std::dec
 		    << std::endl;
-      for(unsigned ib(0);ib<7;ib++)
-	for(unsigned iw(0);iw<getNofUnpkWords();iw++)
+      
+      for(unsigned ib(0);ib<7;ib++){
+	TPGBEDataformat::UnpackerOutputStreamPair up;
+	uint16_t* tc = up.setTcData(0);
+	
+	for(unsigned iw(0);iw<getNofUnpkWords();iw++){
+	  if(iw==0){
+	    uint16_t* ms = up.setMsData(0);
+	    *ms = getUnpkWord(ib, iw);
+	  }else{
+	    *(tc+iw-1) = getUnpkWord(ib, iw);
+	  }
 	  std::cout << " ib " << ib << ", iw  " << iw
 		    << ", unpackedWords = 0x"
 		    << std::hex << ::std::setfill('0') << std::setw(4)
 		    << getUnpkWord(ib, iw)
 		    << std::dec
 		    << std::endl;
+	}//iw loop
+	up.print();
+      }//ib loop
     }
   private:
     uint8_t nofElinks, nofUnpkdWords;

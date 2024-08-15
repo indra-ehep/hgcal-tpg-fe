@@ -9,4 +9,5 @@ do
     #clear
     cd $curdir
 done
+rm *# *~
 

@@ -198,7 +198,21 @@ namespace TPGFEReader{
       uint32_t icapblk = econhpos.first;
       std::vector<uint32_t> econhloc = econhpos.second;
       for(uint32_t iecond = 0 ; iecond < econhloc.size() ; iecond++){
-	uint32_t idx = pck.packModId(zside, sector, icapblk, det, iecond, selTC4, module);
+	uint32_t econtnum = 0;
+	switch(iecond){
+	case 0:
+	  econtnum = 2;
+	  break;
+	case 1:
+	  econtnum = 1;
+	  break;
+	case 2:
+	  econtnum = 0;
+	  break;
+	default:
+	  ;
+	}
+	uint32_t idx = pck.packModId(zside, sector, icapblk, det, econtnum, selTC4, module);
 	int nRx = int(econDPar[idx].getNeRx());
 	
 	if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
@@ -354,7 +368,7 @@ namespace TPGFEReader{
 	  hrocdata.setChannels(chdata);
 	  hrocdata.setBx( uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) );
 	  pck.setZero();
-	  hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, icapblk, det, iecond, selTC4, module, rocn, half),hrocdata));
+	  hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, icapblk, det, econtnum, selTC4, module, rocn, half),hrocdata));
 	  //std::cout<<std::endl;
 	  if(iloc%2==1)ichip++;
 	}//loop over 6/12 eRxs
@@ -375,7 +389,7 @@ namespace TPGFEReader{
     const int maxEcons = 12;
     
     //Use the fileReader to read the records
-    while(_fileReader.read(r)) {
+    while(_fileReader.read(r) and nEvents<=maxEventDAQ) {
       //Check the state of the record and print the record accordingly
       if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
 	if(!(rStart->valid())){
@@ -756,7 +770,7 @@ namespace TPGFEReader{
     int ievent = 0;
 
     //Use the fileReader to read the records
-    while(_fileReader.read(r)) {
+    while(_fileReader.read(r) and nEvents<=maxEventTrig) {
       //Check the state of the record and print the record accordingly
       if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
 	if(!(rStart->valid())){
