@@ -149,7 +149,7 @@ namespace TPGFEModuleEmulation{
     void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&, TPGFEDataformat::TcModulePacket& );
     void EmulateSTC(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
     void EmulateBC(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
-
+    
     void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
     const TPGFEDataformat::TcModulePacket& getTcRawDataPacket() const {return emulOut;}
     TPGFEDataformat::TcModulePacket& accessTcRawDataPacket() {return emulOut;}
@@ -175,7 +175,6 @@ namespace TPGFEModuleEmulation{
 					    TPGFEDataformat::TcRawDataPacket &vtcrp);
     
   private:
-    
     uint32_t DecompressEcont(uint16_t compressed, bool isldm){
       //4E+3M with midpoint correction
       uint32_t mant = compressed & 0x7;

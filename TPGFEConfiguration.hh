@@ -415,7 +415,8 @@ namespace TPGFEConfiguration{
     void loadModIdxToNameMapping();
     
     //Read the ROC/ECOND/ECONT configs from yaml file
-    void readRocConfigYaml(const std::string&);
+    void readRocConfigYaml(const std::string& moduletype);
+    void readRocConfigYaml(const uint32_t& rocid_0, const uint32_t& rocid_1);
     void readEconDConfigYaml();
     void readEconTConfigYaml();
     void readEconDConfigYaml(uint32_t idx);
@@ -715,7 +716,9 @@ namespace TPGFEConfiguration{
     const uint32_t nrocs = TMath::CeilNint(nhfrocs/2);
     const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
     for(uint32_t iroc=0;iroc<nrocs;iroc++){
-      std::string rocname = Form("train_%u.roc%u_%c%u",train_idx,iroc,ew,ew_idx); //egForm("train_0.roc%d_w0",iroc);
+      //std::string rocname = Form("train_%u.roc%u_%c%u",train_idx,iroc,ew,ew_idx); //eg. Form("train_0.roc%d_w0",iroc);
+      std::string EW(1,ew);
+      std::string rocname = "train_" + std::to_string(train_idx) + ".roc" + std::to_string(iroc) + EW + std::to_string(ew_idx); 
       uint32_t th_0 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["0"]["Adc_TH"].as<uint32_t>();
       uint32_t th_1 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["1"]["Adc_TH"].as<uint32_t>();
       uint64_t chmask_0 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["0"]["ClrAdcTot_trig"].as<uint64_t>();
@@ -761,7 +764,7 @@ namespace TPGFEConfiguration{
       for(uint32_t ich=0;ich<nchs;ich++){
 	uint32_t ihalf = (ich<TPGFEDataformat::HalfHgcrocData::NumberOfChannels)?0:1;
 	uint32_t chnl = ich%TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
-	uint32_t ped = node["Configuration"]["roc"][rocname]["cfg"]["ch"][Form("%u",ich)]["Adc_pedestal"].as<uint32_t>() ;
+	uint32_t ped = node["Configuration"]["roc"][rocname]["cfg"]["ch"][std::to_string(ich)]["Adc_pedestal"].as<uint32_t>() ;
 	if(ihalf==0){
 	  TPGFEConfiguration::ConfigCh ch_0;
 	  ch_0.setAdcpedestal(ped);
@@ -774,6 +777,82 @@ namespace TPGFEConfiguration{
       }//channel loop
     }//roc loop
     //std::cout<<"============"<<std::endl;  
+  }//end of read ped class
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::readRocConfigYaml(const uint32_t& rocid_0, const uint32_t& rocid_1)
+  {
+    std::cout<<"Configuration::readRocConfigYaml:: Module config file : "<<PedThfname<<std::endl;
+    YAML::Node node(YAML::LoadFile(PedThfname));
+
+    std::string totname;
+    uint32_t tot_th_0[4], tot_p_0[4], tot_th_1[4], tot_p_1[4];
+    const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
+    uint32_t th_0 = node["DigitalHalf"]["0"]["Adc_TH"].as<uint32_t>();
+    uint32_t th_1 = node["DigitalHalf"]["1"]["Adc_TH"].as<uint32_t>();
+    // uint64_t chmask_0 = node["DigitalHalf"]["0"]["ClrAdcTot_trig"].as<uint64_t>();
+    // uint64_t chmask_1 = node["DigitalHalf"]["1"]["ClrAdcTot_trig"].as<uint64_t>();
+    // uint32_t seltc4_0 = node["DigitalHalf"]["0"]["SelTC4"].as<uint32_t>();
+    // uint32_t seltc4_1 = node["DigitalHalf"]["1"]["SelTC4"].as<uint32_t>();
+    uint64_t chmask_0 = 0,  chmask_1 = 0;
+    uint32_t multfactor_0 = node["DigitalHalf"]["0"]["MultFactor"].as<uint32_t>();
+    uint32_t multfactor_1 = node["DigitalHalf"]["1"]["MultFactor"].as<uint32_t>();
+    for(int itot=0;itot<4;itot++) {
+      totname = "Tot_P" + std::to_string(itot);
+      tot_p_0[itot] = node["DigitalHalf"]["0"][totname].as<uint32_t>();
+      tot_p_1[itot] = node["DigitalHalf"]["1"][totname].as<uint32_t>();
+      totname = "Tot_TH" + std::to_string(itot);
+      tot_th_0[itot] = node["DigitalHalf"]["0"][totname].as<uint32_t>();
+      tot_th_1[itot] = node["DigitalHalf"]["1"][totname].as<uint32_t>();
+      tot_p_0[itot] = 0;
+      tot_p_1[itot] = 0;
+      tot_th_0[itot] = 0;
+      tot_th_1[itot] = 0;
+    }    
+    //std::cout<<"rocname : "<<rocname<<", th_0 : "<<th_0<<", th_1 : "<<th_1<<", chmask_0 : "<<chmask_0<<", chmask_1 : "<<chmask_1<<std::endl;
+
+    // The following are set as input or modulepath
+    // rocn = iroc;
+    // selTC4 = seltc4_0; half = 0;
+    // uint32_t rocid_0 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half);
+    // selTC4 = seltc4_1; half = 1;
+    // uint32_t rocid_1 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half);
+
+    
+    TPGFEConfiguration::ConfigHfROC hroc_0, hroc_1;      
+    hroc_0.setAdcTH(th_0);
+    hroc_0.setClrAdcTottrig(chmask_0);
+    hroc_0.setMultFactor(multfactor_0);
+    for(int itot=0;itot<4;itot++){
+      hroc_0.setTotTH(itot, tot_th_0[itot]);
+      hroc_0.setTotP(itot, tot_p_0[itot]);
+    }
+
+    hroc_1.setAdcTH(th_1);
+    hroc_1.setClrAdcTottrig(chmask_1);
+    hroc_1.setMultFactor(multfactor_1);
+    for(int itot=0;itot<4;itot++){
+      hroc_1.setTotTH(itot, tot_th_1[itot]);
+      hroc_1.setTotP(itot, tot_p_0[itot]);
+    }
+    
+    hroccfg[rocid_0] = hroc_0;
+    hroccfg[rocid_1] = hroc_1;
+    
+    for(uint32_t ich=0;ich<nchs;ich++){
+      uint32_t ihalf = (ich<TPGFEDataformat::HalfHgcrocData::NumberOfChannels)?0:1;
+      uint32_t chnl = ich%TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
+      uint32_t ped = node["ch"][std::to_string(ich)]["Adc_pedestal"].as<uint32_t>() ;
+      if(ihalf==0){
+	TPGFEConfiguration::ConfigCh ch_0;
+	ch_0.setAdcpedestal(ped);
+	hrocchcfg[pck.packChId(rocid_0,chnl)] = ch_0;
+      }else{
+	TPGFEConfiguration::ConfigCh ch_1;
+	ch_1.setAdcpedestal(ped);
+	hrocchcfg[pck.packChId(rocid_1,chnl)] = ch_1;
+      }
+    }//channel loop
   }//end of read ped class
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconDConfigYaml()

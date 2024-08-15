@@ -75,14 +75,18 @@ namespace TPGFEDataformat{
       NumberOfChannels=36
     };
   
-    HalfHgcrocData() {
+    HalfHgcrocData() : _bx(0xFFFF) {
       setZero();
     }
 
     void setZero() {
       std::memset(_data,0,sizeof(HalfHgcrocChannelData)*NumberOfChannels);
     }
-  
+
+    void setBx(uint16_t bx) { _bx = bx;}
+
+    const uint32_t getBx() const {return uint32_t(_bx);}
+
     const HalfHgcrocChannelData* getChannels() const {
       return _data;
     }
@@ -110,7 +114,8 @@ namespace TPGFEDataformat{
 		  << std::hex << ::std::setfill('0')
 		  << std::setw(4) << p[i]
 		  << std::dec << ::std::setfill(' ') << ", "
-		  << "TcTp: " << _data[i].getTcTp() << ", "
+		  << " bx: " << getBx() << ", "
+		  << " TcTp: " << _data[i].getTcTp() << ", "
 		  << (_data[i].isTot()?"TOT = ":"ADC = ") << std::setw(4)
 		  << (_data[i].isTot()?_data[i].getTot():_data[i].getAdc())
 		  << std::endl;
@@ -118,6 +123,7 @@ namespace TPGFEDataformat{
     }
 
   private:
+    uint16_t _bx;
     HalfHgcrocChannelData _data[36];
   };
 
@@ -347,12 +353,34 @@ namespace TPGFEDataformat{
   class Trig24Data{
   public:
     Trig24Data() : nofElinks(0), nofUnpkdWords(0) {}
-    void setNofElinks(uint32_t nelinks) {nofElinks = uint8_t(nelinks);}
-    void setNofUnpkWords(uint32_t nwords) {nofUnpkdWords = uint8_t(nwords);}
-    uint32_t getNofElinks() const {nofElinks = uint8_t(nelinks);}
-    uint32_t getNofUnpkWords() const {nofUnpkdWords = uint8_t(nwords);}
+    void setNofElinks(uint32_t nelinks) {assert(nelinks<=3) ; nofElinks = uint8_t(nelinks);}
+    void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords = uint8_t(nwords);}
+    void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<3) ; elinks[ib][iw] = val;}
+    void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8) ; unpackedWords[ib][iw] = val;}
+
+    uint32_t getNofElinks() const { return uint32_t(nofElinks);}
+    uint32_t getNofUnpkWords() const { return uint32_t(nofUnpkdWords);}
+    uint32_t  getElink(uint32_t ib, uint32_t iw) const { return elinks[ib][iw];}
+    uint32_t  getUnpkWord(uint32_t ib, uint32_t iw) const { return unpackedWords[ib][iw];}
+    const uint32_t *getElinks(uint32_t ib) const { return elinks[ib];}
+    const uint32_t *getUnpkWords(uint32_t ib) const { return unpackedWords[ib];}
     void print(){
-      ;
+      for(unsigned ib(0);ib<7;ib++)
+	for(unsigned iel(0);iel<getNofElinks();iel++)
+	  std::cout << " ib " << ib << ", iel  " << iel
+		    << ", elinks = 0x"
+		    << std::hex << ::std::setfill('0') << std::setw(8)
+		    << getElink(ib, iel)
+		    << std::dec
+		    << std::endl;
+      for(unsigned ib(0);ib<7;ib++)
+	for(unsigned iw(0);iw<getNofUnpkWords();iw++)
+	  std::cout << " ib " << ib << ", iw  " << iw
+		    << ", unpackedWords = 0x"
+		    << std::hex << ::std::setfill('0') << std::setw(4)
+		    << getUnpkWord(ib, iw)
+		    << std::dec
+		    << std::endl;
     }
   private:
     uint8_t nofElinks, nofUnpkdWords;
@@ -363,10 +391,10 @@ namespace TPGFEDataformat{
 
 }
 
-struct Trig24Data{
-  uint8_t nofElinks, nofUnpkdWords;
-  uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
-  uint32_t unpackedWords[7][8]; //7:bxs,8:words
-};
+// struct Trig24Data{
+//   uint8_t nofElinks, nofUnpkdWords;
+//   uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
+//   uint32_t unpackedWords[7][8]; //7:bxs,8:words
+// };
 
 #endif

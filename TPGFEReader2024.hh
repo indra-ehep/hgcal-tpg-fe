@@ -352,6 +352,7 @@ namespace TPGFEReader{
 	  }//end of loop for 37 seq channels
 	  TPGFEDataformat::HalfHgcrocData hrocdata;
 	  hrocdata.setChannels(chdata);
+	  hrocdata.setBx( uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) );
 	  pck.setZero();
 	  hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, icapblk, det, iecond, selTC4, module, rocn, half),hrocdata));
 	  //std::cout<<std::endl;
@@ -446,6 +447,7 @@ namespace TPGFEReader{
 	      econheader_lst[icapblk].push_back(p64[econpos]); 
 	      econheaderpos_lst[icapblk].push_back(econpos);
 	      isPassthrough[iecond] = (econh0 >> 13 ) & 0x1 ;
+	      assert(isPassthrough[iecond]);
 	      uint32_t econsize = (econh0 >> 14 ) & 0x1FF ; //specifies length in 32b-words+1 of eRx sub-packets and CRC trailer
 	      assert(econsize>1);
 	      zeroloc[iecond] = (econsize-1)/2 + (econpos+1) ; //(econ0pos+1): +1 to start from first eRx header
@@ -521,7 +523,7 @@ namespace TPGFEReader{
     // void getEventsBC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
     // void getEventsSTC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
     
-    void getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,Trig24Data>>>& econtarray);
+    void getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray);
     void terminate();
     
   private:
@@ -736,7 +738,7 @@ namespace TPGFEReader{
   }
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-  void ECONTReader::getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,Trig24Data>>>& econtarray){
+  void ECONTReader::getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray){
 
     //Set up specific records to interpet the formats
     const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
@@ -1029,22 +1031,22 @@ namespace TPGFEReader{
 	  //   uint32_t unpackedWords[7][8]; //7:bxs,8:words
 	  // };
 	  
-	  Trig24Data trdata[2][3]; //2:lpGBTs, 3:econts
+	  TPGFEDataformat::Trig24Data trdata[2][3]; //2:lpGBTs, 3:econts
 	  for(int ilp=0;ilp<2;ilp++){
 	    for(int iecon=0;iecon<3;iecon++){
 	      moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
-	      trdata[ilp][iecon].nofElinks = (iecon==0) ? 3 : 2;
-	      trdata[ilp][iecon].nofUnpkdWords = 8;
-	      for(int ib=0;ib<7;ib++){
-		for(uint8_t iw=0;iw<trdata[ilp][iecon].nofElinks;iw++){
+	      trdata[ilp][iecon].setNofElinks( ((iecon==0)?3:2) );
+	      trdata[ilp][iecon].setNofUnpkWords(8);
+	      for(uint32_t ib=0;ib<7;ib++){
+		for(uint32_t iel=0;iel<trdata[ilp][iecon].getNofElinks();iel++){
 		  if(iecon==0)
-		    trdata[ilp][iecon].elinks[ib][iw] = elpckt[ilp][ib][iw] ;
+		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel]) ;
 		  else if(iecon==1)
-		    trdata[ilp][iecon].elinks[ib][iw] = elpckt[ilp][ib][iw+trdata[ilp][0].nofElinks] ;
+		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()]) ;
 		  else
-		    trdata[ilp][iecon].elinks[ib][iw] = elpckt[ilp][ib][iw+trdata[ilp][0].nofElinks+trdata[ilp][1].nofElinks] ;
+		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+trdata[ilp][1].getNofElinks()]) ;
 		}
-		for(uint8_t iw=0;iw<trdata[ilp][iecon].nofUnpkdWords;iw++) trdata[ilp][iecon].unpackedWords[ib][iw] = unpackedWord[ilp][iecon][ib][iw] ;
+		for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords();iw++) trdata[ilp][iecon].setUnpkWord(ib, iw, unpackedWord[ilp][iecon][ib][iw]) ;
 	      }//nof bxs
 	      econtarray[eventId].push_back( std::make_pair(moduleId,trdata[ilp][iecon]) );
 	    }//nof ECONTs
