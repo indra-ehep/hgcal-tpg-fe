@@ -381,6 +381,7 @@ namespace TPGFEDataformat{
 	uint16_t* tc = up.setTcData(0);
 	
 	for(unsigned iw(0);iw<getNofUnpkWords();iw++){
+	//for(unsigned iw(0);iw<4;iw++){
 	  if(iw==0){
 	    uint16_t* ms = up.setMsData(0);
 	    *ms = getUnpkWord(ib, iw);

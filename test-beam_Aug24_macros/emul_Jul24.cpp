@@ -28,7 +28,7 @@
 #include "TPGFEConfiguration.hh"
 #include "TPGFEModuleEmulation.hh"
 #include "TPGFEReader2024.hh"
-
+#include "Stage1IO.hh"
 
 int main(int argc, char** argv)
 {
@@ -84,12 +84,18 @@ int main(int argc, char** argv)
   uint32_t econt = 0, selTC4 = 1, module = 0;
   TPGFEConfiguration::TPGFEIdPacking pck;
   
-  std::string cfgrocname[2][3][3] = {{{"320MLF3WXIH0012_roc0_e2.yaml", "320MLF3WXIH0012_roc1_e2.yaml", "320MLF3WXIH0012_roc2_e2.yaml"},
-				      {"320MLF3WXIH0006_roc0_e1.yaml", "320MLF3WXIH0006_roc1_e1.yaml", "320MLF3WXIH0006_roc2_e1.yaml"},
-				      {"320MLF3WXIH0011_roc0_e0.yaml", "320MLF3WXIH0011_roc1_e0.yaml", "320MLF3WXIH0011_roc2_e0.yaml"}},
-				     {{"320MLF3WXIH0007_roc0_e2.yaml", "320MLF3WXIH0007_roc1_e2.yaml", "320MLF3WXIH0007_roc2_e2.yaml"},
-				      {"320MLF3WXIH0005_roc0_e1.yaml", "320MLF3WXIH0005_roc1_e1.yaml", "320MLF3WXIH0005_roc2_e1.yaml"},
-				      {"320MLF3WXIH0010_roc0_e0.yaml", "320MLF3WXIH0010_roc1_e0.yaml", "320MLF3WXIH0010_roc2_e0.yaml"}}};
+  std::string cfgrocname[2][3][3] = {
+    {
+      {"320MLF3WXIH0012_roc0_e2.yaml", "320MLF3WXIH0012_roc1_e2.yaml", "320MLF3WXIH0012_roc2_e2.yaml"},
+      {"320MLF3WXIH0006_roc0_e1.yaml", "320MLF3WXIH0006_roc1_e1.yaml", "320MLF3WXIH0006_roc2_e1.yaml"},
+      {"320MLF3WXIH0011_roc0_e0.yaml", "320MLF3WXIH0011_roc1_e0.yaml", "320MLF3WXIH0011_roc2_e0.yaml"}
+    },
+    {
+      {"320MLF3WXIH0007_roc0_e2.yaml", "320MLF3WXIH0007_roc1_e2.yaml", "320MLF3WXIH0007_roc2_e2.yaml"},
+      {"320MLF3WXIH0005_roc0_e1.yaml", "320MLF3WXIH0005_roc1_e1.yaml", "320MLF3WXIH0005_roc2_e1.yaml"},
+      {"320MLF3WXIH0010_roc0_e0.yaml", "320MLF3WXIH0010_roc1_e0.yaml", "320MLF3WXIH0010_roc2_e0.yaml"}
+    }
+  };
   
   for(int ilink=0;ilink<2;ilink++){
     for(int iecond=0;iecond<3;iecond++){
@@ -113,7 +119,8 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   //cfgs.setPedThZero();
-  uint32_t testmodid = pck.packModId(zside, sector, link, det, econt+1, selTC4, module); //we assume same ECONT and ECOND number for a given module
+  link = 0; econt = 0;
+  uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
   
@@ -154,27 +161,32 @@ int main(int argc, char** argv)
       //following for STC4A
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setSTCType(3);
+      econTPar[it.first].setNElinks(2);
     }else{
       if(relayNumber<=1722876649){         //both laters with CTC4A
 	econTPar[it.first].setSelect(1);
 	econTPar[it.first].setSTCType(2);
+	econTPar[it.first].setNElinks(2);
       }else if(relayNumber==1722881092){   //one later with CTC4A and another with STC16
 	if(it.first==lp0_stc16orctc4a){
 	  //link0 is set for CTC4A
 	  econTPar[it.first].setSelect(1);
 	  econTPar[it.first].setSTCType(2);
+	  econTPar[it.first].setNElinks(2);
 	}
 	if(it.first==lp1_stc16orctc4a){
 	  //link0 is set for STC16
 	  econTPar[it.first].setSelect(1);
 	  econTPar[it.first].setSTCType(1);
+	  econTPar[it.first].setNElinks(2);
 	}
       }else{                               //both laters with STC16
 	econTPar[it.first].setSelect(1);
 	econTPar[it.first].setSTCType(1);
+	//econTPar[it.first].setNElinks(2);
       }
     }
-    
+    std::cout << "Modtype " << it.first << ", getOuttype: " << econTPar[it.first].getOutType() << ", typename: " << TPGFEDataformat::tctypeName[econTPar[it.first].getOutType()] << std::endl;
     econTPar[it.first].setCalibration(0x800);
   }//econt loop
   //===============================================================================================================================
@@ -207,7 +219,7 @@ int main(int argc, char** argv)
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>> hrocarray; //event,rocId
   std::map<uint64_t,uint32_t> eventbx;
   std::vector<uint64_t> eventList;
-  uint64_t minEventDAQ = 0, maxEventDAQ = 10;
+  uint64_t minEventDAQ = 0, maxEventDAQ = 100;
   
   hrocarray.clear();
   eventList.clear();
@@ -218,30 +230,30 @@ int main(int argc, char** argv)
   econTReader.getEvents(minEventDAQ, maxEventDAQ, econtarray);
   std::cout<<"TRIG After Link "<<trig_linkNumber<<", size : " << econtarray.size() <<std::endl;
   econTReader.terminate();
-
+  
   econDReader.init(relayNumber,runNumber,linkNumber);
   //econDReader.setModulePath(zside, sector, link, det, econt, selTC4, module);
   econDReader.getEvents(minEventDAQ, maxEventDAQ, hrocarray, eventList); //Input <---> output
   econDReader.terminate();
-  
   
   for(const auto& ievent : eventList){
     std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
     std::cout << "ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
     for(const auto& hrocit : datalist){
       TPGFEDataformat::HalfHgcrocData hrocdata = hrocit.second ;
-      std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
-      hrocdata.print();
+      if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
+	std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
+	hrocdata.print();
+      }
     }
     std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>> econtdata =  econtarray[ievent]; 
     for(const auto& econtit : econtdata){
-      std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
+      //std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::Trig24Data trdata = econtit.second ;
       //trdata.print();
     }
   }
-
-
+  
   //===============================================================================================================================
   // Emulate
   //===============================================================================================================================
@@ -254,21 +266,30 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////
   //// The following part should be in a loop over modules
   /////////////////////////////////////////////////////////////
-  zside = 0, sector = 0, link = 1, det = 0;
-  econt = 0, selTC4 = 1, module = 1;
-  uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);    
+  zside = 0, sector = 0, link = 0, det = 0;
+  econt = 0, selTC4 = 1, module = 0;
+  uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  moduleId = testmodid;
   std::cout<<"modarray : Before Link"<<linkNumber<<" size : " << modarray.size() << ", modId : "<< moduleId <<std::endl;
+  std::cout<<"eventList size: " << eventList.size() <<std::endl;
   for(const auto& event : eventList){
     
     //first check that both econd and econt data has the same eventid otherwise skip the event
-    if(econtarray.find(event) == econtarray.end()) continue;
+    if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end()) break;
+
+    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Proessing event: " << event <<std::endl<<std::endl<<std::endl;
     
     std::pair<uint32_t,TPGFEDataformat::ModuleTcData> modTcdata; 
     //;
     
     rocdata.clear();
+    int bx, bx4;
     for(const auto& data : hrocarray.at(event)){
       rocdata[data.first] = data.second ;
+      if(data.first==moduleId){
+	bx = rocdata[data.first].getBx();
+	bx4 = bx & 0xF;
+      }
     }
       
     bool isSim = false; //true for CMSSW simulation and false for beam-test analysis
@@ -292,13 +313,13 @@ int main(int argc, char** argv)
     //   TcRawdata.print();
     // }
 
-    std::cout << "Emul: ievent: "<< event << std::endl;
-    std::cout<<"Module :: "<<TcRawdata.first << std::endl;
+    std::cout << "Emul: ievent: "<< event << ", bx: " << bx <<", bx4: "<< bx4 << std::endl;
+    std::cout<<"Module :: "<<TcRawdata.first << ", refmodule : " << moduleId << std::endl;
     TcRawdata.second.print();
-    uint32_t elinkemul[3];
-    TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(112, TcRawdata.second, elinkemul);
-    std::cout << "Emulation: ievent: "<< event << std::endl;
-    std::cout<<"Elink emul : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[0] << std::dec << std::endl;
+    // uint32_t elinkemul[3];
+    // TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx, TcRawdata.second, elinkemul);
+    // std::cout << "Emulation: ievent: "<< event << std::endl;
+    // std::cout<<"Elink emul : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[0] << std::dec << std::endl;
 
     std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>> econtdata =  econtarray[event];
     
@@ -307,37 +328,20 @@ int main(int argc, char** argv)
       TPGFEDataformat::Trig24Data trdata = econtit.second ;
       std::cout << "ECONT: ievent: "<< event << std::endl;
       std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
+      // TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
+      // TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
+      // const uint32_t *el = trdata.getElinks(2);
+      // uint16_t bx_2 = (el[0]>>28) & 0xF ;
+      // TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC2);
+      // TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC2, up2);
+      // vTC2.print();
+      // up2.print();
       trdata.print();
     }
 
   }//event loop
   //===============================================================================================================================
 
-  // //===============================================================================================================================
-  // //Read one event
-  // //===============================================================================================================================
-  // uint64_t event = 10;
-  // econTReader.getEvents(event, econtarray);
-  // //===============================================================================================================================
-  
-  
-  // //===============================================================================================================================
-  // //Print the read value
-  // //===============================================================================================================================
-  // const std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>& vecont = econtarray.at(event);
-  // for(const auto& modpair : vecont){
-  //   const uint32_t& modnum = modpair.first;
-  //   const std::vector<TPGFEDataformat::TcRawData>& econtlist = modpair.second;
-  //   std::cout <<"Event: "<< event << ", Module: " << modnum << ", size: " << econtlist.size() << std::endl;
-  //   for(size_t itc=0 ; itc < econtlist.size() ; itc++){
-  //     const TPGFEDataformat::TcRawData& tcedata = econtlist.at(itc);
-  //     tcedata.print();
-  //   }//loop to print the TC/STC results
-  // }//modules
-  // //===============================================================================================================================
-
-  // //delete the file readers
-  // econTReader.terminate();
   
   return true;
 }

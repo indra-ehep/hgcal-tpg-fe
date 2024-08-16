@@ -395,7 +395,8 @@ namespace TPGFEModuleEmulation{
       const std::map<std::string,std::vector<uint32_t>>& modSTClist = (pck.getDetType()==0)?configs.getSiModSTClist():configs.getSciModSTClist();
       const std::vector<uint32_t>& stclist = modSTClist.at(modName) ;
       const std::map<std::pair<std::string,uint32_t>,std::vector<uint32_t>>& stcTcMap = (pck.getDetType()==0)?configs.getSiSTCToTC():configs.getSciSTCToTC();
-      
+
+      emulOut.second.reset();
       for(const auto& istc : stclist){
 	const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
@@ -424,7 +425,7 @@ namespace TPGFEModuleEmulation{
       const std::map<std::string,std::vector<uint32_t>>& modSTC16list = (pck.getDetType()==0)?configs.getSiModSTC16list():configs.getSciModSTC16list();
       const std::vector<uint32_t>& stc16list = modSTC16list.at(modName) ;
       const std::map<std::pair<std::string,uint32_t>,std::vector<uint32_t>>& stc16TcMap = (pck.getDetType()==0)?configs.getSiSTC16ToTC():configs.getSciSTC16ToTC();
-      
+      emulOut.second.reset();
       for(const auto& istc16 : stc16list){
 	const std::vector<uint32_t>& tclist = stc16TcMap.at(std::make_pair(modName,istc16));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
@@ -477,6 +478,7 @@ namespace TPGFEModuleEmulation{
     uint32_t nofBCTcs = configs.getEconTPara().at(moduleId).getBCType();
     TMath::Sort(uint32_t(tclist.size()), energy, sorted_idx);
     //The following line should be modified when we have access to the BC mode defined for a given ECONT of a motherboard in the config file
+    emulOut.second.reset();
     for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++){
       //emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
       emulOut.second.setTcData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]);
