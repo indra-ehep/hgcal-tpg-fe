@@ -28,7 +28,7 @@ namespace TPGFEModuleEmulation{
       uint32_t maxval = 0x3FFFF ;      //18b
       uint32_t maxval_ldm = 0x7FFFF ;  //19b
       uint32_t maxval_hdm = 0x1FFFFF ; //21b
-      val = (isldm)?val>>1:val>>3;
+      val = (isldm)?val>>0:val>>3;
       if(isldm){
 	if(val>maxval_ldm) val = maxval_ldm;
       }else{
@@ -183,7 +183,7 @@ namespace TPGFEModuleEmulation{
       if(expo==0) 
 	return (isldm) ? (mant<<1) : (mant<<3) ;
     
-      uint32_t shift = expo+2;
+      uint32_t shift = expo+3;
       uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
       uint32_t mpdeco = 1<<(shift-4);
       decomp = decomp | (mant<<(shift-3));
@@ -210,7 +210,7 @@ namespace TPGFEModuleEmulation{
     
       return decomp;
     }
-
+    
     uint16_t CompressEcontStc4E3M(uint32_t val, bool isldm){
       //4E+3M
       //The following is probably driven by drop_LSB setting, to be tested with a standalone run as no LSB drop is expected for STC
@@ -318,7 +318,7 @@ namespace TPGFEModuleEmulation{
       mant = mant & 0x7;
 
       uint16_t packed = (sub<<3) | mant;
-  
+      
       return packed;
     }
     
@@ -472,20 +472,20 @@ namespace TPGFEModuleEmulation{
       energy[itc] = compressed_bc;
     }
     uint16_t compressed_modsum = CompressEcontModsum(decompressedMS,pck.getSelTC4());
+    emulOut.second.reset();
     //emulOut.second.push_back(TPGFEDataformat::TcRawData(compressed_modsum));
     emulOut.second.setTBM(outputType, 0, compressed_modsum);     //zero bx is set temporarily, bx to be passed from ECOND header to here, this requires a change in the ModuleTcData and 
     
     uint32_t nofBCTcs = configs.getEconTPara().at(moduleId).getBCType();
     TMath::Sort(uint32_t(tclist.size()), energy, sorted_idx);
     //The following line should be modified when we have access to the BC mode defined for a given ECONT of a motherboard in the config file
-    emulOut.second.reset();
     for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++){
       //emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
       emulOut.second.setTcData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]);
     }
     
-    // for(uint32_t itc = 0 ; itc<uint32_t(tclist.size()) ; itc++)
-    //   emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, itc, energy[itc]));
+    for(uint32_t itc = 0 ; itc<uint32_t(tclist.size()) ; itc++)
+      std::cout << "itc: " << sorted_idx[itc] << ", compressed: " << energy[sorted_idx[itc]] << std::endl;
     
     delete []energy ;
     delete []sorted_idx ;

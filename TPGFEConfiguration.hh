@@ -966,6 +966,7 @@ namespace TPGFEConfiguration{
     for(auto const& hroc : hroccfg){
       std::cout << "Configuration::printCfgPedTh moduleId: "<< moduleId
 		<<", RocId: " <<  hroc.first << std::endl;
+      hroccfg[hroc.first].setMultFactor(25);
       if(moduleId==pck.getModIdFromRocId(uint32_t(hroc.first))){
 	hroccfg[hroc.first].print();
 	for(auto const& hrocch : hrocchcfg){

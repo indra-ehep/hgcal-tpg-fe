@@ -66,38 +66,25 @@ namespace TPGFEReader{
     }
 
     // returns location in this event of the n'th 0xfecafe... line
-    int find_ffsep_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int& isMSB, int n, int ffsep_word_loc = -1) {
-      const uint64_t *p64(((const uint64_t*)rEvent)+1);      
+    int find_ffsep_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int& isMSB, int ffsep_word_loc = -1) {
+      const uint64_t *p64(((const uint64_t*)rEvent)+1);
+      if(scanMode and eventId==inspectEvent)
+	std::cout << "\t\t ffsep_word_loc: "<< ffsep_word_loc
+		  << ", word: 0x"<< std::hex << std::setfill('0') << std::setw(16)
+		  <<p64[ffsep_word_loc]
+		  <<std::dec << std::setfill(' ') << std::setw(4)
+		  << ", isMSB : "<<isMSB << std::endl;
       if (ffsep_word_loc > 0) {
 	if (is_ffsep_word(p64[ffsep_word_loc], isMSB)) {
 	  return ffsep_word_loc;
 	}else
 	  return ffsep_word_loc;
-      } 
-      else {
-	if(scanMode and eventId==inspectEvent) std::cout << "hgc_roc::ECONDReader::find_ffsep_word(): missed" << std::endl;
-	;
+      } else {
+	if(scanMode and eventId==inspectEvent)
+	  std::cout << "hgc_roc::ECONDReader::find_ffsep_word(): missed" << std::endl;
       }
  
-      int cafe_counter = 0;
-      int cafe_word_idx = -1;
-      for(uint32_t i(0);i<rEvent->payloadLength();i++){
-	const uint64_t word = p64[i];
-	if (is_ffsep_word(word,isMSB)) { // if word == 0xfeca
-	  cafe_counter++;       
-	  if (cafe_counter == n){                                                                                    
-	    cafe_word_idx = i;
-	    break;
-	  }
-	}
-      }
-
-      if (cafe_word_idx == -1) {
-	//std::cerr << "Could not find cafe word" << std::endl;
-	return 0;
-      }else {
-	return cafe_word_idx;
-      }
+      return 0;
     }
 
     bool is_empty_word(const uint64_t word, int& isMSB) {
@@ -220,16 +207,22 @@ namespace TPGFEReader{
 	int ffsep_word_loc[12];
 	bool is_ff_sep_notfound[12];
 	bool has_all_sep_found = true;;
+	int ffword_loc = econhloc.at(iecond) + 1;
+	int ffsep_length = 0;
 	for(int iloc=0;iloc<nRx;iloc++){
-	  isMSB[iloc] = -1;
+	  isMSB[iloc] = (iloc%2==0) ? 0 : 1 ;
+	  ffsep_length = (iloc%2==0) ? 20 : 19 ;
 	  is_ff_sep_notfound[iloc] = false;
-	  ffsep_word_loc[iloc] = find_ffsep_word(rEvent, isMSB[iloc], iloc+1);
+	  if(scanMode and eventId==inspectEvent)
+	    std::cout << "\t iloc : " << iloc <<", isMSB[iloc] : " << isMSB[iloc] <<", ffsep_length : " << ffsep_length << ", ffword_loc: " << ffword_loc << std::endl;
+	  ffsep_word_loc[iloc] = find_ffsep_word(rEvent, isMSB[iloc], ffword_loc);
+	  ffword_loc += ffsep_length ;
 	  if(isMSB[iloc] == -1) {
 	    is_ff_sep_notfound[iloc] = true;
 	    has_all_sep_found = false ;
 	  }
 	}
-
+	
 	int expctd_empty_word_loc = zeropos_lst[icapblk].at(iecond);
 	int empty_isMSB = -1;
 	bool hasfound_emptry_word = found_empty_word(rEvent, empty_isMSB, expctd_empty_word_loc) ;      
