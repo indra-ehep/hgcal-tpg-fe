@@ -357,6 +357,32 @@ namespace TPGFEModuleEmulation{
  
       return packed;
     }
+    
+    //C++ adaptation of batcher odd-even sorting of https://github.com/dnoonan08/ECONT_Emulator/ASICBlocks/bestchoice.py
+    void batcherOEMSort(std::vector<TPGFEDataformat::TcRawData>& tc) {
+      //Fixme: Requires 49 Tcs
+      TPGFEDataformat::TcRawData dummy(TPGFEDataformat::Unknown,0x3f, 0);
+      tc.push_back(dummy);
+      
+      uint32_t N = uint32_t(tc.size());
+      uint32_t t = uint32_t(ceil(log(N)/log(2)));
+      uint32_t p = uint32_t(pow(2,(t-1)));
+      while(p>=1){
+	uint32_t q = uint32_t(pow(2,(t-1)));
+	uint32_t r = 0;
+	uint32_t d = p;
+	while (q>=p){
+	  for(uint32_t i=0; i<(N-d) ; i++){
+	    if ((i & p) != r) continue;
+	    if (tc[i] < tc[i+d]) std::swap(tc[i], tc[i+d]);
+	  }
+	  d = q - p;
+	  q = floor(q/2);
+	  r = p;
+	}
+	p = floor(p/2);
+      }
+    }
 
     TPGFEConfiguration::Configuration& configs;
     TPGFEConfiguration::TPGFEIdPacking pck;
@@ -462,6 +488,9 @@ namespace TPGFEModuleEmulation{
     
     uint32_t *sorted_idx = new uint32_t[tclist.size()];
     uint32_t *energy = new uint32_t[tclist.size()];
+    //void batcherOEMSort(std::vector<TPGFEDataformat::TcRawData>& tc) {
+    std::vector<TPGFEDataformat::TcRawData> tcrawdatalist;
+    TPGFEDataformat::TcRawData tcdata;
     for(const auto& itc : tclist){
       uint32_t decompressed = DecompressEcont(mdata.getTC(itc).getCdata(),pck.getSelTC4());
       ////apply calibration //uint32_t calib = 0x800;
@@ -470,7 +499,11 @@ namespace TPGFEModuleEmulation{
       decompressedMS += decompressed ;
       uint16_t compressed_bc = CompressEcontBc(decompressed,pck.getSelTC4());
       energy[itc] = compressed_bc;
+      tcdata.setTriggerCell(outputType, itc, compressed_bc) ;
+      tcrawdatalist.push_back(tcdata);
     }
+    batcherOEMSort(tcrawdatalist);
+    
     uint16_t compressed_modsum = CompressEcontModsum(decompressedMS,pck.getSelTC4());
     emulOut.second.reset();
     //emulOut.second.push_back(TPGFEDataformat::TcRawData(compressed_modsum));
@@ -481,7 +514,8 @@ namespace TPGFEModuleEmulation{
     //The following line should be modified when we have access to the BC mode defined for a given ECONT of a motherboard in the config file
     for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++){
       //emulOut.second.push_back(TPGFEDataformat::TcRawData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]));
-      emulOut.second.setTcData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]);
+      //emulOut.second.setTcData(outputType, sorted_idx[itc], energy[sorted_idx[itc]]);
+      emulOut.second.setTcData(outputType, tcrawdatalist[itc].address(), tcrawdatalist[itc].energy());
     }
     
     for(uint32_t itc = 0 ; itc<uint32_t(tclist.size()) ; itc++)

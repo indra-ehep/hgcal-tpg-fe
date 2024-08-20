@@ -7,6 +7,7 @@
 #include <cstring>
 #include <cassert>
 #include <vector>
+#include <algorithm>
 
 #include "TPGBEDataformat.hh"
 
@@ -157,13 +158,41 @@ namespace TPGFEDataformat{
     }
     
     uint8_t address() const {
-      return (_data & 0x3f);
+      return uint32_t(_data & 0x3f);
     }
     
     uint16_t energy() const {
       return ((_data >> 6 ) & 0x1ff);
     }
     
+    uint16_t data() const {
+      return _data;
+    }
+
+    friend void swap(TcRawData& lhs, TcRawData& rhs){
+      std::swap(lhs._data, rhs._data);
+    }
+    friend bool operator<(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() < rhs.energy();
+    }
+    friend bool operator<=(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() <= rhs.energy();
+    }
+    friend bool operator>(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() > rhs.energy();
+    }
+    friend bool operator>=(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() > rhs.energy();
+    }
+    friend std::ostream& operator<<(std::ostream& os, TcRawData const& atc){
+      return os << "TPGFEDataformat::TcRawData(" << atc << ")::print(): Data = 0x"
+		<< std::hex << ::std::setfill('0')
+		<< std::setw(4) << atc.data()
+		<< std::dec << ::std::setfill(' ')
+		<< ", address = " << std::setw(2) << unsigned(atc.address())
+		<< ", energy = " << std::setw(3) << atc.energy() << std::endl;
+    }
+
     void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
       switch(t){
       case TPGFEDataformat::BestC:
@@ -190,14 +219,16 @@ namespace TPGFEDataformat{
 	assert(e<=0x1ff);
 	//a = 0;
 	break;
-      default:
+      default: //to allow unknown type
+	assert(a==0x3f);
+	assert(e==0);
 	;
       }
       _data = (e<<6|a);
     }
     
     void print() const {
-      std::cout << "TcRawData(" << this << ")::print(): Data = 0x"
+      std::cout << "TPGFEDataformat::TcRawData(" << this << ")::print(): Data = 0x"
 		<< std::hex << ::std::setfill('0')
 		<< std::setw(4) << _data
 		<< std::dec << ::std::setfill(' ')
@@ -220,6 +251,7 @@ namespace TPGFEDataformat{
     uint16_t moduleSum() const { return uint16_t(_ms & 0xff);}
     uint16_t bx() const { return uint16_t(_bx);}
     const std::vector<TPGFEDataformat::TcRawData>& getTcData() const {return _tcdata;}
+    TPGFEDataformat::TcRawData& getTc(uint32_t i) {return _tcdata.at(i);}
     bool is4E3M() const { return (_t==BestC or _t==STC4A or _t==CTC4A or _t==TS or _t==RA) ? true : false ; }
     void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _tcdata.resize(0);}
     
@@ -233,28 +265,47 @@ namespace TPGFEDataformat{
       tc.setTriggerCell(t, a, e);
       _tcdata.push_back(tc);
     }
+    TPGFEDataformat::TcRawData& operator[](int index){
+      if (index >= _tcdata.size()) {
+	std::cerr << "TPGFEDataformat::TcRawDataPacket Array index out of bound, exiting" << std::endl;
+	exit(0);
+      }
+      return _tcdata[index];
+    }
     
+    void sortCh() {std::sort(setTcData().begin(), setTcData().end(), customLess);}    
+    friend std::ostream& operator<<(std::ostream& os, TcRawDataPacket const& atcp){
+      return os << "TPGFEDataformat::TcRawDataPacket(" << atcp << ")::print(): "
+		<< "type = " << atcp.typeName()
+		<< ", bx = " << atcp.bx()
+		<< ", ms = " << atcp.moduleSum()
+		<< std::endl;
+      for(const auto& itc: atcp.getTcData()) itc.print();
+    }
     void print() const {
-      std::cout << "TcRawDataPacket(" << this << ")::print(): "
+      std::cout << "TPGFEDataformat::TcRawDataPacket(" << this << ")::print(): "
 		<< "type = " << typeName()
 		<< ", bx = " << bx()
 		<< ", ms = " << moduleSum()
 		<< std::endl;
-      for(uint32_t itc(0); itc < _tcdata.size(); itc++) _tcdata.at(itc).print();
+      for(const auto& itc: getTcData()) itc.print();
     }    
     
   private:
+    struct{
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() < b.address(); }
+    }
+    customLess;
+    
     TPGFEDataformat::Type _t;
     uint8_t _bx;
     uint8_t _ms;
     std::vector<TPGFEDataformat::TcRawData> _tcdata;
   };
-
-
+  
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawDataPacket;
-  typedef std::pair<uint32_t,TPGFEDataformat::TcRawDataPacket> TcModulePacket;
-  
+  typedef std::pair<uint32_t,TPGFEDataformat::TcRawDataPacket> TcModulePacket;  
   
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   class HgcrocTcData {

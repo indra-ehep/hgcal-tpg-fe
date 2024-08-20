@@ -119,7 +119,7 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   cfgs.setPedThZero();
-  link = 0; econt = 0;
+  link = 1; econt = 0;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -307,7 +307,7 @@ int main(int argc, char** argv)
     moddata.clear();
     for(const auto& data : modarray.at(event))
       moddata[data.first] = data.second ;
-
+    
     // if(isEcontEmulNew){
     econtEmul.Emulate(isSim, event, moduleId, moddata);
     TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();
@@ -322,6 +322,7 @@ int main(int argc, char** argv)
     
     std::cout << "Emul: ievent: "<< event << ", bx: " << bx <<", bx4: "<< bx4 << std::endl;
     std::cout<<"Module :: "<<TcRawdata.first << ", refmodule : " << moduleId << std::endl;
+    TcRawdata.second.sortCh();
     TcRawdata.second.print();
     
     // // uint32_t elinkemul[3];
