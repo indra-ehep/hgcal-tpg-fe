@@ -157,8 +157,8 @@ namespace TPGFEDataformat{
       setTriggerCell(t,a,e);
     }
     
-    uint8_t address() const {
-      return uint32_t(_data & 0x3f);
+    uint16_t address() const {
+      return uint16_t(_data & 0x3f);
     }
     
     uint16_t energy() const {
@@ -272,8 +272,14 @@ namespace TPGFEDataformat{
       }
       return _tcdata[index];
     }
-    
-    void sortCh() {std::sort(setTcData().begin(), setTcData().end(), customLess);}    
+    static struct{
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() < b.address(); }
+    } customLT;
+    static struct {
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() > b.address(); }
+    } customGT;
+        
+    void sortCh() {std::sort(setTcData().begin(), setTcData().end(), customLT);}    
     friend std::ostream& operator<<(std::ostream& os, TcRawDataPacket const& atcp){
       return os << "TPGFEDataformat::TcRawDataPacket(" << atcp << ")::print(): "
 		<< "type = " << atcp.typeName()
@@ -292,10 +298,6 @@ namespace TPGFEDataformat{
     }    
     
   private:
-    struct{
-      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() < b.address(); }
-    }
-    customLess;
     
     TPGFEDataformat::Type _t;
     uint8_t _bx;
@@ -367,7 +369,10 @@ namespace TPGFEDataformat{
       std::memset(_data,0,sizeof(HgcrocTcData)*MaxNumberOfTCs);
       NumberOfTCs=0;
     }
-  
+
+    void setBx(uint16_t bx) { _bx = bx;}
+    const uint32_t getBx() const {return uint32_t(_bx);}
+    
     const uint32_t getNofTCs() const {return uint32_t(NumberOfTCs);}
     const HgcrocTcData* getTCs() const {
       return _data;
@@ -400,6 +405,7 @@ namespace TPGFEDataformat{
   
   private:
     HgcrocTcData _data[48];
+    uint16_t _bx;
     uint16_t NumberOfTCs;
   };
 

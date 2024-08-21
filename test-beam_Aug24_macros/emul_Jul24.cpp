@@ -108,8 +108,9 @@ int main(int argc, char** argv)
       
       cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt.yaml");
       cfgs.readEconTConfigYaml();
+      
       for(uint32_t iroc=0;iroc<3;iroc++){
-	std::cout<<"ilink: " << ilink << ", iecond: "<<iecond<<", iroc: "<<iroc << ", fname : " << cfgrocname[ilink][iecond][iroc] << std::endl;
+	std::cout<<"idx: "<<idx<<", ilink: " << ilink << ", iecond: "<<iecond<<", iroc: "<<iroc << ", fname : " << cfgrocname[ilink][iecond][iroc] << std::endl;
 	uint32_t rocid_0 = pck.packRocId(zside, sector, ilink, det, iecond, selTC4, module, iroc, 0);
 	uint32_t rocid_1 = pck.packRocId(zside, sector, ilink, det, iecond, selTC4, module, iroc, 1);
 	//cfgs.setRocFile(Form("cfgmap/slow_control_configuration/configs_with_MasterTDC_and_TPGTRM/%s",cfgrocname[ilink][iecond][iroc].c_str()));
@@ -119,7 +120,7 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   cfgs.setPedThZero();
-  link = 1; econt = 0;
+  link = 0; econt = 1;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -196,7 +197,7 @@ int main(int argc, char** argv)
   // ===============================================================================================================================
   TPGFEReader::ECONTReader econTReader(cfgs);
   //output array
-  //econTReader.checkEvent(1);
+  econTReader.checkEvent(1);
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
   //void ECONTReader::getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray)
   // ===============================================================================================================================
@@ -206,7 +207,7 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   TPGFEReader::ECONDReader econDReader(cfgs);
   econDReader.setTotUp(0);
-  //econDReader.checkEvent(1);
+  econDReader.checkEvent(1);
   //econDReader.showFirstEvents(10);
 
   //===============================================================================================================================
@@ -278,7 +279,7 @@ int main(int argc, char** argv)
     //first check that both econd and econt data has the same eventid otherwise skip the event
     if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end()) break;
 
-    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Proessing event: " << event <<std::endl<<std::endl<<std::endl;
+    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
     
     std::pair<uint32_t,TPGFEDataformat::ModuleTcData> modTcdata; 
     //;
@@ -322,7 +323,7 @@ int main(int argc, char** argv)
     
     std::cout << "Emul: ievent: "<< event << ", bx: " << bx <<", bx4: "<< bx4 << std::endl;
     std::cout<<"Module :: "<<TcRawdata.first << ", refmodule : " << moduleId << std::endl;
-    TcRawdata.second.sortCh();
+    if(TcRawdata.second.type()==TPGFEDataformat::BestC) TcRawdata.second.sortCh();
     TcRawdata.second.print();
     
     // // uint32_t elinkemul[3];
@@ -339,9 +340,9 @@ int main(int argc, char** argv)
       std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
-      const uint32_t *el = trdata.getElinks(5);
+      const uint32_t *el = trdata.getElinks(2);
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, el, vTC1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
       TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
       vTC1.print();
       up1.print();

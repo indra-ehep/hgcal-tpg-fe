@@ -182,9 +182,10 @@ namespace TPGFEReader{
     
     for (const auto&  econhpos : econheaderpos_lst){
       uint32_t icapblk = econhpos.first;
+      uint32_t link = (icapblk==0)? 1 : 0 ;
       std::vector<uint32_t> econhloc = econhpos.second;
       for(uint32_t iecond = 0 ; iecond < econhloc.size() ; iecond++){
-	uint32_t idx = pck.packModId(zside, sector, icapblk, det, iecond, selTC4, module);
+	uint32_t idx = pck.packModId(zside, sector, link, det, iecond, selTC4, module);
 	int nRx = int(econDPar[idx].getNeRx());
 	
 	if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
@@ -344,9 +345,12 @@ namespace TPGFEReader{
 	  }//end of loop for 37 seq channels
 	  TPGFEDataformat::HalfHgcrocData hrocdata;
 	  hrocdata.setChannels(chdata);
-	  hrocdata.setBx( uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) );
+	  uint16_t bxdiff = 3;
+	  int bx = uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) - bxdiff;
+	  if(bx<0) bx = (3564+bx) + 1;
+	  hrocdata.setBx( uint16_t(bx) ); 
 	  pck.setZero();
-	  hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, icapblk, det, iecond, selTC4, module, rocn, half),hrocdata));
+	  hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, link, det, iecond, selTC4, module, rocn, half),hrocdata));
 	  //std::cout<<std::endl;
 	  if(iloc%2==1)ichip++;
 	}//loop over 6/12 eRxs
@@ -393,7 +397,7 @@ namespace TPGFEReader{
 	  rEvent->RecordHeader::print();
 	  boe->print();
 	  eoe->print();
-	  std::cout<<"Payload length : "<< rEvent->payloadLength() << std::endl;
+	  std::cout<<"Payload length : "<< rEvent->payloadLength() << ", DAQ-data bxId " << eoe->bxId()  << std::endl;
 	}
 	/////////////////////////////////////////////////////////////////
 	if(boe->eventId()>=minEventDAQ and boe->eventId()<maxEventDAQ){

@@ -948,11 +948,14 @@ namespace TPGFEConfiguration{
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::setPedThZero(){
+    uint32_t default_mulfactor = 25;
+    
     for(auto const& hrocch : hrocchcfg)
       hrocchcfg[hrocch.first].setAdcpedestal(0);
     
     for(auto const& hroc : hroccfg){
       hroccfg[hroc.first].setAdcTH(0);
+      hroccfg[hroc.first].setMultFactor(default_mulfactor);
       for(int itot=0;itot<4;itot++){
 	hroccfg[hroc.first].setTotTH(itot, 0);
 	hroccfg[hroc.first].setTotP(itot, 0);
@@ -966,7 +969,6 @@ namespace TPGFEConfiguration{
     for(auto const& hroc : hroccfg){
       std::cout << "Configuration::printCfgPedTh moduleId: "<< moduleId
 		<<", RocId: " <<  hroc.first << std::endl;
-      hroccfg[hroc.first].setMultFactor(25);
       if(moduleId==pck.getModIdFromRocId(uint32_t(hroc.first))){
 	hroccfg[hroc.first].print();
 	for(auto const& hrocch : hrocchcfg){
