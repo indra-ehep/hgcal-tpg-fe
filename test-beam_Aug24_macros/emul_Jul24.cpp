@@ -119,8 +119,8 @@ int main(int argc, char** argv)
       }//roc loop
     }//econd loop
   }//lpGBT loop
-  cfgs.setPedThZero();
-  link = 0; econt = 1;
+  //cfgs.setPedThZero();
+  link = 0; econt = 0;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -197,7 +197,7 @@ int main(int argc, char** argv)
   // ===============================================================================================================================
   TPGFEReader::ECONTReader econTReader(cfgs);
   //output array
-  econTReader.checkEvent(1);
+  //econTReader.checkEvent(1);
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
   //void ECONTReader::getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray)
   // ===============================================================================================================================
@@ -207,7 +207,7 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   TPGFEReader::ECONDReader econDReader(cfgs);
   econDReader.setTotUp(0);
-  econDReader.checkEvent(1);
+  //econDReader.checkEvent(1);
   //econDReader.showFirstEvents(10);
 
   //===============================================================================================================================
@@ -220,7 +220,7 @@ int main(int argc, char** argv)
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>> hrocarray; //event,rocId
   std::map<uint64_t,uint32_t> eventbx;
   std::vector<uint64_t> eventList;
-  uint64_t minEventDAQ = 0, maxEventDAQ = 10;
+  uint64_t minEventDAQ = 0, maxEventDAQ = 100;
   
   hrocarray.clear();
   eventList.clear();
@@ -243,10 +243,10 @@ int main(int argc, char** argv)
     for(const auto& hrocit : datalist){
       const TPGFEDataformat::HalfHgcrocData& hrocdata = hrocit.second ;
       //if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
-      if(ievent==3){
-	std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
-	hrocdata.print();
-      }
+      //if(ievent==3){
+      std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
+      hrocdata.print();
+      //}
     }
     // std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>> econtdata =  econtarray[ievent]; 
     // for(const auto& econtit : econtdata){
@@ -340,9 +340,9 @@ int main(int argc, char** argv)
       std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
-      const uint32_t *el = trdata.getElinks(2);
+      const uint32_t *el = trdata.getElinks(4);
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, el, vTC1);
       TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
       vTC1.print();
       up1.print();
