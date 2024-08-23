@@ -290,7 +290,8 @@ namespace TPGFEDataformat{
     }
     void print() const {
       std::cout << "TPGFEDataformat::TcRawDataPacket(" << this << ")::print(): "
-		<< "type = " << typeName()
+		<< "type = " << type()
+		<< ", typename = " << typeName()
 		<< ", bx = " << bx()
 		<< ", ms = " << moduleSum()
 		<< std::endl;

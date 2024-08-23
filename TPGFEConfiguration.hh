@@ -138,7 +138,12 @@ namespace TPGFEConfiguration{
   //////https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs
   class ConfigEconT {
   public:
-    ConfigEconT() : density(0), dropLSB(0), select(0), stc_type(0), calv(0) {}
+    ConfigEconT() : density(0), dropLSB(0), select(0), stc_type(0) {
+      for(uint32_t itc=0;itc<48;itc++) {
+	calv[itc] = 0;
+	mux[itc] = 0;
+      }
+    }
     uint32_t getDensity() const { return uint32_t(density);}
     uint32_t getDropLSB() const { return uint32_t(dropLSB);}
     uint32_t getSelect() const { return uint32_t(select);}
@@ -194,7 +199,18 @@ namespace TPGFEConfiguration{
       }
       return maxTcs;
     }
-    uint32_t getCalibration() const { return uint32_t(calv);}
+    uint32_t getCalibration(uint32_t itc) const {
+      assert(itc<=47) ;
+      return uint32_t(calv[itc]);
+    }
+    uint32_t getInputMux(uint32_t itc) const {
+      assert(itc<=47) ;
+      return (isConnectedMux(itc)) ? uint32_t(mux[itc]) : 0x80 ;
+    }
+    bool isConnectedMux(uint32_t itc) const {
+      assert(itc<=47) ;
+      return (mux[itc]>>7) ? false : true ;
+    }
     TPGFEDataformat::Type getOutType() const {
       TPGFEDataformat::Type type;
       switch(select){
@@ -241,7 +257,14 @@ namespace TPGFEConfiguration{
     void setSelect(uint32_t sel) { select = sel;}
     void setSTCType(uint32_t stctype) { stc_type = stctype;}
     void setNElinks(uint32_t nlinks) { eporttx_numen = nlinks;}
-    void setCalibration(uint32_t calib) { calv = (calib & 0xFFF);}
+    void setCalibration(uint32_t itc, uint32_t calib) {
+      assert(itc<=47) ;
+      calv[itc] = (calib & 0xFFF);
+    }
+    void setInputMux(uint32_t itc, uint32_t muxval) {
+      assert((muxval<=47 or muxval==0x80) and itc<=47) ; //since default value is not known, set to 0x80 for unconnected TC
+      mux[itc] = muxval & 0xff;
+    }
     void print() {
       std::cout << std::dec << ::std::setfill(' ')
 		<<"ConfigEconT(" << this << ")::print(): "
@@ -255,9 +278,15 @@ namespace TPGFEConfiguration{
 		<< std::setw(2) << getSelect()
 		<<", \tECON-T stc_type = "
 		<< std::setw(2) << getSTCType()
-		<<", \tCALV = "
-		<< std::setw(8) << getCalibration()
 		<< std::endl;
+      for(uint32_t itc=0;itc<48;itc++)
+	std::cout <<"ConfigEconT(" << this << ")::print(): "
+		  <<" itc: " << itc
+		  <<", \tCALV = "
+		  << std::setw(5) << getCalibration(itc)
+		  <<", \tMUX = "
+		  << std::setw(2) << getInputMux(itc)
+		  << std::endl;
     }
     
   private:    
@@ -266,7 +295,8 @@ namespace TPGFEConfiguration{
     uint8_t select; //0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4=Autoencoder (AE).
     uint8_t stc_type; //0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
     uint8_t eporttx_numen;//number of elinks
-    uint16_t calv; //12-bit calibration
+    uint16_t calv[48]; //12-bit calibration for 48 TCs
+    uint8_t mux[48];   //multiplexer between HGCROC and TC to ECONT
   };
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////Packing several IDs for listing objects
@@ -857,18 +887,10 @@ namespace TPGFEConfiguration{
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconDConfigYaml()
   {
-    std::cout<<"Configuration::readEconDConfigYaml:: ECOND init config file : "<<EconDfname<<std::endl;
-    YAML::Node node(YAML::LoadFile(EconDfname));
     
     //something like below should loop over ECON-D config(s) for different modules
     uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
-    uint32_t pass_thru_mode = node["RocDaqCtrl"]["Global"]["pass_thru_mode"].as<uint32_t>();
-    uint32_t active_erxs = node["RocDaqCtrl"]["Global"]["active_erxs"].as<uint32_t>();
-    bool passTM = (pass_thru_mode==1) ? true : false ; 
-    TPGFEConfiguration::ConfigEconD econd;
-    econd.setPassThrough(passTM);
-    econd.setNeRx(active_erxs);
-    econDcfg[idx] = econd;
+    readEconDConfigYaml(idx);
     
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -891,31 +913,9 @@ namespace TPGFEConfiguration{
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconTConfigYaml()
   {
-    std::cout<<"Configuration::readEconTConfigYaml:: ECONT init config file : "<<EconTfname<<std::endl;
-    YAML::Node node(YAML::LoadFile(EconTfname));
-    
-    ///////////////////////////
-    ////probably most important input for physics analysis
-    uint32_t dummyCalib = 1.0;
-    ///////////////////////////
-    
     //something like below should loop over ECON-T config(s) for different modules
     uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);  
-    uint32_t select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
-    uint32_t density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
-    uint32_t dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
-    uint32_t stctype = node["FmtBuf"]["Global"]["stc_type"].as<uint32_t>();
-    uint32_t eporttx_numen = node["FmtBuf"]["Global"]["eporttx_numen"].as<uint32_t>();
-    
-    TPGFEConfiguration::ConfigEconT econt;
-    econt.setDensity(density);
-    econt.setDropLSB(dropLSB);
-    econt.setSelect(select); 
-    econt.setSTCType(stctype);
-    econt.setCalibration(dummyCalib);
-    econt.setNElinks(eporttx_numen);
-    econTcfg[idx] = econt;
-    
+    readEconTConfigYaml(idx);
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconTConfigYaml(uint32_t idx)
@@ -924,26 +924,100 @@ namespace TPGFEConfiguration{
     YAML::Node node(YAML::LoadFile(EconTfname));
     
     ///////////////////////////
-    ////probably most important input for physics analysis
-    uint32_t dummyCalib = 1.0;
+    uint32_t dummyCalib = 0x800; //this corresponds to the default value of unit gain
+    uint32_t dummyMux = 0x80;    //default setting not know so set this value to disconnect the corresponding TC
     ///////////////////////////
-    
-    //something like below should loop over ECON-T config(s) for different modules
-    //uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);  
-    uint32_t select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
-    uint32_t density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
-    uint32_t dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
-    uint32_t stctype = node["FmtBuf"]["Global"]["stc_type"].as<uint32_t>();
-    uint32_t eporttx_numen = node["FmtBuf"]["Global"]["eporttx_numen"].as<uint32_t>();
-    
+
+    bool isFirst = true;
     TPGFEConfiguration::ConfigEconT econt;
-    econt.setDensity(density);
-    econt.setDropLSB(dropLSB);
-    econt.setSelect(select); 
-    econt.setSTCType(stctype);
-    econt.setCalibration(dummyCalib);
-    econt.setNElinks(eporttx_numen);
-    econTcfg[idx] = econt;
+    if(auto search_it = econTcfg.find(idx) ;  search_it != econTcfg.end()) isFirst = false;
+    
+    
+    bool hasFound = false;
+    uint32_t select = 0;
+    if(node["Algorithm"]["Global"]["select"]){
+      select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setSelect(select);
+    if(hasFound and !isFirst) econTcfg[idx].setSelect(select);
+      
+    hasFound = false;
+    uint32_t density = 0;
+    if(node["Algorithm"]["Global"]["density"]){
+      density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setDensity(density);
+    if(hasFound and !isFirst) econTcfg[idx].setDensity(density);
+    
+    hasFound = false;
+    uint32_t dropLSB = 0;
+    if(node["AlgoDroplsb"]["Global"]){
+      dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setDropLSB(dropLSB);
+    if(hasFound and !isFirst) econTcfg[idx].setDropLSB(dropLSB);
+    
+    hasFound = false;
+    uint32_t stctype = 0;
+    if(node["FmtBuf"]["Global"]["stc_type"]){
+      stctype = node["FmtBuf"]["Global"]["stc_type"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setSTCType(stctype);
+    if(hasFound and !isFirst) econTcfg[idx].setSTCType(stctype);
+				
+    hasFound = false;
+    uint32_t eporttx_numen = 0;
+    if(node["FmtBuf"]["Global"]["eporttx_numen"]){
+      eporttx_numen = node["FmtBuf"]["Global"]["eporttx_numen"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setNElinks(eporttx_numen);
+    if(hasFound and !isFirst) econTcfg[idx].setNElinks(eporttx_numen);
+    
+    uint32_t value = 0; 
+    if (YAML::Node mux = node["Mux"]) {
+      for(uint32_t itc=0;itc<48;itc++){
+	std::stringstream ss ;
+	ss << std::setw(2) << std::setfill('0') << itc;
+	if(mux[ss.str().c_str()]){
+	  value = mux[ss.str().c_str()].as<uint32_t>();
+	}else{
+	  value = dummyMux; //set this 
+	  std::cerr << "TPGFEconfiguration::Configuration::readEconTConfigYaml(moduleid="<<idx<<") configfile="<<EconTfname<<" : Mux not set for TC " << ss.str().c_str() << std::endl;
+	}
+	//std::cout << "itc : " << itc <<", ss: " <<ss.str().c_str()<< ", value : " << value << std::endl;
+	if(isFirst)
+	  econt.setInputMux(itc,value);
+	else
+	  econTcfg[idx].setInputMux(itc,value);
+      }
+    }else{
+      if(isFirst)
+	for(uint32_t itc=0;itc<48;itc++)
+	  econt.setInputMux(itc,dummyMux);
+    }
+    
+    if (YAML::Node cal = node["Cal"]) {
+      for(uint32_t itc=0;itc<48;itc++){
+	std::stringstream ss ;
+	ss << std::setw(2) << std::setfill('0') << itc;
+	value = (cal[ss.str().c_str()]) ? cal[ss.str().c_str()].as<uint32_t>() : dummyCalib;
+	if(isFirst)
+	  econt.setCalibration(itc,value);
+	else
+	  econTcfg[idx].setCalibration(itc,value);
+      }
+    }else{
+      if(isFirst)
+	for(uint32_t itc=0;itc<48;itc++)
+	  econt.setCalibration(itc,dummyCalib);
+    }
+    
+    if(isFirst) econTcfg[idx] = econt;
     
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
