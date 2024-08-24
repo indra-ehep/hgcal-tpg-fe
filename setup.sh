@@ -14,5 +14,5 @@ cd $CURRDIR
 rsync -avP /tmp/$USER/hgcal10glinkreceiver/common .
 
 if [ ! -L dat ] ; then
-    ln -s /eos/cms/store/group/dpg_hgcal/tb_hgcal/2023/BeamTestSep/HgcalBeamtestSep2023 dat
+    ln -s /eos/cms/store/group/dpg_hgcal/tb_hgcal/2024/BeamTestAug/HgcalBeamtestAug2024 dat
 fi

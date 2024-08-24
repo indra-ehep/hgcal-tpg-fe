@@ -212,12 +212,12 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   uint32_t zside = 0, sector = 0, link = 0, det = 0;
   uint32_t econt = 0, selTC4 = 1, module = 0;
-
+  
   TPGFEConfiguration::TPGFEIdPacking pck;
   uint32_t moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);
   const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = cfgs.getModIdxToName();
   const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
-
+  
   if(linkNumber==1){
     cfgs.setRocFile(Form("dat/Relay%u/Run%u_Module00c87fff.yaml",relayNumber, runNumber));
     cfgs.setTrainEWIndices(1, 'e', 0);
@@ -231,7 +231,7 @@ int main(int argc, char** argv)
     cfgs.readRocConfigYaml(modName);
   }
   //===============================================================================================================================
-
+  
   //===============================================================================================================================
   //Set and Initialize the ECOND reader
   //===============================================================================================================================
@@ -406,13 +406,13 @@ int main(int argc, char** argv)
       }//event==reference Event
       
     }//event loop
-    FillHistogram(cfgs, hrocarray, modarray, econtemularray, econtarray, eventList, moduleId, dir_diff, dir_charge, isSTC4);
+    //FillHistogram(cfgs, hrocarray, modarray, econtemularray, econtarray, eventList, moduleId, dir_diff, dir_charge, isSTC4);
     std::cout<<"modarray : After Link"<<linkNumber<<" size : " << modarray.size() <<std::endl;
     
   }//loop over event group
 
-  void FillSummaryHistogram(TFile*&,TDirectory*&, TDirectory*&, bool);
-  FillSummaryHistogram(fout,dir_diff, dir_charge, isSTC4);
+  // void FillSummaryHistogram(TFile*&,TDirectory*&, TDirectory*&, bool);
+  // FillSummaryHistogram(fout,dir_diff, dir_charge, isSTC4);
   
   moddata.clear();
   rocdata.clear();
@@ -974,10 +974,10 @@ void FillHistogram(TPGFEConfiguration::Configuration& cfgs,                     
 	  uint32_t *sorted_idx = new uint32_t[nofBCTcs];
 	  uint32_t *energy = new uint32_t[nofBCTcs];
 	  uint32_t *channel = new uint32_t[nofBCTcs];
-	  // uint32_t *emul_energy = new uint32_t[nofBCTcs];
-	  // uint32_t *emul_channel = new uint32_t[nofBCTcs];
-	  uint32_t *emul_energy = new uint32_t[(econtemulTcRawdata.size()-1)];
-	  uint32_t *emul_channel = new uint32_t[(econtemulTcRawdata.size()-1)];
+	  uint32_t *emul_energy = new uint32_t[nofBCTcs];
+	  uint32_t *emul_channel = new uint32_t[nofBCTcs];
+	  // uint32_t *emul_energy = new uint32_t[(econtemulTcRawdata.size()-1)];
+	  // uint32_t *emul_channel = new uint32_t[(econtemulTcRawdata.size()-1)];
 	  uint32_t ibc = 0;
 	  uint32_t econtmodsum = 0,  econtemulmodsum = 0;
 	  for(const auto& econtdata : econtTcRawdata){

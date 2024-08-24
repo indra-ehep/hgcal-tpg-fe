@@ -6,6 +6,17 @@
 #include <cstdint>
 #include <cstring>
 #include <cassert>
+#include <map>
+
+#include <yaml-cpp/yaml.h>
+
+#include "TMath.h"
+#include "TProfile.h"
+#include "TSystem.h"
+#include "TCanvas.h"
+#include "TFile.h"
+
+#include "TPGFEDataformat.hh"
 
 namespace TPGFEConfiguration{
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,14 +66,14 @@ namespace TPGFEConfiguration{
 		<< "ConfigHfROC(" << this << ")::print(): "
 		<<"Tot_P = ";
       for(uint32_t itotch=0;itotch<4;itotch++)
-	std::cout << std::setw(4) << "("<< itotch <<": " << getTotP(itotch) <<") ";
+	std::cout << std::setw(4) << "("<< itotch <<": " << uint32_t(Tot_P[itotch]) <<") ";
       std::cout << std::endl;
       
       std::cout << std::dec << ::std::setfill(' ')
 		<< "ConfigHfROC(" << this << ")::print(): "
 		<<"Tot_TH = ";
       for(uint32_t itotch=0;itotch<4;itotch++)
-	std::cout << std::setw(4) << "("<< itotch <<": " << getTotTH(itotch) <<") ";
+	std::cout << std::setw(4) << "("<< itotch <<": " << uint32_t(Tot_TH[itotch]) <<") ";
       std::cout << std::endl;
 
     }
@@ -127,7 +138,12 @@ namespace TPGFEConfiguration{
   //////https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs
   class ConfigEconT {
   public:
-    ConfigEconT() : density(0), dropLSB(0), select(0), stc_type(0), calv(0) {}
+    ConfigEconT() : density(0), dropLSB(0), select(0), stc_type(0) {
+      for(uint32_t itc=0;itc<48;itc++) {
+	calv[itc] = 0;
+	mux[itc] = 0;
+      }
+    }
     uint32_t getDensity() const { return uint32_t(density);}
     uint32_t getDropLSB() const { return uint32_t(dropLSB);}
     uint32_t getSelect() const { return uint32_t(select);}
@@ -135,7 +151,7 @@ namespace TPGFEConfiguration{
     uint32_t getNElinks() const { return uint32_t(eporttx_numen);}
     uint32_t getBCType() const {
       uint32_t maxTcs = 0;
-      if(getOutType()==TPGFEDataformat::TcRawData::BestC){	
+      if(getOutType()==TPGFEDataformat::BestC){	
 	switch(getNElinks()){
 	case 1:
 	  maxTcs = 1;
@@ -183,30 +199,72 @@ namespace TPGFEConfiguration{
       }
       return maxTcs;
     }
-    uint32_t getCalibration() const { return uint32_t(calv);}
-    ////Some option to be added to TPGFEDataformat::TcRawData enum for a undefined type
-    ////Then add final 'else' with that undefined type to make the function usable
-    TPGFEDataformat::TcRawData::Type getOutType() const {
-      if(select==1){
-	if(stc_type==0)
-	  return TPGFEDataformat::TcRawData::STC4B;
-	else if(stc_type==1)
-	  return TPGFEDataformat::TcRawData::STC16;
-	else if(stc_type==3)
-	  return TPGFEDataformat::TcRawData::STC4A;
-	else
-	  return TPGFEDataformat::TcRawData::Type(0xFFFF);
-      }else if(select==2)
-	return TPGFEDataformat::TcRawData::BestC;
-      else
-	return TPGFEDataformat::TcRawData::Type(0xFFFF);
+    uint32_t getCalibration(uint32_t itc) const {
+      assert(itc<=47) ;
+      return uint32_t(calv[itc]);
+    }
+    uint32_t getInputMux(uint32_t itc) const {
+      assert(itc<=47) ;
+      return (isConnectedMux(itc)) ? uint32_t(mux[itc]) : 0x80 ;
+    }
+    bool isConnectedMux(uint32_t itc) const {
+      assert(itc<=47) ;
+      return (mux[itc]>>7) ? false : true ;
+    }
+    TPGFEDataformat::Type getOutType() const {
+      TPGFEDataformat::Type type;
+      switch(select){
+      case 0:
+	type = TPGFEDataformat::TS;
+	break;
+      case 1:
+	switch(stc_type){
+	case 0:
+	  type = TPGFEDataformat::STC4B;
+	  break;
+	case 1:
+	  type = TPGFEDataformat::STC16;
+	  break;
+	case 2:
+	  type = TPGFEDataformat::CTC4A;
+	  break;
+	case 3:
+	  type = TPGFEDataformat::STC4A;
+	  break;
+	case 4:
+	  type = TPGFEDataformat::CTC4B;
+	  break;
+	default:
+	  type = TPGFEDataformat::Unknown;
+	}
+	break;
+      case 2:
+	type = TPGFEDataformat::BestC;
+	break;
+      case 3:
+	type = TPGFEDataformat::RA;
+	break;
+      case 4:
+	type = TPGFEDataformat::AE;
+	break;
+      default:
+	type = TPGFEDataformat::Unknown;
+      }
+      return type;
     }
     void setDensity(uint32_t den) { density = den;}
     void setDropLSB(uint32_t dLSB) { dropLSB = dLSB;}
     void setSelect(uint32_t sel) { select = sel;}
     void setSTCType(uint32_t stctype) { stc_type = stctype;}
     void setNElinks(uint32_t nlinks) { eporttx_numen = nlinks;}
-    void setCalibration(uint32_t calib) { calv = (calib & 0xFFF);}
+    void setCalibration(uint32_t itc, uint32_t calib) {
+      assert(itc<=47) ;
+      calv[itc] = (calib & 0xFFF);
+    }
+    void setInputMux(uint32_t itc, uint32_t muxval) {
+      assert((muxval<=47 or muxval==0x80) and itc<=47) ; //since default value is not known, set to 0x80 for unconnected TC
+      mux[itc] = muxval & 0xff;
+    }
     void print() {
       std::cout << std::dec << ::std::setfill(' ')
 		<<"ConfigEconT(" << this << ")::print(): "
@@ -220,18 +278,25 @@ namespace TPGFEConfiguration{
 		<< std::setw(2) << getSelect()
 		<<", \tECON-T stc_type = "
 		<< std::setw(2) << getSTCType()
-		<<", \tCALV = "
-		<< std::setw(8) << getCalibration()
 		<< std::endl;
+      for(uint32_t itc=0;itc<48;itc++)
+	std::cout <<"ConfigEconT(" << this << ")::print(): "
+		  <<" itc: " << itc
+		  <<", \tCALV = "
+		  << std::setw(5) << getCalibration(itc)
+		  <<", \tMUX = "
+		  << std::setw(2) << getInputMux(itc)
+		  << std::endl;
     }
     
   private:    
     uint8_t density; //lsb at the input TC from ROC
     uint8_t dropLSB; //lsb at the output during the packing
     uint8_t select; //0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4=Autoencoder (AE).
-    uint8_t stc_type; // 0 : STC4 5E+4M, STC_type=1 : STC16, STC_type=3 : STC4 4E+3M
+    uint8_t stc_type; //0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
     uint8_t eporttx_numen;//number of elinks
-    uint16_t calv; //12-bit calibration
+    uint16_t calv[48]; //12-bit calibration for 48 TCs
+    uint8_t mux[48];   //multiplexer between HGCROC and TC to ECONT
   };
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////Packing several IDs for listing objects
@@ -378,11 +443,15 @@ namespace TPGFEConfiguration{
     void readSiChMapping();
     void readSciChMapping();
     void loadModIdxToNameMapping();
+    void loadMuxMapping();
     
     //Read the ROC/ECOND/ECONT configs from yaml file
-    void readRocConfigYaml(const std::string&);
+    void readRocConfigYaml(const std::string& moduletype);
+    void readRocConfigYaml(const uint32_t& rocid_0, const uint32_t& rocid_1);
     void readEconDConfigYaml();
     void readEconTConfigYaml();
+    void readEconDConfigYaml(uint32_t idx);
+    void readEconTConfigYaml(uint32_t idx);
     
     void setPedThZero(); //set the pedestal and thresholds to zero
     
@@ -408,6 +477,7 @@ namespace TPGFEConfiguration{
     const std::map<std::pair<std::string,uint32_t>,uint32_t>& getSciRocpinToAbsSeq() {return SciRocpinToAbsSeq;}
     
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& getModIdxToName() {return modIdxToName;}
+    const std::map<uint32_t,uint32_t>& getMuxMapping() {return refMuxMap;}
     
     const std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& getRocPara() { return hroccfg;}
     const std::map<uint64_t,TPGFEConfiguration::ConfigCh>& getChPara() { return hrocchcfg;}
@@ -472,6 +542,7 @@ namespace TPGFEConfiguration{
     ////////////////////////////////////////
     std::string EconTfname;
     std::map<uint32_t,TPGFEConfiguration::ConfigEconT> econTcfg;
+    std::map<uint32_t,uint32_t> refMuxMap;
     ////////////////////////////////////////
     
   };
@@ -669,6 +740,12 @@ namespace TPGFEConfiguration{
     modIdxToName[std::make_tuple(1,0,4)] = "TM-J12";
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::loadMuxMapping(){
+    uint32_t type_F_muxmap[48] = {3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28, 35, 34, 33, 32, 39, 38, 37, 36, 43, 42, 41, 40, 47, 46, 45, 44};
+    for(uint32_t itc=0;itc<48;itc++) refMuxMap[itc] = type_F_muxmap[itc];
+      
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readRocConfigYaml(const std::string& modName)
   {
     std::cout<<"Configuration::readRocConfigYaml:: Module config file : "<<PedThfname<<std::endl;
@@ -678,7 +755,9 @@ namespace TPGFEConfiguration{
     const uint32_t nrocs = TMath::CeilNint(nhfrocs/2);
     const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
     for(uint32_t iroc=0;iroc<nrocs;iroc++){
-      std::string rocname = Form("train_%u.roc%u_%c%u",train_idx,iroc,ew,ew_idx); //egForm("train_0.roc%d_w0",iroc);
+      //std::string rocname = Form("train_%u.roc%u_%c%u",train_idx,iroc,ew,ew_idx); //eg. Form("train_0.roc%d_w0",iroc);
+      std::string EW(1,ew);
+      std::string rocname = "train_" + std::to_string(train_idx) + ".roc" + std::to_string(iroc) + EW + std::to_string(ew_idx); 
       uint32_t th_0 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["0"]["Adc_TH"].as<uint32_t>();
       uint32_t th_1 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["1"]["Adc_TH"].as<uint32_t>();
       uint64_t chmask_0 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["0"]["ClrAdcTot_trig"].as<uint64_t>();
@@ -724,7 +803,7 @@ namespace TPGFEConfiguration{
       for(uint32_t ich=0;ich<nchs;ich++){
 	uint32_t ihalf = (ich<TPGFEDataformat::HalfHgcrocData::NumberOfChannels)?0:1;
 	uint32_t chnl = ich%TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
-	uint32_t ped = node["Configuration"]["roc"][rocname]["cfg"]["ch"][Form("%u",ich)]["Adc_pedestal"].as<uint32_t>() ;
+	uint32_t ped = node["Configuration"]["roc"][rocname]["cfg"]["ch"][std::to_string(ich)]["Adc_pedestal"].as<uint32_t>() ;
 	if(ihalf==0){
 	  TPGFEConfiguration::ConfigCh ch_0;
 	  ch_0.setAdcpedestal(ped);
@@ -739,13 +818,98 @@ namespace TPGFEConfiguration{
     //std::cout<<"============"<<std::endl;  
   }//end of read ped class
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::readRocConfigYaml(const uint32_t& rocid_0, const uint32_t& rocid_1)
+  {
+    std::cout<<"Configuration::readRocConfigYaml:: Module config file : "<<PedThfname<<std::endl;
+    YAML::Node node(YAML::LoadFile(PedThfname));
+
+    std::string totname;
+    uint32_t tot_th_0[4], tot_p_0[4], tot_th_1[4], tot_p_1[4];
+    const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
+    uint32_t th_0 = node["DigitalHalf"]["0"]["Adc_TH"].as<uint32_t>();
+    uint32_t th_1 = node["DigitalHalf"]["1"]["Adc_TH"].as<uint32_t>();
+    // uint64_t chmask_0 = node["DigitalHalf"]["0"]["ClrAdcTot_trig"].as<uint64_t>();
+    // uint64_t chmask_1 = node["DigitalHalf"]["1"]["ClrAdcTot_trig"].as<uint64_t>();
+    // uint32_t seltc4_0 = node["DigitalHalf"]["0"]["SelTC4"].as<uint32_t>();
+    // uint32_t seltc4_1 = node["DigitalHalf"]["1"]["SelTC4"].as<uint32_t>();
+    uint64_t chmask_0 = 0,  chmask_1 = 0;
+    uint32_t multfactor_0 = node["DigitalHalf"]["0"]["MultFactor"].as<uint32_t>();
+    uint32_t multfactor_1 = node["DigitalHalf"]["1"]["MultFactor"].as<uint32_t>();
+    for(int itot=0;itot<4;itot++) {
+      totname = "Tot_P" + std::to_string(itot);
+      tot_p_0[itot] = node["DigitalHalf"]["0"][totname].as<uint32_t>();
+      tot_p_1[itot] = node["DigitalHalf"]["1"][totname].as<uint32_t>();
+      totname = "Tot_TH" + std::to_string(itot);
+      tot_th_0[itot] = node["DigitalHalf"]["0"][totname].as<uint32_t>();
+      tot_th_1[itot] = node["DigitalHalf"]["1"][totname].as<uint32_t>();
+      // tot_p_0[itot] = 0;
+      // tot_p_1[itot] = 0;
+      // tot_th_0[itot] = 0;
+      // tot_th_1[itot] = 0;
+    }    
+    //std::cout<<"rocname : "<<rocname<<", th_0 : "<<th_0<<", th_1 : "<<th_1<<", chmask_0 : "<<chmask_0<<", chmask_1 : "<<chmask_1<<std::endl;
+
+    // The following are set as input or modulepath
+    // rocn = iroc;
+    // selTC4 = seltc4_0; half = 0;
+    // uint32_t rocid_0 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half);
+    // selTC4 = seltc4_1; half = 1;
+    // uint32_t rocid_1 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half);
+
+    
+    TPGFEConfiguration::ConfigHfROC hroc_0, hroc_1;      
+    hroc_0.setAdcTH(th_0);
+    hroc_0.setClrAdcTottrig(chmask_0);
+    hroc_0.setMultFactor(multfactor_0);
+    for(int itot=0;itot<4;itot++){
+      hroc_0.setTotTH(itot, tot_th_0[itot]);
+      hroc_0.setTotP(itot, tot_p_0[itot]);
+    }
+
+    hroc_1.setAdcTH(th_1);
+    hroc_1.setClrAdcTottrig(chmask_1);
+    hroc_1.setMultFactor(multfactor_1);
+    for(int itot=0;itot<4;itot++){
+      hroc_1.setTotTH(itot, tot_th_1[itot]);
+      hroc_1.setTotP(itot, tot_p_1[itot]);
+    }
+    
+    hroccfg[rocid_0] = hroc_0;
+    hroccfg[rocid_1] = hroc_1;
+    
+    for(uint32_t ich=0;ich<nchs;ich++){
+      uint32_t ihalf = (ich<TPGFEDataformat::HalfHgcrocData::NumberOfChannels)?0:1;
+      uint32_t chnl = ich%TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
+      uint32_t ped = node["ch"][std::to_string(ich)]["Adc_pedestal"].as<uint32_t>() ;
+      if(ihalf==0){
+	TPGFEConfiguration::ConfigCh ch_0;
+	ch_0.setAdcpedestal(ped);
+	hrocchcfg[pck.packChId(rocid_0,chnl)] = ch_0;
+      }else{
+	TPGFEConfiguration::ConfigCh ch_1;
+	ch_1.setAdcpedestal(ped);
+	hrocchcfg[pck.packChId(rocid_1,chnl)] = ch_1;
+      }
+    }//channel loop
+  }//end of read ped class
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconDConfigYaml()
+  {
+    
+    //something like below should loop over ECON-D config(s) for different modules
+    uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
+    readEconDConfigYaml(idx);
+    
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::readEconDConfigYaml(uint32_t idx)
   {
     std::cout<<"Configuration::readEconDConfigYaml:: ECOND init config file : "<<EconDfname<<std::endl;
     YAML::Node node(YAML::LoadFile(EconDfname));
     
     //something like below should loop over ECON-D config(s) for different modules
-    uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
+    //uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
     uint32_t pass_thru_mode = node["RocDaqCtrl"]["Global"]["pass_thru_mode"].as<uint32_t>();
     uint32_t active_erxs = node["RocDaqCtrl"]["Global"]["active_erxs"].as<uint32_t>();
     bool passTM = (pass_thru_mode==1) ? true : false ; 
@@ -758,39 +922,123 @@ namespace TPGFEConfiguration{
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readEconTConfigYaml()
   {
+    //something like below should loop over ECON-T config(s) for different modules
+    uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);  
+    readEconTConfigYaml(idx);
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::readEconTConfigYaml(uint32_t idx)
+  {
     std::cout<<"Configuration::readEconTConfigYaml:: ECONT init config file : "<<EconTfname<<std::endl;
     YAML::Node node(YAML::LoadFile(EconTfname));
     
     ///////////////////////////
-    ////probably most important input for physics analysis
-    uint32_t dummyCalib = 1.0;
+    uint32_t dummyCalib = 0x800; //this corresponds to the default value of unit gain
+    uint32_t dummyMux = 0x80;    //default setting not know so set this value to disconnect the corresponding TC
     ///////////////////////////
-    
-    //something like below should loop over ECON-T config(s) for different modules
-    uint32_t idx = pck.packModId(zside, sector, link, det, econt, selTC4, module);  
-    uint32_t select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
-    uint32_t density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
-    uint32_t dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
-    uint32_t stctype = node["FmtBuf"]["Global"]["stc_type"].as<uint32_t>();
-    uint32_t eporttx_numen = node["FmtBuf"]["Global"]["eporttx_numen"].as<uint32_t>();
-    
+
+    bool isFirst = true;
     TPGFEConfiguration::ConfigEconT econt;
-    econt.setDensity(density);
-    econt.setDropLSB(dropLSB);
-    econt.setSelect(select); 
-    econt.setSTCType(stctype);
-    econt.setCalibration(dummyCalib);
-    econt.setNElinks(eporttx_numen);
-    econTcfg[idx] = econt;
+    if(auto search_it = econTcfg.find(idx) ;  search_it != econTcfg.end()) isFirst = false;
+    
+    
+    bool hasFound = false;
+    uint32_t select = 0;
+    if(node["Algorithm"]["Global"]["select"]){
+      select = node["Algorithm"]["Global"]["select"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setSelect(select);
+    if(hasFound and !isFirst) econTcfg[idx].setSelect(select);
+      
+    hasFound = false;
+    uint32_t density = 0;
+    if(node["Algorithm"]["Global"]["density"]){
+      density = node["Algorithm"]["Global"]["density"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setDensity(density);
+    if(hasFound and !isFirst) econTcfg[idx].setDensity(density);
+    
+    hasFound = false;
+    uint32_t dropLSB = 0;
+    if(node["AlgoDroplsb"]["Global"]){
+      dropLSB = node["AlgoDroplsb"]["Global"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setDropLSB(dropLSB);
+    if(hasFound and !isFirst) econTcfg[idx].setDropLSB(dropLSB);
+    
+    hasFound = false;
+    uint32_t stctype = 0;
+    if(node["FmtBuf"]["Global"]["stc_type"]){
+      stctype = node["FmtBuf"]["Global"]["stc_type"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setSTCType(stctype);
+    if(hasFound and !isFirst) econTcfg[idx].setSTCType(stctype);
+				
+    hasFound = false;
+    uint32_t eporttx_numen = 0;
+    if(node["FmtBuf"]["Global"]["eporttx_numen"]){
+      eporttx_numen = node["FmtBuf"]["Global"]["eporttx_numen"].as<uint32_t>();
+      hasFound = true;
+    }
+    if(isFirst) econt.setNElinks(eporttx_numen);
+    if(hasFound and !isFirst) econTcfg[idx].setNElinks(eporttx_numen);
+    
+    uint32_t value = 0; 
+    if (YAML::Node mux = node["Mux"]) {
+      for(uint32_t itc=0;itc<48;itc++){
+	std::stringstream ss ;
+	ss << std::setw(2) << std::setfill('0') << itc;
+	if(mux[ss.str().c_str()]){
+	  value = mux[ss.str().c_str()].as<uint32_t>();
+	}else{
+	  value = dummyMux; //set this 
+	  std::cerr << "TPGFEconfiguration::Configuration::readEconTConfigYaml(moduleid="<<idx<<") configfile="<<EconTfname<<" : Mux not set for TC " << ss.str().c_str() << std::endl;
+	}
+	//std::cout << "itc : " << itc <<", ss: " <<ss.str().c_str()<< ", value : " << value << std::endl;
+	if(isFirst)
+	  econt.setInputMux(itc,value);
+	else
+	  econTcfg[idx].setInputMux(itc,value);
+      }
+    }else{
+      if(isFirst)
+	for(uint32_t itc=0;itc<48;itc++)
+	  econt.setInputMux(itc,dummyMux);
+    }
+    
+    if (YAML::Node cal = node["Cal"]) {
+      for(uint32_t itc=0;itc<48;itc++){
+	std::stringstream ss ;
+	ss << std::setw(2) << std::setfill('0') << itc;
+	value = (cal[ss.str().c_str()]) ? cal[ss.str().c_str()].as<uint32_t>() : dummyCalib;
+	if(isFirst)
+	  econt.setCalibration(itc,value);
+	else
+	  econTcfg[idx].setCalibration(itc,value);
+      }
+    }else{
+      if(isFirst)
+	for(uint32_t itc=0;itc<48;itc++)
+	  econt.setCalibration(itc,dummyCalib);
+    }
+    
+    if(isFirst) econTcfg[idx] = econt;
     
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::setPedThZero(){
+    uint32_t default_mulfactor = 25;
+    
     for(auto const& hrocch : hrocchcfg)
       hrocchcfg[hrocch.first].setAdcpedestal(0);
     
     for(auto const& hroc : hroccfg){
       hroccfg[hroc.first].setAdcTH(0);
+      hroccfg[hroc.first].setMultFactor(default_mulfactor);
       for(int itot=0;itot<4;itot++){
 	hroccfg[hroc.first].setTotTH(itot, 0);
 	hroccfg[hroc.first].setTotP(itot, 0);

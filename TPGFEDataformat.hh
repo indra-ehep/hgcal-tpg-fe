@@ -6,9 +6,15 @@
 #include <cstdint>
 #include <cstring>
 #include <cassert>
+#include <vector>
+#include <algorithm>
+
+#include "TPGBEDataformat.hh"
 
 namespace TPGFEDataformat{
 
+  typedef std::array<uint32_t,14> OrderedElinkPacket;
+  
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   ////////////////////////// Data Formats by Paul Dauncey /////////////////////////////////
   ///provision for tctp is added by Indra (without altering the existing functionalitites)
@@ -72,18 +78,27 @@ namespace TPGFEDataformat{
       NumberOfChannels=36
     };
   
-    HalfHgcrocData() {
+    HalfHgcrocData() : _bx(0xFFFF) {
       setZero();
     }
 
     void setZero() {
       std::memset(_data,0,sizeof(HalfHgcrocChannelData)*NumberOfChannels);
     }
-  
+
+    void setBx(uint16_t bx) { _bx = bx;}
+
+    const uint32_t getBx() const {return uint32_t(_bx);}
+
     const HalfHgcrocChannelData* getChannels() const {
       return _data;
     }
 
+    bool hasTOT() const {
+      for(unsigned i(0);i<=NumberOfChannels;i++)
+	if(_data[i].getTcTp()==3) return true;
+      return false;
+    }
     /////////////// Following are the modification/addition for emulation ///////////////////
     // HalfHgcrocChannelData* setChannels() {
     //   return _data;
@@ -107,7 +122,8 @@ namespace TPGFEDataformat{
 		  << std::hex << ::std::setfill('0')
 		  << std::setw(4) << p[i]
 		  << std::dec << ::std::setfill(' ') << ", "
-		  << "TcTp: " << _data[i].getTcTp() << ", "
+		  << " bx: " << getBx() << ", "
+		  << " TcTp: " << _data[i].getTcTp() << ", "
 		  << (_data[i].isTot()?"TOT = ":"ADC = ") << std::setw(4)
 		  << (_data[i].isTot()?_data[i].getTot():_data[i].getAdc())
 		  << std::endl;
@@ -115,104 +131,191 @@ namespace TPGFEDataformat{
     }
 
   private:
+    uint16_t _bx;
     HalfHgcrocChannelData _data[36];
   };
 
-
-    class TcRawData {
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////// Data Formats by Paul and Indra ///////////////////////////////////////////////
+  enum Type {
+      //select : 0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4 = Autoencoder (AE) Settings of [5,7] revert to the Repeater algorithm
+      //stc_type : 0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
+      BestC, // TC energy format = 4E3M
+      STC4A, // 4E3M
+      STC4B, // 5E4M
+      STC16, // 5E4M
+      CTC4A, // 4E3M
+      CTC4B, // 5E4M
+      TS,    // 4E3M, placeholder
+      RA,    // 4E3M, Repeater algorithm is intended for testing and debugging of ECONT
+      AE,    // blocks of 16b, uses convolutional neural network
+      Unknown
+  };
+  
+  class TcRawData {
   public:
-    enum Type {
-      BestC=0x0000, // 4E3M
-      STC4A=0x4000, // 4E3M
-      STC4B=0x8000, // 5E4M
-      STC16=0xc000  // 5E4M
-    };
   
     TcRawData() : _data(0) {
     }
-
-    TcRawData(uint8_t e) {
-      setModuleSum(e);
-    }
-
-    TcRawData(Type t, uint8_t a, uint16_t e) {
+    
+    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
       setTriggerCell(t,a,e);
     }
-
-    uint8_t address() const {
-      return (_data&0x8000)==0?_data&0x3f:_data&0x0f;
+    
+    uint16_t address() const {
+      return uint16_t(_data & 0x3f);
     }
-
+    
     uint16_t energy() const {
-      return (_data&0x8000)==0?(_data>>6)&0x007f:(_data>>4)&0x01ff;
+      return ((_data >> 6 ) & 0x1ff);
+    }
+    
+    uint16_t data() const {
+      return _data;
     }
 
-    uint8_t moduleSum() const {
-      if(!isModuleSum()) return 0;
-      return (_data>>6)&0x00ff;
+    friend void swap(TcRawData& lhs, TcRawData& rhs){
+      std::swap(lhs._data, rhs._data);
+    }
+    friend bool operator<(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() < rhs.energy();
+    }
+    friend bool operator<=(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() <= rhs.energy();
+    }
+    friend bool operator>(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() > rhs.energy();
+    }
+    friend bool operator>=(const TcRawData& lhs, const TcRawData& rhs) {
+      return lhs.energy() > rhs.energy();
+    }
+    friend std::ostream& operator<<(std::ostream& os, TcRawData const& atc){
+      return os << "TPGFEDataformat::TcRawData(" << atc << ")::print(): Data = 0x"
+		<< std::hex << ::std::setfill('0')
+		<< std::setw(4) << atc.data()
+		<< std::dec << ::std::setfill(' ')
+		<< ", address = " << std::setw(2) << unsigned(atc.address())
+		<< ", energy = " << std::setw(3) << atc.energy() << std::endl;
     }
 
-    bool isModuleSum() const {
-      return (_data&0xc03f)==0x003f;
-    }
-
-    bool is4E3M() const {
-      return (_data&0x8000)==0;
-    }
-  
-    bool is5E4M() const {
-      return (_data&0x8000)!=0;
-    }
-  
-    Type type() const {
-      return Type(_data&0xc000);
-    }
-  
-    const std::string& typeName() const {
-      return _typeName[_data>>14];
-    }
-
-    void setModuleSum(uint8_t e) {
-      _data=BestC|e<<6|0x3f;    
-    }
-
-    void setTriggerCell(Type t, uint8_t a, uint16_t e) {
-      if(t==BestC || t==STC4A) {
-	if(t==BestC) assert(a<48);//47-->48
-	else assert(a<4);
-	assert(e<0x80); //but modsum is 5E+3M 0x80 --> 0x100
-	_data=t|e<<6|a;
-      
-      } else {
-	if(t==STC4B) assert(a<4);
-	else assert(a<16);
-	assert(e<0x200);
-	_data=t|e<<4|a;      
+    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
+      switch(t){
+      case TPGFEDataformat::BestC:
+	assert(a<=47);
+	assert(e<=0x7f);
+	break;
+      case TPGFEDataformat::STC4A:
+	assert(a<=3);
+	assert(e<=0x7f);
+	break;
+      case TPGFEDataformat::STC4B:
+	assert(a<=3);
+	assert(e<=0x1ff);
+	break;
+      case TPGFEDataformat::STC16:
+	assert(a<=15);
+	assert(e<=0x1ff);
+	break;
+      case TPGFEDataformat::CTC4A:
+	assert(e<=0x7f);
+	//a = 0;
+	break;
+      case TPGFEDataformat::CTC4B:
+	assert(e<=0x1ff);
+	//a = 0;
+	break;
+      default: //to allow unknown type
+	assert(a==0x3f);
+	assert(e==0);
+	;
       }
+      _data = (e<<6|a);
     }
-  
+    
     void print() const {
-      std::cout << "TcRawData(" << this << ")::print(): Data = 0x"
+      std::cout << "TPGFEDataformat::TcRawData(" << this << ")::print(): Data = 0x"
 		<< std::hex << ::std::setfill('0')
 		<< std::setw(4) << _data
 		<< std::dec << ::std::setfill(' ')
-		<< ", type = " << typeName();
-      if(isModuleSum()) std::cout << ",   module sum" << ", energy = "
-				  << std::setw(3) << unsigned(moduleSum())
-				  << std::endl;
-      else std::cout << ", address = " << std::setw(2) << unsigned(address())
-		     << ", energy = " << std::setw(3) << energy() << std::endl;
-    }    
-
+		<< ", address = " << std::setw(2) << unsigned(address())
+		<< ", energy = " << std::setw(3) << energy() << std::endl;
+    }
+    
   private:
-    static std::string _typeName[4];
     uint16_t _data;
   };
 
-  std::string TcRawData::_typeName[4]={"BestC","STC4A","STC4B","STC16"};
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawDataPacket;
+  static std::string tctypeName[10]={"BestC","STC4A","STC4B","STC16", "CTC4A", "CTC4B", "TS", "RA", "AE", "Unknown"};
   
+  class TcRawDataPacket {
+  public:    
+    TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0) { _tcdata.resize(0);}
+    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) : _t(t), _bx(bx), _ms(e) { _tcdata.resize(0);}
+    const std::string& typeName() const { return TPGFEDataformat::tctypeName[type()]; }
+    TPGFEDataformat::Type type() const { return _t;}
+    uint16_t moduleSum() const { return uint16_t(_ms & 0xff);}
+    uint16_t bx() const { return uint16_t(_bx);}
+    const std::vector<TPGFEDataformat::TcRawData>& getTcData() const {return _tcdata;}
+    TPGFEDataformat::TcRawData& getTc(uint32_t i) {return _tcdata.at(i);}
+    bool is4E3M() const { return (_t==BestC or _t==STC4A or _t==CTC4A or _t==TS or _t==RA) ? true : false ; }
+    void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _tcdata.resize(0);}
+    
+    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) { _t = t; _bx = bx; _ms = e;}
+    void setType(TPGFEDataformat::Type t) { _t = t;}
+    void setModuleSum(uint8_t e) { _ms = e;}
+    void setBX(uint8_t bx) { _bx = bx;}
+    std::vector<TPGFEDataformat::TcRawData>& setTcData() {return _tcdata;}
+    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
+      TPGFEDataformat::TcRawData tc;
+      tc.setTriggerCell(t, a, e);
+      _tcdata.push_back(tc);
+    }
+    TPGFEDataformat::TcRawData& operator[](int index){
+      if (index >= _tcdata.size()) {
+	std::cerr << "TPGFEDataformat::TcRawDataPacket Array index out of bound, exiting" << std::endl;
+	exit(0);
+      }
+      return _tcdata[index];
+    }
+    static struct{
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() < b.address(); }
+    } customLT;
+    static struct {
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() > b.address(); }
+    } customGT;
+        
+    void sortCh() {std::sort(setTcData().begin(), setTcData().end(), customLT);}    
+    friend std::ostream& operator<<(std::ostream& os, TcRawDataPacket const& atcp){
+      return os << "TPGFEDataformat::TcRawDataPacket(" << atcp << ")::print(): "
+		<< "type = " << atcp.typeName()
+		<< ", bx = " << atcp.bx()
+		<< ", ms = " << atcp.moduleSum()
+		<< std::endl;
+      for(const auto& itc: atcp.getTcData()) itc.print();
+    }
+    void print() const {
+      std::cout << "TPGFEDataformat::TcRawDataPacket(" << this << ")::print(): "
+		<< "type = " << type()
+		<< ", typename = " << typeName()
+		<< ", bx = " << bx()
+		<< ", ms = " << moduleSum()
+		<< std::endl;
+      for(const auto& itc: getTcData()) itc.print();
+    }    
+    
+  private:
+    
+    TPGFEDataformat::Type _t;
+    uint8_t _bx;
+    uint8_t _ms;
+    std::vector<TPGFEDataformat::TcRawData> _tcdata;
+  };
+  
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  //typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawDataPacket;
+  typedef std::pair<uint32_t,TPGFEDataformat::TcRawDataPacket> TcModulePacket;  
+  
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   class HgcrocTcData {
   public:
     HgcrocTcData() {
@@ -272,7 +375,10 @@ namespace TPGFEDataformat{
       std::memset(_data,0,sizeof(HgcrocTcData)*MaxNumberOfTCs);
       NumberOfTCs=0;
     }
-  
+
+    void setBx(uint16_t bx) { _bx = bx;}
+    const uint32_t getBx() const {return uint32_t(_bx);}
+    
     const uint32_t getNofTCs() const {return uint32_t(NumberOfTCs);}
     const HgcrocTcData* getTCs() const {
       return _data;
@@ -305,10 +411,70 @@ namespace TPGFEDataformat{
   
   private:
     HgcrocTcData _data[48];
+    uint16_t _bx;
     uint16_t NumberOfTCs;
+  };
+
+  class Trig24Data{
+  public:
+    Trig24Data() : nofElinks(0), nofUnpkdWords(0) {}
+    void setNofElinks(uint32_t nelinks) {assert(nelinks<=3) ; nofElinks = uint8_t(nelinks);}
+    void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords = uint8_t(nwords);}
+    void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<3) ; elinks[ib][iw] = val;}
+    void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8) ; unpackedWords[ib][iw] = val;}
+    
+    uint32_t getNofElinks() const { return uint32_t(nofElinks);}
+    uint32_t getNofUnpkWords() const { return uint32_t(nofUnpkdWords);}
+    uint32_t  getElink(uint32_t ib, uint32_t iw) const { return elinks[ib][iw];}
+    uint32_t  getUnpkWord(uint32_t ib, uint32_t iw) const { return unpackedWords[ib][iw];}
+    const uint32_t *getElinks(uint32_t ib) const { return elinks[ib];}
+    const uint32_t *getUnpkWords(uint32_t ib) const { return unpackedWords[ib];}
+    void print(){
+      
+      for(unsigned ib(0);ib<7;ib++){
+	for(unsigned iel(0);iel<getNofElinks();iel++)
+	  std::cout << " ib " << ib << ", iel  " << iel
+		    << ", elinks = 0x"
+		    << std::hex << ::std::setfill('0') << std::setw(8)
+		    << getElink(ib, iel)
+		    << std::dec
+		    << std::endl;
+      }
+      for(unsigned ib(0);ib<7;ib++){
+	TPGBEDataformat::UnpackerOutputStreamPair up;
+	uint16_t* tc = up.setTcData(0);
+	
+	for(unsigned iw(0);iw<getNofUnpkWords();iw++){
+	//for(unsigned iw(0);iw<4;iw++){
+	  if(iw==0){
+	    uint16_t* ms = up.setMsData(0);
+	    *ms = getUnpkWord(ib, iw);
+	  }else{
+	    *(tc+iw-1) = getUnpkWord(ib, iw);
+	  }
+	  std::cout << " ib " << ib << ", iw  " << iw
+		    << ", unpackedWords = 0x"
+		    << std::hex << ::std::setfill('0') << std::setw(4)
+		    << getUnpkWord(ib, iw)
+		    << std::dec
+		    << std::endl;
+	}//iw loop
+	up.print();
+      }//ib loop
+    }
+  private:
+    uint8_t nofElinks, nofUnpkdWords;
+    uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
+    uint32_t unpackedWords[7][8]; //7:bxs,8:words
   };
 
 
 }
+
+// struct Trig24Data{
+//   uint8_t nofElinks, nofUnpkdWords;
+//   uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
+//   uint32_t unpackedWords[7][8]; //7:bxs,8:words
+// };
 
 #endif

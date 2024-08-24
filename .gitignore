@@ -14,7 +14,12 @@ log*
 log_old*
 *.xlsx
 *.csv
+*.txt
 *.root 
 output*
 output/*
 dat
+dat*
+cfgmap/slow_control_configuration
+dat_old
+
