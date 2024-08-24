@@ -66,14 +66,14 @@ namespace TPGFEConfiguration{
 		<< "ConfigHfROC(" << this << ")::print(): "
 		<<"Tot_P = ";
       for(uint32_t itotch=0;itotch<4;itotch++)
-	std::cout << std::setw(4) << "("<< itotch <<": " << getTotP(itotch) <<") ";
+	std::cout << std::setw(4) << "("<< itotch <<": " << uint32_t(Tot_P[itotch]) <<") ";
       std::cout << std::endl;
       
       std::cout << std::dec << ::std::setfill(' ')
 		<< "ConfigHfROC(" << this << ")::print(): "
 		<<"Tot_TH = ";
       for(uint32_t itotch=0;itotch<4;itotch++)
-	std::cout << std::setw(4) << "("<< itotch <<": " << getTotTH(itotch) <<") ";
+	std::cout << std::setw(4) << "("<< itotch <<": " << uint32_t(Tot_TH[itotch]) <<") ";
       std::cout << std::endl;
 
     }
@@ -443,6 +443,7 @@ namespace TPGFEConfiguration{
     void readSiChMapping();
     void readSciChMapping();
     void loadModIdxToNameMapping();
+    void loadMuxMapping();
     
     //Read the ROC/ECOND/ECONT configs from yaml file
     void readRocConfigYaml(const std::string& moduletype);
@@ -476,6 +477,7 @@ namespace TPGFEConfiguration{
     const std::map<std::pair<std::string,uint32_t>,uint32_t>& getSciRocpinToAbsSeq() {return SciRocpinToAbsSeq;}
     
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& getModIdxToName() {return modIdxToName;}
+    const std::map<uint32_t,uint32_t>& getMuxMapping() {return refMuxMap;}
     
     const std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& getRocPara() { return hroccfg;}
     const std::map<uint64_t,TPGFEConfiguration::ConfigCh>& getChPara() { return hrocchcfg;}
@@ -540,6 +542,7 @@ namespace TPGFEConfiguration{
     ////////////////////////////////////////
     std::string EconTfname;
     std::map<uint32_t,TPGFEConfiguration::ConfigEconT> econTcfg;
+    std::map<uint32_t,uint32_t> refMuxMap;
     ////////////////////////////////////////
     
   };
@@ -737,6 +740,12 @@ namespace TPGFEConfiguration{
     modIdxToName[std::make_tuple(1,0,4)] = "TM-J12";
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  void Configuration::loadMuxMapping(){
+    uint32_t type_F_muxmap[48] = {3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28, 35, 34, 33, 32, 39, 38, 37, 36, 43, 42, 41, 40, 47, 46, 45, 44};
+    for(uint32_t itc=0;itc<48;itc++) refMuxMap[itc] = type_F_muxmap[itc];
+      
+  }
+  ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readRocConfigYaml(const std::string& modName)
   {
     std::cout<<"Configuration::readRocConfigYaml:: Module config file : "<<PedThfname<<std::endl;
@@ -834,10 +843,10 @@ namespace TPGFEConfiguration{
       totname = "Tot_TH" + std::to_string(itot);
       tot_th_0[itot] = node["DigitalHalf"]["0"][totname].as<uint32_t>();
       tot_th_1[itot] = node["DigitalHalf"]["1"][totname].as<uint32_t>();
-      tot_p_0[itot] = 0;
-      tot_p_1[itot] = 0;
-      tot_th_0[itot] = 0;
-      tot_th_1[itot] = 0;
+      // tot_p_0[itot] = 0;
+      // tot_p_1[itot] = 0;
+      // tot_th_0[itot] = 0;
+      // tot_th_1[itot] = 0;
     }    
     //std::cout<<"rocname : "<<rocname<<", th_0 : "<<th_0<<", th_1 : "<<th_1<<", chmask_0 : "<<chmask_0<<", chmask_1 : "<<chmask_1<<std::endl;
 
@@ -863,7 +872,7 @@ namespace TPGFEConfiguration{
     hroc_1.setMultFactor(multfactor_1);
     for(int itot=0;itot<4;itot++){
       hroc_1.setTotTH(itot, tot_th_1[itot]);
-      hroc_1.setTotP(itot, tot_p_0[itot]);
+      hroc_1.setTotP(itot, tot_p_1[itot]);
     }
     
     hroccfg[rocid_0] = hroc_0;

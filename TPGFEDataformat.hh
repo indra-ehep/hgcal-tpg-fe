@@ -94,6 +94,11 @@ namespace TPGFEDataformat{
       return _data;
     }
 
+    bool hasTOT() const {
+      for(unsigned i(0);i<=NumberOfChannels;i++)
+	if(_data[i].getTcTp()==3) return true;
+      return false;
+    }
     /////////////// Following are the modification/addition for emulation ///////////////////
     // HalfHgcrocChannelData* setChannels() {
     //   return _data;
