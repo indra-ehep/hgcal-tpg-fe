@@ -28,19 +28,23 @@ namespace TPGFEModuleEmulation{
       uint32_t maxval = 0x3FFFF ;      //18b
       uint32_t maxval_ldm = 0x7FFFF ;  //19b
       uint32_t maxval_hdm = 0x1FFFFF ; //21b
-      val = (isldm)?val>>0:val>>3;
+      
       if(isldm){
 	if(val>maxval_ldm) val = maxval_ldm;
+	if(val>maxval and val<=maxval_ldm) val = val>>1;
       }else{
 	if(val>maxval_hdm) val = maxval_hdm;
+	if(val>0xFFFFF and val<=maxval_ldm) val = val>>3;	
+	if(val>0x7FFFF and val<=0xFFFFF) val = val>>2;
+	if(val>maxval and val<=0x7FFFF) val = val>>1;
       }
-      if(val>maxval) val = maxval;
+      
       
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
       uint32_t shift ;
       uint32_t mant ;
-  
+      
       if(val>7){
 	uint32_t v = val; 
 	r = 0; 
@@ -64,7 +68,7 @@ namespace TPGFEModuleEmulation{
   
       return cdata;
     }
-
+    
   private:    
     TPGFEConfiguration::Configuration& configs;
     TPGFEConfiguration::TPGFEIdPacking pck;
@@ -185,7 +189,7 @@ namespace TPGFEModuleEmulation{
       
       if(expo==0) 
 	return (isldm) ? (mant<<1) : (mant<<3) ;
-    
+      
       uint32_t shift = expo+3;
       uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
       uint32_t mpdeco = 1<<(shift-4);
@@ -210,7 +214,7 @@ namespace TPGFEModuleEmulation{
       decomp = decomp | (mant<<(shift-3));
       decomp = decomp | mpdeco;
       decomp = (isldm) ? (decomp<<0) : (decomp<<2) ;
-    
+      
       return decomp;
     }
     
@@ -218,7 +222,7 @@ namespace TPGFEModuleEmulation{
       //4E+3M
       //The following is probably driven by drop_LSB setting, to be tested with a standalone run as no LSB drop is expected for STC
       val = (isldm)?val>>1:val>>3;  
-
+      
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
       uint32_t shift ;

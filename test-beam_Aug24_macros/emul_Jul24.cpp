@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   //cfgs.setPedThZero();
-  link = 1; econt = 2;
+  link = 0; econt = 1;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -282,19 +282,19 @@ int main(int argc, char** argv)
   //uint64_t refEvt[8] = {563, 11321, 12346, 12646, 17305, 19916, 22529, 22857}; //CTC4A lpGBT:1
   
   ////./emul_Jul24.exe 1722871974 1722871979 1 > temp1.log
-  //uint64_t refEvt[2] = {9198, 16570}; // BC lpGBT:1
+  uint64_t refEvt[2] = {9198, 16570}; // BC lpGBT:1
   //uint64_t refEvt[24] = {886, 2006, 2236, 2757, 3349, 4520, 6407, 6945, 11617, 13469, 14599, 17199, 19673, 20470, 20827, 21444, 22509, 23358, 26502, 26577, 26627, 30012, 30853, 31140}; //BC lpGBT:0
   //uint64_t refEvt[73] = {143, 567, 728, 1895, 1994, 2062, 2099, 2273, 2481, 2532, 2598, 2938, 5501, 6559, 6931, 7137, 7432, 7657, 7757, 7805, 8450, 8639, 9560, 9897, 9958, 10237, 10602, 10897, 11453, 11966, 12357, 13997, 14500, 14928, 15208, 15246, 15662, 16548, 17534, 17646, 20156, 20255, 20472, 20558, 20952, 20962, 21727, 22107, 22359, 23709, 23873, 24263, 24270, 24907, 24942, 25083, 25589, 25736, 26709, 27276, 27303, 28117, 28423, 28597, 28813, 29368, 29468, 29562, 29606, 30372, 30405, 31137, 31151}; // STC4A lpGBT:1
-  uint64_t refEvt[14] = {5152, 8783, 10290, 18288, 18458, 19709, 20780, 23286, 24086, 26662, 26972, 28046, 28504, 30599};
+  //uint64_t refEvt[14] = {5152, 8783, 10290, 18288, 18458, 19709, 20780, 23286, 24086, 26662, 26972, 28046, 28504, 30599};
   std::vector<uint64_t> refEvents;
   for(int ievent=0;ievent<14;ievent++) refEvents.push_back(refEvt[ievent]);
-  //refEvents.resize(0);
+  refEvents.resize(0);
   //===============================================================================================================================
 
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>> hrocarray; //event,rocId
   std::map<uint64_t,uint32_t> eventbx;
   std::vector<uint64_t> eventList;
-  uint64_t minEventDAQ = 0, maxEventDAQ = 100000;
+  uint64_t minEventDAQ = 0, maxEventDAQ = 100;
   
   hrocarray.clear();
   eventList.clear();
@@ -323,7 +323,7 @@ int main(int argc, char** argv)
       if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
       //if(ievent==3){
 	std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
-	//hrocdata.print();
+	hrocdata.print();
 	if(hrocdata.hasTOT()) hasTOT = true;
       }
     }
@@ -384,9 +384,9 @@ int main(int argc, char** argv)
       
     modarray[event].push_back(modTcdata);
 
-    if(event==563){
+    if(event==1){
       uint32_t modTcid = modTcdata.first;
-      TPGFEDataformat::ModuleTcData mtcdata = modTcdata.second;
+      TPGFEDataformat::ModuleTcData& mtcdata = modTcdata.second;
       if(modTcid==moduleId) mtcdata.print();
     }
     
@@ -394,13 +394,8 @@ int main(int argc, char** argv)
     for(const auto& data : modarray.at(event))
       moddata[data.first] = data.second ;
     
-    // if(isEcontEmulNew){
     econtEmul.Emulate(isSim, event, moduleId, moddata);
     TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();
-    // }else{
-    //   econtEmul.Emulate(isSim, event, moduleId, moddata, TcRawdata);
-    // }
-    //econtemularray[event].push_back(TcRawdata);
     
     // if(event==0){
     //   TcRawdata.print();
@@ -427,7 +422,7 @@ int main(int argc, char** argv)
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
       const uint32_t *el = trdata.getElinks(3); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::CTC4A, 6, el, vTC1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
       TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
       vTC1.print();
       up1.print();

@@ -72,7 +72,8 @@ int main(int argc, char** argv)
   cfgs.readSiChMapping();
   cfgs.readSciChMapping();
   cfgs.loadModIdxToNameMapping();
-
+  cfgs.loadMuxMapping();
+  
   //June/2024 : Proposal1 : 1+2+11+1+3+1+3+3+1 = 1(+/-z) + 2(120deg sector) + 11(link max ~1848) + 1(Si/Sci) + 3(ECONT number max 7) + 1(LD/HD) + 4[(Si type)/(Sci type)] +  3(ROC number) + 1 (Half) = 27 bits
   //June/2024 : Proposal3 : 1+2+6+6+1+3+1+3+3+1 = 1(+/-z) + 2(120deg sector) + 6(layers) + 6(max 40 per LD/HD/layer for MB) + 1(Si/Sci) + 3(ECONT number max 7) + 1(LD/HD) + 4[(Si type)/(Sci type)] +  3(ROC number) + 1 (Half) = 28 bits  
   //Below we choose for proposal 1
@@ -152,7 +153,7 @@ int main(int argc, char** argv)
   econTPar[moduleId].setSelect(select);
   econTPar[moduleId].setSTCType(stc_type); //STC type
   econTPar[moduleId].setNElinks(nelinks); //BC type
-  econTPar[moduleId].setCalibration(calibration);
+  for(uint32_t itc=0;itc<48;itc++) econTPar[moduleId].setCalibration(itc,calibration);
   cfgs.setEconTPara(econTPar);
   //===============================================================================================================================
 
@@ -175,7 +176,6 @@ int main(int argc, char** argv)
     if(ihroc%2==1)rocn++;
   }
   //===============================================================================================================================
-
   
   //===============================================================================================================================
   //Emulation of HGCROC

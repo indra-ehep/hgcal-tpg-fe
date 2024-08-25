@@ -389,13 +389,13 @@ namespace TPGFEDataformat{
   
     void setNofTCs(const unsigned nofTCs) {NumberOfTCs = nofTCs;}
     void setTCs(const HgcrocTcData* data) {
-      for(uint16_t i(0);i<=NumberOfTCs;i++)
+      for(uint16_t i(0);i<NumberOfTCs;i++)
 	_data[i] = data[i];
     }
   
     void print() const {
-      std::cout << "ModuleTriggerCellData(" << this << ")::print()" << std::endl;
-    
+      std::cout << "ModuleTriggerCellData(" << this << ")::print() : NumberOfTCs :" << NumberOfTCs << std::endl;
+      
       for(uint16_t i(0);i<NumberOfTCs;i++) {
 	std::cout << " TC " << std::setw(2) << i << ": compressed = "
 		  << std::dec << ::std::setfill(' ')
