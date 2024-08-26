@@ -25,6 +25,7 @@
 #include <cassert>
 
 #include "TPGFEDataformat.hh"
+#include "TPGBEDataformat.hh"
 #include "TPGFEConfiguration.hh"
 #include "TPGFEModuleEmulation.hh"
 #include "TPGFEReader2024.hh"
@@ -172,7 +173,7 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   //cfgs.setPedThZero();
-  link = 0; econt = 1;
+  link = 0; econt = 2;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -251,8 +252,8 @@ int main(int argc, char** argv)
   TPGFEReader::ECONTReader econTReader(cfgs);
   //output array
   //econTReader.checkEvent(1);
-  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
-  //void ECONTReader::getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray)
+  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
+  //void ECONTReader::getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray)
   // ===============================================================================================================================
   
   //===============================================================================================================================
@@ -328,10 +329,10 @@ int main(int argc, char** argv)
       }
     }
     if(hasTOT) totEvents.push_back(ievent);
-    // std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>> econtdata =  econtarray[ievent]; 
+    // std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[ievent]; 
     // for(const auto& econtit : econtdata){
     //   //std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
-    //   TPGFEDataformat::Trig24Data trdata = econtit.second ;
+    //   TPGBEDataformat::Trig24Data trdata = econtit.second ;
     //   //trdata.print();
     // }
   }
@@ -346,8 +347,6 @@ int main(int argc, char** argv)
   modarray.clear();
   std::map<uint32_t,TPGFEDataformat::HalfHgcrocData> rocdata;
   std::map<uint32_t,TPGFEDataformat::ModuleTcData> moddata;
-  std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcModulePacket>>>> econtemularray; //event,moduleId (emulation)
-  econtemularray.clear();
   /////////////////////////////////////////////////////////////
   //// The following part should be in a loop over modules
   /////////////////////////////////////////////////////////////
@@ -381,7 +380,7 @@ int main(int argc, char** argv)
       
     bool isSim = false; //true for CMSSW simulation and false for beam-test analysis
     rocTPGEmul.Emulate(isSim, event, moduleId, rocdata, modTcdata);
-      
+    
     modarray[event].push_back(modTcdata);
 
     if(event==1){
@@ -406,23 +405,25 @@ int main(int argc, char** argv)
     if(TcRawdata.second.type()==TPGFEDataformat::BestC) TcRawdata.second.sortCh();
     TcRawdata.second.print();
     
-    // // uint32_t elinkemul[3];
-    // // TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx, TcRawdata.second, elinkemul);
-    // // std::cout << "Emulation: ievent: "<< event << std::endl;
-    // // std::cout<<"Elink emul : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[0] << std::dec << std::endl;
+    uint32_t elinkemul[6];
+    TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx4, TcRawdata.second, elinkemul);
+    std::cout << "Emulation: ievent: "<< event << std::endl;
+    std::cout<<"Elink emul : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[0] << std::dec << std::endl;
+    std::cout<<"           : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[1] << std::dec << std::endl;
+    std::cout<<"           : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[2] << std::dec << std::endl;
     
-    std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>> econtdata =  econtarray[event];
+    std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];
     
     for(const auto& econtit : econtdata){
       if(econtit.first!=TcRawdata.first) continue;
-      TPGFEDataformat::Trig24Data trdata = econtit.second ;
+      TPGBEDataformat::Trig24Data trdata = econtit.second ;
       std::cout << "ECONT: ievent: "<< event << std::endl;
       std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
-      const uint32_t *el = trdata.getElinks(3); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
+      const uint32_t *el = trdata.getElinks(2); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::CTC4A, 6, el, vTC1);
       TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
       vTC1.print();
       up1.print();

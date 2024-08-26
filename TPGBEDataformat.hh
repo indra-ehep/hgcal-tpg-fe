@@ -393,6 +393,59 @@ private:
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
 
+    class Trig24Data{
+  public:
+    Trig24Data() : nofElinks(0), nofUnpkdWords(0) {}
+    void setNofElinks(uint32_t nelinks) {assert(nelinks<=3) ; nofElinks = uint8_t(nelinks);}
+    void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords = uint8_t(nwords);}
+    void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<3) ; elinks[ib][iw] = val;}
+    void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8) ; unpackedWords[ib][iw] = val;}
+    
+    uint32_t getNofElinks() const { return uint32_t(nofElinks);}
+    uint32_t getNofUnpkWords() const { return uint32_t(nofUnpkdWords);}
+    uint32_t  getElink(uint32_t ib, uint32_t iw) const { return elinks[ib][iw];}
+    uint32_t  getUnpkWord(uint32_t ib, uint32_t iw) const { return unpackedWords[ib][iw];}
+    const uint32_t *getElinks(uint32_t ib) const { return elinks[ib];}
+    const uint32_t *getUnpkWords(uint32_t ib) const { return unpackedWords[ib];}
+    void print(){
+      
+      for(unsigned ib(0);ib<7;ib++){
+	for(unsigned iel(0);iel<getNofElinks();iel++)
+	  std::cout << " ib " << ib << ", iel  " << iel
+		    << ", elinks = 0x"
+		    << std::hex << ::std::setfill('0') << std::setw(8)
+		    << getElink(ib, iel)
+		    << std::dec
+		    << std::endl;
+      }
+      for(unsigned ib(0);ib<7;ib++){
+	TPGBEDataformat::UnpackerOutputStreamPair up;
+	uint16_t* tc = up.setTcData(0);
+	
+	for(unsigned iw(0);iw<getNofUnpkWords();iw++){
+	//for(unsigned iw(0);iw<4;iw++){
+	  if(iw==0){
+	    uint16_t* ms = up.setMsData(0);
+	    *ms = getUnpkWord(ib, iw);
+	  }else{
+	    *(tc+iw-1) = getUnpkWord(ib, iw);
+	  }
+	  std::cout << " ib " << ib << ", iw  " << iw
+		    << ", unpackedWords = 0x"
+		    << std::hex << ::std::setfill('0') << std::setw(4)
+		    << getUnpkWord(ib, iw)
+		    << std::dec
+		    << std::endl;
+	}//iw loop
+	up.print();
+      }//ib loop
+    }
+  private:
+    uint8_t nofElinks, nofUnpkdWords;
+    uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
+    uint32_t unpackedWords[7][8]; //7:bxs,8:words
+  };
+
 }
 
 #endif

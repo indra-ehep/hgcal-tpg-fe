@@ -2,13 +2,13 @@
 LDFLAGS=-L$(HOME)/Software/yaml-cpp/lib64
 CPPFLAGS=-I$(HOME)/Software/yaml-cpp/include
 
-all: emul_Jul24 
+all: findEMax
 
 emul_test-beam_Sep23:  test-beam_Sep23_macros/emul_test-beam_Sep23.cpp
 	g++ -I common/inc -I . test-beam_Sep23_macros/emul_test-beam_Sep23.cpp  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` -o emul_test-beam_Sep23.exe
 
 findEMax: test-beam_Sep23_macros/findEMax.cpp
-	g++ -I common/inc $(LDFLAGS) $(CPPFLAGS) -I . test-beam_Sep23_macros/findEMax.cpp  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` -o findEMax.exe
+	g++ -I common/inc $(LDFLAGS) $(CPPFLAGS) -I TPGStage1Emulation/ -I . test-beam_Sep23_macros/findEMax.cpp  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` -o findEMax.exe
 
 read_econt_Jul24: test-beam_Aug24_macros/read_econt_Jul24.cpp
 	g++ -I common/inc -I . test-beam_Aug24_macros/read_econt_Jul24.cpp  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` -o read_econt_Jul24.exe

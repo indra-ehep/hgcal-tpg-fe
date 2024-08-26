@@ -521,7 +521,7 @@ namespace TPGFEReader{
     // void getEventsBC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
     // void getEventsSTC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
     
-    void getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray);
+    void getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray);
     void terminate();
     
   private:
@@ -736,7 +736,7 @@ namespace TPGFEReader{
   }
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-  void ECONTReader::getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::Trig24Data>>>& econtarray){
+  void ECONTReader::getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray){
 
     //Set up specific records to interpet the formats
     const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
@@ -1032,7 +1032,7 @@ namespace TPGFEReader{
 	  //   uint32_t unpackedWords[7][8]; //7:bxs,8:words
 	  // };
 	  
-	  TPGFEDataformat::Trig24Data trdata[2][3]; //2:lpGBTs, 3:econts
+	  TPGBEDataformat::Trig24Data trdata[2][3]; //2:lpGBTs, 3:econts
 	  for(int ilp=0;ilp<2;ilp++){
 	    for(int iecon=0;iecon<3;iecon++){
 	      moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
