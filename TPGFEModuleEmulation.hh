@@ -28,6 +28,9 @@ namespace TPGFEModuleEmulation{
       uint32_t maxval = 0x3FFFF ;      //18b
       uint32_t maxval_ldm = 0x7FFFF ;  //19b
       uint32_t maxval_hdm = 0x1FFFFF ; //21b
+
+      //The following line is for September'23 test beam
+      val = (isldm)?val>>1:val>>3;
       
       if(isldm){
 	if(val>maxval_ldm) val = maxval_ldm;
@@ -189,8 +192,12 @@ namespace TPGFEModuleEmulation{
       
       if(expo==0) 
 	return (isldm) ? (mant<<1) : (mant<<3) ;
+
+      //The following line is for September'23 test beam
+      uint32_t shift = expo+2;
+      //The following line is for August'24 test beam
+      //uint32_t shift = expo+3;
       
-      uint32_t shift = expo+3;
       uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
       uint32_t mpdeco = 1<<(shift-4);
       decomp = decomp | (mant<<(shift-3));
@@ -206,7 +213,7 @@ namespace TPGFEModuleEmulation{
       uint32_t expo = (compressed>>3) & 0xF;
       
       if(expo==0) 
-	return (isldm) ? (mant<<1)+1 : (mant<<3)+4 ;
+	return (isldm) ? (mant<<2)+5 : (mant<<5)+6 ;
     
       uint32_t shift = expo+4;
       uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
@@ -506,7 +513,7 @@ namespace TPGFEModuleEmulation{
 	    std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	    continue;
 	  }
-	  uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),pck.getSelTC4());
+	  uint32_t decompressed = DecompressEcontSTC(mdata.getTC(emultc).getCdata(),pck.getSelTC4());
 	  decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
 	  decompressed =  decompressed >> 11;
 	  decompressedSTC16 += decompressed ;

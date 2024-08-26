@@ -755,9 +755,9 @@ namespace TPGFEConfiguration{
     const uint32_t nrocs = TMath::CeilNint(nhfrocs/2);
     const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
     for(uint32_t iroc=0;iroc<nrocs;iroc++){
-      //std::string rocname = Form("train_%u.roc%u_%c%u",train_idx,iroc,ew,ew_idx); //eg. Form("train_0.roc%d_w0",iroc);
-      std::string EW(1,ew);
-      std::string rocname = "train_" + std::to_string(train_idx) + ".roc" + std::to_string(iroc) + EW + std::to_string(ew_idx); 
+      std::string rocname = Form("train_%u.roc%u_%c%u",train_idx,iroc,ew,ew_idx); //eg. Form("train_0.roc%d_w0",iroc);
+      // std::string EW(1,ew);
+      // std::string rocname = "train_" + std::to_string(train_idx) + ".roc" + std::to_string(iroc) + EW + std::to_string(ew_idx); 
       uint32_t th_0 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["0"]["Adc_TH"].as<uint32_t>();
       uint32_t th_1 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["1"]["Adc_TH"].as<uint32_t>();
       uint64_t chmask_0 = node["Configuration"]["roc"][rocname]["cfg"]["DigitalHalf"]["0"]["ClrAdcTot_trig"].as<uint64_t>();

@@ -173,7 +173,7 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   //cfgs.setPedThZero();
-  link = 0; econt = 2;
+  link = 0; econt = 1;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -423,8 +423,9 @@ int main(int argc, char** argv)
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
       const uint32_t *el = trdata.getElinks(2); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::CTC4A, 6, el, vTC1);
-      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+      trdata.setNofUnpkWords(6);
+      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);      
       vTC1.print();
       up1.print();
       trdata.print();
