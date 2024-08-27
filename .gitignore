@@ -15,7 +15,9 @@ log_old*
 *.xlsx
 *.csv
 *.txt
-*.root 
+*.root
+*.log 
+.*swp*
 output*
 output/*
 dat

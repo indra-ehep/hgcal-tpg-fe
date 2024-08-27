@@ -41,8 +41,7 @@ namespace TPGFEModuleEmulation{
 	if(val>0x7FFFF and val<=0xFFFFF) val = val>>2;
 	if(val>maxval and val<=0x7FFFF) val = val>>1;
       }
-      
-      
+            
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
       uint32_t shift ;
@@ -206,16 +205,23 @@ namespace TPGFEModuleEmulation{
     
       return decomp;
     }
-
+    
     uint32_t DecompressEcontSTC(uint16_t compressed, bool isldm){
       //4E+3M with midpoint correction
       uint32_t mant = compressed & 0x7;
       uint32_t expo = (compressed>>3) & 0xF;
-      
+
+      //The following line is for September'23 test beam
       if(expo==0) 
-	return (isldm) ? (mant<<2)+5 : (mant<<5)+6 ;
-    
-      uint32_t shift = expo+4;
+	return (isldm) ? (mant<<1)+1 : (mant<<3)+1 ;
+      // //The following line is for August'24 test beam
+      // if(expo==0) 
+      // 	return (isldm) ? (mant<<2)+5 : (mant<<5)+6 ;
+      
+      //The following line is for September'23 test beam
+      uint32_t shift = expo+3;
+      //The following line is for August'24 test beam
+      //uint32_t shift = expo+4;
       uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
       uint32_t mpdeco = 1<<(shift-4);
       decomp = decomp | (mant<<(shift-3));
