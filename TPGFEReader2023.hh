@@ -417,21 +417,21 @@ namespace TPGFEReader{
     uint64_t getCheckedEvent() {return inspectEvent;}
     
     void init(uint32_t, uint32_t, uint32_t);
-    void getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>& econtarray, std::vector<uint64_t>& events){
+    void getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<TPGFEDataformat::TcModulePacket>>& econtarray, std::vector<uint64_t>& events){
       moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-      const TPGFEDataformat::TcRawData::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
-      if(outputType==TPGFEDataformat::TcRawData::BestC)
+      const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+      if(outputType==TPGFEDataformat::BestC)
 	getEventsBC(minEventTrig, maxEventTrig, econtarray, events);
-      else if(outputType==TPGFEDataformat::TcRawData::STC4A or outputType==TPGFEDataformat::TcRawData::STC4B or outputType==TPGFEDataformat::TcRawData::STC16)
+      else if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B or outputType==TPGFEDataformat::STC16)
 	getEventsSTC(minEventTrig, maxEventTrig, econtarray, events);
       else{
-	std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>> dummy1;
+	std::vector<TPGFEDataformat::TcModulePacket> dummy1;
 	econtarray[0] = dummy1;
     }
 
     }
-    void getEventsBC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
-    void getEventsSTC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
+    void getEventsBC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<TPGFEDataformat::TcModulePacket>>&, std::vector<uint64_t>&);
+    void getEventsSTC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<TPGFEDataformat::TcModulePacket>>&, std::vector<uint64_t>&);
     void terminate();
     
   private:
@@ -639,17 +639,17 @@ namespace TPGFEReader{
     isMSB = (linkNumber%2==0) ? true : false;
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void ECONTReader::getEventsSTC(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>& econtarray, std::vector<uint64_t>& events){
+  void ECONTReader::getEventsSTC(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<TPGFEDataformat::TcModulePacket>>& econtarray, std::vector<uint64_t>& events){
 
     //Set up specific records to interpet the formats
     const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
     const Hgcal10gLinkReceiver::RecordStopping *rStop ((Hgcal10gLinkReceiver::RecordStopping*)r);
     const Hgcal10gLinkReceiver::RecordRunning  *rEvent((Hgcal10gLinkReceiver::RecordRunning*) r);
-
-    std::vector<TPGFEDataformat::TcRawData> edata;
-    std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>> edataarray;
     
-    const TPGFEDataformat::TcRawData::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+    TPGFEDataformat::TcRawDataPacket edata;
+    std::vector<TPGFEDataformat::TcModulePacket> edataarray;
+    
+    const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
     
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
@@ -695,7 +695,8 @@ namespace TPGFEReader{
 	const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
 	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
 	eventId = boe->eventId();
-	edata.clear();
+	edata.reset();
+	edata.setTBM(outputType, 0, 0);
 	edataarray.clear();
 	// if (nEvents < 1){ 
 	//  	event_dump(rEvent);
@@ -851,14 +852,17 @@ namespace TPGFEReader{
 	    }//isMSB
 	    
 	    if((bx_index+int(daq_nbx[0]))==refbxindex){
-	      for(int istc=0;istc<maxSTcs;istc++)
-		edata.push_back(TPGFEDataformat::TcRawData(outputType, packet_locations[istc], packet_energies[istc]));
+	      for(int istc=0;istc<maxSTcs;istc++){
+		//edata.push_back(TPGFEDataformat::TcRawData(outputType, , packet_energies[istc]));
+		edata.setTcData(outputType, packet_locations[istc], packet_energies[istc]);
+	      }
 	    }
 	    
 	    bx_index++;
 	  }//loop over unpacked
 
-	  edataarray.push_back(std::make_pair(moduleId,edata));
+	  TPGFEDataformat::TcModulePacket modpacket = std::make_pair(moduleId,edata);
+	  edataarray.push_back(modpacket);
     	  econtarray[eventId] = edataarray;
 	  
 	  //econtarray[eventId] = edata;
@@ -872,19 +876,18 @@ namespace TPGFEReader{
 
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  void ECONTReader::getEventsBC(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>& econtarray, std::vector<uint64_t>& events){
-  //int read_econt_data_bc(map<uint64_t,bcdata>& econtarray, unsigned relayNumber, unsigned runNumber, uint64_t minEventTrig, uint64_t maxEventTrig){
-    
+  //void ECONTReader::getEventsBC(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>& econtarray, std::vector<uint64_t>& events){
+  void ECONTReader::getEventsBC(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<TPGFEDataformat::TcModulePacket>>& econtarray, std::vector<uint64_t>& events){
     
     //Set up specific records to interpet the formats
     const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
     const Hgcal10gLinkReceiver::RecordStopping *rStop ((Hgcal10gLinkReceiver::RecordStopping*)r);
     const Hgcal10gLinkReceiver::RecordRunning  *rEvent((Hgcal10gLinkReceiver::RecordRunning*) r);
     
-    std::vector<TPGFEDataformat::TcRawData> edata;
-    std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>> edataarray;
+    TPGFEDataformat::TcRawDataPacket edata;
+    std::vector<TPGFEDataformat::TcModulePacket> edataarray;
     
-    const TPGFEDataformat::TcRawData::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
+    const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
     const uint32_t maxBCTcs = configs.getEconTPara().at(moduleId).getBCType() ;
     
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
@@ -932,7 +935,7 @@ namespace TPGFEReader{
 	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
 	eventId = boe->eventId();
 	//clean the array;
-	edata.clear();
+	edata.reset();
 	edataarray.clear();
 
 	// if (nEvents < 1){ 
@@ -1088,10 +1091,14 @@ namespace TPGFEReader{
 	    }
 	    int itrigcell = 0;
 	    if((bx_index+int(daq_nbx[0]))==refbxindex){
-	      edata.push_back(TPGFEDataformat::TcRawData(modsum));
+	      //edata.push_back(TPGFEDataformat::TcRawData(modsum));
+	      edata.setTBM(outputType, 0, modsum) ;
 	      for(int itc=0;itc<maxNofTcs;itc++)
-    		if(packet_tcs[itc])
-		  edata.push_back(TPGFEDataformat::TcRawData(outputType, itc, packet_energies[itrigcell++]));
+    		if(packet_tcs[itc]){
+		  //edata.push_back(TPGFEDataformat::TcRawData(outputType, itc, packet_energies[itrigcell++]));
+		  //std::cout << "itc: " << itc << ", maxNofTcs: "<<maxNofTcs<<", e: " << packet_energies[itrigcell] << std::endl;
+		  edata.setTcData(outputType, itc, packet_energies[itrigcell++]);
+		}
 	    }
 	    
     	    //Itrigcell = 0;
@@ -1105,7 +1112,8 @@ namespace TPGFEReader{
 	
     	    bx_index++;
     	  }
-	  edataarray.push_back(std::make_pair(moduleId,edata));
+	  TPGFEDataformat::TcModulePacket modpacket = std::make_pair(moduleId,edata);
+	  edataarray.push_back(modpacket);
     	  econtarray[eventId] = edataarray;
 	}
 	//Increment event counter

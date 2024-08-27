@@ -28,6 +28,9 @@
 #include "TPGFEConfiguration.hh"
 #include "TPGFEModuleEmulation.hh"
 
+#include "TPGBEDataformat.hh"
+#include "Stage1IO.hh"
+
 int main(int argc, char** argv)
 {
   
@@ -49,16 +52,17 @@ int main(int argc, char** argv)
   //HD: K6(0), K8(1), K11(2), K12(3), J12(4)
   uint32_t det = 0, selTC4 = 1, module = 0;
   
-  uint32_t multfactor = 15;//TOT mult factor other values could be 31 or 8
+  uint32_t multfactor = 31;//TOT mult factor other values could be 31 or 8
   uint32_t inputLSB = 1; //lsb at the input TC from ROC
   uint32_t dropLSB = 1;  //lsb at the output during the packing
   uint32_t select = 1 ;  //0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4=Autoencoder (AE).
-  uint32_t stc_type = 0; // 0 = STC4B(5E+4M), 1 = STC16(5E+4M), 3 = STC4A(4E+3M)
-  uint32_t nelinks = 4; //1 = BC1, 2 = BC4, 3 = BC6, 4 = BC9, 5 = BC14..... (see details https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs)
+  uint32_t stc_type = 1; //0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
+  const uint32_t nelinks = 5; //1 = BC1, 2 = BC4, 3 = BC6, 4 = BC9, 5 = BC14..... (see details https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs)
   uint32_t calibration = 0xFFF; //0x400 = 0.5, 0x800 = 1.0, 0xFFF = 1.99951 (max)
   
   uint32_t maxADC = 0x3FF ; //10 bit input in TPG path
   uint32_t maxTOT = 0xFFF ; //12 bit input in TPG path
+  uint16_t bx = 4;
   //===============================================================================================================================
   
   
@@ -72,7 +76,8 @@ int main(int argc, char** argv)
   cfgs.readSiChMapping();
   cfgs.readSciChMapping();
   cfgs.loadModIdxToNameMapping();
-
+  cfgs.loadMuxMapping();
+  
   //June/2024 : Proposal1 : 1+2+11+1+3+1+3+3+1 = 1(+/-z) + 2(120deg sector) + 11(link max ~1848) + 1(Si/Sci) + 3(ECONT number max 7) + 1(LD/HD) + 4[(Si type)/(Sci type)] +  3(ROC number) + 1 (Half) = 27 bits
   //June/2024 : Proposal3 : 1+2+6+6+1+3+1+3+3+1 = 1(+/-z) + 2(120deg sector) + 6(layers) + 6(max 40 per LD/HD/layer for MB) + 1(Si/Sci) + 3(ECONT number max 7) + 1(LD/HD) + 4[(Si type)/(Sci type)] +  3(ROC number) + 1 (Half) = 28 bits  
   //Below we choose for proposal 1
@@ -152,7 +157,7 @@ int main(int argc, char** argv)
   econTPar[moduleId].setSelect(select);
   econTPar[moduleId].setSTCType(stc_type); //STC type
   econTPar[moduleId].setNElinks(nelinks); //BC type
-  econTPar[moduleId].setCalibration(calibration);
+  for(uint32_t itc=0;itc<48;itc++) econTPar[moduleId].setCalibration(itc,calibration);
   cfgs.setEconTPara(econTPar);
   //===============================================================================================================================
 
@@ -169,13 +174,13 @@ int main(int argc, char** argv)
     for(uint32_t ich = 0 ; ich < TPGFEDataformat::HalfHgcrocData::NumberOfChannels ; ich++)
       chdata[ich].setTot(maxTOT);    
     TPGFEDataformat::HalfHgcrocData hrocdata;
+    hrocdata.setBx(bx);
     hrocdata.setChannels(chdata);
     pck.setZero();
     hrocarray[eventId].push_back(std::make_pair(pck.packRocId(zside, sector, link, det, econt, selTC4, module, rocn, half),hrocdata));
     if(ihroc%2==1)rocn++;
   }
   //===============================================================================================================================
-
   
   //===============================================================================================================================
   //Emulation of HGCROC
@@ -197,7 +202,7 @@ int main(int argc, char** argv)
   rocTPGEmul.Emulate(isSim, eventId, moduleId, rocdata, modTcdata);
   /////////////////////////////////////////////////////////////////
   
-  //while needed attange for later inspection
+  //while needed for later inspection
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::ModuleTcData>>> modarray; //event,moduleId
   modarray[eventId].push_back(modTcdata);
   //===============================================================================================================================
@@ -209,34 +214,59 @@ int main(int argc, char** argv)
   std::map<uint32_t,TPGFEDataformat::ModuleTcData> moddata;
   for(const auto& data : modarray.at(eventId))
     moddata[data.first] = data.second ;
-
-  //emulation output format
-  std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawdata;
   
   ////////////////////// ECONT emulation //////////////////////////
   TPGFEModuleEmulation::ECONTEmulation econtEmul(cfgs);
-  econtEmul.Emulate(isSim, eventId, moduleId, moddata, TcRawdata);
+  econtEmul.Emulate(isSim, eventId, moduleId, moddata);
   /////////////////////////////////////////////////////////////////
-  
-  std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>> econtemularray; //event, tcrawdata vector  
-  econtemularray[eventId].push_back(TcRawdata);
+
+  //emulation output format
+  TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();  
+  //===============================================================================================================================
+
+  //===============================================================================================================================
+  //Packing for elink
+  //===============================================================================================================================
+  uint32_t elinkemul[nelinks];
+  TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx, TcRawdata.second, elinkemul);
   //===============================================================================================================================
 
   //===============================================================================================================================
   // check I/O
   //===============================================================================================================================
-  const TPGFEDataformat::HalfHgcrocData& hrocdata = rocdata.at(moduleId); //this corresponds to roc=0,half=0
-  hrocdata.print();
+  for(const auto& data : hrocarray.at(eventId)){
+    const TPGFEDataformat::HalfHgcrocData& hrocdata = data.second ;
+    std::cout << "ModuleId: "<<moduleId << ", RocId: "<< data.first << std::endl;
+    if(moduleId==pck.getModIdFromRocId(uint32_t(data.first)))
+      hrocdata.print();
+  }
   
   const TPGFEDataformat::ModuleTcData& modtcdata = moddata.at(moduleId);
   modtcdata.print();
 
   std::cout <<"\t1: Module " << TcRawdata.first << ", size : " << TcRawdata.second.size() << std::endl;
-  const std::vector<TPGFEDataformat::TcRawData>& tcarr = TcRawdata.second ;
-  for(size_t itc=0 ; itc < tcarr.size() ; itc++){
-    const TPGFEDataformat::TcRawData& tcdata = tcarr.at(itc);
-    tcdata.print();
-  }
+  if(TcRawdata.second.type()==TPGFEDataformat::BestC) TcRawdata.second.sortCh();
+  const TPGFEDataformat::TcRawDataPacket& tcpkt = TcRawdata.second ;
+  tcpkt.print();
+
+    //===============================================================================================================================
+
+  
+  //===============================================================================================================================
+  //Unpacking for elink to TC rawdata
+  //===============================================================================================================================
+  TPGFEDataformat::TcRawDataPacket vTC1;
+  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TcRawdata.second.type(), TcRawdata.second.size(), elinkemul, vTC1);
+  vTC1.print();
+  //===============================================================================================================================
+
+
+  //===============================================================================================================================
+  //TC rawdata to stage1 input
+  //===============================================================================================================================
+  TPGBEDataformat::UnpackerOutputStreamPair up1;
+  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx, vTC1, up1);
+  up1.print();
   //===============================================================================================================================
   
   hroccfg.clear();
@@ -247,7 +277,7 @@ int main(int argc, char** argv)
   rocdata.clear();
   modarray.clear();
   moddata.clear();
-  econtemularray.clear();
+  
   
   return true;
 }
