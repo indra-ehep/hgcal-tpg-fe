@@ -189,7 +189,7 @@ namespace TPGFEModuleEmulation{
       return decomp;
     }
     
-    uint16_t CompressEcontStc4E3M(uint32_t val, uint32_t dropLSB){
+    uint16_t CompressEcontStc4E3M(uint64_t val, uint32_t dropLSB){
       //4E+3M
       //controlled by the dropLSB parameter of ECON-T 
       val = val>>dropLSB;  
@@ -200,7 +200,7 @@ namespace TPGFEModuleEmulation{
       uint32_t mant ;
       
       if(val>7){
-	uint32_t v = val; 
+	uint64_t v = val; 
 	r = 0; 
 	while (v >>= 1) r++;
 	sub = r - 2;
@@ -226,7 +226,7 @@ namespace TPGFEModuleEmulation{
       return packed;
     }
     
-    uint16_t CompressEcontStc5E4M(uint32_t val){
+    uint16_t CompressEcontStc5E4M(uint64_t val){
       //5E+4M
       //dropLSB is not applicable for 5E+4M
 
@@ -236,7 +236,7 @@ namespace TPGFEModuleEmulation{
       uint32_t mant ;
       
       if(val>0xF){
-	uint32_t v = val; 
+	uint64_t v = val; 
 	r = 0; 
 	while (v >>= 1) r++;
 	sub = r - 3;         
@@ -262,7 +262,7 @@ namespace TPGFEModuleEmulation{
       return packed;
     }
     
-    uint16_t CompressEcontBc(uint32_t val, uint32_t dropLSB){
+    uint16_t CompressEcontBc(uint64_t val, uint32_t dropLSB){
       //4E+3M
       //controlled by the dropLSB parameter of ECON-T 
       val = val>>dropLSB;  
@@ -273,7 +273,7 @@ namespace TPGFEModuleEmulation{
       uint32_t mant ;
   
       if(val>7){
-	uint32_t v = val; 
+	uint64_t v = val; 
 	r = 0; 
 	while (v >>= 1) r++;
 	sub = r - 2;
@@ -299,7 +299,7 @@ namespace TPGFEModuleEmulation{
       return packed;
     }
     
-    uint16_t CompressEcontModsum(uint32_t val, uint32_t dropLSB){
+    uint16_t CompressEcontModsum(uint64_t val, uint32_t dropLSB){
       //5E+3M
       //controlled by the dropLSB parameter of ECON-T 
       val = val>>dropLSB;  
@@ -308,9 +308,9 @@ namespace TPGFEModuleEmulation{
       uint32_t sub ;
       uint32_t shift ;
       uint32_t mant ;
-  
+      
       if(val>7){
-	uint32_t v = val; 
+	uint64_t v = val; 
 	r = 0; 
 	while (v >>= 1) r++;
 	sub = r - 2;
@@ -411,7 +411,7 @@ namespace TPGFEModuleEmulation{
 	const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
 	bx = (mdata.getBx()==3564) ? 0xF : mdata.getBx() & 0x7 ; 
-	uint32_t decompressedSTC = 0;
+	uint64_t decompressedSTC = 0;
 	std::vector<TPGFEDataformat::TcRawData> tcrawdatalist;
 	TPGFEDataformat::TcRawData tcdata;
 	for(const auto& econtc : tclist){
@@ -428,10 +428,10 @@ namespace TPGFEModuleEmulation{
 	    std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateSTC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	    continue;
 	  }
-	  uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),configs.getEconTPara().at(moduleId).getDensity());
+	  uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),configs.getEconTPara().at(moduleId).getDensity());
 	  //decomplist.push_back(decompressed);
-	  decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
-	  decompressed =  decompressed >> 11;
+	  uint64_t decomp64bit =  decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
+	  decompressed =  decomp64bit >> 11;
 	  decompressedSTC += decompressed ;
 	  uint16_t compressed_bc = CompressEcontBc(decompressed, dropLSB);
 	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc) ;
@@ -443,7 +443,7 @@ namespace TPGFEModuleEmulation{
 	std::sort(tcrawdatalist.begin(),tcrawdatalist.end(),TPGFEDataformat::TcRawDataPacket::customGT);
 	TPGFEDataformat::TcRawData lastMax = tcrawdatalist[0] ;
 	uint16_t compressed_energy = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? CompressEcontStc4E3M(decompressedSTC, dropLSB) : CompressEcontStc5E4M(decompressedSTC);
-	uint32_t decomp_E = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? decompressedSTC>>dropLSB : decompressedSTC ;
+	uint64_t decomp_E = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? decompressedSTC>>dropLSB : decompressedSTC ;
 	emulOut.second.setTBM(outputType, bx, 0); 
 	if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B)
 	  emulOut.second.setTcData(outputType, lastMax.address()%4, compressed_energy, decomp_E);
@@ -467,7 +467,7 @@ namespace TPGFEModuleEmulation{
 	const std::vector<uint32_t>& tclist = stc16TcMap.at(std::make_pair(modName,istc16));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
 	bx = (mdata.getBx()==3564) ? 0xF : mdata.getBx() & 0x7 ; 
-	uint32_t decompressedSTC16 = 0;
+	uint64_t decompressedSTC16 = 0;
 	std::vector<TPGFEDataformat::TcRawData> tcrawdatalist;
 	TPGFEDataformat::TcRawData tcdata;
 	for(const auto& econtc : tclist){
@@ -484,9 +484,9 @@ namespace TPGFEModuleEmulation{
 	    std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	    continue;
 	  }
-	  uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
-	  decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
-	  decompressed =  decompressed >> 11;
+	  uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
+	  uint64_t decomp64bit = decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
+	  decompressed =  decomp64bit >> 11;
 	  decompressedSTC16 += decompressed ;
 	  uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
 	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc) ;
@@ -519,7 +519,7 @@ namespace TPGFEModuleEmulation{
     const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
 
     uint16_t bx = (mdata.getBx()==3564) ? 0xF : mdata.getBx() & 0x7 ; //make 8 modulo
-    uint32_t decompressedMS = 0;
+    uint64_t decompressedMS = 0;
     std::vector<TPGFEDataformat::TcRawData> tcrawdatalist;
     TPGFEDataformat::TcRawData tcdata;
     for(const auto& econtc : tclist){
@@ -536,9 +536,10 @@ namespace TPGFEModuleEmulation{
 	std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	continue;
       }
-      uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
-      decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
-      decompressed =  decompressed >> 11;
+      uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity()); //funny that return needs to defined as 64-bit
+      uint64_t decomp64bit = decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc); //overflows for 12bit TOT
+      //std::cout << "decompressed: " << decompressed << ", decomp64bit " << decomp64bit << std::endl;
+      decompressed =  decomp64bit >> 11;
       decompressedMS += decompressed ;
       uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
       tcdata.setTriggerCell(outputType, econtc, compressed_bc, decompressed>>dropLSB) ;

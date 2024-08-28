@@ -161,7 +161,7 @@ namespace TPGFEDataformat{
       _unpacked = 0;
     }
     
-    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint32_t unpacked) {
+    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t unpacked) {
       setTriggerCell(t,a,e, unpacked);
     }
     
@@ -173,7 +173,7 @@ namespace TPGFEDataformat{
       return ((_data >> 6 ) & 0x1ff);
     }
 
-    uint32_t unpacked() const {
+    uint64_t unpacked() const {
       return _unpacked;
     }
     
@@ -207,7 +207,7 @@ namespace TPGFEDataformat{
 		<< std::endl;
     }
 
-    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint32_t unpacked) {
+    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t unpacked) {
       setTriggerCell(t,a,e);
       _unpacked = unpacked;
     }
@@ -253,13 +253,13 @@ namespace TPGFEDataformat{
 		<< std::dec << ::std::setfill(' ')
 		<< ", address = " << std::setw(2) << unsigned(address())
 		<< ", energy = " << std::setw(3) << energy()
-		<< ", unpacked = " << std::setw(8) << unpacked()
+		<< ", unpacked = " << std::setw(10) << unpacked()
 		<< std::endl;
     }
     
   private:
     uint16_t _data;
-    uint32_t _unpacked;
+    uint64_t _unpacked;
   };
 
   static std::string tctypeName[10]={"BestC","STC4A","STC4B","STC16", "CTC4A", "CTC4B", "TS", "RA", "AE", "Unknown"};
@@ -268,12 +268,12 @@ namespace TPGFEDataformat{
   public:    
     TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0), _unpackedms(0) { _tcdata.resize(0);}
     TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) : _t(t), _bx(bx), _ms(e) { _tcdata.resize(0);}
-    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint32_t upe) : _t(t), _bx(bx), _ms(e), _unpackedms(upe) { _tcdata.resize(0);}
+    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint64_t upe) : _t(t), _bx(bx), _ms(e), _unpackedms(upe) { _tcdata.resize(0);}
     const std::string& typeName() const { return TPGFEDataformat::tctypeName[type()]; }
     TPGFEDataformat::Type type() const { return _t;}
     size_t size() const { return _tcdata.size();}
     uint16_t moduleSum() const { return uint16_t(_ms & 0xff);}
-    uint32_t unpackedMS() const { return _unpackedms;}
+    uint64_t unpackedMS() const { return _unpackedms;}
     uint16_t bx() const { return uint16_t(_bx);}
     const std::vector<TPGFEDataformat::TcRawData>& getTcData() const {return _tcdata;}
     TPGFEDataformat::TcRawData& getTc(uint32_t i) {return _tcdata.at(i);}
@@ -281,10 +281,10 @@ namespace TPGFEDataformat{
     void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _unpackedms = 0; _tcdata.resize(0);}
     
     void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) { _t = t; _bx = bx; _ms = e;}
-    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint32_t upe) { _t = t; _bx = bx; _ms = e; _unpackedms = upe;}
+    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint64_t upe) { _t = t; _bx = bx; _ms = e; _unpackedms = upe;}
     void setType(TPGFEDataformat::Type t) { _t = t;}
     void setModuleSum(uint8_t e) { _ms = e;}
-    void setModuleSum(uint8_t e, uint32_t upe) { _ms = e; _unpackedms = upe;}
+    void setModuleSum(uint8_t e, uint64_t upe) { _ms = e; _unpackedms = upe;}
     void setBX(uint8_t bx) { _bx = bx;}
     std::vector<TPGFEDataformat::TcRawData>& setTcData() {return _tcdata;}
     void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
@@ -292,7 +292,7 @@ namespace TPGFEDataformat{
       tc.setTriggerCell(t, a, e);
       _tcdata.push_back(tc);
     }
-    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint32_t upe) {
+    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t upe) {
       TPGFEDataformat::TcRawData tc;
       tc.setTriggerCell(t, a, e, upe);
       _tcdata.push_back(tc);
@@ -337,7 +337,7 @@ namespace TPGFEDataformat{
     TPGFEDataformat::Type _t;
     uint8_t _bx;
     uint8_t _ms;
-    uint32_t _unpackedms;
+    uint64_t _unpackedms;
     std::vector<TPGFEDataformat::TcRawData> _tcdata;
   };
   

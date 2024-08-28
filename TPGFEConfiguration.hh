@@ -144,7 +144,7 @@ namespace TPGFEConfiguration{
 	mux[itc] = 0;
       }
     }
-    uint32_t getDensity() const { return uint32_t(density);}
+    bool getDensity() const { return (density==1) ? true : false;}
     uint32_t getDropLSB() const { return uint32_t(dropLSB);}
     uint32_t getSelect() const { return uint32_t(select);}
     uint32_t getSTCType() const { return uint32_t(stc_type);}
