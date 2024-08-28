@@ -195,7 +195,7 @@ int main(int argc, char** argv)
   }
   std::map<uint32_t,TPGFEConfiguration::ConfigEconT>& econTPar =  cfgs.getEconTPara();
   for(const auto& it : econTPar){
-    econTPar[it.first].setDensity(1);
+    econTPar[it.first].setDensity(0);
     econTPar[it.first].setDropLSB(1);
     if(relayNumber==1695733045){
       //following for STC4A
@@ -205,8 +205,12 @@ int main(int argc, char** argv)
       //following for BC9
       econTPar[it.first].setSelect(2);
       econTPar[it.first].setNElinks(4);
+      //The following two combinations gives same result
+      //combination 1
+      //econTPar[it.first].setDensity(0); econTPar[it.first].setDropLSB(3);
+      //combination 2
+      //econTPar[it.first].setDensity(1); econTPar[it.first].setDropLSB(4);
     }
-    //for(uint32_t itc=0;itc<48;itc++) econTPar[it.first].setCalibration(itc,0x800);
   }
   //===============================================================================================================================
   //Read adc pedestal and threshold from yaml module file

@@ -152,12 +152,17 @@ namespace TPGFEDataformat{
   
   class TcRawData {
   public:
-  
-    TcRawData() : _data(0) {
+    
+    TcRawData() : _data(0), _unpacked(0) {
     }
     
     TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
       setTriggerCell(t,a,e);
+      _unpacked = 0;
+    }
+    
+    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint32_t unpacked) {
+      setTriggerCell(t,a,e, unpacked);
     }
     
     uint16_t address() const {
@@ -166,6 +171,10 @@ namespace TPGFEDataformat{
     
     uint16_t energy() const {
       return ((_data >> 6 ) & 0x1ff);
+    }
+
+    uint32_t unpacked() const {
+      return _unpacked;
     }
     
     uint16_t data() const {
@@ -193,7 +202,14 @@ namespace TPGFEDataformat{
 		<< std::setw(4) << atc.data()
 		<< std::dec << ::std::setfill(' ')
 		<< ", address = " << std::setw(2) << unsigned(atc.address())
-		<< ", energy = " << std::setw(3) << atc.energy() << std::endl;
+		<< ", energy = " << std::setw(3) << atc.energy()
+		<< ", unpacked = " << std::setw(8) << atc.unpacked()
+		<< std::endl;
+    }
+
+    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint32_t unpacked) {
+      setTriggerCell(t,a,e);
+      _unpacked = unpacked;
     }
 
     void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
@@ -236,37 +252,49 @@ namespace TPGFEDataformat{
 		<< std::setw(4) << _data
 		<< std::dec << ::std::setfill(' ')
 		<< ", address = " << std::setw(2) << unsigned(address())
-		<< ", energy = " << std::setw(3) << energy() << std::endl;
+		<< ", energy = " << std::setw(3) << energy()
+		<< ", unpacked = " << std::setw(8) << unpacked()
+		<< std::endl;
     }
     
   private:
     uint16_t _data;
+    uint32_t _unpacked;
   };
 
   static std::string tctypeName[10]={"BestC","STC4A","STC4B","STC16", "CTC4A", "CTC4B", "TS", "RA", "AE", "Unknown"};
   
   class TcRawDataPacket {
   public:    
-    TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0) { _tcdata.resize(0);}
+    TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0), _unpackedms(0) { _tcdata.resize(0);}
     TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) : _t(t), _bx(bx), _ms(e) { _tcdata.resize(0);}
+    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint32_t upe) : _t(t), _bx(bx), _ms(e), _unpackedms(upe) { _tcdata.resize(0);}
     const std::string& typeName() const { return TPGFEDataformat::tctypeName[type()]; }
     TPGFEDataformat::Type type() const { return _t;}
     size_t size() const { return _tcdata.size();}
     uint16_t moduleSum() const { return uint16_t(_ms & 0xff);}
+    uint32_t unpackedMS() const { return _unpackedms;}
     uint16_t bx() const { return uint16_t(_bx);}
     const std::vector<TPGFEDataformat::TcRawData>& getTcData() const {return _tcdata;}
     TPGFEDataformat::TcRawData& getTc(uint32_t i) {return _tcdata.at(i);}
     bool is4E3M() const { return (_t==BestC or _t==STC4A or _t==CTC4A or _t==TS or _t==RA) ? true : false ; }
-    void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _tcdata.resize(0);}
+    void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _unpackedms = 0; _tcdata.resize(0);}
     
     void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) { _t = t; _bx = bx; _ms = e;}
+    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint32_t upe) { _t = t; _bx = bx; _ms = e; _unpackedms = upe;}
     void setType(TPGFEDataformat::Type t) { _t = t;}
     void setModuleSum(uint8_t e) { _ms = e;}
+    void setModuleSum(uint8_t e, uint32_t upe) { _ms = e; _unpackedms = upe;}
     void setBX(uint8_t bx) { _bx = bx;}
     std::vector<TPGFEDataformat::TcRawData>& setTcData() {return _tcdata;}
     void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
       TPGFEDataformat::TcRawData tc;
       tc.setTriggerCell(t, a, e);
+      _tcdata.push_back(tc);
+    }
+    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint32_t upe) {
+      TPGFEDataformat::TcRawData tc;
+      tc.setTriggerCell(t, a, e, upe);
       _tcdata.push_back(tc);
     }
     TPGFEDataformat::TcRawData& operator[](int index){
@@ -289,6 +317,7 @@ namespace TPGFEDataformat{
 		<< "type = " << atcp.typeName()
 		<< ", bx = " << atcp.bx()
 		<< ", ms = " << atcp.moduleSum()
+		<< ", unpacked = " << atcp.unpackedMS()
 		<< std::endl;
       for(const auto& itc: atcp.getTcData()) itc.print();
     }
@@ -298,6 +327,7 @@ namespace TPGFEDataformat{
 		<< ", typename = " << typeName()
 		<< ", bx = " << bx()
 		<< ", ms = " << moduleSum()
+		<< ", unpacked = " << unpackedMS()
 		<< std::endl;
       for(const auto& itc: getTcData()) itc.print();
     }    
@@ -307,6 +337,7 @@ namespace TPGFEDataformat{
     TPGFEDataformat::Type _t;
     uint8_t _bx;
     uint8_t _ms;
+    uint32_t _unpackedms;
     std::vector<TPGFEDataformat::TcRawData> _tcdata;
   };
   

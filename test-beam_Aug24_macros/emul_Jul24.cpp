@@ -172,8 +172,8 @@ int main(int argc, char** argv)
       }//roc loop
     }//econd loop
   }//lpGBT loop
-  //cfgs.setPedThZero();
-  link = 0; econt = 1;
+  cfgs.setPedThZero();
+  link = 0; econt = 2;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
@@ -406,7 +406,7 @@ int main(int argc, char** argv)
     TcRawdata.second.print();
     
     uint32_t elinkemul[6];
-    TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx4, TcRawdata.second, elinkemul);
+    TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx4%8, TcRawdata.second, elinkemul);
     std::cout << "Emulation: ievent: "<< event << std::endl;
     std::cout<<"Elink emul : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[0] << std::dec << std::endl;
     std::cout<<"           : 0x" << std::hex << ::std::setfill('0') << std::setw(8) << elinkemul[1] << std::dec << std::endl;
@@ -421,9 +421,9 @@ int main(int argc, char** argv)
       std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
-      const uint32_t *el = trdata.getElinks(2); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
+      const uint32_t *el = trdata.getElinks(1); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
       trdata.setNofUnpkWords(6);
       TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);      
       vTC1.print();
