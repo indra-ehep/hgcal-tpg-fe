@@ -261,8 +261,9 @@ namespace TPGFEDataformat{
       uint32_t mant = compressed & 0x7;
       uint32_t expo = (compressed>>3) & 0xF;
       
-      if(expo==0) return mant;
-      
+      if(expo==0) return mant; 
+      if(expo==1) return 8+mant;
+     
       uint32_t shift = expo+2;
       uint32_t decomp = 1<<shift;
       uint32_t mpdeco = 1<<(shift-4);
@@ -277,7 +278,8 @@ namespace TPGFEDataformat{
       uint32_t expo = (compressed>>3) & 0x1F;
       
       if(expo==0) return mant; 
-
+      if(expo==1) return 8+mant;
+      
       uint32_t shift = expo+2;
       uint64_t decomp = 1<<shift;
       uint32_t mpdeco = 1<<(shift-4);
@@ -292,6 +294,7 @@ namespace TPGFEDataformat{
       uint32_t expo = (compressed>>4) & 0x1F;
       
       if(expo==0) return mant; 
+      if(expo==1) return 8+mant;
       
       uint32_t shift = expo+3;
       uint64_t decomp = 1<<shift;
