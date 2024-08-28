@@ -17,30 +17,16 @@ namespace TPGFEModuleEmulation{
     HGCROCTPGEmulation(TPGFEConfiguration::Configuration& cfgs) : configs(cfgs) {}
     //The following emulation function performs 1) pedestal subtraction, 2) linearization, 3) compression
     void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::HalfHgcrocData>&, std::pair<uint32_t,TPGFEDataformat::ModuleTcData>&, uint64_t);
-
+    
     uint16_t CompressHgroc(uint32_t val, bool isldm){
       
       //////The configuration of half of ROC based on HGCROC3a [doc. no. v2.0] (Read subsection 1.3.3 of Page-39)
       //////EDMS ROCv3a: https://edms.cern.ch/ui/#!master/navigator/document?D:100570166:100570166:subDocs
       //4E+3M
       //Ref:https://graphics.stanford.edu/%7Eseander/bithacks.html
-      
-      uint32_t maxval = 0x3FFFF ;      //18b
-      uint32_t maxval_ldm = 0x7FFFF ;  //19b
-      uint32_t maxval_hdm = 0x1FFFFF ; //21b
 
-      //The following line is for September'23 test beam
+      //controlled by the SelTC4 parameter of HGCROC (1/0 for LD/HD)
       val = (isldm)?val>>1:val>>3;
-      
-      if(isldm){
-	if(val>maxval_ldm) val = maxval_ldm;
-	if(val>maxval and val<=maxval_ldm) val = val>>1;
-      }else{
-	if(val>maxval_hdm) val = maxval_hdm;
-	if(val>0xFFFFF and val<=maxval_ldm) val = val>>3;	
-	if(val>0x7FFFF and val<=0xFFFFF) val = val>>2;
-	if(val>maxval and val<=0x7FFFF) val = val>>1;
-      }
             
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
@@ -184,57 +170,29 @@ namespace TPGFEModuleEmulation{
 					    TPGFEDataformat::TcRawDataPacket &vtcrp);
     
   private:
-    uint32_t DecompressEcont(uint16_t compressed, bool isldm){
+    uint32_t DecompressEcont(uint16_t compressed, bool density){
       //4E+3M with midpoint correction
+      //controlled by the density parameter of ECON-T (0/1 stands for LD/HD and represents 1/3 bit shifts)
       uint32_t mant = compressed & 0x7;
       uint32_t expo = (compressed>>3) & 0xF;
       
       if(expo==0) 
-	return (isldm) ? (mant<<1) : (mant<<3) ;
-
-      //The following line is for September'23 test beam
-      uint32_t shift = expo+2;
-      //The following line is for August'24 test beam
-      //uint32_t shift = expo+3;
+	return (density) ? (mant<<3)+4 : (mant<<1)+1 ; //The the +4/+1 are midpoint corrections for expo==0
       
-      uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
+      uint32_t shift = expo+2;//3 bits for 15-->18
+               shift += (density) ? 3 : 1;
+      uint32_t decomp = 1<<shift; 
       uint32_t mpdeco = 1<<(shift-4);
       decomp = decomp | (mant<<(shift-3));
       decomp = decomp | mpdeco;
-      decomp = (isldm) ? (decomp<<1) : (decomp<<3) ;
-    
-      return decomp;
-    }
-    
-    uint32_t DecompressEcontSTC(uint16_t compressed, bool isldm){
-      //4E+3M with midpoint correction
-      uint32_t mant = compressed & 0x7;
-      uint32_t expo = (compressed>>3) & 0xF;
-
-      //The following line is for September'23 test beam
-      if(expo==0) 
-	return (isldm) ? (mant<<1)+1 : (mant<<3)+1 ;
-      // //The following line is for August'24 test beam
-      // if(expo==0) 
-      // 	return (isldm) ? (mant<<2)+5 : (mant<<5)+6 ;
-      
-      //The following line is for September'23 test beam
-      uint32_t shift = expo+3;
-      //The following line is for August'24 test beam
-      //uint32_t shift = expo+4;
-      uint32_t decomp = 1<<shift; //Should this shift be controlled by the density parameter of econt config  ?
-      uint32_t mpdeco = 1<<(shift-4);
-      decomp = decomp | (mant<<(shift-3));
-      decomp = decomp | mpdeco;
-      decomp = (isldm) ? (decomp<<0) : (decomp<<2) ;
       
       return decomp;
     }
     
-    uint16_t CompressEcontStc4E3M(uint32_t val, bool isldm){
+    uint16_t CompressEcontStc4E3M(uint32_t val, uint32_t dropLSB){
       //4E+3M
-      //The following is probably driven by drop_LSB setting, to be tested with a standalone run as no LSB drop is expected for STC
-      val = (isldm)?val>>1:val>>3;  
+      //controlled by the dropLSB parameter of ECON-T 
+      val = val>>dropLSB;  
       
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
@@ -262,16 +220,15 @@ namespace TPGFEModuleEmulation{
       
       sub = sub & 0xF;
       mant = mant & 0x7;
-
+      
       uint16_t packed = (sub<<3) | mant;
       
       return packed;
     }
     
-    uint16_t CompressEcontStc5E4M(uint32_t val, bool isldm){
+    uint16_t CompressEcontStc5E4M(uint32_t val){
       //5E+4M
-      //The following is probably driven by drop_LSB setting, to be tested with a standalone run as no LSB drop is expected for STC
-      val = (isldm)?val>>1:val>>3;  
+      //dropLSB is not applicable for 5E+4M
 
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
@@ -282,8 +239,8 @@ namespace TPGFEModuleEmulation{
 	uint32_t v = val; 
 	r = 0; 
 	while (v >>= 1) r++;
-	sub = r - 2;         //// Do we reduce the index by 2 or not ?? For the moment keep it untill tested with any technial run
-	shift = r - 4;       //// 4 for 4M 
+	sub = r - 3;         
+	shift = r - 4;       
 	if(sub<=0x1F){
 	  mant = (val>>shift) & 0xF;
 	}else{
@@ -304,12 +261,12 @@ namespace TPGFEModuleEmulation{
       
       return packed;
     }
-
-    uint16_t CompressEcontBc(uint32_t val, bool isldm){
+    
+    uint16_t CompressEcontBc(uint32_t val, uint32_t dropLSB){
       //4E+3M
-      val = (isldm)?val>>1:val>>3;  
-      if(val>0x3FFFFF) val = 0x3FFFFF; // maximum energy value is 0x3FFFFF for 22 bit register
-
+      //controlled by the dropLSB parameter of ECON-T 
+      val = val>>dropLSB;  
+      
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
       uint32_t shift ;
@@ -342,9 +299,10 @@ namespace TPGFEModuleEmulation{
       return packed;
     }
     
-    uint16_t CompressEcontModsum(uint32_t val, bool isldm){
+    uint16_t CompressEcontModsum(uint32_t val, uint32_t dropLSB){
       //5E+3M
-      val = (isldm)?val>>1:val>>3;  
+      //controlled by the dropLSB parameter of ECON-T 
+      val = val>>dropLSB;  
   
       uint32_t r = 0; // r will be lg(v)
       uint32_t sub ;
@@ -369,18 +327,19 @@ namespace TPGFEModuleEmulation{
 	shift = 0;
 	mant = val & 0x7;
       }
-
+      
       sub = sub & 0x1F;
       mant = mant & 0x7;
-
+      
       uint16_t packed = (sub<<3) | mant;
  
       return packed;
     }
     
-    //C++ adaptation of batcher odd-even sorting of https://github.com/dnoonan08/ECONT_Emulator/ASICBlocks/bestchoice.py
+
     void batcherOEMSort(std::vector<TPGFEDataformat::TcRawData>& tc) {
-      //Fixme: Requires 49 Tcs
+      //C++ adaptation of batcher odd-even sorting of https://github.com/dnoonan08/ECONT_Emulator/ASICBlocks/bestchoice.py
+      //Requires 49 Tcs for sorting
       TPGFEDataformat::TcRawData dummy(TPGFEDataformat::Unknown,0x3f, 0);
       tc.push_back(dummy);
       
@@ -436,6 +395,7 @@ namespace TPGFEModuleEmulation{
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
     const std::map<uint32_t,uint32_t>& refMuxMap = configs.getMuxMapping() ;
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
+    uint32_t dropLSB = configs.getEconTPara().at(moduleId).getDropLSB() ;
     
     const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
    
@@ -446,6 +406,7 @@ namespace TPGFEModuleEmulation{
       const std::map<std::pair<std::string,uint32_t>,std::vector<uint32_t>>& stcTcMap = (pck.getDetType()==0)?configs.getSiSTCToTC():configs.getSciSTCToTC();
       uint16_t bx = 0xffff;
       emulOut.second.reset();
+      //std::vector<uint32_t> decomplist;
       for(const auto& istc : stclist){
 	const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
@@ -467,11 +428,12 @@ namespace TPGFEModuleEmulation{
 	    std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateSTC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	    continue;
 	  }
-	  uint32_t decompressed = DecompressEcontSTC(mdata.getTC(emultc).getCdata(),pck.getSelTC4());
+	  uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),configs.getEconTPara().at(moduleId).getDensity());
+	  //decomplist.push_back(decompressed);
 	  decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
 	  decompressed =  decompressed >> 11;
 	  decompressedSTC += decompressed ;
-	  uint16_t compressed_bc = CompressEcontBc(decompressed,pck.getSelTC4());
+	  uint16_t compressed_bc = CompressEcontBc(decompressed, dropLSB);
 	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc) ;
 	  tcrawdatalist.push_back(tcdata);
 	}
@@ -480,13 +442,16 @@ namespace TPGFEModuleEmulation{
 	tcrawdatalist.resize(lMaxId+1);
 	std::sort(tcrawdatalist.begin(),tcrawdatalist.end(),TPGFEDataformat::TcRawDataPacket::customGT);
 	TPGFEDataformat::TcRawData lastMax = tcrawdatalist[0] ;
-	uint16_t compressed_energy = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? CompressEcontStc4E3M(decompressedSTC,pck.getSelTC4()) : CompressEcontStc5E4M(decompressedSTC,pck.getSelTC4());
+	uint16_t compressed_energy = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? CompressEcontStc4E3M(decompressedSTC, dropLSB) : CompressEcontStc5E4M(decompressedSTC);
+	uint32_t decomp_E = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? decompressedSTC>>dropLSB : decompressedSTC ;
 	emulOut.second.setTBM(outputType, bx, 0); 
 	if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B)
-	  emulOut.second.setTcData(outputType, lastMax.address()%4, compressed_energy);
+	  emulOut.second.setTcData(outputType, lastMax.address()%4, compressed_energy, decomp_E);
 	else
-	  emulOut.second.setTcData(outputType, istc, compressed_energy);
+	  emulOut.second.setTcData(outputType, istc, compressed_energy, decomp_E);
 	tcrawdatalist.clear();
+	// for(uint32_t itc = 0 ; itc<decomplist.size() ; itc++) std::cout << "Decomp: itc: " << itc << ", decompressed value : " << decomplist[itc] << std::endl; 
+	// decomplist.clear();
       }//stc loop
       
     }
@@ -519,11 +484,11 @@ namespace TPGFEModuleEmulation{
 	    std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	    continue;
 	  }
-	  uint32_t decompressed = DecompressEcontSTC(mdata.getTC(emultc).getCdata(),pck.getSelTC4());
+	  uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
 	  decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
 	  decompressed =  decompressed >> 11;
 	  decompressedSTC16 += decompressed ;
-	  uint16_t compressed_bc = CompressEcontBc(decompressed,pck.getSelTC4());
+	  uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
 	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc) ;
 	  tcrawdatalist.push_back(tcdata);
 	}
@@ -532,9 +497,9 @@ namespace TPGFEModuleEmulation{
 	tcrawdatalist.resize(lMaxId+1);
 	std::sort(tcrawdatalist.begin(),tcrawdatalist.end(),TPGFEDataformat::TcRawDataPacket::customGT);
 	TPGFEDataformat::TcRawData lastMax = tcrawdatalist[0] ;
-	uint16_t compressed_energy = CompressEcontStc5E4M(decompressedSTC16,pck.getSelTC4());
+	uint16_t compressed_energy = CompressEcontStc5E4M(decompressedSTC16);
 	emulOut.second.setTBM(outputType, bx, 0); 
-	emulOut.second.setTcData(outputType, (lastMax.address())%16, compressed_energy);
+	emulOut.second.setTcData(outputType, (lastMax.address())%16, compressed_energy, decompressedSTC16);
 	tcrawdatalist.clear();
       }//stc16 loop
     }//STC16 select condition
@@ -546,6 +511,7 @@ namespace TPGFEModuleEmulation{
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
     const std::map<uint32_t,uint32_t>& refMuxMap = configs.getMuxMapping() ;
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
+    uint32_t dropLSB = configs.getEconTPara().at(moduleId).getDropLSB() ;
     const std::map<std::string,std::vector<uint32_t>>& modTClist = (pck.getDetType()==0)?configs.getSiModTClist():configs.getSciModTClist();
     const std::vector<uint32_t>& tclist = modTClist.at(modName) ;
     
@@ -570,22 +536,22 @@ namespace TPGFEModuleEmulation{
 	std::cerr << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") : Mux not set for TC " << econtc << std::endl;
 	continue;
       }
-      uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),pck.getSelTC4());
+      uint32_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
       decompressed *= configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
       decompressed =  decompressed >> 11;
       decompressedMS += decompressed ;
-      uint16_t compressed_bc = CompressEcontBc(decompressed,pck.getSelTC4());
-      tcdata.setTriggerCell(outputType, econtc, compressed_bc) ;
+      uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
+      tcdata.setTriggerCell(outputType, econtc, compressed_bc, decompressed>>dropLSB) ;
       tcrawdatalist.push_back(tcdata);
     }
     batcherOEMSort(tcrawdatalist);
     
-    uint16_t compressed_modsum = CompressEcontModsum(decompressedMS,pck.getSelTC4());
+    uint16_t compressed_modsum = CompressEcontModsum(decompressedMS,dropLSB);
     emulOut.second.reset();
-    emulOut.second.setTBM(outputType, bx, compressed_modsum); 
+    emulOut.second.setTBM(outputType, bx, compressed_modsum, decompressedMS>>dropLSB); 
     uint32_t nofBCTcs = configs.getEconTPara().at(moduleId).getBCType();
     for(uint32_t itc = 0 ; itc<nofBCTcs ; itc++)
-      emulOut.second.setTcData(outputType, tcrawdatalist[itc].address(), tcrawdatalist[itc].energy());
+      emulOut.second.setTcData(outputType, tcrawdatalist[itc].address(), tcrawdatalist[itc].energy(), tcrawdatalist[itc].unpacked());
     
   }//Emulate BC
   
