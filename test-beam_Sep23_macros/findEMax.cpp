@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   //Sci:==
   //LD: A5A6(0), B11B12(1), C5(2), D8(3), E8(4), G3(5), G5(6), G7(7), G8(8)
   //HD: K6(0), K8(1), K11(2), K12(3), J12(4)
-  uint32_t det = 0, selTC4 = 1, module = 0;
+  uint32_t det = 1, selTC4 = 0, module = 0;
   
   uint32_t multfactor = 31;//TOT mult factor other values could be 31 or 8
   uint32_t inputLSB = (selTC4==0) ? 1 : 0; //lsb at the input TC from ROC

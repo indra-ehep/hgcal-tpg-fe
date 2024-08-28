@@ -256,7 +256,89 @@ namespace TPGFEDataformat{
 		<< ", unpacked = " << std::setw(10) << unpacked()
 		<< std::endl;
     }
-    
+
+    static uint32_t Decode4E3M(uint16_t compressed){
+      uint32_t mant = compressed & 0x7;
+      uint32_t expo = (compressed>>3) & 0xF;
+      
+      if(expo==0) return mant;
+      
+      uint32_t shift = expo+2;
+      uint32_t decomp = 1<<shift;
+      uint32_t mpdeco = 1<<(shift-4);
+      decomp = decomp | (mant<<(shift-3));
+      decomp = decomp | mpdeco;
+      
+      return decomp;
+    }
+
+    static uint64_t Decode5E3M(uint16_t compressed){
+      uint32_t mant = compressed & 0x7;
+      uint32_t expo = (compressed>>3) & 0x1F;
+      
+      if(expo==0) return mant; 
+
+      uint32_t shift = expo+2;
+      uint64_t decomp = 1<<shift;
+      uint32_t mpdeco = 1<<(shift-4);
+      decomp = decomp | (mant<<(shift-3));
+      decomp = decomp | mpdeco;
+      
+      return decomp;
+    }
+
+    static uint64_t Decode5E4M(uint16_t compressed){
+      uint32_t mant = compressed & 0xF;
+      uint32_t expo = (compressed>>4) & 0x1F;
+      
+      if(expo==0) return mant; 
+      
+      uint32_t shift = expo+3;
+      uint64_t decomp = 1<<shift;
+      uint32_t mpdeco = 1<<(shift-4);
+      decomp = decomp | (mant<<(shift-4));
+      decomp = decomp | mpdeco;
+      
+      return decomp;
+    }
+
+    void print(TPGFEDataformat::Type t) const {
+
+      uint64_t decompressed = 0;
+      switch(t){
+      case TPGFEDataformat::BestC:
+	decompressed = Decode4E3M(energy());
+	break;
+      case TPGFEDataformat::STC4A:
+	decompressed = Decode4E3M(energy());
+	break;
+      case TPGFEDataformat::STC4B:
+	decompressed = Decode5E4M(energy());
+	break;
+      case TPGFEDataformat::STC16:
+	decompressed = Decode5E4M(energy());
+	break;
+      case TPGFEDataformat::CTC4A:
+	decompressed = Decode4E3M(energy());
+	break;
+      case TPGFEDataformat::CTC4B:
+	decompressed = Decode5E4M(energy());
+	break;
+      default: //to allow unknown type
+	;
+      }
+
+      std::cout << "TPGFEDataformat::TcRawData(" << this << ")::print(): Data = 0x"
+		<< std::hex << ::std::setfill('0')
+		<< std::setw(4) << _data
+		<< std::dec << ::std::setfill(' ')
+		<< ", address = " << std::setw(2) << unsigned(address())
+		<< ", raw = " << std::setw(10) << unpacked()
+		<< ", energy = " << std::setw(3) << energy()
+		<< ", unpacked = " << std::setw(10) << decompressed
+		<< std::endl;
+    }
+
   private:
     uint16_t _data;
     uint64_t _unpacked;
@@ -316,20 +398,22 @@ namespace TPGFEDataformat{
       return os << "TPGFEDataformat::TcRawDataPacket(" << atcp << ")::print(): "
 		<< "type = " << atcp.typeName()
 		<< ", bx = " << atcp.bx()
+		<< ", rawms = "<< atcp.unpackedMS()
 		<< ", ms = " << atcp.moduleSum()
-		<< ", unpacked = " << atcp.unpackedMS()
+		<< ", unpacked = " << TPGFEDataformat::TcRawData::Decode5E3M(atcp.moduleSum())
 		<< std::endl;
-      for(const auto& itc: atcp.getTcData()) itc.print();
+      for(const auto& itc: atcp.getTcData()) itc.print(atcp.type());
     }
     void print() const {
       std::cout << "TPGFEDataformat::TcRawDataPacket(" << this << ")::print(): "
 		<< "type = " << type()
 		<< ", typename = " << typeName()
 		<< ", bx = " << bx()
+		<< ", rawms = "<< unpackedMS()
 		<< ", ms = " << moduleSum()
-		<< ", unpacked = " << unpackedMS()
+		<< ", unpacked = " << TPGFEDataformat::TcRawData::Decode5E3M(moduleSum())
 		<< std::endl;
-      for(const auto& itc: getTcData()) itc.print();
+      for(const auto& itc: getTcData()) itc.print(type());
     }    
     
   private:

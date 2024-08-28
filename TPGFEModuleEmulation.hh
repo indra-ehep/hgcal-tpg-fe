@@ -179,7 +179,7 @@ namespace TPGFEModuleEmulation{
       if(expo==0) 
 	return (density) ? (mant<<3)+4 : (mant<<1)+1 ; //The the +4/+1 are midpoint corrections for expo==0
       
-      uint32_t shift = expo+2;//3 bits for 15-->18
+      uint32_t shift = expo+2; 
                shift += (density) ? 3 : 1;
       uint32_t decomp = 1<<shift; 
       uint32_t mpdeco = 1<<(shift-4);
@@ -188,7 +188,7 @@ namespace TPGFEModuleEmulation{
       
       return decomp;
     }
-    
+
     uint16_t CompressEcontStc4E3M(uint64_t val, uint32_t dropLSB){
       //4E+3M
       //controlled by the dropLSB parameter of ECON-T 
