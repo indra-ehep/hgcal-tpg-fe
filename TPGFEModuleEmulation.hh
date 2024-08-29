@@ -73,6 +73,8 @@ namespace TPGFEModuleEmulation{
 
     uint16_t bx = 0xFFFF;
     const uint32_t nTCs = tclist.size();
+    if(ievent==refEvent) std::cout << "TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: nTCs : " << nTCs << std::endl;
+    if(ievent==refEvent) for(const auto& itc : tclist) std::cout << "TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: tclist["<<itc<<"] " << std::endl;
     TPGFEDataformat::ModuleTcData mdata;
     mdata.setNofTCs(nTCs);
     TPGFEDataformat::HgcrocTcData hrtcdata[nTCs];
@@ -87,10 +89,10 @@ namespace TPGFEModuleEmulation{
 	uint32_t half = (int(TMath::Floor(tcch/36))%2==0)?0:1;
 	uint32_t rocid = pck.getRocIdFromModId(moduleId,rocn,half);
 	if(rocdata.find(rocid)==rocdata.end()){
-	  std::cerr << "HalfRoc not found in data for Event "<< ievent <<", Tcch: "<< tcch << ", rocn: " << rocn << ", half: " << half << ", rocpin: " << rocpin << std::endl;
+	  std::cerr << "TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: HalfRoc not found in data for Event "<< ievent <<", Tcch: "<< tcch << ", rocn: " << rocn << ", half: " << half << ", rocpin: " << rocpin << std::endl;
 	  continue ; 
 	}
-	if(ievent==refEvent) std::cout<<"TC : " << itc << ", tcch: " << tcch <<", rocpin : "<<rocpin<<", rocid: "<<rocid<<", rocn: "<<rocn<<", half: "<<half<<std::endl;
+	if(ievent==refEvent) std::cout<<"TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: TC : " << itc << ", tcch: " << tcch <<", rocpin : "<<rocpin<<", rocid: "<<rocid<<", rocn: "<<rocn<<", half: "<<half<<std::endl;
 	const TPGFEDataformat::HalfHgcrocChannelData& chdata = rocdata.at(rocid).getChannelData(rocpin);
 	bx = rocdata.at(rocid).getBx();
 	if(ievent==refEvent) chdata.print();
@@ -103,14 +105,14 @@ namespace TPGFEModuleEmulation{
 	    uint32_t adc = chdata.getAdc();
 	    adc = (adc>(ped+thr) and !(rocpara.isChMasked(rocpin)) and (ped<0xFF)) ? adc-ped : 0 ;
 	    totadc += adc;
-	    if(ievent==refEvent) std::cout<<"\t ped: " << ped << ", thr: " << thr <<", adc : "<<adc<<", rocpara.isChMasked(rocpin): "<< rocpara.isChMasked(rocpin) <<std::endl;
+	    if(ievent==refEvent) std::cout<<"\t TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: ped: " << ped << ", thr: " << thr <<", adc : "<<adc<<", rocpara.isChMasked(rocpin): "<< rocpara.isChMasked(rocpin) <<std::endl;
 	  }else{
 	    uint32_t tot1 = (chdata.getTot()>rocpara.getTotTH(rocpin)) ? (chdata.getTot()-rocpara.getTotP(rocpin)) : (rocpara.getTotTH(rocpin)-rocpara.getTotP(rocpin)) ;
 	    //ideally ped<255 condition should only be restricted for ADC case, however TOT signal triggers in emulation for event 146245 of relay 1695829026 and link 1, which is not that seen by ECONT data
 	    uint32_t totlin = (!(rocpara.isChMasked(rocpin)) and (ped<0xFF))?tot1*rocpara.getMultFactor():0; 
 	    totadc += totlin;
 	    isTot = true;
-	    if(ievent==refEvent) std::cout<<"\t tot1: " << tot1 << ", tot: " << chdata.getTot() <<", thr : "<< rocpara.getTotTH(rocpin) <<", ped: "<< rocpara.getTotP(rocpin) << ", totlin : "<< totlin <<std::endl;
+	    if(ievent==refEvent) std::cout<<"\t TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: tot1: " << tot1 << ", tot: " << chdata.getTot() <<", thr : "<< rocpara.getTotTH(rocpin) <<", ped: "<< rocpara.getTotP(rocpin) << ", totlin : "<< totlin <<std::endl;
 	  }//istot or adc
 	}else{
 	  //check CMSSW for details should be 
@@ -124,7 +126,6 @@ namespace TPGFEModuleEmulation{
       hrtcdata[itc].setTot(isTot);
       if(!isSim){
 	pck.setModId(moduleId);    
-	//hrtcdata[itc].setCdata(CompressHgroc(totadc, configs.getEconTPara().at(moduleId).getDensity()));
 	hrtcdata[itc].setCdata(CompressHgroc(totadc, pck.getSelTC4()));
       }else
 	hrtcdata[itc].setCdata(CompressHgroc(totadc,1));
@@ -136,7 +137,7 @@ namespace TPGFEModuleEmulation{
 
   class ECONTEmulation{
   public:
-    ECONTEmulation(TPGFEConfiguration::Configuration& cfgs) : configs(cfgs) {}
+    ECONTEmulation(TPGFEConfiguration::Configuration& cfgs) : configs(cfgs), isVerbose(false) {}
     //~ECONTEmulation() {tcrawlist.clear();} Not needed
     ~ECONTEmulation() {}
     
@@ -148,6 +149,7 @@ namespace TPGFEModuleEmulation{
     void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>&);
     const TPGFEDataformat::TcModulePacket& getTcRawDataPacket() const {return emulOut;}
     TPGFEDataformat::TcModulePacket& accessTcRawDataPacket() {return emulOut;}
+    void setVerbose() {isVerbose = true;}
     
     // BX here may be absorbed into TcRawDataPacket?
     static void convertToElinkData(unsigned bx, const TPGFEDataformat::TcRawDataPacket &tcrdp, uint32_t *ve);
@@ -371,6 +373,7 @@ namespace TPGFEModuleEmulation{
     TPGFEConfiguration::Configuration& configs;
     TPGFEConfiguration::TPGFEIdPacking pck;
     TPGFEDataformat::TcModulePacket emulOut;
+    bool isVerbose ; 
   };
 
   void ECONTEmulation::Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::ModuleTcData>& moddata, TPGFEDataformat::TcModulePacket& econtOut){
@@ -406,7 +409,6 @@ namespace TPGFEModuleEmulation{
       const std::map<std::pair<std::string,uint32_t>,std::vector<uint32_t>>& stcTcMap = (pck.getDetType()==0)?configs.getSiSTCToTC():configs.getSciSTCToTC();
       uint16_t bx = 0xffff;
       emulOut.second.reset();
-      //std::vector<uint32_t> decomplist;
       for(const auto& istc : stclist){
 	const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
@@ -429,10 +431,11 @@ namespace TPGFEModuleEmulation{
 	    continue;
 	  }
 	  uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),configs.getEconTPara().at(moduleId).getDensity());
-	  //decomplist.push_back(decompressed);
 	  uint64_t decomp64bit =  decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
+	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateSTC4 (moduleid="<<moduleId<<") decompressed: " << decompressed << ", decompressed*calib: " << decomp64bit << std::endl; 
 	  decompressed =  decomp64bit >> 11;
 	  decompressedSTC += decompressed ;
+	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateSTC4 (moduleid="<<moduleId<<") decompressed*calib>>11: " << decompressed << ", decompressedSTC: " << decompressedSTC << std::endl; 
 	  uint16_t compressed_bc = CompressEcontBc(decompressed, dropLSB);
 	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc) ;
 	  tcrawdatalist.push_back(tcdata);
@@ -450,8 +453,6 @@ namespace TPGFEModuleEmulation{
 	else
 	  emulOut.second.setTcData(outputType, istc, compressed_energy, decomp_E);
 	tcrawdatalist.clear();
-	// for(uint32_t itc = 0 ; itc<decomplist.size() ; itc++) std::cout << "Decomp: itc: " << itc << ", decompressed value : " << decomplist[itc] << std::endl; 
-	// decomplist.clear();
       }//stc loop
       
     }
@@ -486,8 +487,10 @@ namespace TPGFEModuleEmulation{
 	  }
 	  uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
 	  uint64_t decomp64bit = decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
+	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateSTC16 (moduleid="<<moduleId<<") decompressed: " << decompressed << ", decompressed*calib: " << decomp64bit << std::endl; 
 	  decompressed =  decomp64bit >> 11;
 	  decompressedSTC16 += decompressed ;
+	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateSTC16 (moduleid="<<moduleId<<") decompressed*calib>>11: " << decompressed << ", decompressedSTC16: " << decompressedSTC16 << std::endl; 
 	  uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
 	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc) ;
 	  tcrawdatalist.push_back(tcdata);
@@ -538,9 +541,10 @@ namespace TPGFEModuleEmulation{
       }
       uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity()); //funny that return needs to defined as 64-bit
       uint64_t decomp64bit = decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc); //overflows for 12bit TOT
-      //std::cout << "decompressed: " << decompressed << ", decomp64bit " << decomp64bit << std::endl;
+      if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") decompressed: " << decompressed << ", decompressed*calib: " << decomp64bit << std::endl; 
       decompressed =  decomp64bit >> 11;
       decompressedMS += decompressed ;
+      if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateBC (moduleid="<<moduleId<<") decompressed*calib>>11: " << decompressed << ", decompressedMS: " << decompressedMS << std::endl; 
       uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
       tcdata.setTriggerCell(outputType, econtc, compressed_bc, decompressed>>dropLSB) ;
       tcrawdatalist.push_back(tcdata);

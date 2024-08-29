@@ -634,6 +634,9 @@ namespace TPGFEConfiguration{
     int iphi;
     float t, trace;
 
+    std::string debugmodule = "TM-K6" ;
+    bool isDebug = false;
+    
     //Typecode ROC HalfROC Seq ROCpin TrLink TrCell iring iphi trace t
     std::ifstream inwafermap(SciMapfname);
     std::stringstream ss;
@@ -652,7 +655,9 @@ namespace TPGFEConfiguration{
 	ss << s.data() << std::endl;
 	ss >> Typecode >> ROC >> HalfROC >> Seq >> ROCpin >> TrLink  >> TrCell  >> iring  >> iphi  >> t >> trace ;
 	if(TrLink!=-1 and TrCell!=-1 and ROCpin>=0 and Seq>=0 and iring.find("-1")==std::string::npos and iphi!=-1 and t!=-1){
-	  //std::cout << s ;//<< std::endl;
+	  
+	  if(s.find("TM-K6")!=std::string::npos and isDebug) std::cout << s << std::endl;
+	  
 	  isLD = (iring.find("h")==std::string::npos)?1:0;
 	  if(iring.find("h")==std::string::npos)
 	    ring = stoi(iring);
@@ -663,6 +668,7 @@ namespace TPGFEConfiguration{
 	  uint32_t absTC = (isLD==1 ) ? (ROC*16 + TrLink*4 + TrCell) : (ROC*8 + HalfROC*4 + TrCell) ;
 	  uint32_t absSTC = uint32_t(TMath::FloorNint(absTC/4));
 	  uint32_t absSTC16 = uint32_t(TMath::FloorNint(absTC/16));
+	  if(s.find("TM-K6")!=std::string::npos and isDebug) std::cout << "TPGFEConfiguration::Configuration::readSciChMapping: TrLink: " << TrLink << ", absTC: " << absTC  << ", absSTC: " << absSTC << ", absSTC16: " << absSTC16 << std::endl;
 	  uint32_t rocpin = ROC*72 + uint32_t(ROCpin);
 	  uint32_t iRiP = pck.packij(ring,uint32_t(iphi));
 	  std::tuple<uint32_t,uint32_t,uint32_t> seqch = std::make_tuple( ROC, HalfROC, uint32_t(Seq));
@@ -684,7 +690,7 @@ namespace TPGFEConfiguration{
 	  SiSeqToRocpin[std::make_pair(Typecode,seqch)] = rocpin;
 	  SciRocpinToAbsSeq[std::make_pair(Typecode,rocpin)] = absSeq;
 	  
-	  if (std::find(SciModSTClst[Typecode].begin(), SciModSTClst[Typecode].end(), absTC) == SciModSTClst[Typecode].end()) {
+	  if (std::find(SciModTClst[Typecode].begin(), SciModTClst[Typecode].end(), absTC) == SciModTClst[Typecode].end()) {
 	    SciModTClst[Typecode].push_back(absTC);
 	  }
 	  if (std::find(SciModSTClst[Typecode].begin(), SciModSTClst[Typecode].end(), absSTC) == SciModSTClst[Typecode].end()) {
@@ -694,9 +700,13 @@ namespace TPGFEConfiguration{
 	    SciModSTC16lst[Typecode].push_back(absSTC16);
 	  }
 
-	  // SciTCToSTC[std::make_pair(Typecode,absTC)] = absSTC ; 
-	  SciSTCToTC[std::make_pair(Typecode,absSTC)].push_back( absTC );
-	  SciSTC16ToTC[std::make_pair(Typecode,absSTC16)].push_back( absTC );
+	  if (std::find(SciSTCToTC[std::make_pair(Typecode,absSTC)].begin(), SciSTCToTC[std::make_pair(Typecode,absSTC)].end(), absTC) == SciSTCToTC[std::make_pair(Typecode,absSTC)].end()) {
+	    SciSTCToTC[std::make_pair(Typecode,absSTC)].push_back( absTC );
+	  }
+
+	  if (std::find(SciSTC16ToTC[std::make_pair(Typecode,absSTC16)].begin(), SciSTC16ToTC[std::make_pair(Typecode,absSTC16)].end(), absTC) == SciSTC16ToTC[std::make_pair(Typecode,absSTC16)].end()) {
+	    SciSTC16ToTC[std::make_pair(Typecode,absSTC16)].push_back( absTC );
+	  }
 	  //std::cout <<"\t"<< absSTC << "\t" << absTC  <<"\t"<< rocpin <<"\t"<< ring <<"\t"<< iphi << std::endl;
 	}//skip the unconnected channels
       }//Read Scintillator modules

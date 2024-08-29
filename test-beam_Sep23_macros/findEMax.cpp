@@ -50,7 +50,7 @@ int main(int argc, char** argv)
   //Sci:==
   //LD: A5A6(0), B11B12(1), C5(2), D8(3), E8(4), G3(5), G5(6), G7(7), G8(8)
   //HD: K6(0), K8(1), K11(2), K12(3), J12(4)
-  uint32_t det = 1, selTC4 = 0, module = 0;
+  uint32_t det = 1, selTC4 = 0, module = 4;
   
   uint32_t multfactor = 31;//TOT mult factor other values could be 31 or 8
   uint32_t inputLSB = (selTC4==0) ? 1 : 0; //lsb at the input TC from ROC
@@ -86,7 +86,6 @@ int main(int argc, char** argv)
   const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = cfgs.getModIdxToName();
   const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
   const uint32_t nhfrocs = (pck.getDetType()==0)?cfgs.getSiModNhroc(modName):cfgs.getSciModNhroc(modName);
-  std::cout<<"Check1 : modName: "<<modName<<", nhfrocs : " << nhfrocs << std::endl;
   //===============================================================================================================================
   
   //===============================================================================================================================
@@ -94,9 +93,10 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   std::map<uint32_t,TPGFEConfiguration::ConfigHfROC> hroccfg;
   std::map<uint64_t,TPGFEConfiguration::ConfigCh> hrocchcfg;
-  const uint32_t nrocs = TMath::CeilNint(nhfrocs/2);
-  const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
-
+  const uint32_t nrocs = ceil(nhfrocs/2.);
+  const uint32_t nchs = 2*TPGFEDataformat::HalfHgcrocData::NumberOfChannels;  
+  std::cout<<"Check1 : modName: "<<modName<<", nhfrocs : " << nhfrocs << ", nrocs: " << nrocs << std::endl;
+  
   for(uint32_t iroc=0;iroc<nrocs;iroc++){
     uint32_t half0 = 0, half1 = 1;
     uint32_t rocid_0 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, iroc, half0);
@@ -150,6 +150,7 @@ int main(int argc, char** argv)
   econDPar[moduleId].setPassThrough(true);
   econDPar[moduleId].setNeRx(nhfrocs);
   cfgs.setEconDPara(econDPar);
+  econDPar[moduleId].print();
   
   std::map<uint32_t,TPGFEConfiguration::ConfigEconT> econTPar ;
   econTPar[moduleId].setDensity(inputLSB);
@@ -159,6 +160,8 @@ int main(int argc, char** argv)
   econTPar[moduleId].setNElinks(nelinks); //BC type
   for(uint32_t itc=0;itc<48;itc++) econTPar[moduleId].setCalibration(itc,calibration);
   cfgs.setEconTPara(econTPar);
+  std::map<uint32_t,TPGFEConfiguration::ConfigEconT>& cfgTPar = cfgs.getEconTPara() ;
+  for(const auto& it : cfgTPar) cfgTPar.at(it.first).print();
   //===============================================================================================================================
 
   
@@ -201,7 +204,8 @@ int main(int argc, char** argv)
   TPGFEModuleEmulation::HGCROCTPGEmulation rocTPGEmul(cfgs);
   rocTPGEmul.Emulate(isSim, eventId, moduleId, rocdata, modTcdata);
   /////////////////////////////////////////////////////////////////
-  
+
+ 
   //while needed for later inspection
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::ModuleTcData>>> modarray; //event,moduleId
   modarray[eventId].push_back(modTcdata);
@@ -217,20 +221,21 @@ int main(int argc, char** argv)
   
   ////////////////////// ECONT emulation //////////////////////////
   TPGFEModuleEmulation::ECONTEmulation econtEmul(cfgs);
+  //econtEmul.setVerbose();
   econtEmul.Emulate(isSim, eventId, moduleId, moddata);
   /////////////////////////////////////////////////////////////////
-
+  
   //emulation output format
   TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();  
   //===============================================================================================================================
-
+  
   //===============================================================================================================================
   //Packing for elink
   //===============================================================================================================================
   uint32_t elinkemul[nelinks];
   TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bx, TcRawdata.second, elinkemul);
   //===============================================================================================================================
-
+  
   //===============================================================================================================================
   // check I/O
   //===============================================================================================================================
