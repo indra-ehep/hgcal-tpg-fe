@@ -52,10 +52,11 @@ int main(int argc, char** argv)
   //HD: K6(0), K8(1), K11(2), K12(3), J12(4)
   uint32_t det = 1, selTC4 = 0, module = 4;
   
-  uint32_t multfactor = 31;//TOT mult factor other values could be 31 or 8
+  uint32_t multfactor = 31;//TOT mult factor other values could be 14 or 8
   uint32_t inputLSB = (selTC4==0) ? 1 : 0; //lsb at the input TC from ROC
-  uint32_t dropLSB = 0;  //lsb at the output during the packing
-  uint32_t select = 1 ;  //0 = Threshold Sum (TS), 1 = Super Trigger Cell (STC), 2 = Best Choice (BC), 3 = Repeater, 4=Autoencoder (AE).
+  uint32_t dropLSB = 0;  //lsb at the output during the packing [0 to 4]
+  uint32_t select = 1 ;  //1 = Super Trigger Cell (STC), 2 = Best Choice (BC)
+  //Not in use: 0 = Threshold Sum (TS), 3 = Repeater, 4=Autoencoder (AE).
   uint32_t stc_type = 1; //0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
   const uint32_t nelinks = 5; //1 = BC1, 2 = BC4, 3 = BC6, 4 = BC9, 5 = BC14..... (see details https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs)
   uint32_t calibration = 0xFFF; //0x400 = 0.5, 0x800 = 1.0, 0xFFF = 1.99951 (max)

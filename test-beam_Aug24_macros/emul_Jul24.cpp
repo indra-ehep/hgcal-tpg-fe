@@ -104,12 +104,22 @@ int main(int argc, char** argv)
       uint32_t idx = pck.packModId(zside, sector, ilink, det, iecond, selTC4, module); //we assume same ECONT and ECOND number for a given module
       
       cfgs.setModulePath(zside, sector, ilink, det, iecond, selTC4, module);
+
+      switch(iecond){
+      case 0:
+	cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt_e2.yaml");
+	break;
+      case 1:
+	cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt_e1.yaml");
+	break;
+      default:
+	cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt.yaml");
+	break;
+      }
+      cfgs.readEconTConfigYaml();
       
       cfgs.setEconDFile("cfgmap/slow_control_configuration/init_econd.yaml");
       cfgs.readEconDConfigYaml();
-      
-      cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt.yaml");
-      cfgs.readEconTConfigYaml();
       
       if(relayNumber==1722870998 and runNumber==1722871004){
 	if(ilink==1 and (iecond==1 or iecond==2)){
@@ -145,7 +155,7 @@ int main(int argc, char** argv)
 	  cfgs.readEconTConfigYaml();
 	}
       }
-
+      
       if(relayNumber==1722871974 and runNumber==1722871979){
 	if(ilink==1 and (iecond==1 or iecond==2)){
 	  cfgs.setEconTFile("cfgmap/init_econt_e1_cal_setup1.yaml");
@@ -160,7 +170,6 @@ int main(int argc, char** argv)
 	  cfgs.readEconTConfigYaml();
 	}
       }
-
       
       for(uint32_t iroc=0;iroc<3;iroc++){
 	std::cout<<"idx: "<<idx<<", ilink: " << ilink << ", iecond: "<<iecond<<", iroc: "<<iroc << ", fname : " << cfgrocname[ilink][iecond][iroc] << std::endl;
@@ -173,76 +182,32 @@ int main(int argc, char** argv)
     }//econd loop
   }//lpGBT loop
   cfgs.setPedThZero();
-  link = 0; econt = 2;
+  link = 0; econt = 1;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
   //===============================================================================================================================
   
+  //===============================================================================================================================
+  //Modify the ECON parameters for special cases
+  //===============================================================================================================================
   std::map<uint32_t,TPGFEConfiguration::ConfigEconD>& econDPar =  cfgs.getEconDPara();
   for(const auto& it : econDPar){
     //std::cout << "it.first: "<< it.first << std::endl;
     econDPar.at(it.first).setPassThrough(true);
     econDPar.at(it.first).setNeRx(6);
   }
-  
-  //===============================================================================================================================
-  //Set ECON-T parameters manually (as it was for September, 2024 beam-test)
-  //===============================================================================================================================
-  
-  link = 0; econt = 0;
-  uint32_t lp0_bc = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  econt = 1;
-  uint32_t lp0_stc4a = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  econt = 2;
+  link = 0; econt = 2;
   uint32_t lp0_stc16orctc4a = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  
-  link = 1; econt = 0;
-  uint32_t lp1_bc = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  econt = 1;
-  uint32_t lp1_stc4a = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  econt = 2;
+  link = 1; econt = 2;
   uint32_t lp1_stc16orctc4a = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  
+
   std::map<uint32_t,TPGFEConfiguration::ConfigEconT>& econTPar =  cfgs.getEconTPara();
   for(const auto& it : econTPar){
     econTPar[it.first].setDensity(1);
-    econTPar[it.first].setDropLSB(1);
-    if(it.first==lp0_bc or it.first==lp1_bc){
-      //following for BC6
-      econTPar[it.first].setSelect(2);
-      econTPar[it.first].setNElinks(3);
-    }else if(it.first==lp0_stc4a or it.first==lp1_stc4a){
-      //following for STC4A
-      econTPar[it.first].setSelect(1);
-      econTPar[it.first].setSTCType(3);
-      econTPar[it.first].setNElinks(2);
-    }else{
-      if(relayNumber<=1722876649){         //both laters with CTC4A
-	econTPar[it.first].setSelect(1);
-	econTPar[it.first].setSTCType(2);
-	econTPar[it.first].setNElinks(2);
-      }else if(relayNumber==1722881092){   //one later with CTC4A and another with STC16
-	if(it.first==lp0_stc16orctc4a){
-	  //link0 is set for CTC4A
-	  econTPar[it.first].setSelect(1);
-	  econTPar[it.first].setSTCType(2);
-	  econTPar[it.first].setNElinks(2);
-	}
-	if(it.first==lp1_stc16orctc4a){
-	  //link0 is set for STC16
-	  econTPar[it.first].setSelect(1);
-	  econTPar[it.first].setSTCType(1);
-	  econTPar[it.first].setNElinks(2);
-	}
-      }else{                               //both laters with STC16
-	econTPar[it.first].setSelect(1);
-	econTPar[it.first].setSTCType(1);
-	econTPar[it.first].setNElinks(2);
-      }
-    }
+    econTPar[it.first].setDropLSB(4);
+    if((it.first == lp0_stc16orctc4a or it.first == lp1_stc16orctc4a) and relayNumber>1722881092) econTPar[it.first].setSTCType(1);
     std::cout << "Modtype " << it.first << ", getOuttype: " << econTPar[it.first].getOutType() << ", typename: " << TPGFEDataformat::tctypeName[econTPar[it.first].getOutType()] << std::endl;
     econTPar[it.first].print();
-    //for(uint32_t itc=0;itc<48;itc++) econTPar[it.first].setCalibration(itc,0x800);
   }//econt loop
   //===============================================================================================================================
 
@@ -421,9 +386,9 @@ int main(int argc, char** argv)
       std::cout << "\t data for econt_id: "<< econtit.first <<  std::endl;
       TPGFEDataformat::TcRawDataPacket vTC1, vTC2, vTC3;
       TPGBEDataformat::UnpackerOutputStreamPair up1, up2,up3;
-      const uint32_t *el = trdata.getElinks(1); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
+      const uint32_t *el = trdata.getElinks(2); //5 for BC and 3 for STC4A and CTC4A , 6 for BC of lpGBT:0
       uint16_t bx_2 = (el[0]>>28) & 0xF ;
-      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+      TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
       trdata.setNofUnpkWords(6);
       TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);      
       vTC1.print();

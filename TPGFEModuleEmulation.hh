@@ -399,6 +399,7 @@ namespace TPGFEModuleEmulation{
     const std::map<uint32_t,uint32_t>& refMuxMap = configs.getMuxMapping() ;
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
     uint32_t dropLSB = configs.getEconTPara().at(moduleId).getDropLSB() ;
+    uint32_t nofSTCs = configs.getEconTPara().at(moduleId).getNofSTCs();
     
     const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
    
@@ -410,6 +411,7 @@ namespace TPGFEModuleEmulation{
       uint16_t bx = 0xffff;
       emulOut.second.reset();
       for(const auto& istc : stclist){
+	if(istc>=nofSTCs) continue;
 	const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
 	bx = (mdata.getBx()==3564) ? 0xF : mdata.getBx() & 0x7 ; 
@@ -465,6 +467,7 @@ namespace TPGFEModuleEmulation{
       uint16_t bx = 0xffff;
       emulOut.second.reset();
       for(const auto& istc16 : stc16list){
+	if(istc16>=nofSTCs) continue;
 	const std::vector<uint32_t>& tclist = stc16TcMap.at(std::make_pair(modName,istc16));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
 	bx = (mdata.getBx()==3564) ? 0xF : mdata.getBx() & 0x7 ; 

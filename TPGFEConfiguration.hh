@@ -116,9 +116,9 @@ namespace TPGFEConfiguration{
   public:
     ConfigEconD() : isPassThrough(false), neRx(0) {}
     bool passThrough() const { return isPassThrough;}
-    uint32_t getNeRx() const { return uint32_t(neRx);}
+    uint32_t getNeRx() const { assert(neRx!=0); return uint32_t(neRx);}
     void setPassThrough(bool isPT) { isPassThrough = isPT;}
-    void setNeRx(uint32_t nofeRx) { neRx = nofeRx;}
+    void setNeRx(uint32_t nofeRx) { assert(nofeRx!=0); neRx = nofeRx;}
     void print() {
       std::cout << std::dec << ::std::setfill(' ')
 		<< "ConfigEconD(" << this << ")::print(): "
@@ -144,11 +144,11 @@ namespace TPGFEConfiguration{
 	mux[itc] = 0;
       }
     }
-    bool getDensity() const { return (density==1) ? true : false;}
-    uint32_t getDropLSB() const { return uint32_t(dropLSB);}
-    uint32_t getSelect() const { return uint32_t(select);}
-    uint32_t getSTCType() const { return uint32_t(stc_type);}
-    uint32_t getNElinks() const { return uint32_t(eporttx_numen);}
+    bool getDensity() const { assert(density==0 or density==1); return (density==1) ? true : false;}
+    uint32_t getDropLSB() const { assert(dropLSB>=0 and dropLSB<=4); return uint32_t(dropLSB);}
+    uint32_t getSelect() const { assert(select==1 or select==2); return uint32_t(select);}
+    uint32_t getSTCType() const { assert(stc_type>=0 and stc_type<=4); return uint32_t(stc_type);}
+    uint32_t getNElinks() const { assert(eporttx_numen!=0);  return uint32_t(eporttx_numen);}
     uint32_t getBCType() const {
       uint32_t maxTcs = 0;
       if(getOutType()==TPGFEDataformat::BestC){	
@@ -189,15 +189,75 @@ namespace TPGFEConfiguration{
 	case 12:
 	  maxTcs = 46;
 	  break;
-	case 13:
+	default: //same as case13 or above
 	  maxTcs = 48;
-	  break;
-	default:
-	  maxTcs = 0;
 	  break;
 	}	  
       }
       return maxTcs;
+    }
+    uint32_t getNofSTCs() const {
+      uint32_t maxSTCs = 0;
+      switch(getSTCType()){
+      case 0: //0 = STC4B(5E+4M)
+	switch(getNElinks()){
+	case 1:
+	  maxSTCs = 2;
+	  break;
+	case 2:
+	  maxSTCs = 5;
+	  break;
+	case 3:
+	  maxSTCs = 8;
+	  break;
+	case 4:
+	  maxSTCs = 11;
+	  break;
+	default: //case 5 or higher
+	  maxSTCs = 12;
+	  break;
+	}
+	break;
+      case 1: //1 = STC16(5E+4M)
+	switch(getNElinks()){
+	case 1:
+	  maxSTCs = 2;
+	  break;
+	default: //case 2 or higher
+	  maxSTCs = 3;
+	  break;
+	}
+	break;
+      case 2: //2 = CTC4A(4E+3M)
+	switch(getNElinks()){
+	case 1:
+	  maxSTCs = 4;
+	  break;
+	case 2:
+	  maxSTCs = 8;
+	  break;
+	default: //case 3 or higher
+	  maxSTCs = 12;
+	  break;
+	}
+	break;
+      default: //3 = STC4A(4E+3M) //4 = CTC4B(5E+3M)
+	switch(getNElinks()){
+	case 1:
+	  maxSTCs = 3;
+	  break;
+	case 2:
+	  maxSTCs = 6;
+	  break;
+	case 3:
+	  maxSTCs = 10;
+	  break;
+	default: //case 4 or higher
+	  maxSTCs = 12;
+	  break; 
+	}	
+      }//stctype
+      return maxSTCs;
     }
     uint32_t getCalibration(uint32_t itc) const {
       assert(itc<=47) ;
@@ -236,6 +296,7 @@ namespace TPGFEConfiguration{
 	  break;
 	default:
 	  type = TPGFEDataformat::Unknown;
+	  break;
 	}
 	break;
       case 2:
@@ -249,14 +310,15 @@ namespace TPGFEConfiguration{
 	break;
       default:
 	type = TPGFEDataformat::Unknown;
+	break;
       }
       return type;
     }
-    void setDensity(uint32_t den) { density = den;}
-    void setDropLSB(uint32_t dLSB) { dropLSB = dLSB;}
-    void setSelect(uint32_t sel) { select = sel;}
-    void setSTCType(uint32_t stctype) { stc_type = stctype;}
-    void setNElinks(uint32_t nlinks) { eporttx_numen = nlinks;}
+    void setDensity(uint32_t den) { assert(density==0 or density==1); density = den;}
+    void setDropLSB(uint32_t dLSB) { assert(dLSB>=0 and dLSB<=4); dropLSB = dLSB;}
+    void setSelect(uint32_t sel) { assert(sel==1 or sel==2); select = sel;}
+    void setSTCType(uint32_t stctype) { assert(stctype>=0 and stctype<=4); stc_type = stctype;}
+    void setNElinks(uint32_t nlinks) { assert(nlinks!=0); eporttx_numen = nlinks;}
     void setCalibration(uint32_t itc, uint32_t calib) {
       assert(itc<=47) ;
       calv[itc] = (calib & 0xFFF);
