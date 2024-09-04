@@ -94,9 +94,12 @@ int main(int argc, char** argv){
   issRelay >> relayNumber;
   std::istringstream issRun(argv[2]);
   issRun >> runNumber;
-  
-  int runNumber1 = int(runNumber);
-
+  std::istringstream issLink(argv[3]);
+  issLink >> linkNumber;
+  if(linkNumber!=0 and linkNumber!=1){
+    std::cerr << "Link number "<< argv[3] <<"is out of bound (use: 0 or 1)" << std::endl;
+    return false;
+  }
 
   //Create the file reader
   Hgcal10gLinkReceiver::FileReader _fileReader;
@@ -110,14 +113,10 @@ int main(int argc, char** argv){
   const Hgcal10gLinkReceiver::RecordRunning  *rEvent((Hgcal10gLinkReceiver::RecordRunning*) r);
   _fileReader.setDirectory(std::string("dat/Relay")+argv[1]);
   _fileReader.openRun(runNumber,linkNumber);
-
   
   uint64_t nEvents = 0;    
   //Keep a record of status of last 100 events
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
-  uint64_t nofBoEE = 0;
-  uint64_t nofEoEE = 0;
-  uint64_t nofL1aE = 0;
 
   //Use the fileReader to read the records
   while(_fileReader.read(r)) {
@@ -144,164 +143,18 @@ int main(int argc, char** argv){
     //Else we have an event record 
     else{
       
-      // const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
-      // const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
-      
       if (nEvents < 2) {
 	rEvent->RecordHeader::print();
-	// boe->print();
-  	// eoe->print();
   	event_dump(rEvent);
       }
-
-      //Increment event counter and reset error state
-      nEvents++;
-      cout << "nEvents : " << nEvents << endl;
-      if(nEvents>2) break;
-      // if(boe->boeHeader()!=boe->BoePattern) { nofBoEE++; continue;}
-      // if(eoe->eoeHeader()!=eoe->EoePattern) { nofEoEE++; continue;}
-      // uint16_t l1atype = boe->l1aType();      
-      // if(l1atype==0) { nofL1aE++; continue;}
-     
-      // const uint64_t *p64(((const uint64_t*)rEvent)+1);
-      
-      // if(nEvents<=2){
-      // 	cout<<"========= event : "<< nEvents << "=================="<< endl;
-      // 	cout<< std::hex   ;
-      // 	cout<<"0th : 0x"<< std::setfill('0') << setw(16) << p64[0] << endl;
-      // 	cout<<"1st : 0x" << p64[1] << endl;
-      // 	cout<<"2nd : 0x" << p64[2] << endl;
-      // 	cout<< std::dec << std::setfill(' ') ;
-      // }
-
-      // ////////////// First find the block details from header //////////
-      // int loc[6], size[6];
-      // for(int iloc = 0 ; iloc < 6 ; iloc++) {loc[iloc] = size[iloc] = -1;}
-      // cout<< std::dec << std::setfill(' ');
-      // for(int iloc = 0 ; iloc < 6 ; iloc++){
-      // 	loc[iloc] = find_cafe_word(rEvent, iloc+1);
-      // 	size[iloc] = p64[loc[iloc]] & 0xFF ;
-      // 	int chid = (p64[loc[iloc]] >> 8) & 0xFF ;
-      // 	int bufstat = (p64[loc[iloc]] >> 16) & 0xF ;
-      // 	int nofwd_perbx = (p64[loc[iloc]] >> 20) & 0xF ;
-      // 	if(nEvents<=2)
-      // 	  cout<<"iloc: "<< iloc
-      // 	      << std::hex
-      // 	      <<", word : 0x" << std::setfill('0') << setw(16) << p64[loc[iloc]]
-      // 	      << std::dec << std::setfill(' ')
-      // 	      << ", location : " << loc[iloc] << ", size: " << size[iloc] <<", ch_id : "<< chid << ", bufstat: " << bufstat << ", nofwd_perbx: "<< nofwd_perbx << endl;
-      // }
-      // /////////////////////////////////////////////////////////////////
-      
-      // //////////// Read raw elink inputs for ch 1 /////////////////////
-      // int iblock = 1;
-      // int elBgnOffset = 3;
-      // int elIndx = 0;
-      // uint32_t elpckt0[7];
-      // uint32_t bx = 0xF;
-      // uint32_t refBx ;
-      // int iel = 0;
-      // for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
-      // 	uint32_t wMSB = (p64[iw] >> 32) & 0xFFFFFFFF ;
-      // 	uint32_t wLSB = p64[iw] & 0xFFFFFFFF ;
-      // 	if(elIndx>=elBgnOffset and (elIndx-elBgnOffset)%7==0) bx = (wLSB>>28) & 0xF ;
-      // 	if(elIndx>=elBgnOffset and elIndx<elBgnOffset+7){
-      // 	  elpckt0[iel] = wLSB;
-      // 	  if(iel==0) refBx = bx;
-      // 	  iel++;
-      // 	}//pick the first elink
-      // 	if(nEvents<=2)
-      // 	  cout<<"iloc: "<< iw << ", bx: " << bx
-      // 	      << std::hex
-      // 	      <<", word : 0x" << std::setfill('0') << setw(8) << wLSB
-      // 	      << std::dec << std::setfill(' ')
-      // 	      <<endl;
-
-      // 	elIndx++;
-      // }
-      // /////////////////////////////////////////////////////////////////
-
-      // ////// Print the energy/location and stage1 input also check back elink//////
-      // if(nEvents<=2)
-      // 	for(int iel=0;iel<7;iel++)
-      // 	  cout<<"elIndx: "<< iel
-      // 	      << std::hex
-      // 	      <<", word : 0x" << std::setfill('0') << setw(8) << elpckt0[iel]
-      // 	      << std::dec << std::setfill(' ')
-      // 	      <<endl;
-      // TPGFEDataformat::TcRawDataPacket vTcrdp;
-      // TPGBEDataformat::UnpackerOutputStreamPair up;
-      // if(nEvents<=2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::TcRawData::BestC, 6, elpckt0, vTcrdp);
-      // if(nEvents<=2) {
-      // 	TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(refBx, vTcrdp, up); 
-      // 	up.print();
-      // }
-      // uint32_t elpckt0_test[3];
-      // if(nEvents<=2) TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(refBx, vTcrdp, elpckt0_test); 
-      // if(nEvents<=2)
-      // 	for(int iel=0;iel<3;iel++)
-      // 	  cout<<"iel: "<< iel
-      // 	      << std::hex
-      // 	      <<", word : 0x" << std::setfill('0') << setw(8) << elpckt0_test[iel]
-      // 	      << std::dec << std::setfill(' ')
-      // 	      <<endl;
-      // /////////////////////////////////////////////////////////////////
-      
-      // //////////// Print unpacker output for ch 1 /////////////////////
-      // iblock = 3;
-      // int unpkBgnOffset = 4;
-      // int unpkIndx = 0;
-      // uint32_t unpackedWord[7];
-      // uint32_t iunpkw = 0;
-      // for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
-      // 	uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-      // 	uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-      // 	uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-      // 	uint32_t col3 = p64[iw] & 0xFFFF ;
-      // 	if(unpkIndx>=unpkBgnOffset and unpkIndx<unpkBgnOffset+7){
-      // 	  unpackedWord[iunpkw] = col1;
-      // 	  iunpkw++;
-      // 	}
-      // 	if(nEvents<=2)
-      // 	  cout<<"iloc: "<< iw
-      // 	      << std::hex
-      // 	      <<", col0 : 0x" << std::setfill('0') << setw(4) << col0 <<", "
-      // 	      <<", col1 : 0x" << std::setfill('0') << setw(4) << col1 <<", "
-      // 	      <<", col2 : 0x" << std::setfill('0') << setw(4) << col2 <<", "
-      // 	      <<", col3 : 0x" << std::setfill('0') << setw(4) << col3 <<", "
-      // 	      << std::dec << std::setfill(' ')
-      // 	      <<endl;
-	
-      // 	unpkIndx++;
-      // }
-      // uint32_t modsum = 0xFF;
-      // uint32_t unpkBx = 0xF;
-      // uint32_t isValid = 0;
-      // uint32_t energy, channel;
-      // for(int iupw=0;iupw<7;iupw++){
-      // 	isValid = (unpackedWord[iupw] >> 15) & 0x1;
-      // 	if(iupw==0){
-      // 	  modsum = (unpackedWord[iupw] >> 6) & 0xFF ;
-      // 	  unpkBx = unpackedWord[iupw] & 0xF ;
-      // 	}else{
-      // 	  energy = (unpackedWord[iupw] >> 6) & 0x1FF ;
-      // 	  channel = unpackedWord[iupw]  & 0x3F ;
-      // 	}
-      // if(nEvents<=2)
-      // 	if(iupw==0)
-      // 	  cout<<"iupw: "<< iupw
-      // 	      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[iupw] << std::dec << std::setfill(' ')
-      // 	      <<", bx: " << unpkBx <<", modsum: "<<modsum << endl;
-      // 	else
-      // 	  cout<<"iupw: "<< iupw
-      // 	      <<", word: 0x" << std::hex << std::setfill('0') << setw(4) <<unpackedWord[iupw] << std::dec << std::setfill(' ')
-      // 	      <<", energy: " << energy <<", channel: "<<channel << endl;
-      // }
-      // /////////////////////////////////////////////////////////////////
       
       if(nEvents<=2) cout<<"========= End of event : "<< nEvents << "============="<< endl;
-    }//loop event  
+      //Increment event counter and reset error state
+      nEvents++;      
+    }//loop event
   }
+  
+  std::cout << "========== Total Events : " << nEvents << std::endl;
   
   delete r;
   

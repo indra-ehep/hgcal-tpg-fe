@@ -97,7 +97,13 @@ namespace TPGFEDataformat{
 	if(_data[i].getTcTp()==3) return true;
       return false;
     }
-    /////////////// Following are the modification/addition for emulation ///////////////////
+
+    bool hasTcTp1() const {
+      for(unsigned i(0);i<=NumberOfChannels;i++)
+	if(_data[i].getTcTp()==1) return true;
+      return false;
+    }
+/////////////// Following are the modification/addition for emulation ///////////////////
     // HalfHgcrocChannelData* setChannels() {
     //   return _data;
     // }
@@ -153,16 +159,11 @@ namespace TPGFEDataformat{
   class TcRawData {
   public:
     
-    TcRawData() : _data(0), _unpacked(0) {
+    TcRawData() : _data(0), _rawE(0), _istctp1(false) {
     }
     
-    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
-      setTriggerCell(t,a,e);
-      _unpacked = 0;
-    }
-    
-    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t unpacked) {
-      setTriggerCell(t,a,e, unpacked);
+    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t rawE = 0, bool istctp1 = false) {
+      setTriggerCell(t,a,e, rawE, istctp1);
     }
     
     uint16_t address() const {
@@ -173,14 +174,22 @@ namespace TPGFEDataformat{
       return ((_data >> 6 ) & 0x1ff);
     }
 
-    uint64_t unpacked() const {
-      return _unpacked;
+    uint64_t rawE() const {
+      return _rawE;
     }
     
     uint16_t data() const {
       return _data;
     }
-
+    
+    bool isTcTp1() const {
+      return _istctp1;
+    }
+    
+    void setTcTp1(bool tctp1) {
+      _istctp1 = tctp1 ;
+    }
+    
     friend void swap(TcRawData& lhs, TcRawData& rhs){
       std::swap(lhs._data, rhs._data);
     }
@@ -203,13 +212,15 @@ namespace TPGFEDataformat{
 		<< std::dec << ::std::setfill(' ')
 		<< ", address = " << std::setw(2) << unsigned(atc.address())
 		<< ", energy = " << std::setw(3) << atc.energy()
-		<< ", unpacked = " << std::setw(8) << atc.unpacked()
+		<< ", rawE = " << std::setw(8) << atc.rawE()
+		<< ", istctp1 = " << std::setw(2) << atc.isTcTp1()
 		<< std::endl;
     }
-
-    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t unpacked) {
+    
+    void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t rawE, bool istctp1) {
       setTriggerCell(t,a,e);
-      _unpacked = unpacked;
+      _rawE = rawE;
+      setTcTp1(istctp1);
     }
 
     void setTriggerCell(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
@@ -253,17 +264,18 @@ namespace TPGFEDataformat{
 		<< std::dec << ::std::setfill(' ')
 		<< ", address = " << std::setw(2) << unsigned(address())
 		<< ", energy = " << std::setw(3) << energy()
-		<< ", unpacked = " << std::setw(10) << unpacked()
+		<< ", rawE = " << std::setw(10) << rawE()
+		<< ", istctp1 = " << std::setw(2) << isTcTp1()
 		<< std::endl;
     }
-
+    
     static uint32_t Decode4E3M(uint16_t compressed){
       uint32_t mant = compressed & 0x7;
       uint32_t expo = (compressed>>3) & 0xF;
       
       if(expo==0) return mant; 
       if(expo==1) return 8+mant;
-     
+      
       uint32_t shift = expo+2;
       uint32_t decomp = 1<<shift;
       uint32_t mpdeco = 1<<(shift-4);
@@ -272,7 +284,7 @@ namespace TPGFEDataformat{
       
       return decomp;
     }
-
+    
     static uint64_t Decode5E3M(uint16_t compressed){
       uint32_t mant = compressed & 0x7;
       uint32_t expo = (compressed>>3) & 0x1F;
@@ -336,50 +348,51 @@ namespace TPGFEDataformat{
 		<< std::setw(4) << _data
 		<< std::dec << ::std::setfill(' ')
 		<< ", address = " << std::setw(2) << unsigned(address())
-		<< ", raw = " << std::setw(10) << unpacked()
+		<< ", raw = " << std::setw(10) << rawE()
 		<< ", energy = " << std::setw(3) << energy()
 		<< ", unpacked = " << std::setw(10) << decompressed
+		<< ", istctp1 = " << std::setw(2) << isTcTp1()
 		<< std::endl;
     }
 
   private:
     uint16_t _data;
-    uint64_t _unpacked;
+    uint64_t _rawE;
+    bool _istctp1;
   };
 
   static std::string tctypeName[10]={"BestC","STC4A","STC4B","STC16", "CTC4A", "CTC4B", "TS", "RA", "AE", "Unknown"};
   
   class TcRawDataPacket {
   public:    
-    TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0), _unpackedms(0) { _tcdata.resize(0);}
+    TcRawDataPacket() : _t(Unknown), _bx(0), _ms(0), _rawEms(0) { _tcdata.resize(0);}
     TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) : _t(t), _bx(bx), _ms(e) { _tcdata.resize(0);}
-    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint64_t upe) : _t(t), _bx(bx), _ms(e), _unpackedms(upe) { _tcdata.resize(0);}
+    TcRawDataPacket(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint64_t upe) : _t(t), _bx(bx), _ms(e), _rawEms(upe) { _tcdata.resize(0);}
     const std::string& typeName() const { return TPGFEDataformat::tctypeName[type()]; }
     TPGFEDataformat::Type type() const { return _t;}
     size_t size() const { return _tcdata.size();}
     uint16_t moduleSum() const { return uint16_t(_ms & 0xff);}
-    uint64_t unpackedMS() const { return _unpackedms;}
+    uint64_t rawEMS() const { return _rawEms;}
     uint16_t bx() const { return uint16_t(_bx);}
     const std::vector<TPGFEDataformat::TcRawData>& getTcData() const {return _tcdata;}
     TPGFEDataformat::TcRawData& getTc(uint32_t i) {return _tcdata.at(i);}
     bool is4E3M() const { return (_t==BestC or _t==STC4A or _t==CTC4A or _t==TS or _t==RA) ? true : false ; }
-    void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _unpackedms = 0; _tcdata.resize(0);}
+    void reset() { _t = TPGFEDataformat::Type::Unknown; _bx = 0; _ms = 0;  _rawEms = 0; _tcdata.resize(0);}
+    bool isTcTp1() const {
+      for(const auto& itc: getTcData()) if(itc.isTcTp1()) return true;
+      return false;
+    }
     
     void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e) { _t = t; _bx = bx; _ms = e;}
-    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint64_t upe) { _t = t; _bx = bx; _ms = e; _unpackedms = upe;}
+    void setTBM(TPGFEDataformat::Type t, uint8_t bx, uint8_t e, uint64_t upe) { _t = t; _bx = bx; _ms = e; _rawEms = upe;}
     void setType(TPGFEDataformat::Type t) { _t = t;}
     void setModuleSum(uint8_t e) { _ms = e;}
-    void setModuleSum(uint8_t e, uint64_t upe) { _ms = e; _unpackedms = upe;}
+    void setModuleSum(uint8_t e, uint64_t upe) { _ms = e; _rawEms = upe;}
     void setBX(uint8_t bx) { _bx = bx;}
     std::vector<TPGFEDataformat::TcRawData>& setTcData() {return _tcdata;}
-    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e) {
+    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t upe=0, bool isTcTp1=false) {
       TPGFEDataformat::TcRawData tc;
-      tc.setTriggerCell(t, a, e);
-      _tcdata.push_back(tc);
-    }
-    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t upe) {
-      TPGFEDataformat::TcRawData tc;
-      tc.setTriggerCell(t, a, e, upe);
+      tc.setTriggerCell(t, a, e, upe, isTcTp1);
       _tcdata.push_back(tc);
     }
     TPGFEDataformat::TcRawData& operator[](int index){
@@ -401,9 +414,10 @@ namespace TPGFEDataformat{
       return os << "TPGFEDataformat::TcRawDataPacket(" << atcp << ")::print(): "
 		<< "type = " << atcp.typeName()
 		<< ", bx = " << atcp.bx()
-		<< ", rawms = "<< atcp.unpackedMS()
+		<< ", rawms = "<< atcp.rawEMS()
 		<< ", ms = " << atcp.moduleSum()
 		<< ", unpacked = " << TPGFEDataformat::TcRawData::Decode5E3M(atcp.moduleSum())
+		<< ", istctp1 = " << std::setw(2) << atcp.isTcTp1()
 		<< std::endl;
       for(const auto& itc: atcp.getTcData()) itc.print(atcp.type());
     }
@@ -412,9 +426,10 @@ namespace TPGFEDataformat{
 		<< "type = " << type()
 		<< ", typename = " << typeName()
 		<< ", bx = " << bx()
-		<< ", rawms = "<< unpackedMS()
+		<< ", rawms = "<< rawEMS()
 		<< ", ms = " << moduleSum()
 		<< ", unpacked = " << TPGFEDataformat::TcRawData::Decode5E3M(moduleSum())
+		<< ", istctp1 = " << std::setw(2) << isTcTp1()
 		<< std::endl;
       for(const auto& itc: getTcData()) itc.print(type());
     }    
@@ -424,7 +439,7 @@ namespace TPGFEDataformat{
     TPGFEDataformat::Type _t;
     uint8_t _bx;
     uint8_t _ms;
-    uint64_t _unpackedms;
+    uint64_t _rawEms;
     std::vector<TPGFEDataformat::TcRawData> _tcdata;
   };
   
@@ -443,6 +458,7 @@ namespace TPGFEDataformat{
       _data=0;
       _cdata=0;
       _isTot=false;
+      _istctp1=false;
     }
 
     bool isTot() const {
@@ -457,6 +473,10 @@ namespace TPGFEDataformat{
       return _data;
     }
     
+    bool isTcTp1() const {
+      return _istctp1;
+    }
+
     void setCdata(uint16_t a) {
       assert(a<0x80); //compressed HGCROC TC data is packed into7bits 
       _cdata=a;
@@ -470,11 +490,16 @@ namespace TPGFEDataformat{
     void setTot(bool a) {
       _isTot=a;
     }
+
+    void setTcTp1(bool tctp1) {
+      _istctp1 = tctp1 ;
+    }
   
   private:
     uint32_t _data;  //raw-uncompressed data
     uint16_t _cdata; //compressed 4E+3M ()
     bool _isTot;     //isTOT or ADC
+    bool _istctp1;
   };
 
   class ModuleTcData {
@@ -483,7 +508,6 @@ namespace TPGFEDataformat{
       MaxNumberOfTCs = 48
     };
 
-  
     ModuleTcData() {
       setZero();
     }
@@ -521,7 +545,9 @@ namespace TPGFEDataformat{
 		  << ", raw-uncompressed "
 		  << std::setw(10) << _data[i].getCharge()
 		  << ", istot : "
-		  << std::setw(10) << _data[i].isTot()
+		  << std::setw(2) << _data[i].isTot()
+		  << ", istctp1 : "
+		  << std::setw(2) << _data[i].isTcTp1()
 		  << std::endl;
       }    
     }

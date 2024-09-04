@@ -370,8 +370,9 @@ namespace TPGFEReader{
     uint64_t nEvents = 0;
     const int maxEcons = 12;
     
+    uint64_t maxEvent = (refEvents.size()==0) ? maxEventDAQ : refEvents[refEvents.size()-1] ;
     //Use the fileReader to read the records
-    while(_fileReader.read(r) and nEvents<maxEventDAQ) {
+    while(_fileReader.read(r) and nEvents<maxEvent) {
       //Check the state of the record and print the record accordingly
       if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
 	if(!(rStart->valid())){
@@ -379,7 +380,7 @@ namespace TPGFEReader{
 	  continue;
 	}
       }
-    
+      
       else if(r->state()==Hgcal10gLinkReceiver::FsmState::Stopping){
 	if(!(rStop->valid())){
 	  std::cerr << " FsmState::Stopping validadity fails : rStop->valid() " << rStop->valid() << std::endl;
@@ -391,6 +392,12 @@ namespace TPGFEReader{
 	
 	const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
 	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
+	const Hgcal10gLinkReceiver::BePacketHeader *beh = rEvent->bePacketHeader();
+	if(beh->pattern()!=0xfe){
+	  std::cerr <<"Event: " << boe->eventId() << " DAQ BePacketHeader pattern is  " << std::hex << std::setfill('0') << std::setw(2) << uint32_t(beh->pattern()) << std::dec << std::endl;
+	  continue;
+	}
+
 	eventId = boe->eventId();
 	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
 	  event_dump(rEvent);
@@ -500,27 +507,7 @@ namespace TPGFEReader{
     uint64_t getCheckedEvent() {return inspectEvent;}
     
     void init(uint32_t, uint32_t, uint32_t);
-    
-    // void getEvents(uint64_t& ievent, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>& econtarray){
-    //   std::vector<uint64_t> events; uint64_t maxevent = ievent+1;
-    //   getEvents(ievent, maxevent, econtarray, events);
-    // }
-    // void getEvents(uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>& econtarray, std::vector<uint64_t>& events){
-    //   moduleId = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-    //   const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
-    //   if(outputType==TPGFEDataformat::BestC)
-    // 	getEventsBC(minEventTrig, maxEventTrig, econtarray, events);
-    //   else if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B or outputType==TPGFEDataformat::STC16)
-    // 	getEventsSTC(minEventTrig, maxEventTrig, econtarray, events);
-    //   else{
-    // 	std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>> dummy1;
-    // 	econtarray[0] = dummy1;
-    // }
-
-    // }
-    // void getEventsBC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
-    // void getEventsSTC(uint64_t&, uint64_t&, std::map<uint64_t,std::vector<std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>>>>&, std::vector<uint64_t>&);
-    
+        
     void getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray);
     void terminate();
     
@@ -753,8 +740,9 @@ namespace TPGFEReader{
     const int maxCAFESeps = 7;
     int ievent = 0;
 
+    uint64_t maxEvent = (refEvents.size()==0) ? maxEventTrig : refEvents[refEvents.size()-1] ;
     //Use the fileReader to read the records
-    while(_fileReader.read(r) and nEvents<maxEventTrig) {
+    while(_fileReader.read(r) and nEvents<=maxEvent ) {
       //Check the state of the record and print the record accordingly
       if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
 	if(!(rStart->valid())){
@@ -773,7 +761,8 @@ namespace TPGFEReader{
 	
 	const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
 	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
-      
+	const Hgcal10gLinkReceiver::BePacketHeader *beh =  rEvent->bePacketHeader();
+	
 	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){  
 	  rEvent->RecordHeader::print();
 	  event_dump(rEvent);
@@ -789,7 +778,13 @@ namespace TPGFEReader{
 	  std::cerr <<"Event: " << nEvents<< " Slink EoE header mismatch " << std::endl;
 	  continue;
 	}
-      
+
+	if(beh->pattern()!=0xca){
+	  beh->print();
+	  std::cerr <<"Event: " << nEvents<< " TPG BePacketHeader pattern is  " << std::hex << std::setfill('0') << std::setw(2) << uint32_t(beh->pattern()) << std::dec << std::endl;
+	  continue;
+	}
+	
 	eventId = boe->eventId();
 	bxId = eoe->bxId();
 	sequenceId = rEvent->RecordHeader::sequenceCounter(); 

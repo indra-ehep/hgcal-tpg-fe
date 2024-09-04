@@ -393,7 +393,7 @@ private:
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
 
-    class Trig24Data{
+  class Trig24Data{
   public:
     Trig24Data() : nofElinks(0), nofUnpkdWords(0) {}
     void setNofElinks(uint32_t nelinks) {assert(nelinks<=3) ; nofElinks = uint8_t(nelinks);}
@@ -418,12 +418,12 @@ private:
 		    << std::dec
 		    << std::endl;
       }
+      
       for(unsigned ib(0);ib<7;ib++){
 	TPGBEDataformat::UnpackerOutputStreamPair up;
 	uint16_t* tc = up.setTcData(0);
 	
 	for(unsigned iw(0);iw<getNofUnpkWords();iw++){
-	//for(unsigned iw(0);iw<4;iw++){
 	  if(iw==0){
 	    uint16_t* ms = up.setMsData(0);
 	    *ms = getUnpkWord(ib, iw);
@@ -443,7 +443,7 @@ private:
   private:
     uint8_t nofElinks, nofUnpkdWords;
     uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
-    uint32_t unpackedWords[7][8]; //7:bxs,8:words
+    uint32_t unpackedWords[7][8]; //7:bxs,8:words per half
   };
 
 }
