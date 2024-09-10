@@ -708,7 +708,7 @@ namespace TPGFEReader{
 	if(boe->boeHeader()!=boe->BoePattern) continue;
 	if(eoe->eoeHeader()!=eoe->EoePattern) continue;
 	uint16_t l1atype = boe->l1aType();      
-	if(l1atype==0) continue;
+	//if(l1atype==0) continue;
       
 	const uint64_t *p64(((const uint64_t*)rEvent)+1);
 
@@ -949,7 +949,7 @@ namespace TPGFEReader{
 	if(boe->boeHeader()!=boe->BoePattern) continue;
 	if(eoe->eoeHeader()!=eoe->EoePattern) continue;
 	uint16_t l1atype = boe->l1aType();      
-	if(l1atype==0) continue;
+	//if(l1atype==0) continue;
 	
 	const uint64_t *p64(((const uint64_t*)rEvent)+1);
 	
