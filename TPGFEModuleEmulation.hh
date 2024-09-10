@@ -682,6 +682,7 @@ namespace TPGFEModuleEmulation{
 						   TPGFEDataformat::Type type,
 						   unsigned nTc,
 						   TPGFEDataformat::TcRawDataPacket &vtcrp) {
+
     generateTcRawData(true,bx,type,nTc,vtcrp);
   }
   
@@ -692,15 +693,16 @@ namespace TPGFEModuleEmulation{
     
     //std::vector<TPGFEDataformat::TcRawData> &vtc(vtcrp.second);
     std::vector<TPGFEDataformat::TcRawData> &vtc(vtcrp.setTcData());
+    vtcrp.setType(type);
   
     if(type==TPGFEDataformat::BestC) {
-      // vtc.resize(nTc+1);
-      // vtc[0].setModuleSum(zero?0:rand()&0xff);
+      vtc.resize(nTc);
+      vtcrp.setModuleSum(zero?0:rand()&0xff);
     
       unsigned step(48/nTc);
       //for(unsigned i(1);i<vtc.size();i++) {
       for(unsigned i(0);i<vtc.size();i++) {
-	vtc[i].setTriggerCell(type,step*(i-1)+(rand()%step),zero?0:rand()&0x7f);
+	      vtc[i].setTriggerCell(type,step*(i)+(rand()%step),zero?0:rand()&0x7f);
       }
     
     } else if(type==TPGFEDataformat::STC4A) {
@@ -728,5 +730,6 @@ namespace TPGFEModuleEmulation{
 
   
 }//end of namespace
+
 
 #endif

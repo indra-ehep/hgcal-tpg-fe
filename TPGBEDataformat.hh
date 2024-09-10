@@ -400,7 +400,9 @@ private:
     void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords = uint8_t(nwords);}
     void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<3) ; elinks[ib][iw] = val;}
     void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8) ; unpackedWords[ib][iw] = val;}
+    void setSlinkBx(uint16_t bx) {bxId = bx;}
     
+    const uint32_t getSlinkBx() const {return uint32_t(bxId);}
     uint32_t getNofElinks() const { return uint32_t(nofElinks);}
     uint32_t getNofUnpkWords() const { return uint32_t(nofUnpkdWords);}
     uint32_t  getElink(uint32_t ib, uint32_t iw) const { return elinks[ib][iw];}
@@ -442,6 +444,7 @@ private:
     }
   private:
     uint8_t nofElinks, nofUnpkdWords;
+    uint16_t bxId ; //from Slink trailer
     uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
     uint32_t unpackedWords[7][8]; //7:bxs,8:words per half
   };

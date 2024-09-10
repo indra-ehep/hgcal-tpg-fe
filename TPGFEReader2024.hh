@@ -345,10 +345,12 @@ namespace TPGFEReader{
 	  }//end of loop for 37 seq channels
 	  TPGFEDataformat::HalfHgcrocData hrocdata;
 	  hrocdata.setChannels(chdata);
-	  uint16_t bxdiff = 3;
-	  int bx = uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) - bxdiff;
-	  if(bx<0) bx = (3564+bx) + 1;
-	  hrocdata.setBx( uint16_t(bx) ); 
+	  // uint16_t bxdiff = 3;
+	  // int bx = uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) - bxdiff;
+	  // if(bx<0) bx = (3564+bx) + 1;
+	  uint16_t bx = uint16_t((econheader_lst[icapblk].at(iecond)>>20) & 0xFFF) ;
+	  hrocdata.setBx(bx);
+	  hrocdata.setSlinkBx(eoe->bxId());
 	  pck.setZero();
 	  hrocarray[boe->eventId()].push_back(std::make_pair(pck.packRocId(zside, sector, link, det, iecond, selTC4, module, rocn, half),hrocdata));
 	  //std::cout<<std::endl;
@@ -369,10 +371,12 @@ namespace TPGFEReader{
     const uint64_t *p64(((const uint64_t*)rEvent)+1);
     uint64_t nEvents = 0;
     const int maxEcons = 12;
+    uint16_t l1atype = 0;
+    const uint8_t valid_daq_be_pattern = 0xfe;
     
-    uint64_t maxEvent = (refEvents.size()==0) ? maxEventDAQ : refEvents[refEvents.size()-1] ;
+    const uint64_t maxEvent = (refEvents.size()==0) ? maxEventDAQ : refEvents[refEvents.size()-1] ;
     //Use the fileReader to read the records
-    while(_fileReader.read(r) and nEvents<maxEvent) {
+    while(_fileReader.read(r) and nEvents<=maxEvent ) {
       //Check the state of the record and print the record accordingly
       if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
 	if(!(rStart->valid())){
@@ -393,21 +397,53 @@ namespace TPGFEReader{
 	const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();      
 	const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
 	const Hgcal10gLinkReceiver::BePacketHeader *beh = rEvent->bePacketHeader();
-	if(beh->pattern()!=0xfe){
-	  std::cerr <<"Event: " << boe->eventId() << " DAQ BePacketHeader pattern is  " << std::hex << std::setfill('0') << std::setw(2) << uint32_t(beh->pattern()) << std::dec << std::endl;
-	  continue;
-	}
-
-	eventId = boe->eventId();
+	
+	
 	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
-	  event_dump(rEvent);
 	  rEvent->RecordHeader::print();
+	  event_dump(rEvent);
 	  boe->print();
 	  eoe->print();
 	  std::cout<<"Payload length : "<< rEvent->payloadLength() << ", DAQ-data bxId " << eoe->bxId()  << std::endl;
 	}
+	
+	//Increment event counter
+	nEvents++;
+	
+	if(boe->boeHeader()!=boe->BoePattern) {
+	  std::cerr <<"Event: " << nEvents<< " Slink BoE header mismatch " << std::endl;
+	  continue;
+	}
+	if(eoe->eoeHeader()!=eoe->EoePattern) {
+	  std::cerr <<"Event: " << nEvents<< " Slink EoE header mismatch " << std::endl;
+	  continue;
+	}
+	
+	// if(boe->eventId()%10000==0){
+	//   std::cout <<"DAQ: Event: " << boe->eventId() << std::endl;
+	//   boe->print();
+	//   beh->print();
+	//   std::cout <<"=========================================================="<< std::endl;
+	// }
+	
+	if( beh->pattern() != valid_daq_be_pattern ){
+	  std::cerr <<"Event: " << boe->eventId() << " DAQ BePacketHeader pattern is  " << std::hex << std::setfill('0') << std::setw(2) << uint32_t(beh->pattern()) << std::dec << std::endl;
+	  beh->print();
+	  continue;
+	}
+	
+	eventId = boe->eventId();
+
+	l1atype = boe->l1aType();
+	
+	// if(l1atype==0) {
+	//   std::cerr << " Event: "<< eventId << ", l1aType : " << l1atype << std::endl;
+	//   //Event_Dump(eventId, rEvent);
+	//   continue;
+	// }
+
 	bool eventscan = (refEvents.size()==0) ? (boe->eventId()>=minEventDAQ and boe->eventId()<maxEventDAQ) : (std::find(refEvents.begin(),refEvents.end(),eventId) != refEvents.end()) ;
-	/////////////////////////////////////////////////////////////////
+	// /////////////////////////////////////////////////////////////////
 	//if(boe->eventId()>=minEventDAQ and boe->eventId()<maxEventDAQ){
 	if(eventscan){
 	  captureheader_lst.clear();
@@ -415,10 +451,13 @@ namespace TPGFEReader{
 	  captureheaderpos_lst.clear();
 	  econheaderpos_lst.clear();
 	  zeropos_lst.clear();
-      
+	  
 	  uint32_t icapblk = 0;
 	  uint32_t capturepos = 2;
-	  while( (capturepos+2) < rEvent->payloadLength()){
+	  bool isThreeEcons = true;
+	  bool isallPassthrough = true;
+	  bool isValideRxSize = true;
+	  while( (capturepos+2) < rEvent->payloadLength() ){
 	    uint64_t captureblkheader = p64[capturepos];
 	    captureheader_lst.push_back(captureblkheader);
 	    captureheaderpos_lst.push_back(capturepos);
@@ -440,10 +479,10 @@ namespace TPGFEReader{
 	      }
 	    }
 	    //assert(nofecons!=0);
-	    if(nofecons==0) {
-	      continue;
-	    } //update the feedback from Martim
-	
+	    if(nofecons!=3) {
+	      isThreeEcons = false;
+	      break;
+	     } //update the feedback from Martim
 	    uint32_t next_econd_pos = capturepos + 1;
 	    for(int iecond = 0 ; iecond < nofecons ; iecond++){
 	      uint32_t econpos = next_econd_pos;
@@ -452,14 +491,22 @@ namespace TPGFEReader{
 	      econheader_lst[icapblk].push_back(p64[econpos]); 
 	      econheaderpos_lst[icapblk].push_back(econpos);
 	      isPassthrough[iecond] = (econh0 >> 13 ) & 0x1 ;
-	      assert(isPassthrough[iecond]);
+	      //assert(isPassthrough[iecond]);
+	      if(!isPassthrough[iecond]) {
+		isallPassthrough = false;
+		break;
+	      }
 	      uint32_t econsize = (econh0 >> 14 ) & 0x1FF ; //specifies length in 32b-words+1 of eRx sub-packets and CRC trailer
-	      assert(econsize>1);
+	      //assert(econsize>1);
+	      if((econsize-1)<=0){
+		isValideRxSize = false;
+		break;
+	      }
 	      zeroloc[iecond] = (econsize-1)/2 + (econpos+1) ; //(econ0pos+1): +1 to start from first eRx header
 	      zeropos_lst[icapblk].push_back(zeroloc[iecond]);
 	      next_econd_pos = zeroloc[iecond]+1 ;
 	    }
-	    capturepos = zeroloc[nofecons-1] + 1;
+	    capturepos = zeroloc[nofecons-1] + 1 ;
 	    icapblk++;
 	  }//find the block positions
 	  if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
@@ -468,13 +515,12 @@ namespace TPGFEReader{
 	      for(int iecond = 0 ; iecond < econheaderpos_lst[econhpos.first].size() ; iecond++)
 		std::cout<<"icapblk: "<<econhpos.first<<" zero position for econ " << iecond << ", "<<zeropos_lst[econhpos.first].at(iecond)<<std::endl;
 	  }
-	
-	  getModuleData(nEvents, hrocarray, events);
-	  events.push_back(boe->eventId());
-	}
-	//Increment event counter
-	nEvents++;	
-      }
+	  if(isThreeEcons and isallPassthrough and isValideRxSize){
+	    getModuleData(nEvents, hrocarray, events);
+	    events.push_back(boe->eventId());
+	  }
+	}//read event if within the range
+      }//else for loopting events
     }//file reader
   }
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -779,7 +825,14 @@ namespace TPGFEReader{
 	  continue;
 	}
 
-	if(beh->pattern()!=0xca){
+	// if(boe->eventId()%10000==0){
+	//   std::cout <<"TRIG: Event: " << boe->eventId() << std::endl;
+	//   boe->print();
+	//   beh->print();
+	//   std::cout <<"=========================================================="<< std::endl;
+	// }
+
+	if(uint32_t(beh->pattern())!=0xca){
 	  beh->print();
 	  std::cerr <<"Event: " << nEvents<< " TPG BePacketHeader pattern is  " << std::hex << std::setfill('0') << std::setw(2) << uint32_t(beh->pattern()) << std::dec << std::endl;
 	  continue;
@@ -1044,6 +1097,7 @@ namespace TPGFEReader{
 		}
 		for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords();iw++) trdata[ilp][iecon].setUnpkWord(ib, iw, unpackedWord[ilp][iecon][ib][iw]) ;
 	      }//nof bxs
+	      trdata[ilp][iecon].setSlinkBx(eoe->bxId());
 	      econtarray[eventId].push_back( std::make_pair(moduleId,trdata[ilp][iecon]) );
 	    }//nof ECONTs
 	  }//nof lpGBTs

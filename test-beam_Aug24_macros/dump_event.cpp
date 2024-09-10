@@ -142,12 +142,29 @@ int main(int argc, char** argv){
     }
     //Else we have an event record 
     else{
+
+      const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();
+      const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
+      const Hgcal10gLinkReceiver::BePacketHeader *beh =  rEvent->bePacketHeader();
       
-      if (nEvents < 2) {
+      // if (beh->pattern()!=0xfe ) {
+      // 	std::cout <<"=========================================================="<< std::endl;
+      // 	std::cout <<"Event: " << boe->eventId() << std::endl;
+      // 	rEvent->RecordHeader::print();
+      // 	boe->print();
+      // 	eoe->print();
+      // 	beh->print();
+      // 	std::cout <<"=========================================================="<< std::endl;
+      // 	//event_dump(rEvent);
+      // }
+
+      if (nEvents < 2 ) {
+	std::cout <<"Event: " << boe->eventId() << std::endl;
 	rEvent->RecordHeader::print();
-  	event_dump(rEvent);
+	boe->print();
+	eoe->print();
+	beh->print();
       }
-      
       if(nEvents<=2) cout<<"========= End of event : "<< nEvents << "============="<< endl;
       //Increment event counter and reset error state
       nEvents++;      

@@ -85,8 +85,9 @@ namespace TPGFEDataformat{
     }
 
     void setBx(uint16_t bx) { _bx = bx;}
-
     const uint32_t getBx() const {return uint32_t(_bx);}
+    void setSlinkBx(uint16_t bx) { _bxId = bx;}
+    const uint32_t getSlinkBx() const {return uint32_t(_bxId);}
 
     const HalfHgcrocChannelData* getChannels() const {
       return _data;
@@ -135,7 +136,8 @@ namespace TPGFEDataformat{
     }
 
   private:
-    uint16_t _bx;
+    uint16_t _bx;//from ECOND header
+    uint16_t _bxId;//from Slink trailer
     HalfHgcrocChannelData _data[36];
   };
 
