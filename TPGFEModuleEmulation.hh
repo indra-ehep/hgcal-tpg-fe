@@ -614,7 +614,7 @@ namespace TPGFEModuleEmulation{
           data=(data<<32);
           last+=32;
         }
-        
+
         if     (tcType==TPGFEDataformat::BestC) last-=6;
         else if(tcType==TPGFEDataformat::STC4A) last-=2;
         else if(tcType==TPGFEDataformat::STC4B) last-=2;

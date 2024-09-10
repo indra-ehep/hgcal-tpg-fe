@@ -109,9 +109,9 @@ int main() {
       for(unsigned up(0);up<TPGStage1Emulation::Stage1IOFwCfg::MaximumUnpackersPerLpgbtPair;up++) {
         if(fwCfg.connected(lp,up)) {
 	  connected=true;
-	  vTc.second.resize(0);
+	  //vTc.resize(0);
 
-	  TPGFEDataformat::TcRawData::Type type=fwCfg.type(lp,up);
+	  TPGFEDataformat::Type type=fwCfg.type(lp,up);
 	  unsigned nTc=fwCfg.numberOfTCs(lp,up);
 
 	  //if(lp==0) std::srand(0x12345678);
@@ -120,14 +120,14 @@ int main() {
 
 	  std::cout << std::endl << "lp,up = " << lp << ", " << up
 		    << ", TCs generated" << std::endl;
-	  for(unsigned i(0);i<vTc.second.size();i++) vTc.second[i].print();
+    vTc.print();
 	
 	  TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bxi,vTc,vEl.data()+fwCfg.firstElink(lp,up));
 	
 	  if(ibx==0 && lp==0) {
 	    std::cout << std::endl << "ECONT " << up << std::endl;
-	    for(unsigned i(0);i<vTc.second.size();i++) vTc.second[i].print();
-	    std::cout << std::hex << std::setfill('0');
+	    vTc.print();
+      std::cout << std::hex << std::setfill('0');
 	    for(unsigned i(0);i<vEl.size();i++) {
 	      std::cout << " 0x" << vEl[i];
 	    }
