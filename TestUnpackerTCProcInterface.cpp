@@ -87,9 +87,9 @@ int main() {
       for(unsigned up(0);up<TPGStage1Emulation::Stage1IOFwCfg::MaximumUnpackersPerLpgbtPair;up++) {
         if(fwCfg.connected(lp,up)) {
 	          connected=true;
-	          vTc.second.resize(0);
+	          //vTc.second.resize(0);
 
-	          TPGFEDataformat::TcRawData::Type type=fwCfg.type(lp,up);
+	          TPGFEDataformat::Type type=fwCfg.type(lp,up);
 	          unsigned nTc=fwCfg.numberOfTCs(lp,up);
 
 	          TPGFEModuleEmulation::ECONTEmulation::generateRandomTcRawData(bx,type,nTc,vTc);
@@ -97,7 +97,7 @@ int main() {
             //Print created TCs
 	          /*std::cout << std::endl << "lp,up = " << lp << ", " << up
 		        << ", TCs generated" << std::endl;
-	          for(unsigned i(0);i<vTc.second.size();i++) vTc.second[i].print();*/
+            vTc.print();*/
 
             //Now pass the randomly created data to the unpacker. 
             //Doing this in a slightly dumb way (always convert immediately after creating the data, and append to a vector)
