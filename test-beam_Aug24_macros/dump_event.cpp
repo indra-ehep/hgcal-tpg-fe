@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "TFileHandlerLocal.h"
-#include "common/inc/FileReader.h"
+#include "FileReader.h"
 
 #include "TPGFEDataformat.hh"
 #include "TPGFEModuleEmulation.hh"

@@ -4,7 +4,7 @@ RocDaqCtrl:
     hgcroc_hdr_marker: 5
     sync_header: 0xa
     sync_body: 0x5555555
-    first_sync_header: 9
+    first_sync_header: 0x9
     pass_thru_mode: 1
     active_erxs: 0x3F
     simple_mode: 1
@@ -26,7 +26,9 @@ Aligner:
     orbsyn_cnt_load_val: 1
     orbsyn_cnt_snapshot: 3483
     snapshot_en: 1
-    match_pattern_val: 0x95555555
+    match_pattern_val: 
+      00: 0x95555555
+      01: 0x0
     freeze_output_enable: 0x0
     freeze_output_enable_all_channels_locked: 0x0
 FCtrl:
