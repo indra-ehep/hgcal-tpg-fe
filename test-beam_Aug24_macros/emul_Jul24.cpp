@@ -15,7 +15,7 @@
 #include "TFile.h"
 
 #include "TFileHandlerLocal.h"
-#include "common/inc/FileReader.h"
+#include "FileReader.h"
 
 #include "yaml-cpp/yaml.h"
 #include <deque>
@@ -129,18 +129,18 @@ int main(int argc, char** argv)
 
       switch(iecond){
       case 0:
-	cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt_e2.yaml");
+	cfgs.setEconTFile("cfgmap/init_econt_e2.yaml");
 	break;
       case 1:
-	cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt_e1.yaml");
+	cfgs.setEconTFile("cfgmap/init_econt_e1.yaml");
 	break;
       default:
-	cfgs.setEconTFile("cfgmap/slow_control_configuration/init_econt.yaml");
+	cfgs.setEconTFile("cfgmap/init_econt.yaml");
 	break;
       }
       cfgs.readEconTConfigYaml();
       
-      cfgs.setEconDFile("cfgmap/slow_control_configuration/init_econd.yaml");
+      cfgs.setEconDFile("cfgmap/init_econd.yaml");
       cfgs.readEconDConfigYaml();
       
       if(relayNumber==1722870998 and runNumber==1722871004){
@@ -307,8 +307,8 @@ int main(int argc, char** argv)
   //const long double maxEvent = 6377139 ; 
   //const long double maxEvent = 1138510 ;
   //long double nloopEvent =  100000;
-  const long double maxEvent = 1000000  ; //1722870998:24628, 1722871979:31599
-  long double nloopEvent = 100000 ;
+  const long double maxEvent = 100  ; //1722870998:24628, 1722871979:31599
+  long double nloopEvent = 100 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -349,7 +349,7 @@ int main(int argc, char** argv)
       uint64_t ievent = eventList[ievt] ;
       if(econtarray.at(ievent).size()!=6 or hrocarray.at(ievent).size()!=36) continue;
       std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
-      if(ievt<1000) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
+      if(ievt<10) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
       bool hasTOT = false;
       for(const auto& hrocit : datalist){
 	const TPGFEDataformat::HalfHgcrocData& hrocdata = hrocit.second ;
@@ -385,7 +385,7 @@ int main(int argc, char** argv)
 
       //bool eventCondn = (event<1000 or event==1560 or event==2232 or event==2584 or event==2968 or event==3992);
       //bool eventCondn = (event<1000);
-      bool eventCondn = (ievt<1000);
+      bool eventCondn = (ievt<10);
       if( eventCondn or event%100000==0)
 	std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
     
@@ -418,6 +418,7 @@ int main(int argc, char** argv)
 	      emul_bx_4b = (rocdata[data.first].getBx()==3564) ? 0xF : (emul_bx & 0xF);
 	      econd_bx_4b = (rocdata[data.first].getBx()==3564) ? 0xF : (econd_bx & 0xF);
 	      //tune the bx here to match the TPG
+	      if(relayNumber==1722698259) emul_bx_4b += 7;
 	      if(relayNumber==1723627575) emul_bx_4b += 2;
 	      if(relayNumber==1722702638) emul_bx_4b += 7;
 	      if(relayNumber==1722870998) emul_bx_4b += 2;
@@ -534,6 +535,7 @@ int main(int argc, char** argv)
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and hasTcTp1==false) isLargeDiff = true;
 	  }
+	  isLargeDiff = false;
 	  if(isLargeDiff)
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
 	  if(eventCondn or isLargeDiff) std::cout << "Elink comparison for  ievent: "<< event << ", moduleId : " << moduleId << std::endl;
@@ -544,8 +546,8 @@ int main(int argc, char** argv)
 	  //if(eventCondn or isLargeDiff) modTcdata.second.print();
 	  if(eventCondn or isLargeDiff) TcRawdata.second.print();
 	  if(eventCondn or isLargeDiff) vTC1.print();
-          //if(eventCondn or isLargeDiff) up1.print();
-	  //if(eventCondn or isLargeDiff) upemul.print();
+          if(eventCondn or isLargeDiff) up1.print();
+	  if(eventCondn or isLargeDiff) upemul.print();
 	  // 
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if(eventCondn or isLargeDiff) std::cout<<"Elink emul : 0x" << std::hex << std::setfill('0') << std::setw(8) << elinkemul[iel] << std::dec ;

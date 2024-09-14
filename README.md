@@ -12,17 +12,13 @@ Run the setup code to download additional dependencies and setup. This setup is 
 
 ## Compile and run
 
-### Test-beam data of September 2023
-To process the test-beam binary files for the BC results
+### Test-beam data of August 2024
+To process the test-beam binary files
 ```
-./compile.sh
-./emul_test-beam_Sep23.exe 1695829026 1695829027 1
+make
+./emul_Jul24.exe 1722698259 1722698259 1 0 1 1
 ```
-The arguments from left to right are relay number, run number and link number, respectively.
-Similarly for the STC4 results
-```
-./emul_test-beam_Sep23.exe 1695733045 1695733046 1 
-```
+The arguments from left to right are relay number, run number, link number, (1/0:trimming ON/OFF), density, dropLSB respectively.
 
 ### Estimation of maximum energy output of ECONT
 Modify the module setup inside the code,
@@ -58,9 +54,8 @@ Modify the module setup inside the code,
   //===============================================================================================================================
 ```
 
-then compile again and run as,
+then edit Makefile to compile for findEMax.exe, and run as
 ```
-./compile.sh
 ./findEMax.exe
 ```
 

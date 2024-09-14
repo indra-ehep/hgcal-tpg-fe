@@ -1,13 +1,7 @@
 Aligner:
   Global:
-    match_mask:
-      00:
-        0
-    match_pattern:
-      00:
-        0x95555555
-      01:
-        0xa5555555
+    match_mask: 0
+    match_pattern: 11913522215344493909 #0xa555555595555555
     orbsyn_cnt_load_val: 1
     orbsyn_cnt_snapshot: 3482
 FCtrl:

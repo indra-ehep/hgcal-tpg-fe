@@ -186,6 +186,11 @@ public:
     assert(s<2);
     return &_msData[s];
   }
+
+  void setMsData(unsigned s,uint16_t d) {
+    assert(s<2);
+   _msData[s] = d;
+  }
   
   // For use with STCs when module sum is invalid
   void setBx(uint8_t bx) {
@@ -282,6 +287,8 @@ public:
   void print() {
     std::cout << "UnpackerOutputStreamPair(" << this << ")::print(), format = "
 	      << (checkFormat()?"  valid":"invalid")
+        << ", module ID = "
+        << getModuleId()
 	      << ", number of valid channels = "
 	      << numberOfValidChannels() << std::endl;
 
@@ -386,6 +393,7 @@ public:
     assert(s<3);
     return _s2Vector[s];
   }  
+
   
 private:
   Stage1ToStage2Data _dataArray[3][14][6];
