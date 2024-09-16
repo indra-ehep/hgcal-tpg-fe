@@ -340,6 +340,8 @@ namespace TPGFEConfiguration{
 		<< std::setw(2) << getSelect()
 		<<", \tECON-T stc_type = "
 		<< std::setw(2) << getSTCType()
+		<<", \tECON-T maxTCs = "
+		<< std::setw(2) << ((getSelect()==2) ? getBCType() : getNofSTCs())
 		<< std::endl;
       for(uint32_t itc=0;itc<48;itc++)
 	std::cout <<"ConfigEconT(" << this << ")::print(): "

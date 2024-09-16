@@ -403,20 +403,24 @@ private:
 
   class Trig24Data{
   public:
-    Trig24Data() : nofElinks(0), nofUnpkdWords(0) {}
+    Trig24Data() : nofElinks(0){nofUnpkdWords[0] = 0; nofUnpkdWords[1] = 0;}
     void setNofElinks(uint32_t nelinks) {assert(nelinks<=3) ; nofElinks = uint8_t(nelinks);}
-    void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords = uint8_t(nwords);}
+    void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords[0] = uint8_t(nwords);}
+    void setNofUnpkWords(uint32_t istrm, uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords[istrm] = uint8_t(nwords);}
     void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<3) ; elinks[ib][iw] = val;}
-    void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8) ; unpackedWords[ib][iw] = val;}
+    void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8); unpackedWords[ib][0][iw] = val;}
+    void setUnpkWord(uint32_t ib, uint32_t istrm, uint32_t iw, uint32_t val) {
+      assert(ib<7) ; assert(istrm<=2) ; assert(iw<8) ;
+      unpackedWords[ib][istrm][iw] = val;}
     void setSlinkBx(uint16_t bx) {bxId = bx;}
     
     const uint32_t getSlinkBx() const {return uint32_t(bxId);}
     uint32_t getNofElinks() const { return uint32_t(nofElinks);}
-    uint32_t getNofUnpkWords() const { return uint32_t(nofUnpkdWords);}
+    uint32_t getNofUnpkWords(uint32_t istrm = 0) const { return uint32_t(nofUnpkdWords[istrm]);}
     uint32_t  getElink(uint32_t ib, uint32_t iw) const { return elinks[ib][iw];}
-    uint32_t  getUnpkWord(uint32_t ib, uint32_t iw) const { return unpackedWords[ib][iw];}
+    uint32_t  getUnpkWord(uint32_t ib, uint32_t iw, uint32_t istrm = 0) const { return unpackedWords[ib][istrm][iw];}
     const uint32_t *getElinks(uint32_t ib) const { return elinks[ib];}
-    const uint32_t *getUnpkWords(uint32_t ib) const { return unpackedWords[ib];}
+    const uint32_t *getUnpkWords(uint32_t ib, uint32_t istrm = 0) const { return unpackedWords[ib][istrm];}
     void print(){
       
       for(unsigned ib(0);ib<7;ib++){
@@ -428,7 +432,8 @@ private:
 		    << std::dec
 		    << std::endl;
       }
-      
+
+      std::cout << "NofUnpkdWords[0]: " << getNofUnpkWords(0) << ", NofUnpkdWords[1]: " << getNofUnpkWords(1) << std::endl;
       for(unsigned ib(0);ib<7;ib++){
 	TPGBEDataformat::UnpackerOutputStreamPair up;
 	uint16_t* tc = up.setTcData(0);
@@ -447,14 +452,33 @@ private:
 		    << std::dec
 		    << std::endl;
 	}//iw loop
-	up.print();
+	if(getNofUnpkWords(1)==0) up.print();
+
+	if(getNofUnpkWords(1)>0){
+	  tc = up.setTcData(1);
+	  for(unsigned iw(0);iw<getNofUnpkWords(1);iw++){
+	    if(iw==0){
+	      uint16_t* ms = up.setMsData(1);
+	      *ms = getUnpkWord(ib, iw, 1);
+	    }else{
+	      *(tc+iw-1) = getUnpkWord(ib, iw, 1);
+	    }
+	    std::cout << " ib " << ib << ", iw  " << iw
+		      << ", unpackedWords = 0x"
+		      << std::hex << ::std::setfill('0') << std::setw(4)
+		      << getUnpkWord(ib, iw, 1)
+		      << std::dec
+		      << std::endl;
+	  }//iw loop
+	  up.print();
+	}
       }//ib loop
     }
   private:
-    uint8_t nofElinks, nofUnpkdWords;
+    uint8_t nofElinks, nofUnpkdWords[2];
     uint16_t bxId ; //from Slink trailer
     uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
-    uint32_t unpackedWords[7][8]; //7:bxs,8:words per half
+    uint32_t unpackedWords[7][2][8]; //7:bxs,2:stream,8:words per half 
   };
 
 }

@@ -182,7 +182,7 @@ namespace TPGFEReader{
     
     for (const auto&  econhpos : econheaderpos_lst){
       uint32_t icapblk = econhpos.first;
-      uint32_t link = (icapblk==0)? 1 : 0 ;
+      uint32_t link = (icapblk==0)? 0 : 1 ;
       std::vector<uint32_t> econhloc = econhpos.second;
       for(uint32_t iecond = 0 ; iecond < econhloc.size() ; iecond++){
 	uint32_t idx = pck.packModId(zside, sector, link, det, iecond, selTC4, module);
@@ -491,7 +491,7 @@ namespace TPGFEReader{
 	      econheader_lst[icapblk].push_back(p64[econpos]); 
 	      econheaderpos_lst[icapblk].push_back(econpos);
 	      isPassthrough[iecond] = (econh0 >> 13 ) & 0x1 ;
-	      //assert(isPassthrough[iecond]);
+	      assert(isPassthrough[iecond]);
 	      if(!isPassthrough[iecond]) {
 		isallPassthrough = false;
 		break;
@@ -1004,10 +1004,10 @@ namespace TPGFEReader{
       
 	
 	  //////////// Print unpacker output for ch 1 /////////////////////
-	  iblock = 3;
+	  iblock = 5;
 	  int unpkBgnOffset = 0;
 	  int unpkIndx = 0;
-	  uint32_t unpackedWord[2][3][7][8]; //2:lpGBT, 3:ECON-T, 7:bxs,8:words
+	  uint32_t unpackedWord[2][3][7][2][8]; //2:lpGBT, 3:ECON-T, 7:bxs, 2:streams, 8:words
 	  uint32_t iunpkw = 0;
 	  ibx = 0;
 	  for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
@@ -1017,9 +1017,9 @@ namespace TPGFEReader{
 	    uint32_t col3 = p64[iw] & 0xFFFF ;
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
-	      unpackedWord[0][0][ibx][iunpkw] = col3; //BC6
-	      unpackedWord[0][1][ibx][iunpkw] = col2; //STC4A
-	      unpackedWord[0][2][ibx][iunpkw] = col1; //STC16
+	      unpackedWord[0][0][ibx][0][iunpkw] = col3; //BC6
+	      unpackedWord[0][1][ibx][0][iunpkw] = col1; //BC4
+	      unpackedWord[0][2][ibx][0][iunpkw] = col0; //BC4
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1038,11 +1038,12 @@ namespace TPGFEReader{
 	  /////////////////////////////////////////////////////////////////
       
 	  //////////// Print unpacker output for ch 2 /////////////////////
-	  iblock = 4;
+	  iblock = 6;
 	  unpkBgnOffset = 0;
 	  unpkIndx = 0;
 	  iunpkw = 0;
 	  ibx = 0;
+	  uint32_t col2_prev,col3_prev;
 	  for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	    uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
 	    uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
@@ -1050,9 +1051,10 @@ namespace TPGFEReader{
 	    uint32_t col3 = p64[iw] & 0xFFFF ;
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
-	      unpackedWord[1][0][ibx][iunpkw] = col3; //BC6
-	      unpackedWord[1][1][ibx][iunpkw] = col2; //STC4A
-	      unpackedWord[1][2][ibx][iunpkw] = col1; //STC16
+	      unpackedWord[1][0][ibx][0][iunpkw] = col3; //STC4A-10 //col3 and col2 contains (stream0:11,48) and (stream1:24576) to be implemented correctly
+	      unpackedWord[1][0][ibx][1][iunpkw] = col2; //STC4A-10 //col3 and col2 contains (stream0:11,48) and (stream1:24576) to be implemented correctly
+	      unpackedWord[1][1][ibx][0][iunpkw] = col1; //STC4A-6
+	      unpackedWord[1][2][ibx][0][iunpkw] = col0; //STC4A-6
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1086,6 +1088,7 @@ namespace TPGFEReader{
 	      moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
 	      trdata[ilp][iecon].setNofElinks( ((iecon==0)?3:2) );
 	      trdata[ilp][iecon].setNofUnpkWords(8);
+	      if(ilp==1 and iecon==0) trdata[ilp][iecon].setNofUnpkWords(1,8);
 	      for(uint32_t ib=0;ib<7;ib++){
 		for(uint32_t iel=0;iel<trdata[ilp][iecon].getNofElinks();iel++){
 		  if(iecon==0)
@@ -1095,7 +1098,8 @@ namespace TPGFEReader{
 		  else
 		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+trdata[ilp][1].getNofElinks()]) ;
 		}
-		for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords();iw++) trdata[ilp][iecon].setUnpkWord(ib, iw, unpackedWord[ilp][iecon][ib][iw]) ;
+		for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords();iw++) trdata[ilp][iecon].setUnpkWord(ib, iw, unpackedWord[ilp][iecon][ib][0][iw]) ;
+		if(ilp==1 and iecon==0) for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords(1);iw++) trdata[ilp][iecon].setUnpkWord(ib, 1, iw, unpackedWord[ilp][iecon][ib][1][iw]) ;
 	      }//nof bxs
 	      trdata[ilp][iecon].setSlinkBx(eoe->bxId());
 	      econtarray[eventId].push_back( std::make_pair(moduleId,trdata[ilp][iecon]) );
