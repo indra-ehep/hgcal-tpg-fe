@@ -454,7 +454,7 @@ private:
     uint8_t nofElinks, nofUnpkdWords;
     uint16_t bxId ; //from Slink trailer
     uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
-    uint32_t unpackedWords[7][8]; //7:bxs,8:words per half
+    uint32_t unpackedWords[7][8]; //7:bxs,8:words per half //Two unpacker streams to be implemented here
   };
 
 }

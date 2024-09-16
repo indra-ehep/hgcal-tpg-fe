@@ -1004,7 +1004,7 @@ namespace TPGFEReader{
       
 	
 	  //////////// Print unpacker output for ch 1 /////////////////////
-	  iblock = 3;
+	  iblock = 5;
 	  int unpkBgnOffset = 0;
 	  int unpkIndx = 0;
 	  uint32_t unpackedWord[2][3][7][8]; //2:lpGBT, 3:ECON-T, 7:bxs,8:words
@@ -1018,8 +1018,8 @@ namespace TPGFEReader{
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
 	      unpackedWord[0][0][ibx][iunpkw] = col3; //BC6
-	      unpackedWord[0][1][ibx][iunpkw] = col2; //STC4A
-	      unpackedWord[0][2][ibx][iunpkw] = col1; //STC16
+	      unpackedWord[0][1][ibx][iunpkw] = col1; //BC4
+	      unpackedWord[0][2][ibx][iunpkw] = col0; //BC4
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1038,11 +1038,12 @@ namespace TPGFEReader{
 	  /////////////////////////////////////////////////////////////////
       
 	  //////////// Print unpacker output for ch 2 /////////////////////
-	  iblock = 4;
+	  iblock = 6;
 	  unpkBgnOffset = 0;
 	  unpkIndx = 0;
 	  iunpkw = 0;
 	  ibx = 0;
+	  uint32_t col2_prev,col3_prev;
 	  for(int iw = loc[iblock]+1; iw <= (loc[iblock]+size[iblock]) ; iw++ ){
 	    uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
 	    uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
@@ -1050,9 +1051,9 @@ namespace TPGFEReader{
 	    uint32_t col3 = p64[iw] & 0xFFFF ;
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
-	      unpackedWord[1][0][ibx][iunpkw] = col3; //BC6
-	      unpackedWord[1][1][ibx][iunpkw] = col2; //STC4A
-	      unpackedWord[1][2][ibx][iunpkw] = col1; //STC16
+	      unpackedWord[1][0][ibx][iunpkw] = col2; //STC4A-10 //col3 and col2 contains (stream0:11,48) and (stream1:24576) to be implemented correctly
+	      unpackedWord[1][1][ibx][iunpkw] = col1; //STC4A-6
+	      unpackedWord[1][2][ibx][iunpkw] = col0; //STC4A-6
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1067,6 +1068,8 @@ namespace TPGFEReader{
 		
 	    unpkIndx++;
 	    if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
+	    col2_prev = col2;
+	    col3_prev = col3;
 	  }
 	  /////////////////////////////////////////////////////////////////
 	  // struct Trig24Data{
