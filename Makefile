@@ -28,5 +28,8 @@ dump_event.exe: test-beam_Aug24_macros/dump_event.cpp inc/*.*  TPGFEEmulation/*.
 GenerateEmpRxFile.exe: TPGStage1Emulation/GenerateEmpRxFile.cpp inc/*.*  TPGFEEmulation/*.hh TPGStage1Emulation/*.hh common/inc/*.h
 	g++ $(LDFLAGS) $(CPPFLAGS)  TPGStage1Emulation/GenerateEmpRxFile.cpp  -l yaml-cpp `root-config --libs --cflags` -o GenerateEmpRxFile.exe
 
+TestUnpackerTCProcInterface.exe: TestUnpackerTCProcInterface.cpp *.hh *.h TPGStage1Emulation/*.hh common/inc/*.h
+	g++ -I TPGStage1Emulation -I. HGCalLayer1PhiOrderFwImpl.cc -I. TestUnpackerTCProcInterface.cpp -L /opt/local/lib  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` -o TestUnpackerTCProcInterface.exe
+
 clean:
 	rm *.exe
