@@ -21,12 +21,6 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
   l1thgcfirmware::HGCalTriggerCellSACollection theTCVec;
   for (auto& up : upVec){
       unsigned theModId_ = up.getModuleId();
-      unsigned subPerTC = 0;
-      if(theModId_%5==2){//if STC4, need to subtract 4*nTC from channel no to get address
-          subPerTC = 4;
-      } else if(theModId_%5==3||theModId_%5==4){//if STC16, need to subtract 16*nTC from channel no to get address
-          subPerTC = 16;
-      }
       //std::cout<<"Module ID "<<theModId_<<" subtract per TC "<<subPerTC<<std::endl;
       //std::cout<<"Number of valid channels "<<up.numberOfValidChannels()<<std::endl;
       unsigned nChans_ = up.numberOfValidChannels();
@@ -40,7 +34,7 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
             nTC = (iChn-nStream)/2;
             //std::cout<<"for TC in iChn "<<iChn<<" nStream "<<nStream<<" nTC "<<nTC<<std::endl;
         }
-        theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC)-iChn*subPerTC,0,up.unpackedChannelEnergy(nStream,nTC));
+        theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.unpackedChannelEnergy(nStream,nTC));
         theTCVec.back().setModuleId(theModId_);
 
         //std::cout<<"number "<<up.channelNumber(nStream,nTC)<<" address "<<up.channelNumber(nStream,nTC)-iChn*subPerTC<<" unpacked energy "<<up.unpackedChannelEnergy(nStream,nTC)<<std::endl;
