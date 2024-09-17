@@ -151,3 +151,16 @@ FileReader::close() closing file dat/Relay1695733045/Run1695733046_Link0_File000
 [idas@lxplus915 hgcal-tpg-fe]$
 
 ```
+
+### Testing running the TC processor on the unpacker output
+
+After compilation, this can be run as
+
+`./TestUnpackerTCProcInterface.exe`
+
+The code will,
+1. Generate some raw TC data (as in `GenerateEmpRxFile.cpp`). For simplicity only one BX is considered.
+2. Converts the raw TC data to `UnpackerOutputStreamPair`s
+3. Converts `UnpackerOutputStreamPair` objects to `HGCalTriggerCellSA` objects - these are identical to what is used in CMSSW. Some of the variables of the TC objects are not filled; the phi variable used in simulation is filled with the TC address. A module ID is assigned to each module; the TC object carries this information as well.
+4. A mapping is created that defines TC/column budgets for the different module IDs (mapping based on budgets for different mod types). This, together with the `HGCalTriggerCellSA`s, is used as input to the TC processor emulator.
+5. The TC processor emulator runs, orders the TCs in each module by address, and assigns a column/channel/frame combination to each TC (channel/frame always 0 for the moment). The output of the TC processor emulator is a new, ordered collection of `HGCalTriggerCellSA`s, with additional information stored in the column/channel/frame variables. The information stored in this TC collection is also printed to screen.
