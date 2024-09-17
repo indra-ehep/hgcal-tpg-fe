@@ -491,7 +491,7 @@ namespace TPGFEReader{
 	      econheader_lst[icapblk].push_back(p64[econpos]); 
 	      econheaderpos_lst[icapblk].push_back(econpos);
 	      isPassthrough[iecond] = (econh0 >> 13 ) & 0x1 ;
-	      assert(isPassthrough[iecond]);
+	      //assert(isPassthrough[iecond]);
 	      if(!isPassthrough[iecond]) {
 		isallPassthrough = false;
 		break;

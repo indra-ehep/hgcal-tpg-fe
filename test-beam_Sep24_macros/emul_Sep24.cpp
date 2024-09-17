@@ -165,8 +165,7 @@ int main(int argc, char** argv)
       // }
       
       cfgs.setEconDFile("cfgmap/init_econd.yaml");
-      cfgs.readEconDConfigYaml();
-      
+      cfgs.readEconDConfigYaml();      
       
       for(uint32_t iroc=0;iroc<3;iroc++){
 	std::cout<<"idx: "<<idx<<", ilink: " << ilink << ", iecond: "<<iecond<<", iroc: "<<iroc << ", fname : " << cfgrocname[ilink][iecond][iroc] << std::endl;
@@ -261,7 +260,6 @@ int main(int argc, char** argv)
   econDReader.setTotUp(0);
   //econDReader.checkEvent(1);
   //econDReader.showFirstEvents(10);
-  
   //===============================================================================================================================
   //Set and Initialize the Emulator
   //===============================================================================================================================
