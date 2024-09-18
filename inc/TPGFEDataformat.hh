@@ -406,12 +406,18 @@ namespace TPGFEDataformat{
     }
     static struct{
       bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() < b.address(); }
-    } customLT;
+    } customLTA;
     static struct {
       bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.address() > b.address(); }
-    } customGT;
+    } customGTA;
+    static struct{
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.energy() < b.energy(); }
+    } customLTE;
+    static struct {
+      bool operator()(TPGFEDataformat::TcRawData& a, TPGFEDataformat::TcRawData& b) const { return a.energy() > b.energy(); }
+    } customGTE;
         
-    void sortCh() {std::sort(setTcData().begin(), setTcData().end(), customLT);}    
+    void sortCh() {std::sort(setTcData().begin(), setTcData().end(), customLTA);}    
     friend std::ostream& operator<<(std::ostream& os, TcRawDataPacket const& atcp){
       return os << "TPGFEDataformat::TcRawDataPacket(" << atcp << ")::print(): "
 		<< "type = " << atcp.typeName()
