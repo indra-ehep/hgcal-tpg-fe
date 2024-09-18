@@ -82,7 +82,7 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   void BookHistograms(TDirectory*&, uint32_t);
   void FillHistogram(bool, TDirectory*&, uint32_t, uint64_t, uint16_t, uint32_t, const uint32_t *, const uint32_t *, uint32_t, uint32_t,
-		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, TPGBEDataformat::UnpackerOutputStreamPair&);
+		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, const uint32_t *, TPGBEDataformat::UnpackerOutputStreamPair&);
   
   TFile *fout = new TFile(Form("Diff_Relay-%u.root",relayNumber), "recreate");
   TDirectory *dir_diff = fout->mkdir("diff_plots");
@@ -164,6 +164,9 @@ int main(int argc, char** argv)
       // 	cfgs.readEconTConfigYaml();
       // }
       
+      cfgs.setEconTFile("cfgmap/init_econt_mux_test1.yaml");
+      cfgs.readEconTConfigYaml();
+
       cfgs.setEconDFile("cfgmap/init_econd.yaml");
       cfgs.readEconDConfigYaml();      
       
@@ -179,7 +182,12 @@ int main(int argc, char** argv)
       }//roc loop
     }//econd loop
   }//lpGBT loop
-  if(!isTrimming) cfgs.setPedThZero();
+  if(!isTrimming){
+    if(relayNumber==1726581356)
+      cfgs.setPedZero();
+    else
+      cfgs.setPedThZero();
+  }
   link = 1; econt = 2;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
   cfgs.printCfgPedTh(testmodid);
@@ -288,10 +296,10 @@ int main(int argc, char** argv)
   //const long double maxEvent = 1038510 ;
   //const long double maxEvent = 6377139 ; 
   //const long double maxEvent = 1138510 ;
-  const long double maxEvent = 2279666 ;
-  long double nloopEvent =  100000;
-  //const long double maxEvent = 100  ; //1722870998:24628, 1722871979:31599
-  //long double nloopEvent = 100 ;
+  // const long double maxEvent = 2279666 ;
+  // long double nloopEvent =  100000;
+  const long double maxEvent = 10000  ; //1722870998:24628, 1722871979:31599
+  long double nloopEvent = 10000 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -429,7 +437,7 @@ int main(int argc, char** argv)
 	  for(const auto& data : modarray.at(event))
 	    if(data.first==moduleId) moddata[data.first] = data.second ;
 	  
-	  // if(iecond==1 and ilink==1)
+	  // if(ilink==1)
 	  //   econtEmul.setVerbose();
 	  // else
 	  //   econtEmul.setVerbose(false);
@@ -471,7 +479,7 @@ int main(int argc, char** argv)
 	      if(eventCondn and iecond==2 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
 	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 10, el, vTC1);
 	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
-	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4B, 5, el, vTC1);
 	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
 	      //if(eventCondn and iecond==2 and ilink==1) vTC1.print();
 	      //if(eventCondn and iecond==0 and ilink==1) up1.print();
@@ -483,7 +491,7 @@ int main(int argc, char** argv)
 	    //std::cout << "refbx: " << refbx << std::endl ;
 	    if(std::find(shiftedBxEvent.begin(),shiftedBxEvent.end(),event) == shiftedBxEvent.end()) shiftedBxEvent.push_back(event);
 	    econt_slink_bx = trdata.getSlinkBx();
-	    FillHistogram(false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, upemul);
+	    FillHistogram(false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, upemul);
 	    delete []elinkemul;
 	    continue;
 	  }
@@ -493,6 +501,7 @@ int main(int argc, char** argv)
 	  econt_slink_bx = trdata.getSlinkBx();
 	  const uint32_t *eldata = trdata.getElinks(refbx);
 	  const uint32_t *unpkWords = trdata.getUnpkWords(refbx);
+	  const uint32_t *unpkWords1 = trdata.getUnpkWords(refbx,1);
 	  uint32_t bx_data = (eldata[0]>>28) & 0xF;
 	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TcRawdata.second.type(), TcRawdata.second.size(), eldata, vTC1);
 	  if(relayNumber>1722881092 or iecond==0 or iecond==1){
@@ -530,7 +539,7 @@ int main(int argc, char** argv)
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and hasTcTp1==false) isLargeDiff = true;
 	  }
-	  isLargeDiff = false;
+	  //isLargeDiff = false;
 	  if(isLargeDiff)
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
 	  if(eventCondn or isLargeDiff) std::cout << "Elink comparison for  ievent: "<< event << ", moduleId : " << moduleId << std::endl;
@@ -538,7 +547,7 @@ int main(int argc, char** argv)
 						  << ", ECOND:: (econd_slink_bx: " << econd_slink_bx <<", econd_bx: "<<econd_bx<<", econd econd_bx_4b : " <<  econd_bx_4b
 						  << ") ECONT:: (econt_slink_bx: " << econt_slink_bx <<", econt_slink_bx%8: "<< (econt_slink_bx%8) <<", econt_central_bx_4b: " << econt_central_bx_4b
 						  <<"), moduleId : " << moduleId <<", isLargeDiff: " << isLargeDiff << std::endl;
-	  //if(eventCondn or isLargeDiff) modTcdata.second.print();
+	  //if((eventCondn or isLargeDiff) and ilink==1 and iecond==2) modTcdata.second.print();
 	  if(eventCondn or isLargeDiff) TcRawdata.second.print();
 	  if(eventCondn or isLargeDiff) vTC1.print();
           // if(eventCondn or isLargeDiff) up1.print();
@@ -551,21 +560,19 @@ int main(int argc, char** argv)
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroEvents.begin(),nonZeroEvents.end(),event) == nonZeroEvents.end()) and hasTcTp1==false) nonZeroEvents.push_back(event);
 	  }
 	  // uint16_t *unpkMsTc = new uint16_t[TcRawdata.second.size()+1];
-	  // if(relayNumber>1722881092 or iecond==0 or iecond==1){
-	  //   uint32_t strm = 0;
-	  //   for(uint32_t iw=0;iw<=TcRawdata.second.size();iw++){
-	  //     unpkMsTc[iw] = (iw==0)? upemul.getMsData(strm) : upemul.getTcData(strm, iw-1);
-	  //     bool diffcondn = (iw==0 and (TcRawdata.second.type()==TPGFEDataformat::STC4A or TcRawdata.second.type()==TPGFEDataformat::CTC4A or TcRawdata.second.type()==TPGFEDataformat::STC16));
-	  //     uint32_t diff = (diffcondn)? ((unpkWords[iw]&0xf) - (unpkMsTc[iw]&0xf)) : (unpkWords[iw] - unpkMsTc[iw]) ;
-	  //     uint32_t XOR = (diffcondn)? ((unpkWords[iw]&0xf) xor (unpkMsTc[iw]&0xf)) : (unpkWords[iw] xor unpkMsTc[iw]) ;
-	  //     if(eventCondn or isLargeDiff) std::cout<<"Stage1 unpacker Words emul : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkWords[iw] << std::dec ;
-	  //     if(eventCondn or isLargeDiff) std::cout<<"\t  data : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkMsTc[iw] << std::dec ;
-	  //     if(eventCondn or isLargeDiff) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
+	  // uint32_t strm = 0;
+	  // for(uint32_t iw=0;iw<=TcRawdata.second.size();iw++){
+	  //   unpkMsTc[iw] = (iw==0)? upemul.getMsData(strm) : upemul.getTcData(strm, iw-1);
+	  //   bool diffcondn = (iw==0 and (TcRawdata.second.type()==TPGFEDataformat::STC4A or TcRawdata.second.type()==TPGFEDataformat::CTC4A or TcRawdata.second.type()==TPGFEDataformat::STC16));
+	  //   uint32_t diff = (diffcondn)? ((unpkWords[iw]&0xf) - (unpkMsTc[iw]&0xf)) : (unpkWords[iw] - unpkMsTc[iw]) ;
+	  //   uint32_t XOR = (diffcondn)? ((unpkWords[iw]&0xf) xor (unpkMsTc[iw]&0xf)) : (unpkWords[iw] xor unpkMsTc[iw]) ;
+	  //   if(eventCondn or isLargeDiff) std::cout<<"Stage1 unpacker Words emul : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkWords[iw] << std::dec ;
+	  //   if(eventCondn or isLargeDiff) std::cout<<"\t  data : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkMsTc[iw] << std::dec ;
+	  //   if(eventCondn or isLargeDiff) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
 	  //   }	    
-	  // }
-	  // FillHistogram(true, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, upemul);	  
+	  FillHistogram(true, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, upemul);	  
 	  delete []elinkemul;
-	  //delete []unpkMsTc;
+	  // delete []unpkMsTc;
 	}//econd loop
       }//ilink loop    
     }//event loop
@@ -622,8 +629,8 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
 
   TH1D *hElDiff[2][2][3]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT
   TH1D *hUnpkWordDiff[2][2][3][8]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT 8 words max
-  TH1D *hTCEDiff[2][2][3][8]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC energies 
-  TH1D *hTCADiff[2][2][3][8]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC addresses
+  TH1D *hTCEDiff[2][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC energies 
+  TH1D *hTCADiff[2][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC addresses
   
   for(int imode=0;imode<2;imode++)
     for(int ilp=0;ilp<2;ilp++)
@@ -644,7 +651,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   for(int imode=0;imode<2;imode++)
     for(int ilp=0;ilp<2;ilp++)
       for(int imdl=0;imdl<3;imdl++)
-	for(int itc=0;itc<8;itc++){
+	for(int itc=0;itc<10;itc++){
 	  
 	  //compressed energy
 	  hTCEDiff[imode][ilp][imdl][itc] = new TH1D(Form("hTCEDiff_%d_%d_%d_%d",imode,ilp,imdl,itc),Form("%u: (ECONT - Emulator) encoded energy for tctp case : %d, ilp:%d, module:%d, itc:%d",relay,imode,ilp,imdl,itc), 200, -99, 101);
@@ -780,7 +787,7 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
 		   uint32_t nelinks,  const uint32_t *eldata, const uint32_t *elemul,
 		   uint32_t ilp, uint32_t imdl,
 		   TPGFEDataformat::TcRawDataPacket& tcdata, TPGFEDataformat::TcRawDataPacket& tcemul,
-		   const uint32_t *unpkWords, TPGBEDataformat::UnpackerOutputStreamPair& upemul){
+		   const uint32_t *unpkWords, const uint32_t *unpkWords1, TPGBEDataformat::UnpackerOutputStreamPair& upemul){
   
   int imode = (tcemul.isTcTp1()) ? 1 : 0 ;
   TList *list = (TList *)dir_diff->GetList();
@@ -866,14 +873,14 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
       }
     
     }
-  
+    
     uint16_t *unpkMsTc = new uint16_t[tcdata.size()+1];
-    if(relayNumber>1722881092 or imdl==0 or imdl==1){
-      uint32_t strm = 0;
+    uint32_t strm = 0;
+    if(tcdata.size()<=7){
       for(uint32_t iw=0;iw<=tcdata.size();iw++){
 	unpkMsTc[iw] = (iw==0)? upemul.getMsData(strm) : upemul.getTcData(strm, iw-1);
 	uint32_t diff = (iw==0 or tcdata.type()!=TPGFEDataformat::BestC)? ((unpkWords[iw]&0xf) - (unpkMsTc[iw]&0xf)) : (unpkWords[iw] - unpkMsTc[iw]) ;
-	//uint32_t XOR = (iw==0 or tcdata.type()!=TPGFEDataformat::BestC)? ((unpkWords[iw]&0xf) xor (unpkMsTc[iw]&0xf)) : (unpkWords[iw] xor unpkMsTc[iw]) ;
+	uint32_t XOR = (iw==0 or tcdata.type()!=TPGFEDataformat::BestC)? ((unpkWords[iw]&0xf) xor (unpkMsTc[iw]&0xf)) : (unpkWords[iw] xor unpkMsTc[iw]) ;
       
 	int imodeloc = (iw==0) ? ((tcemul.isTcTp1())?1:0) : ((tcemul.getTcData().at(iw-1).isTcTp1())?1:0) ;
 	((TH1D *) list->FindObject("hUWord"))->Fill( diff );
@@ -882,9 +889,11 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
 	else
 	  ((TH1D *) list->FindObject("hUWord_1"))->Fill( diff );
 	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
-	//hUnpkWordDiff[imode][ilp][imdl][iw] = new TH1D(,
-      }	    
+      }
+    }else if (tcdata.size()>7 and tcdata.size()<=14) {
+      ;
     }
+    
     delete []unpkMsTc;
   }//if matched
   
