@@ -279,9 +279,10 @@ int main(int argc, char** argv)
   //Set refernce eventlist
   //===============================================================================================================================
   //uint64_t refEvt[] = {1560, 2232, 2584, 2968, 3992, 4344, 5048, 5848, 6168, 8248, 9976};
-  uint64_t refEvt[] = {1, 2, 3, 4, 5};
+  //uint64_t refEvt[] = {1, 2, 3, 4, 5};
+  uint64_t refEvt[30] = {3128, 9954, 16733, 19162, 33927, 34190, 37363, 37827, 40369, 45842, 46118, 46373, 46419, 46506, 52079, 53856, 58912, 60802, 62177, 62275, 64008, 65645, 67282, 77309, 84325, 86764, 87628, 91094, 97064, 99445};
   std::vector<uint64_t> refEvents;
-  for(int ievent=0;ievent<6;ievent++) refEvents.push_back(refEvt[ievent]);
+  for(int ievent=0;ievent<30;ievent++) refEvents.push_back(refEvt[ievent]);
   refEvents.resize(0);
   //===============================================================================================================================
   
@@ -296,10 +297,10 @@ int main(int argc, char** argv)
   //const long double maxEvent = 1038510 ;
   //const long double maxEvent = 6377139 ; 
   //const long double maxEvent = 1138510 ;
-  // const long double maxEvent = 2279666 ;
+  // const long double maxEvent = 2557414 ;
   // long double nloopEvent =  100000;
-  const long double maxEvent = 10000  ; //1722870998:24628, 1722871979:31599
-  long double nloopEvent = 10000 ;
+  const long double maxEvent = 100  ; //1722870998:24628, 1722871979:31599
+  long double nloopEvent = 100 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -310,12 +311,11 @@ int main(int argc, char** argv)
     maxEventDAQ = (maxEventDAQ>uint64_t(maxEvent)) ? uint64_t(maxEvent) : maxEventDAQ ;
     
     printf("iloop : %d, minEventDAQ = %lu, maxEventDAQ = %lu\n",ieloop,minEventDAQ, maxEventDAQ);
+    std::cerr<<"iloop : "<< ieloop <<", minEventDAQ = "<< minEventDAQ <<", maxEventDAQ = " << maxEventDAQ << std::endl;
 
     hrocarray.clear();
     eventList.clear();
     econtarray.clear();
-    nonZeroEvents.clear();
-    shiftedBxEvent.clear();
     
     econTReader.setNofCAFESep(11);
     econTReader.init(relayNumber,runNumber,0);
@@ -347,8 +347,8 @@ int main(int argc, char** argv)
 	const TPGFEDataformat::HalfHgcrocData& hrocdata = hrocit.second ;
 	if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
 	//if(event<100 and (iecond==1 and ilink==0)){
-	  if(ievt<1000) std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
-	  if(ievt<1000) hrocdata.print();
+	  if(ievt<10) std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
+	  if(ievt<10) hrocdata.print();
 	  if(hrocdata.hasTOT()) hasTOT = true;
 	}
       }
@@ -449,10 +449,10 @@ int main(int argc, char** argv)
 	  TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();
 	  //================================================
 	  if(TcRawdata.second.type()==TPGFEDataformat::BestC) TcRawdata.second.sortCh();
-	  TcRawdata.second.setBX(emul_bx_4b%8);
+	  TcRawdata.second.setBX(emul_bx_4b);
 	
 	  uint32_t *elinkemul = new uint32_t[econTPar[moduleId].getNElinks()];
-	  TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(emul_bx_4b%8, TcRawdata.second, elinkemul);
+	  TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(emul_bx_4b, TcRawdata.second, elinkemul);
 	  
 	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];
 	  
@@ -460,6 +460,7 @@ int main(int argc, char** argv)
 	  TPGFEDataformat::TcRawDataPacket vTC1;	
     	  int refbx = -1;
 	  TPGBEDataformat::Trig24Data trdata;
+	  int tpg_m3_bxid = -1, tpg_p3_bxid = -1; 
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
@@ -469,7 +470,9 @@ int main(int argc, char** argv)
 	    for(int ibx=0;ibx<7;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
 	      uint32_t bx_2 = (el[0]>>28) & 0xF;
-	      if(bx_2==(emul_bx_4b%8)) {
+	      if(ibx==0) tpg_m3_bxid = bx_2;
+	      if(ibx==6) tpg_p3_bxid = bx_2;
+	      if(bx_2==emul_bx_4b) {
 	      //if(ibx==3) {
 		refbx = ibx;
 		hasMatched = true;
@@ -479,9 +482,9 @@ int main(int argc, char** argv)
 	      if(eventCondn and iecond==2 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
 	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 10, el, vTC1);
 	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
-	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4B, 5, el, vTC1);
+	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 5, el, vTC1);
 	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
-	      //if(eventCondn and iecond==2 and ilink==1) vTC1.print();
+	      //if(eventCondn) vTC1.print();
 	      //if(eventCondn and iecond==0 and ilink==1) up1.print();
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
@@ -493,6 +496,11 @@ int main(int argc, char** argv)
 	    econt_slink_bx = trdata.getSlinkBx();
 	    FillHistogram(false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, upemul);
 	    delete []elinkemul;
+	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Skipping event: " << event <<std::endl<<std::endl<<std::endl;
+	    std::cout << "Skip Event: "<< event
+		      << ", ECOND:: (econd_slink_bx: " << econd_slink_bx <<", econd_bx: "<<econd_bx<<", econd econd_bx_4b : " <<  econd_bx_4b
+		      << ") ECONT:: (econt_slink_bx: " << trdata.getSlinkBx() <<", econt_slink_bx%8: "<< (trdata.getSlinkBx()%8) <<", TPG bxid range : [" << tpg_m3_bxid << ", " << tpg_p3_bxid << "] "
+		      <<"), moduleId : " << moduleId << std::endl;
 	    continue;
 	  }
 	  // if(iecond==0) refbx = 5;
@@ -503,11 +511,9 @@ int main(int argc, char** argv)
 	  const uint32_t *unpkWords = trdata.getUnpkWords(refbx);
 	  const uint32_t *unpkWords1 = trdata.getUnpkWords(refbx,1);
 	  uint32_t bx_data = (eldata[0]>>28) & 0xF;
-	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TcRawdata.second.type(), TcRawdata.second.size(), eldata, vTC1);
-	  if(relayNumber>1722881092 or iecond==0 or iecond==1){
-	    TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(emul_bx_4b%8, TcRawdata.second, upemul);
-	    TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_data, vTC1, up1);
-	  }
+	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TcRawdata.second.type(), TcRawdata.second.size(), eldata, vTC1);	  
+	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(emul_bx_4b, TcRawdata.second, upemul);
+	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_data, vTC1, up1);
 	  
 	  // if(iecond==0){
 	  //   bool hasTC33emul = false, hasTC33data = false;
@@ -548,9 +554,9 @@ int main(int argc, char** argv)
 						  << ") ECONT:: (econt_slink_bx: " << econt_slink_bx <<", econt_slink_bx%8: "<< (econt_slink_bx%8) <<", econt_central_bx_4b: " << econt_central_bx_4b
 						  <<"), moduleId : " << moduleId <<", isLargeDiff: " << isLargeDiff << std::endl;
 	  //if((eventCondn or isLargeDiff) and ilink==1 and iecond==2) modTcdata.second.print();
-	  if(eventCondn or isLargeDiff) TcRawdata.second.print();
+	  //if(eventCondn or isLargeDiff) TcRawdata.second.print();
 	  if(eventCondn or isLargeDiff) vTC1.print();
-          // if(eventCondn or isLargeDiff) up1.print();
+          if(eventCondn or isLargeDiff) up1.print();
 	  // if(eventCondn or isLargeDiff) upemul.print();
 	  // 
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
