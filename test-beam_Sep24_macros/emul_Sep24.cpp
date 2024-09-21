@@ -81,8 +81,9 @@ int main(int argc, char** argv)
   //Book histograms
   //===============================================================================================================================
   void BookHistograms(TDirectory*&, uint32_t);
-  void FillHistogram(bool, TDirectory*&, uint32_t, uint64_t, uint16_t, uint32_t, const uint32_t *, const uint32_t *, uint32_t, uint32_t,
-		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, const uint32_t *, TPGBEDataformat::UnpackerOutputStreamPair&);
+  void FillHistogram(bool, bool, TDirectory*&, uint32_t, uint64_t, uint16_t, uint32_t, const uint32_t *, const uint32_t *, uint32_t, uint32_t,
+		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, const uint32_t *, TPGBEDataformat::UnpackerOutputStreamPair&,
+		     std::vector<uint64_t>&, std::vector<uint64_t>&);
   
   TFile *fout = new TFile(Form("Diff_Relay-%u.root",relayNumber), "recreate");
   TDirectory *dir_diff = fout->mkdir("diff_plots");
@@ -280,9 +281,18 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //uint64_t refEvt[] = {1560, 2232, 2584, 2968, 3992, 4344, 5048, 5848, 6168, 8248, 9976};
   //uint64_t refEvt[] = {1, 2, 3, 4, 5};
-  uint64_t refEvt[30] = {3128, 9954, 16733, 19162, 33927, 34190, 37363, 37827, 40369, 45842, 46118, 46373, 46419, 46506, 52079, 53856, 58912, 60802, 62177, 62275, 64008, 65645, 67282, 77309, 84325, 86764, 87628, 91094, 97064, 99445};
+  //uint64_t refEvt[30] = {3128, 9954, 16733, 19162, 33927, 34190, 37363, 37827, 40369, 45842, 46118, 46373, 46419, 46506, 52079, 53856, 58912, 60802, 62177, 62275, 64008, 65645, 67282, 77309, 84325, 86764, 87628, 91094, 97064, 99445};
+  
+  //uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
+
+  //uint64_t refEvt[20] = {1, 2, 3, 66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213};
+
+  //uint64_t refEvt[20] = {1, 2, 3, 66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213};
+  uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648};
   std::vector<uint64_t> refEvents;
-  for(int ievent=0;ievent<30;ievent++) refEvents.push_back(refEvt[ievent]);
+  //for(int ievent=0;ievent<25702;ievent++) refEvents.push_back(refEvt[ievent]);
+  //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
+  for(int ievent=0;ievent<6;ievent++) refEvents.push_back(refEvt[ievent]);
   refEvents.resize(0);
   //===============================================================================================================================
   
@@ -291,16 +301,19 @@ int main(int argc, char** argv)
   std::vector<uint64_t> eventList;
   std::vector<uint64_t> nonZeroEvents;
   std::vector<uint64_t> shiftedBxEvent;
+  std::vector<uint64_t> unExDataTC;
+  std::vector<uint64_t> unExEmulTC;
   
   uint64_t minEventDAQ, maxEventDAQ;  
   //const long double maxEvent = 882454  ; 
   //const long double maxEvent = 1038510 ;
   //const long double maxEvent = 6377139 ; 
   //const long double maxEvent = 1138510 ;
-  // const long double maxEvent = 2557414 ;
-  // long double nloopEvent =  100000;
-  const long double maxEvent = 100  ; //1722870998:24628, 1722871979:31599
-  long double nloopEvent = 100 ;
+  //const long double maxEvent = 1000000 ;
+  const long double maxEvent = 2557415 ;
+  long double nloopEvent =  100000;
+  // const long double maxEvent = 100000  ; //1722870998:24628, 1722871979:31599
+  // long double nloopEvent = 10000 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -341,16 +354,16 @@ int main(int argc, char** argv)
       uint64_t ievent = eventList[ievt] ;
       if(econtarray.at(ievent).size()!=6 or hrocarray.at(ievent).size()!=36) continue;
       std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
-      if(ievt<10) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
+      if(ievt<100) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
       bool hasTOT = false;
       for(const auto& hrocit : datalist){
 	const TPGFEDataformat::HalfHgcrocData& hrocdata = hrocit.second ;
-	if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
+	//if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
 	//if(event<100 and (iecond==1 and ilink==0)){
-	  if(ievt<10) std::cout << "ievent: "<< ievent<< "\t data for half-roc_id: "<< hrocit.first <<  std::endl;
-	  if(ievt<10) hrocdata.print();
-	  if(hrocdata.hasTOT()) hasTOT = true;
-	}
+	if(ievt<100) std::cout << "ievent: "<< ievent<< "\t data for modid : "<< pck.getModIdFromRocId(uint32_t(hrocit.first)) << ",\t half-roc_id: "<< hrocit.first <<  std::endl;
+	if(ievt<100) hrocdata.print();
+	if(hrocdata.hasTOT()) hasTOT = true;
+	//}
       }
       //if(hasTOT) totEvents.push_back(ievent);
     }
@@ -410,6 +423,15 @@ int main(int argc, char** argv)
 	      emul_bx_4b = (rocdata[data.first].getBx()==3564) ? 0xF : (emul_bx%8);
 	      econd_bx_4b = (rocdata[data.first].getBx()==3564) ? 0xF : (econd_bx%8);
 	      //tune the bx here to match the TPG
+	      if(relayNumber==1726581356)
+		if(rocdata[data.first].getBx()==3564)
+		  emul_bx_4b = 1;
+		else if(rocdata[data.first].getBx()==3563)
+		  emul_bx_4b = 0xF;
+		else if(emul_bx_4b==7)
+		  emul_bx_4b = 0x0;
+		else
+		  emul_bx_4b += 1;	      
 	      if(relayNumber==1726435152) emul_bx_4b += 0;
 	      if(relayNumber==1722698259) emul_bx_4b += 7;
 	      if(relayNumber==1723627575) emul_bx_4b += 2;
@@ -494,7 +516,7 @@ int main(int argc, char** argv)
 	    //std::cout << "refbx: " << refbx << std::endl ;
 	    if(std::find(shiftedBxEvent.begin(),shiftedBxEvent.end(),event) == shiftedBxEvent.end()) shiftedBxEvent.push_back(event);
 	    econt_slink_bx = trdata.getSlinkBx();
-	    FillHistogram(false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, upemul);
+	    FillHistogram(false, false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, upemul, unExEmulTC, unExDataTC);
 	    delete []elinkemul;
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Skipping event: " << event <<std::endl<<std::endl<<std::endl;
 	    std::cout << "Skip Event: "<< event
@@ -546,23 +568,25 @@ int main(int argc, char** argv)
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and hasTcTp1==false) isLargeDiff = true;
 	  }
 	  //isLargeDiff = false;
+	  bool printCondn = (eventCondn or isLargeDiff);
+	  //bool printCondn = isLargeDiff;
 	  if(isLargeDiff)
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
-	  if(eventCondn or isLargeDiff) std::cout << "Elink comparison for  ievent: "<< event << ", moduleId : " << moduleId << std::endl;
-	  if(eventCondn or isLargeDiff) std::cout << "Event: "<< event
+	  if(printCondn) std::cout << "Elink comparison for  ievent: "<< event << ", moduleId : " << moduleId << std::endl;
+	  if(printCondn) std::cout << "Event: "<< event
 						  << ", ECOND:: (econd_slink_bx: " << econd_slink_bx <<", econd_bx: "<<econd_bx<<", econd econd_bx_4b : " <<  econd_bx_4b
 						  << ") ECONT:: (econt_slink_bx: " << econt_slink_bx <<", econt_slink_bx%8: "<< (econt_slink_bx%8) <<", econt_central_bx_4b: " << econt_central_bx_4b
 						  <<"), moduleId : " << moduleId <<", isLargeDiff: " << isLargeDiff << std::endl;
-	  //if((eventCondn or isLargeDiff) and ilink==1 and iecond==2) modTcdata.second.print();
-	  //if(eventCondn or isLargeDiff) TcRawdata.second.print();
-	  if(eventCondn or isLargeDiff) vTC1.print();
-          if(eventCondn or isLargeDiff) up1.print();
-	  // if(eventCondn or isLargeDiff) upemul.print();
+	  //if(printCondn) modTcdata.second.print();
+	  if(printCondn) TcRawdata.second.print();
+	  if(printCondn) vTC1.print();
+          //if(printCondn) up1.print();
+	  // if(printCondn) upemul.print();
 	  // 
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
-	    if(eventCondn or isLargeDiff) std::cout<<"Elink emul : 0x" << std::hex << std::setfill('0') << std::setw(8) << elinkemul[iel] << std::dec ;
-	    if(eventCondn or isLargeDiff) std::cout<<"\t Elink data : 0x" << std::hex << std::setfill('0') << std::setw(8) << eldata[iel] << std::dec ;//<< std::endl;
-	    if(eventCondn or isLargeDiff) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << (eldata[iel]-elinkemul[iel])  << ", XOR: " << std::bitset<32>{(eldata[iel] ^ elinkemul[iel])} << std::endl;
+	    if(printCondn) std::cout<<"Elink emul : 0x" << std::hex << std::setfill('0') << std::setw(8) << elinkemul[iel] << std::dec ;
+	    if(printCondn) std::cout<<"\t Elink data : 0x" << std::hex << std::setfill('0') << std::setw(8) << eldata[iel] << std::dec ;//<< std::endl;
+	    if(printCondn) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << (eldata[iel]-elinkemul[iel])  << ", XOR: " << std::bitset<32>{(eldata[iel] ^ elinkemul[iel])} << std::endl;
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroEvents.begin(),nonZeroEvents.end(),event) == nonZeroEvents.end()) and hasTcTp1==false) nonZeroEvents.push_back(event);
 	  }
 	  // uint16_t *unpkMsTc = new uint16_t[TcRawdata.second.size()+1];
@@ -572,11 +596,12 @@ int main(int argc, char** argv)
 	  //   bool diffcondn = (iw==0 and (TcRawdata.second.type()==TPGFEDataformat::STC4A or TcRawdata.second.type()==TPGFEDataformat::CTC4A or TcRawdata.second.type()==TPGFEDataformat::STC16));
 	  //   uint32_t diff = (diffcondn)? ((unpkWords[iw]&0xf) - (unpkMsTc[iw]&0xf)) : (unpkWords[iw] - unpkMsTc[iw]) ;
 	  //   uint32_t XOR = (diffcondn)? ((unpkWords[iw]&0xf) xor (unpkMsTc[iw]&0xf)) : (unpkWords[iw] xor unpkMsTc[iw]) ;
-	  //   if(eventCondn or isLargeDiff) std::cout<<"Stage1 unpacker Words emul : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkWords[iw] << std::dec ;
-	  //   if(eventCondn or isLargeDiff) std::cout<<"\t  data : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkMsTc[iw] << std::dec ;
-	  //   if(eventCondn or isLargeDiff) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
+	  //   if(printCondn) std::cout<<"Stage1 unpacker Words emul : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkWords[iw] << std::dec ;
+	  //   if(printCondn) std::cout<<"\t  data : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkMsTc[iw] << std::dec ;
+	  //   if(printCondn) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
 	  //   }	    
-	  FillHistogram(true, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, upemul);	  
+	  FillHistogram(true, isLargeDiff, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, upemul,
+			unExEmulTC, unExDataTC);	  
 	  delete []elinkemul;
 	  // delete []unpkMsTc;
 	}//econd loop
@@ -591,6 +616,14 @@ int main(int argc, char** argv)
   if(shiftedBxEvent.size()>0) std::cerr<< "/*Shifted Bx/events */ uint64_t refEvt["<< shiftedBxEvent.size() <<"] = {";
   for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
   if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
+
+  if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
+  for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
+  if(unExDataTC.size()>0) std::cerr<< "};" << std::endl;
+
+  if(unExEmulTC.size()>0) std::cerr<< "/*Unexpect TC in Emul in event*/ uint64_t refEvt["<< unExEmulTC.size() <<"] = {";
+  for(const uint64_t& totEvt : unExEmulTC) std::cerr<<totEvt << ", ";
+  if(unExEmulTC.size()>0) std::cerr<< "};" << std::endl;
 
   fout->cd();
   dir_diff->Write();
@@ -702,40 +735,6 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
       }//iword
 
 
-  TH1D *hTC33EDiff = new TH1D("hTC33EDiff", Form("Energy difference for TC 33 for Relay: %u",relay), 1000, -10., 10.);
-  hTC33EDiff->GetXaxis()->SetTitle("Difference in (ECONT - Emulator)");
-  hTC33EDiff->GetYaxis()->SetTitle("Entries");
-  hTC33EDiff->SetDirectory(dir_diff);
-  
-  TH1D *hTC33EDiff_0 = new TH1D("hTC33EDiff_0", Form("Energy difference for TC 33 for Relay: %u for tctp case 0",relay), 1000, -10., 10.);
-  hTC33EDiff_0->GetXaxis()->SetTitle("Difference in (ECONT - Emulator)");
-  hTC33EDiff_0->GetYaxis()->SetTitle("Entries");
-  hTC33EDiff_0->SetDirectory(dir_diff);
-
-  TH1D *hTC33EDiff_1 = new TH1D("hTC33EDiff_1", Form("Energy difference for TC 33 for Relay: %u for tctp case 1",relay), 1000, -10., 10.);
-  hTC33EDiff_1->GetXaxis()->SetTitle("Difference in (ECONT - Emulator)");
-  hTC33EDiff_1->GetYaxis()->SetTitle("Entries");
-  hTC33EDiff_1->SetDirectory(dir_diff);
-
-  TH1D *hTCEmulfor33 = new TH1D("hTCEmulfor33", Form("Emul TC for data TC 33 for Relay: %u",relay), 50, 0, 50.);
-  hTCEmulfor33->GetXaxis()->SetTitle("Emul TC");
-  hTCEmulfor33->GetYaxis()->SetTitle("Entries");
-  hTCEmulfor33->SetDirectory(dir_diff);
-
-  TH1D *hTC33DataE = new TH1D("hTC33DataE", Form("Matched: Data energy of TC 33 for Relay: %u",relay), 400, -1., 399.);
-  hTC33DataE->GetXaxis()->SetTitle("Data energy for TC 33");
-  hTC33DataE->GetYaxis()->SetTitle("Entries");
-  hTC33DataE->SetDirectory(dir_diff);
-
-  TH1D *hTC33EmulE = new TH1D("hTC33EmulE", Form("Matched: Emul energy of TC 33 for Relay: %u",relay), 400, -1., 399.);
-  hTC33EmulE->GetXaxis()->SetTitle("Emul energy for TC 33");
-  hTC33EmulE->GetYaxis()->SetTitle("Entries");
-  hTC33EmulE->SetDirectory(dir_diff);
-
-  TH1D *hTC33EmulENM = new TH1D("hTC33EmulENM", Form("NonMatching: Emul energy of TC 33 for Relay: %u",relay), 400, -1., 399.);
-  hTC33EmulENM->GetXaxis()->SetTitle("Emul energy for TC 33");
-  hTC33EmulENM->GetYaxis()->SetTitle("Entries");
-  hTC33EmulENM->SetDirectory(dir_diff);
 
   TH1D *hOccuTCData = new TH1D("hOccuTCData", Form("TC occupancy in data for Relay: %u",relay), 50, -0.5, 49.5);
   hOccuTCData->GetXaxis()->SetTitle("TC");
@@ -781,23 +780,141 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hSlinkBx8All->GetXaxis()->SetTitle("Bx");
   hSlinkBx8All->GetYaxis()->SetTitle("Entries");
   hSlinkBx8All->SetDirectory(dir_diff);
+  
+  TH2D *hNZEmulModules = new TH2D("hNZEmulModules", Form("Emul:Non-zero modules for Relay: %u",relay), 2, -0.5, 1.5, 3, -0.5, 2.5);
+  hNZEmulModules->GetXaxis()->SetTitle("lpGBT");
+  hNZEmulModules->GetYaxis()->SetTitle("Module");
+  hNZEmulModules->SetDirectory(dir_diff);
+
+  TH2D *hNZDataModules = new TH2D("hNZDataModules", Form("Data:Non-zero modules for Relay: %u",relay), 2, -0.5, 1.5, 3, -0.5, 2.5);
+  hNZDataModules->GetXaxis()->SetTitle("lpGBT");
+  hNZDataModules->GetYaxis()->SetTitle("Module");
+  hNZDataModules->SetDirectory(dir_diff);
 
   TH2D *hNZModules = new TH2D("hNZModules", Form("Non-zero modules for Relay: %u",relay), 2, -0.5, 1.5, 3, -0.5, 2.5);
-  hNZModules->GetXaxis()->SetTitle("Emulation");
-  hNZModules->GetYaxis()->SetTitle("Data");
+  hNZModules->GetXaxis()->SetTitle("lpGBT");
+  hNZModules->GetYaxis()->SetTitle("Module");
   hNZModules->SetDirectory(dir_diff);
 
+  TH2D *hBCEnergyData[3], *hBCEnergyEmul[3] ;
+  TH2D *hSTCEnergyData[3], *hSTCEnergyEmul[3] ;
+  for(int imdl=0;imdl<3;imdl++){
+    hBCEnergyData[imdl] = new TH2D(Form("hBCEnergyData_%d",imdl), Form("Data:Expected vs Obtained Energy for relay %u",relay), 70, -0.5, 69.5, 70, -0.5, 69.5);
+    hBCEnergyData[imdl]->GetXaxis()->SetTitle("expected Energy");
+    hBCEnergyData[imdl]->GetYaxis()->SetTitle("observed Energy");
+    hBCEnergyData[imdl]->SetDirectory(dir_diff);
+
+    hBCEnergyEmul[imdl] = new TH2D(Form("hBCEnergyEmul_%d",imdl), Form("Emul:Expected vs Obtained Energy for relay %u",relay), 70, -0.5, 69.5, 70, -0.5, 69.5);
+    hBCEnergyEmul[imdl]->GetXaxis()->SetTitle("expected Energy");
+    hBCEnergyEmul[imdl]->GetYaxis()->SetTitle("observed Energy");
+    hBCEnergyEmul[imdl]->SetDirectory(dir_diff);
+
+    hSTCEnergyData[imdl] = new TH2D(Form("hSTCEnergyData_%d",imdl), Form("Data:Expected vs Obtained Energy for relay %u",relay), 70, -0.5, 69.5, 70, -0.5, 69.5);
+    hSTCEnergyData[imdl]->GetXaxis()->SetTitle("expected Energy");
+    hSTCEnergyData[imdl]->GetYaxis()->SetTitle("observed Energy");
+    hSTCEnergyData[imdl]->SetDirectory(dir_diff);
+
+    hSTCEnergyEmul[imdl] = new TH2D(Form("hSTCEnergyEmul_%d",imdl), Form("Emul:Expected vs Obtained Energy for relay %u",relay), 70, -0.5, 69.5, 70, -0.5, 69.5);
+    hSTCEnergyEmul[imdl]->GetXaxis()->SetTitle("expected Energy");
+    hSTCEnergyEmul[imdl]->GetYaxis()->SetTitle("observed Energy");
+    hSTCEnergyEmul[imdl]->SetDirectory(dir_diff);
+  }
+
+  TH2D *hBCPosData[3], *hBCPosEmul[3] ;
+  TH2D *hSTCPosData[3], *hSTCPosEmul[3] ;
+  for(int imdl=0;imdl<3;imdl++){
+    hBCPosData[imdl] = new TH2D(Form("hBCPosData_%d",imdl), Form("Data:Expected vs Obtained Address for relay %u",relay), 48, -0.5, 47.5, 48, -0.5, 47.5);
+    hBCPosData[imdl]->GetXaxis()->SetTitle("expected TC");
+    hBCPosData[imdl]->GetYaxis()->SetTitle("observed TC");
+    hBCPosData[imdl]->SetDirectory(dir_diff);
+
+    hBCPosEmul[imdl] = new TH2D(Form("hBCPosEmul_%d",imdl), Form("Emul:Expected vs Obtained Address for relay %u",relay), 48, -0.5, 47.5, 48, -0.5, 47.5);
+    hBCPosEmul[imdl]->GetXaxis()->SetTitle("expected TC");
+    hBCPosEmul[imdl]->GetYaxis()->SetTitle("observed TC");
+    hBCPosEmul[imdl]->SetDirectory(dir_diff);
+
+    hSTCPosData[imdl] = new TH2D(Form("hSTCPosData_%d",imdl), Form("Data:Expected vs Obtained Address for relay %u",relay), 48, -0.5, 47.5, 48, -0.5, 47.5);
+    hSTCPosData[imdl]->GetXaxis()->SetTitle("expected TC");
+    hSTCPosData[imdl]->GetYaxis()->SetTitle("observed TC");
+    hSTCPosData[imdl]->SetDirectory(dir_diff);
+
+    hSTCPosEmul[imdl] = new TH2D(Form("hSTCPosEmul_%d",imdl), Form("Emul:Expected vs Obtained Address for relay %u",relay), 48, -0.5, 47.5, 48, -0.5, 47.5);
+    hSTCPosEmul[imdl]->GetXaxis()->SetTitle("expected TC");
+    hSTCPosEmul[imdl]->GetYaxis()->SetTitle("observed TC");
+    hSTCPosEmul[imdl]->SetDirectory(dir_diff);
+  }
+
+  TH2D *hBCUnExTCData = new TH2D("hBCUnExTCData", Form("Data:UnExpected TC in data for relay %u",relay), 48, -0.5, 47.5, 3, -0.5, 2.5);
+  hBCUnExTCData->GetXaxis()->SetTitle("unexpected TC");
+  hBCUnExTCData->GetYaxis()->SetTitle("module");
+  hBCUnExTCData->SetDirectory(dir_diff);
+
+  TH2D *hBCUnExTCEmul = new TH2D("hBCUnExTCEmul", Form("Emul:UnExpected TC in emul for relay %u",relay), 48, -0.5, 47.5, 3, -0.5, 2.5);
+  hBCUnExTCEmul->GetXaxis()->SetTitle("unexpected TC");
+  hBCUnExTCEmul->GetYaxis()->SetTitle("module");
+  hBCUnExTCEmul->SetDirectory(dir_diff);
+
+  TH2D *hSTCUnExTCData = new TH2D("hSTCUnExTCData", Form("Data:UnExpected TC in data for relay %u",relay), 48, -0.5, 47.5, 3, -0.5, 2.5);
+  hSTCUnExTCData->GetXaxis()->SetTitle("unexpected TC");
+  hSTCUnExTCData->GetYaxis()->SetTitle("module");
+  hSTCUnExTCData->SetDirectory(dir_diff);
+
+  TH2D *hSTCUnExTCEmul = new TH2D("hSTCUnExTCEmul", Form("Emul:UnExpected TC in emul for relay %u",relay), 48, -0.5, 47.5, 3, -0.5, 2.5);
+  hSTCUnExTCEmul->GetXaxis()->SetTitle("unexpected TC");
+  hSTCUnExTCEmul->GetYaxis()->SetTitle("module");
+  hSTCUnExTCEmul->SetDirectory(dir_diff);
+  
 }
 
-void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber, uint64_t event, uint16_t inputbxId,
+void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uint32_t relayNumber, uint64_t event, uint16_t inputbxId,
 		   uint32_t nelinks,  const uint32_t *eldata, const uint32_t *elemul,
 		   uint32_t ilp, uint32_t imdl,
 		   TPGFEDataformat::TcRawDataPacket& tcdata, TPGFEDataformat::TcRawDataPacket& tcemul,
-		   const uint32_t *unpkWords, const uint32_t *unpkWords1, TPGBEDataformat::UnpackerOutputStreamPair& upemul){
+		   const uint32_t *unpkWords, const uint32_t *unpkWords1, TPGBEDataformat::UnpackerOutputStreamPair& upemul,
+		   std::vector<uint64_t>& unExEmulTC, std::vector<uint64_t>& unExDataTC){
   
+  uint32_t IdealE[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
+    {
+      {48, 48, 48, 48, 48, 49, 00, 00, 00, 00},
+      {43, 43, 43, 44, 00, 00, 00, 00, 00, 00},
+      {35, 35, 35, 36, 00, 00, 00, 00, 00, 00}
+    },
+    {
+      {60, 60, 61, 61, 62, 62, 63, 63, 64, 64},
+      {52, 53, 54, 55, 56, 56, 00, 00, 00, 00},
+      {02, 27, 35, 39, 41, 43, 00, 00, 00, 00}
+    }
+  };
+  
+  uint32_t IdealA[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
+    {
+      {32, 33, 34, 36, 37, 47, 99, 99, 99, 99},
+      {40, 41, 42, 47, 99, 99, 99, 99, 99, 99},
+      {44, 45, 46, 47, 99, 99, 99, 99, 99, 99}
+    },
+    {
+      {0, 3, 0, 3, 0, 3, 0, 3, 0, 0},
+      {3, 3, 3, 3, 0, 3, 9, 9, 9, 9},
+      {0, 3, 3, 3, 3, 3, 9, 9, 9, 9}
+    }
+  };
+  
+  uint32_t IdealL[2][3][3] = { //nof lpGBTs, nofModules, maxElinks
+    {
+      {0x05b8218a, 0x496f60c1, 0x83060c40},
+      {0x055a29aa, 0xf56ad5ac, 0xffffffff},
+      {0x049b2dba, 0xf468d1a4, 0xffffffff}
+    },
+    {
+      {0x03333078, 0xf1ebd7cf, 0x9fbf8100},
+      {0x0ff368d5, 0xb3770e00, 0xffffffff},
+      {0x03ff046d, 0x1a752ac0, 0xffffffff}
+    }
+  };
+
   int imode = (tcemul.isTcTp1()) ? 1 : 0 ;
   TList *list = (TList *)dir_diff->GetList();
-
+  
   uint16_t bxIdmod8 = (inputbxId==3564) ? 0xf : (inputbxId%8);
   if(imdl==0 and ilp==0){
     ((TH1D *) list->FindObject("hSlinkBx8All"))->Fill( bxIdmod8 );
@@ -809,6 +926,9 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
   
   if(matchFound){
     bool hasDiff = false;
+    uint32_t emullink, datalink;
+    bool hasDiffEmul = false;
+    bool hasDiffData = false;
     for(uint32_t iel=0;iel<nelinks;iel++){
       ((TH1D *) list->FindObject("hElinkDiff"))->Fill( (eldata[iel] - elemul[iel]) );
       if(imode==0)
@@ -817,10 +937,21 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
 	((TH1D *) list->FindObject("hElinkDiff_1"))->Fill( (eldata[iel] - elemul[iel]) );
       ((TH1D *) list->FindObject(Form("hElDiff_%d_%d_%d",imode,ilp,imdl)))->Fill( (eldata[iel] - elemul[iel]) );
       if( ((eldata[iel] - elemul[iel]) != 0) and imode==0) hasDiff = true;
+      emullink = (iel==0) ? (elemul[iel] & 0x0fffffff) : elemul[iel] ;
+      datalink = (iel==0) ? (eldata[iel] & 0x0fffffff) : eldata[iel] ;
+      if( ((IdealL[ilp][imdl][iel] - emullink) != 0) and imode==0) hasDiffEmul = true;
+      if( ((IdealL[ilp][imdl][iel] - datalink) != 0) and imode==0) hasDiffData = true;
     }
-    if(hasDiff)
-      ((TH2D *) list->FindObject("hNZModules"))->Fill( ilp, imdl );
-  
+    if(hasDiff) ((TH2D *) list->FindObject("hNZModules"))->Fill( ilp, imdl );
+    if(hasDiffData) {
+      ((TH2D *) list->FindObject("hNZDataModules"))->Fill( ilp, imdl );
+      if(std::find(unExDataTC.begin(),unExDataTC.end(),event) == unExDataTC.end()) unExDataTC.push_back(event);
+    }
+    if(hasDiffEmul) {
+      ((TH2D *) list->FindObject("hNZEmulModules"))->Fill( ilp, imdl );
+      if(std::find(unExEmulTC.begin(),unExEmulTC.end(),event) == unExEmulTC.end()) unExEmulTC.push_back(event);
+    }
+    
     if(imode==0 and imdl==0 and ilp==0){
       if(hasDiff)
 	((TH1D *) list->FindObject("hSlinkBx8NZ"))->Fill( bxIdmod8 );
@@ -829,55 +960,78 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
       ((TH1D *) list->FindObject("hSlinkBx8Matched"))->Fill( bxIdmod8 );
     }
   
-    std::vector<int> emulist,econtlist;
+    std::vector<int> ideallist, emulist,econtlist;
     for(uint32_t itc=0;itc<tcdata.size();itc++){
       int imodeloc = (tcemul.getTcData().at(itc).isTcTp1()) ? 1 : 0 ;
       ((TH1D *) list->FindObject(Form("hTCEDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,itc)))->Fill( (tcdata.getTcData().at(itc).energy() - tcemul.getTcData().at(itc).energy()) );
       ((TH1D *) list->FindObject(Form("hTCADiff_%d_%d_%d_%d",imodeloc,ilp,imdl,itc)))->Fill( (tcdata.getTcData().at(itc).address() - tcemul.getTcData().at(itc).address()) );
-    
-      if(tcdata.getTcData().at(itc).address()==33 and imdl==0){
-	((TH1D *) list->FindObject("hTC33EDiff"))->Fill( (tcdata.getTcData().at(itc).energy() - tcemul.getTcData().at(itc).energy()) );
-	((TH1D *) list->FindObject("hTCEmulfor33"))->Fill( double(tcemul.getTcData().at(itc).address()) );
-	if(imodeloc==0)
-	  ((TH1D *) list->FindObject("hTC33EDiff_0"))->Fill( (tcdata.getTcData().at(itc).energy() - tcemul.getTcData().at(itc).energy()) );
-	else
-	  ((TH1D *) list->FindObject("hTC33EDiff_1"))->Fill( (tcdata.getTcData().at(itc).energy() - tcemul.getTcData().at(itc).energy()) );
-	if((tcdata.getTcData().at(itc).energy() - tcemul.getTcData().at(itc).energy())!=0 and tcemul.getTcData().at(itc).address()==33) std::cout<<"CHECK event : " << event << std::endl;
+
+      uint32_t ideal_stc = 4*itc + IdealA[ilp][imdl][itc];
+      uint32_t data_stc = 4*itc + tcdata.getTcData().at(itc).address();
+      uint32_t emul_stc = 4*itc + tcemul.getTcData().at(itc).address();
+      if(isLargeDiff){
+	if(ilp==0){
+	  ((TH2D *) list->FindObject(Form("hBCEnergyData_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcdata.getTcData().at(itc).energy());
+	  ((TH2D *) list->FindObject(Form("hBCEnergyEmul_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcemul.getTcData().at(itc).energy());
+	  ((TH2D *) list->FindObject(Form("hBCPosData_%d",imdl)))->Fill(IdealA[ilp][imdl][itc],tcdata.getTcData().at(itc).address());
+	  ((TH2D *) list->FindObject(Form("hBCPosEmul_%d",imdl)))->Fill(IdealA[ilp][imdl][itc],tcemul.getTcData().at(itc).address());
+	}else{
+	  ((TH2D *) list->FindObject(Form("hSTCEnergyData_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcdata.getTcData().at(itc).energy());
+	  ((TH2D *) list->FindObject(Form("hSTCEnergyEmul_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcemul.getTcData().at(itc).energy());
+	  ((TH2D *) list->FindObject(Form("hSTCPosData_%d",imdl)))->Fill(ideal_stc, data_stc);
+	  ((TH2D *) list->FindObject(Form("hSTCPosEmul_%d",imdl)))->Fill(ideal_stc, emul_stc);
+	}
+      }//only for problematic module with elink mismatch
       
-	((TH1D *) list->FindObject("hTC33DataE"))->Fill( tcdata.getTcData().at(itc).energy() );
-	((TH1D *) list->FindObject("hTC33EmulE"))->Fill( tcemul.getTcData().at(itc).energy() );
-      }
-      if(tcemul.getTcData().at(itc).address()==33 and  tcdata.getTcData().at(itc).address()!=33){
-	((TH1D *) list->FindObject("hTC33EmulENM"))->Fill( tcemul.getTcData().at(itc).energy() );
-	//std::cout<<"No data for TC-33 in emulation: " << event << std::endl;
-      }
       if(imdl==0){
 	((TH1D *) list->FindObject("hOccuTCData"))->Fill( tcdata.getTcData().at(itc).address() );
 	((TH1D *) list->FindObject("hOccuTCEmul"))->Fill( tcemul.getTcData().at(itc).address() );
+      }
+      if(ilp==0){
+	ideallist.push_back(IdealA[ilp][imdl][itc]);
 	emulist.push_back(tcemul.getTcData().at(itc).address());
 	econtlist.push_back(tcdata.getTcData().at(itc).address());
+      }else{
+	ideallist.push_back( ideal_stc );
+	emulist.push_back( emul_stc );
+	econtlist.push_back( data_stc );
       }
+      
     }
-    if(imdl==0){
-      int missingEmulTC = -1;
-      int nofmismatches = 0;
-      for(const auto& itcemul : emulist){
-	if(std::find(econtlist.begin(), econtlist.end(), itcemul) == econtlist.end()) {
-	  missingEmulTC = itcemul;
-	  nofmismatches++;
-	}
-      }
-      int missingDataTC = -1;
-      for(const auto& itcdata : econtlist){
-	if(std::find(emulist.begin(), emulist.end(), itcdata) == emulist.end()) {
-	  missingDataTC = itcdata;
-	}
-      }
-      if(nofmismatches==1 and missingDataTC!=-1) {
-	((TH2D *) list->FindObject("hMissedTCs"))->Fill( missingEmulTC, missingDataTC );
+    if(isLargeDiff){
+      int *missingEmulTC = new int[tcdata.size()];
+      int nofemulmismatches = 0;
+      for(const auto& itcemul : emulist)
+	if(std::find(ideallist.begin(), ideallist.end(), itcemul) == ideallist.end())
+	  missingEmulTC[nofemulmismatches++] = itcemul;
+      
+      int *missingDataTC = new int[tcdata.size()];;
+      int nofdatamismatches = 0;
+      for(const auto& itcdata : econtlist)
+	if(std::find(ideallist.begin(), ideallist.end(), itcdata) == ideallist.end())
+	  missingDataTC[nofdatamismatches++] = itcdata;
+      
+      if(nofemulmismatches==1 and nofdatamismatches==1 and imdl==0) {
+	((TH2D *) list->FindObject("hMissedTCs"))->Fill( missingEmulTC[0], missingDataTC[0] );
 	//std::cout<<"Event with single mismatch : " << event << std::endl;
       }
-    
+
+      for(int idatamm = 0 ; idatamm < nofdatamismatches ; idatamm++){
+	if(ilp==0){
+	  ((TH2D *) list->FindObject("hBCUnExTCData"))->Fill( missingDataTC[idatamm], imdl );
+	}else{
+	  ((TH2D *) list->FindObject("hSTCUnExTCData"))->Fill( missingDataTC[idatamm], imdl );
+	}
+      }//if TC is not expected in data
+      for(int iemulmm = 0 ; iemulmm < nofemulmismatches ; iemulmm++){
+	if(ilp==0){
+	  ((TH2D *) list->FindObject("hBCUnExTCEmul"))->Fill( missingEmulTC[iemulmm], imdl );
+	}else{
+	  ((TH2D *) list->FindObject("hSTCUnExTCEmul"))->Fill( missingEmulTC[iemulmm], imdl );
+	}
+      }//if one missing TC is absent
+      delete []missingEmulTC;
+      delete []missingDataTC;
     }
     
     uint16_t *unpkMsTc = new uint16_t[tcdata.size()+1];
@@ -899,8 +1053,9 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
     }else if (tcdata.size()>7 and tcdata.size()<=14) {
       ;
     }
-    
     delete []unpkMsTc;
+    
   }//if matched
   
 }
+
