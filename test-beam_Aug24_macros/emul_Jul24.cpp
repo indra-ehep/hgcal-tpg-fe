@@ -31,6 +31,43 @@
 #include "TPGFEModuleEmulation.hh"
 #include "TPGFEReader2024.hh"
 #include "Stage1IO.hh"
+#include "HGCalLayer1PhiOrderFwConfig.h"
+#include "HGCalLayer1PhiOrderFwImpl.h"
+#include "HGCalTriggerCell_SA.h"
+
+l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDataformat::UnpackerOutputStreamPair> &upVec){
+  l1thgcfirmware::HGCalTriggerCellSACollection theTCVec;
+  for (auto& up : upVec){
+      unsigned theModId_ = up.getModuleId();
+      unsigned nChans_ = up.numberOfValidChannels();
+      for (unsigned iChn = 0; iChn < nChans_; iChn++){
+        unsigned nTC=0;
+        unsigned nStream=0;
+        if(nChans_<7){
+            nTC=iChn;
+        } else {
+            nStream = iChn%2;
+            nTC = (iChn-nStream)/2;
+        } 
+        theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.channelEnergy(nStream,nTC));
+        theTCVec.back().setModuleId(theModId_);
+
+      }
+  }
+  return theTCVec;
+}
+
+bool hasDifferentTCs(l1thgcfirmware::HGCalTriggerCellSACollection tcOrig, l1thgcfirmware::HGCalTriggerCellSACollection tcToComp){
+   if(tcOrig.size()!=tcToComp.size()) return true;
+   for(unsigned i = 0; i<tcOrig.size(); i++){ 
+       if (tcOrig.at(i).energy()!=tcToComp.at(i).energy() || tcOrig.at(i).phi()!=tcToComp.at(i).phi() || tcOrig.at(i).channel()!=tcToComp.at(i).channel() || tcOrig.at(i).frame()!=tcToComp.at(i).frame() || tcOrig.at(i).column()!=tcToComp.at(i).column()){
+	       return true;
+       }
+   }
+   return false;
+}
+
+
 
 int main(int argc, char** argv)
 {
@@ -98,7 +135,7 @@ int main(int argc, char** argv)
   cfgs.readSiChMapping();
   cfgs.readSciChMapping();
   cfgs.loadModIdxToNameMapping();
-  cfgs.loadMuxMapping();
+  cfgs.loadMuxMappingJul24();
   //===============================================================================================================================
   
   //===============================================================================================================================
@@ -247,6 +284,7 @@ int main(int argc, char** argv)
   }//econt loop
   //===============================================================================================================================
 
+
   // ===============================================================================================================================
   // Set and Initialize the ECONT reader
   // ===============================================================================================================================
@@ -271,6 +309,15 @@ int main(int argc, char** argv)
   TPGFEModuleEmulation::ECONTEmulation econtEmul(cfgs);
   //===============================================================================================================================
   
+
+  //===============================================================================================================================
+  //Set mapping info for TC processor bins
+  //===============================================================================================================================
+  l1thgcfirmware::HGCalLayer1PhiOrderFwConfig theConfiguration_;
+  theConfiguration_.configureTestBeamMappingInfo();
+  //===============================================================================================================================
+
+
   //===============================================================================================================================
   //Set refernce eventlist
   //===============================================================================================================================
@@ -452,7 +499,7 @@ int main(int argc, char** argv)
 	  //================================================
 	  //ECONT emulation for a given module
 	  //================================================
-	  econtEmul.Emulate(isSim, event, moduleId, moddata);
+	  econtEmul.EmulateJulTB(isSim, event, moduleId, moddata);
 	  TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();
 	  //================================================
 	  if(TcRawdata.second.type()==TPGFEDataformat::BestC) TcRawdata.second.sortCh();
@@ -465,6 +512,10 @@ int main(int argc, char** argv)
 
 	  TPGBEDataformat::UnpackerOutputStreamPair upemul,up1;
 	  TPGFEDataformat::TcRawDataPacket vTC1;	
+    std::vector<TPGBEDataformat::UnpackerOutputStreamPair> theOutputStreams,theOutputStreams_emul;
+    l1thgcfirmware::HGCalTriggerCellSACollection theTCsFromOS, theTCsFromOS_emul;
+    l1thgcfirmware::HGCalTriggerCellSACollection tcs_out_SA, tcs_out_emul_SA; //output from elink data, from emulated data
+    l1thgcfirmware::HGCalLayer1PhiOrderFwImpl theAlgo_;
 	  int refbx = -1;
 	  TPGBEDataformat::Trig24Data trdata;
 	  for(const auto& econtit : econtdata){
@@ -546,8 +597,45 @@ int main(int argc, char** argv)
 	  //if(eventCondn or isLargeDiff) modTcdata.second.print();
 	  if(eventCondn or isLargeDiff) TcRawdata.second.print();
 	  if(eventCondn or isLargeDiff) vTC1.print();
-          if(eventCondn or isLargeDiff) up1.print();
-	  if(eventCondn or isLargeDiff) upemul.print();
+          up1.setModuleId(moduleId);
+          if(eventCondn or isLargeDiff) up1.print(); //Stage1 unpacker output results using ECON-T elink data
+          upemul.setModuleId(moduleId);
+	  if(eventCondn or isLargeDiff) upemul.print();//Stage1 unpacker emulation output
+
+    theOutputStreams.resize(0);
+    theOutputStreams_emul.resize(0);
+
+    theOutputStreams.push_back(up1);//Always a single UnpackerOutputStreamPair, vector only for generality
+    theOutputStreams_emul.push_back(upemul); //Always a single UnpackerOutputStreamPair, vector only for generality 
+
+    //Convert unpacker output to standalone HGCal trigger cells
+    theTCsFromOS.resize(0);
+    theTCsFromOS_emul.resize(0);
+    theTCsFromOS = convertOSPToTCs(theOutputStreams);
+    theTCsFromOS_emul = convertOSPToTCs(theOutputStreams_emul);
+
+
+    //Run TC processor emulator
+    tcs_out_SA.resize(0);
+    tcs_out_emul_SA.resize(0);
+    unsigned error_code = theAlgo_.run(theTCsFromOS, theConfiguration_, tcs_out_SA);
+    unsigned error_code_emul = theAlgo_.run(theTCsFromOS_emul, theConfiguration_, tcs_out_emul_SA);
+
+    bool diffTCs=hasDifferentTCs(tcs_out_SA,tcs_out_emul_SA);
+
+    if(eventCondn or diffTCs){
+      std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from ECON-T elink input"<<std::endl;
+      for (auto& tcobj : tcs_out_SA){
+        std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+      }
+
+      std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from emulator input"<<std::endl;
+      for (auto& tcobj : tcs_out_emul_SA){
+        std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+      }
+    }
+
+
 	  // 
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if(eventCondn or isLargeDiff) std::cout<<"Elink emul : 0x" << std::hex << std::setfill('0') << std::setw(8) << elinkemul[iel] << std::dec ;
@@ -894,3 +982,4 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
   }//if matched
   
 }
+
