@@ -82,8 +82,9 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   void BookHistograms(TDirectory*&, uint32_t);
   void FillHistogram(bool, bool, TDirectory*&, uint32_t, uint64_t, uint16_t, uint32_t, const uint32_t *, const uint32_t *, uint32_t, uint32_t,
-		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, const uint32_t *, TPGBEDataformat::UnpackerOutputStreamPair&,
-		     std::vector<uint64_t>&, std::vector<uint64_t>&);
+		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, const uint32_t *,
+		     TPGBEDataformat::UnpackerOutputStreamPair&, TPGBEDataformat::UnpackerOutputStreamPair&,
+		     std::vector<uint64_t>&, std::vector<uint64_t>&, std::vector<uint64_t>&);
   
   TFile *fout = new TFile(Form("Diff_Relay-%u.root",relayNumber), "recreate");
   TDirectory *dir_diff = fout->mkdir("diff_plots");
@@ -302,8 +303,10 @@ int main(int argc, char** argv)
   std::vector<uint64_t> eventList;
   std::vector<uint64_t> nonZeroEvents;
   std::vector<uint64_t> shiftedBxEvent;
+  std::vector<uint64_t> corrruptEvent;
   std::vector<uint64_t> unExDataTC;
   std::vector<uint64_t> unExEmulTC;
+  std::vector<uint64_t> elStg1Event;
   
   uint64_t minEventDAQ, maxEventDAQ;  
   //const long double maxEvent = 882454  ; 
@@ -385,8 +388,10 @@ int main(int argc, char** argv)
       uint64_t event = eventList[ievt] ;
       
       //first check that both econd and econt data has the same eventid otherwise skip the event
-      if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=6 or hrocarray.at(event).size()!=36) continue;
-
+      if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=6 or hrocarray.at(event).size()!=36) {
+	if(std::find(corrruptEvent.begin(),corrruptEvent.end(),event) == corrruptEvent.end()) corrruptEvent.push_back(event);
+	continue;
+      }
       //if(econtarray.find(event) == econtarray.end()) break;
 
       //bool eventCondn = (event<1000 or event==1560 or event==2232 or event==2584 or event==2968 or event==3992);
@@ -517,7 +522,8 @@ int main(int argc, char** argv)
 	    //std::cout << "refbx: " << refbx << std::endl ;
 	    if(std::find(shiftedBxEvent.begin(),shiftedBxEvent.end(),event) == shiftedBxEvent.end()) shiftedBxEvent.push_back(event);
 	    econt_slink_bx = trdata.getSlinkBx();
-	    FillHistogram(false, false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, upemul, unExEmulTC, unExDataTC);
+	    FillHistogram(false, false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, up1, upemul,
+			  unExEmulTC, unExDataTC, elStg1Event);
 	    delete []elinkemul;
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Skipping event: " << event <<std::endl<<std::endl<<std::endl;
 	    std::cout << "Skip Event: "<< event
@@ -601,8 +607,8 @@ int main(int argc, char** argv)
 	  //   if(printCondn) std::cout<<"\t  data : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkMsTc[iw] << std::dec ;
 	  //   if(printCondn) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
 	  //   }	    
-	  FillHistogram(true, isLargeDiff, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, upemul,
-			unExEmulTC, unExDataTC);	  
+	  FillHistogram(true, isLargeDiff, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, up1, upemul,
+			unExEmulTC, unExDataTC, elStg1Event);	  
 	  delete []elinkemul;
 	  // delete []unpkMsTc;
 	}//econd loop
@@ -618,6 +624,10 @@ int main(int argc, char** argv)
   for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
   if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
 
+  if(corrruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corrruptEvent.size() <<"] = {";
+  for(const uint64_t& totEvt : corrruptEvent) std::cerr<<totEvt << ", ";
+  if(corrruptEvent.size()>0) std::cerr<< "};" << std::endl;
+
   if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
   for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
   if(unExDataTC.size()>0) std::cerr<< "};" << std::endl;
@@ -625,6 +635,10 @@ int main(int argc, char** argv)
   if(unExEmulTC.size()>0) std::cerr<< "/*Unexpect TC in Emul in event*/ uint64_t refEvt["<< unExEmulTC.size() <<"] = {";
   for(const uint64_t& totEvt : unExEmulTC) std::cerr<<totEvt << ", ";
   if(unExEmulTC.size()>0) std::cerr<< "};" << std::endl;
+
+  if(elStg1Event.size()>0) std::cerr<< "/*Difference in elink and Stage1 output in event*/ uint64_t refEvt["<< elStg1Event.size() <<"] = {";
+  for(const uint64_t& totEvt : elStg1Event) std::cerr<<totEvt << ", ";
+  if(elStg1Event.size()>0) std::cerr<< "};" << std::endl;
 
   fout->cd();
   dir_diff->Write();
@@ -871,8 +885,9 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 		   uint32_t nelinks,  const uint32_t *eldata, const uint32_t *elemul,
 		   uint32_t ilp, uint32_t imdl,
 		   TPGFEDataformat::TcRawDataPacket& tcdata, TPGFEDataformat::TcRawDataPacket& tcemul,
-		   const uint32_t *unpkWords, const uint32_t *unpkWords1, TPGBEDataformat::UnpackerOutputStreamPair& upemul,
-		   std::vector<uint64_t>& unExEmulTC, std::vector<uint64_t>& unExDataTC){
+		   const uint32_t *unpkWords, const uint32_t *unpkWords1,
+		   TPGBEDataformat::UnpackerOutputStreamPair& updata, TPGBEDataformat::UnpackerOutputStreamPair& upemul,
+		   std::vector<uint64_t>& unExEmulTC, std::vector<uint64_t>& unExDataTC, std::vector<uint64_t>& elStg1Event){
   
   uint32_t IdealE[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
     {
@@ -1039,8 +1054,8 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
     uint32_t strm = 0;
     if(tcdata.size()<=7){
       for(uint32_t iw=0;iw<=tcdata.size();iw++){
-	unpkMsTc[iw] = (iw==0)? upemul.getMsData(strm) : upemul.getTcData(strm, iw-1);
-	uint32_t diff = (iw==0 or tcdata.type()!=TPGFEDataformat::BestC)? ((unpkWords[iw]&0xf) - (unpkMsTc[iw]&0xf)) : (unpkWords[iw] - unpkMsTc[iw]) ;
+	unpkMsTc[iw] = (iw==0)? updata.getMsData(strm) : updata.getTcData(strm, iw-1);
+	int diff = (iw==0 or tcdata.type()!=TPGFEDataformat::BestC)? ((unpkWords[iw]&0xf) - (unpkMsTc[iw]&0xf)) : (unpkWords[iw] - unpkMsTc[iw]) ;
 	uint32_t XOR = (iw==0 or tcdata.type()!=TPGFEDataformat::BestC)? ((unpkWords[iw]&0xf) xor (unpkMsTc[iw]&0xf)) : (unpkWords[iw] xor unpkMsTc[iw]) ;
       
 	int imodeloc = (iw==0) ? ((tcemul.isTcTp1())?1:0) : ((tcemul.getTcData().at(iw-1).isTcTp1())?1:0) ;
@@ -1050,16 +1065,17 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 	else
 	  ((TH1D *) list->FindObject("hUWord_1"))->Fill( diff );
 	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
+	if(iw>0 and diff!=0 and std::find(elStg1Event.begin(),elStg1Event.end(),event) == elStg1Event.end()) elStg1Event.push_back(event);
       }
     }else if (tcdata.size()>7 and tcdata.size()<=14) {
-      uint32_t diff = 99;
+      int diff = 99;
       uint32_t word = 99;
       for(uint32_t iw=0;iw<=tcdata.size();iw++){
 	if(iw==0){
-	  unpkMsTc[iw] =  upemul.getMsData(0);
+	  unpkMsTc[iw] =  updata.getMsData(0);
 	  diff = unpkWords[iw] - unpkMsTc[iw];
 	}else {
-	  unpkMsTc[iw] =  (iw%2==1)? upemul.getTcData(0, (iw-1)/2) : upemul.getTcData(1, (iw-2)/2) ;
+	  unpkMsTc[iw] =  (iw%2==1)? updata.getTcData(0, (iw-1)/2) : updata.getTcData(1, (iw-2)/2) ;
 	  word = (iw%2==1)? unpkWords[iw/2+1] : unpkWords1[iw/2] ;
 	  diff = word - unpkMsTc[iw];
 	  //std::cout << "iw: " << iw << ", unpkMsTc[iw]: " << unpkMsTc[iw] << ", word: " << word << ", diff: " << diff << std::endl;
@@ -1071,6 +1087,7 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 	else
 	  ((TH1D *) list->FindObject("hUWord_1"))->Fill( diff );
 	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
+	if(iw>0 and diff!=0 and std::find(elStg1Event.begin(),elStg1Event.end(),event) == elStg1Event.end()) elStg1Event.push_back(event);
       }
       ;
     }
