@@ -57,6 +57,17 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
   return theTCVec;
 }
 
+bool hasDifferentTCs(l1thgcfirmware::HGCalTriggerCellSACollection tcOrig, l1thgcfirmware::HGCalTriggerCellSACollection tcToComp){
+   if(tcOrig.size()!=tcToComp.size()) return true;
+   for(unsigned i = 0; i<tcOrig.size(); i++){ 
+       if (tcOrig.at(i).energy()!=tcToComp.at(i).energy() || tcOrig.at(i).phi()!=tcToComp.at(i).phi() || tcOrig.at(i).channel()!=tcToComp.at(i).channel() || tcOrig.at(i).frame()!=tcToComp.at(i).frame() || tcOrig.at(i).column()!=tcToComp.at(i).column()){
+	       return true;
+       }
+   }
+   return false;
+}
+
+
 
 int main(int argc, char** argv)
 {
@@ -488,7 +499,7 @@ int main(int argc, char** argv)
 	  //================================================
 	  //ECONT emulation for a given module
 	  //================================================
-	  econtEmul.Emulate(isSim, event, moduleId, moddata);
+	  econtEmul.EmulateJulTB(isSim, event, moduleId, moddata);
 	  TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();
 	  //================================================
 	  if(TcRawdata.second.type()==TPGFEDataformat::BestC) TcRawdata.second.sortCh();
@@ -610,14 +621,18 @@ int main(int argc, char** argv)
     unsigned error_code = theAlgo_.run(theTCsFromOS, theConfiguration_, tcs_out_SA);
     unsigned error_code_emul = theAlgo_.run(theTCsFromOS_emul, theConfiguration_, tcs_out_emul_SA);
 
-    std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from ECON-T elink input"<<std::endl;
-    for (auto& tcobj : tcs_out_SA){
-      std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
-    }
+    bool diffTCs=hasDifferentTCs(tcs_out_SA,tcs_out_emul_SA);
 
-    std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from emulator input"<<std::endl;
-    for (auto& tcobj : tcs_out_emul_SA){
-      std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+    if(eventCondn or diffTCs){
+      std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from ECON-T elink input"<<std::endl;
+      for (auto& tcobj : tcs_out_SA){
+        std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+      }
+
+      std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from emulator input"<<std::endl;
+      for (auto& tcobj : tcs_out_emul_SA){
+        std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+      }
     }
 
 
@@ -967,3 +982,4 @@ void FillHistogram(bool matchFound, TDirectory*& dir_diff, uint32_t relayNumber,
   }//if matched
   
 }
+
