@@ -86,11 +86,11 @@ namespace l1thgcfirmware {
       }
 
 
-      for(unsigned j=0; j<3;j++){ // Module 1280,9472 - CTC4A, 
+      for(unsigned j=0; j<3;j++){ // Module 1280,9472 - CTC4A in Jul TB 
         chn_frame_slots_per_mod_and_col_[1280][j].push_back(std::make_pair(0,0));
         max_tcs_per_module_and_column_[1280].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[1280][j].size()));
         chn_frame_slots_per_mod_and_col_[9472][j].push_back(std::make_pair(0,0));
-        max_tcs_per_module_and_column_[9472].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[1280][j].size()));
+        max_tcs_per_module_and_column_[9472].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[9472][j].size()));
       }
     }
 
