@@ -124,7 +124,7 @@ int main(int argc, char** argv)
   cfgs.readSiChMapping();
   cfgs.readSciChMapping();
   cfgs.loadModIdxToNameMapping();
-  cfgs.loadMuxMapping();
+  cfgs.loadMuxMappingJul24();
   //===============================================================================================================================
   
   //===============================================================================================================================
@@ -586,9 +586,9 @@ int main(int argc, char** argv)
 	  //if(eventCondn or isLargeDiff) modTcdata.second.print();
 	  if(eventCondn or isLargeDiff) TcRawdata.second.print();
 	  if(eventCondn or isLargeDiff) vTC1.print();
-    //up1.setModuleId(moduleId);
+          up1.setModuleId(moduleId);
           if(eventCondn or isLargeDiff) up1.print(); //Stage1 unpacker output results using ECON-T elink data
-    //upemul.setModuleId(moduleId);
+          upemul.setModuleId(moduleId);
 	  if(eventCondn or isLargeDiff) upemul.print();//Stage1 unpacker emulation output
 
     theOutputStreams.resize(0);

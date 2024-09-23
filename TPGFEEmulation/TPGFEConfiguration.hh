@@ -508,6 +508,7 @@ namespace TPGFEConfiguration{
     void readSciChMapping();
     void loadModIdxToNameMapping();
     void loadMuxMapping();
+    void loadMuxMappingJul24(); //Hack, but needed to not break Jul24 testbeam script
     
     //Read the ROC/ECOND/ECONT configs from yaml file
     void readRocConfigYaml(const std::string& moduletype);
@@ -821,6 +822,11 @@ namespace TPGFEConfiguration{
     for(uint32_t itc=0;itc<48;itc++) refMuxMap[itc] = type_F_muxmap[itc];
       
   }
+  void Configuration::loadMuxMappingJul24(){
+    uint32_t type_F_muxmap[48] = {3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12, 19, 18, 17, 16, 23, 22, 21, 20, 27, 26, 25, 24, 31, 30, 29, 28, 35, 34, 33, 32, 39, 38, 37, 36, 43, 42, 41, 40, 47, 46, 45, 44};
+    for(uint32_t itc=0;itc<48;itc++) refMuxMap[itc] = type_F_muxmap[itc];
+  }
+
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::readRocConfigYaml(const std::string& modName)
   {
