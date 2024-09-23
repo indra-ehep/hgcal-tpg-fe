@@ -1127,12 +1127,13 @@ namespace TPGFEConfiguration{
     
     for(auto const& hrocch : hrocchcfg)
       hrocchcfg[hrocch.first].setAdcpedestal(0);
-        
-    for(auto const& hroc : hroccfg){
-      for(int itot=0;itot<4;itot++){
-	hroccfg[hroc.first].setTotP(itot, 0);
-      }
-    }
+    
+    // for(auto const& hroc : hroccfg){
+    //   for(int itot=0;itot<4;itot++){
+    // 	hroccfg[hroc.first].setTotTH(itot, 0);
+    // 	hroccfg[hroc.first].setTotP(itot, 0);
+    //   }
+    // }    
   }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   void Configuration::printCfgPedTh(uint32_t moduleId){

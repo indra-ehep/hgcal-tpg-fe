@@ -288,11 +288,12 @@ int main(int argc, char** argv)
   //uint64_t refEvt[20] = {1, 2, 3, 66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213};
 
   //uint64_t refEvt[20] = {1, 2, 3, 66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213};
-  uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648};
+  //uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648};
+  int64_t refEvt[45] = {66235, 471496, 1763515, 1968826, 2245408, 2390648, 127532, 145302, 194816, 260756, 269698, 383736, 391481, 397781, 534349, 605680, 613325, 694404, 873524, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1769677, 1871023, 1967257, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2259447, 2462559, 2514946};
   std::vector<uint64_t> refEvents;
   //for(int ievent=0;ievent<25702;ievent++) refEvents.push_back(refEvt[ievent]);
   //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
-  for(int ievent=0;ievent<6;ievent++) refEvents.push_back(refEvt[ievent]);
+  for(int ievent=0;ievent<45;ievent++) refEvents.push_back(refEvt[ievent]);
   refEvents.resize(0);
   //===============================================================================================================================
   
@@ -312,8 +313,8 @@ int main(int argc, char** argv)
   //const long double maxEvent = 1000000 ;
   const long double maxEvent = 2557415 ;
   long double nloopEvent =  100000;
-  // const long double maxEvent = 100000  ; //1722870998:24628, 1722871979:31599
-  // long double nloopEvent = 10000 ;
+  // const long double maxEvent = 100  ; //1722870998:24628, 1722871979:31599
+  // long double nloopEvent = 100 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -667,7 +668,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hUWord_1->SetDirectory(dir_diff);
 
   TH1D *hElDiff[2][2][3]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT
-  TH1D *hUnpkWordDiff[2][2][3][8]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT 8 words max
+  TH1D *hUnpkWordDiff[2][2][3][11]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT 8 words max
   TH1D *hTCEDiff[2][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC energies 
   TH1D *hTCADiff[2][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC addresses
   
@@ -720,7 +721,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   for(int imode=0;imode<2;imode++)
     for(int ilp=0;ilp<2;ilp++)
       for(int imdl=0;imdl<3;imdl++)
-	for(int iw=0;iw<8;iw++){
+	for(int iw=0;iw<11;iw++){
 	  //compressed word
 	  hUnpkWordDiff[imode][ilp][imdl][iw] = new TH1D(Form("hUnpkWordDiff_%d_%d_%d_%d",imode,ilp,imdl,iw),Form("%u: (ECONT - Emulator) unpacker word for tctp case : %d, ilp:%d, module:%d, iw:%d",relay,imode,ilp,imdl,iw), 200, -99, 101);
 	  hUnpkWordDiff[imode][ilp][imdl][iw]->SetMinimum(1.e-1);
@@ -795,7 +796,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hNZModules->GetXaxis()->SetTitle("lpGBT");
   hNZModules->GetYaxis()->SetTitle("Module");
   hNZModules->SetDirectory(dir_diff);
-
+  
   TH2D *hBCEnergyData[3], *hBCEnergyEmul[3] ;
   TH2D *hSTCEnergyData[3], *hSTCEnergyEmul[3] ;
   for(int imdl=0;imdl<3;imdl++){
@@ -803,12 +804,12 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
     hBCEnergyData[imdl]->GetXaxis()->SetTitle("expected Energy");
     hBCEnergyData[imdl]->GetYaxis()->SetTitle("observed Energy");
     hBCEnergyData[imdl]->SetDirectory(dir_diff);
-
+    
     hBCEnergyEmul[imdl] = new TH2D(Form("hBCEnergyEmul_%d",imdl), Form("Emul:Expected vs Obtained Energy for relay %u",relay), 70, -0.5, 69.5, 70, -0.5, 69.5);
     hBCEnergyEmul[imdl]->GetXaxis()->SetTitle("expected Energy");
     hBCEnergyEmul[imdl]->GetYaxis()->SetTitle("observed Energy");
     hBCEnergyEmul[imdl]->SetDirectory(dir_diff);
-
+    
     hSTCEnergyData[imdl] = new TH2D(Form("hSTCEnergyData_%d",imdl), Form("Data:Expected vs Obtained Energy for relay %u",relay), 70, -0.5, 69.5, 70, -0.5, 69.5);
     hSTCEnergyData[imdl]->GetXaxis()->SetTitle("expected Energy");
     hSTCEnergyData[imdl]->GetYaxis()->SetTitle("observed Energy");
@@ -1051,6 +1052,26 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
       }
     }else if (tcdata.size()>7 and tcdata.size()<=14) {
+      uint32_t diff = 99;
+      uint32_t word = 99;
+      for(uint32_t iw=0;iw<=tcdata.size();iw++){
+	if(iw==0){
+	  unpkMsTc[iw] =  upemul.getMsData(0);
+	  diff = unpkWords[iw] - unpkMsTc[iw];
+	}else {
+	  unpkMsTc[iw] =  (iw%2==1)? upemul.getTcData(0, (iw-1)/2) : upemul.getTcData(1, (iw-2)/2) ;
+	  word = (iw%2==1)? unpkWords[iw/2+1] : unpkWords1[iw/2] ;
+	  diff = word - unpkMsTc[iw];
+	  //std::cout << "iw: " << iw << ", unpkMsTc[iw]: " << unpkMsTc[iw] << ", word: " << word << ", diff: " << diff << std::endl;
+	}
+	int imodeloc = (iw==0) ? ((tcemul.isTcTp1())?1:0) : ((tcemul.getTcData().at(iw-1).isTcTp1())?1:0) ;
+	((TH1D *) list->FindObject("hUWord"))->Fill( diff );
+	if(imodeloc==0)
+	  ((TH1D *) list->FindObject("hUWord_0"))->Fill( diff );
+	else
+	  ((TH1D *) list->FindObject("hUWord_1"))->Fill( diff );
+	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
+      }
       ;
     }
     delete []unpkMsTc;
