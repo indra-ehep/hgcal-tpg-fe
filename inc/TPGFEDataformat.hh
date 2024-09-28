@@ -45,12 +45,12 @@ namespace TPGFEDataformat{
       return _data&0xfff;
     }
 
-    void setAdc(uint16_t a, uint16_t tctp=0x0) {
+    void setAdc(uint16_t a, uint16_t tctp) {
       assert(a<0x400 and tctp<0x4);
       _data=tctp<<12|a;
     }
     
-    void setTot(uint16_t a, uint16_t tctp=0x3) {
+    void setTot(uint16_t a, uint16_t tctp) {
       assert(a<0x1000 and tctp<0x4);
       _data=tctp<<12|a|0x8000;
     }
@@ -58,7 +58,10 @@ namespace TPGFEDataformat{
     void print() const {
       std::cout << "HalfHgcrocChannelData(" << this << ")::print()" << std::endl;
 
-      std::cout << std::dec << ::std::setfill(' ') << ", "
+      std::cout << std::dec << ::std::setfill(' ') 
+		<<" data: 0x" << std::hex << ::std::setfill('0')
+		<< std::setw(4) << _data 
+		<< std::dec << ::std::setfill(' ') << ", "
 		<< "TcTp: " << getTcTp() << ", "
 		<< (isTot()?"TOT = ":"ADC = ") << std::setw(4)
 		<< (isTot()?getTot():getAdc())
@@ -98,9 +101,13 @@ namespace TPGFEDataformat{
     bool hasTcTp2() const { return hasTcTp(2); }
     bool hasTcTp3() const { return hasTOT(); }
     
-    bool hasTcTp(uint16_t tctpval = 1) const {
-      for(unsigned i(0);i<=NumberOfChannels;i++)
-	if(_data[i].getTcTp()==tctpval) return true;
+    bool hasTcTp(uint16_t tctpval) const {
+      for(unsigned i(0);i<NumberOfChannels;i++)
+	if(_data[i].getTcTp()==tctpval) {
+	  std::cout << "ich : " << i ; 
+	  _data[i].print();
+	  return true;
+	}
       return false;
     }
 
@@ -164,7 +171,7 @@ namespace TPGFEDataformat{
     TcRawData() : _data(0), _rawE(0), _istctp1(false), _istctp2(false), _istctp3(false) {
     }
     
-    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t rawE = 0, bool istctp1 = false, bool istctp2 = false, bool istctp3 = false) {
+    TcRawData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t rawE = 0, bool istctp1  = false, bool istctp2  = false, bool istctp3 = false) {
       setTriggerCell(t,a,e, rawE, istctp1, istctp2, istctp3);
     }
     
@@ -424,7 +431,7 @@ namespace TPGFEDataformat{
     void setModuleSum(uint8_t e, uint64_t upe) { _ms = e; _rawEms = upe;}
     void setBX(uint8_t bx) { _bx = bx;}
     std::vector<TPGFEDataformat::TcRawData>& setTcData() {return _tcdata;}
-    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t upe=0, bool isTcTp1=false, bool isTcTp2=false, bool isTcTp3=false) {
+    void setTcData(TPGFEDataformat::Type t, uint8_t a, uint16_t e, uint64_t upe, bool isTcTp1, bool isTcTp2, bool isTcTp3) {
       TPGFEDataformat::TcRawData tc;
       tc.setTriggerCell(t, a, e, upe, isTcTp1, isTcTp2, isTcTp3);
       _tcdata.push_back(tc);

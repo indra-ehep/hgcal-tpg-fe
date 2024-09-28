@@ -356,7 +356,7 @@ namespace TPGFEModuleEmulation{
     void batcherOEMSort(std::vector<TPGFEDataformat::TcRawData>& tc) {
       //C++ adaptation of batcher odd-even sorting of https://github.com/dnoonan08/ECONT_Emulator/ASICBlocks/bestchoice.py
       //Requires 49 Tcs for sorting
-      TPGFEDataformat::TcRawData dummy(TPGFEDataformat::Unknown,0x3f, 0);
+      TPGFEDataformat::TcRawData dummy(TPGFEDataformat::Unknown,0x3f, 0, 0, false, false, false);
       tc.push_back(dummy);
       
       uint32_t N = uint32_t(tc.size());
@@ -442,7 +442,7 @@ namespace TPGFEModuleEmulation{
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
     uint32_t dropLSB = configs.getEconTPara().at(moduleId).getDropLSB() ;
     uint32_t nofSTCs = configs.getEconTPara().at(moduleId).getNofSTCs();
-    TPGFEDataformat::TcRawData dummy(TPGFEDataformat::Unknown,0x3f, 0);
+    TPGFEDataformat::TcRawData dummy(TPGFEDataformat::Unknown,0x3f, 0, 0, false, false, false);
     
     const TPGFEDataformat::Type& outputType = configs.getEconTPara().at(moduleId).getOutType();
    
@@ -596,6 +596,8 @@ namespace TPGFEModuleEmulation{
       emulOut.second.reset();
       for(const auto& istc : stclist){
 	bool isTcTp1 = false;
+	bool isTcTp2 = false;
+	bool isTcTp3 = false;
 	if(istc>=nofSTCs) continue;
 	const std::vector<uint32_t>& tclist = stcTcMap.at(std::make_pair(modName,istc));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
@@ -618,6 +620,8 @@ namespace TPGFEModuleEmulation{
 	    continue;
 	  }
 	  if(mdata.getTC(emultc).isTcTp1()) isTcTp1 = true;
+	  if(mdata.getTC(emultc).isTcTp2()) isTcTp3 = true;
+	  if(mdata.getTC(emultc).isTcTp3()) isTcTp3 = true;
 	  uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(),configs.getEconTPara().at(moduleId).getDensity());
 	  uint64_t decomp64bit =  decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
 	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateJulSTC4 (moduleid="<<moduleId<<", TC="<<econtc<<") decompressed: " << decompressed << ", decompressed*calib: " << decomp64bit << std::endl; 
@@ -625,7 +629,7 @@ namespace TPGFEModuleEmulation{
 	  decompressedSTC += decompressed ;
 	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateJulSTC4 (moduleid="<<moduleId<<", TC="<<econtc<<") decompressed*calib>>11: " << decompressed << ", decompressedSTC: " << decompressedSTC << std::endl; 
 	  uint16_t compressed_bc = CompressEcontBc(decompressed, dropLSB);
-	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc, decompressed, mdata.getTC(emultc).isTcTp1()) ;
+	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc, decompressed, mdata.getTC(emultc).isTcTp1(), mdata.getTC(emultc).isTcTp2(), mdata.getTC(emultc).isTcTp3()) ;
 	  tcrawdatalist.push_back(tcdata);
 	}
 	batcherOEMSort(tcrawdatalist);
@@ -640,9 +644,9 @@ namespace TPGFEModuleEmulation{
 	uint64_t raw_E = (outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::CTC4A) ? decompressedSTC>>dropLSB : decompressedSTC ;
 	emulOut.second.setTBM(outputType, bx, 0); 
 	if(outputType==TPGFEDataformat::STC4A or outputType==TPGFEDataformat::STC4B)
-	  emulOut.second.setTcData(outputType, lastMax.address()%4, compressed_energy, raw_E, isTcTp1);
+	  emulOut.second.setTcData(outputType, lastMax.address()%4, compressed_energy, raw_E, isTcTp1, isTcTp2, isTcTp3);
 	else
-	  emulOut.second.setTcData(outputType, istc, compressed_energy, raw_E, isTcTp1);
+	  emulOut.second.setTcData(outputType, istc, compressed_energy, raw_E, isTcTp1, isTcTp2, isTcTp3);
 	tcrawdatalist.clear();
       }//stc loop
       
@@ -657,6 +661,8 @@ namespace TPGFEModuleEmulation{
       emulOut.second.reset();
       for(const auto& istc16 : stc16list){
 	bool isTcTp1 = false;
+	bool isTcTp2 = false;
+	bool isTcTp3 = false;
 	if(istc16>=nofSTCs) continue;
 	const std::vector<uint32_t>& tclist = stc16TcMap.at(std::make_pair(modName,istc16));
 	const TPGFEDataformat::ModuleTcData& mdata = moddata.at(moduleId);
@@ -679,6 +685,8 @@ namespace TPGFEModuleEmulation{
 	    continue;
 	  }
 	  if(mdata.getTC(emultc).isTcTp1()) isTcTp1 = true;
+	  if(mdata.getTC(emultc).isTcTp2()) isTcTp2 = true;
+	  if(mdata.getTC(emultc).isTcTp3()) isTcTp3 = true;
 	  uint64_t decompressed = DecompressEcont(mdata.getTC(emultc).getCdata(), configs.getEconTPara().at(moduleId).getDensity());
 	  uint64_t decomp64bit = decompressed * configs.getEconTPara().at(moduleId).getCalibration(econtc) ;
 	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateJulSTC16 (moduleid="<<moduleId<<", TC="<<econtc<<") decompressed: " << decompressed << ", decompressed*calib: " << decomp64bit << std::endl; 
@@ -686,7 +694,7 @@ namespace TPGFEModuleEmulation{
 	  decompressedSTC16 += decompressed ;
 	  if(isVerbose) std::cout << "TPGFEModuleEmulation::ECONTEmulation::EmulateJulSTC16 (moduleid="<<moduleId<<", TC="<<econtc<<") decompressed*calib>>11: " << decompressed << ", decompressedSTC16: " << decompressedSTC16 << std::endl; 
 	  uint16_t compressed_bc = CompressEcontBc(decompressed,dropLSB);
-	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc, decompressed, mdata.getTC(emultc).isTcTp1()) ;
+	  tcdata.setTriggerCell(TPGFEDataformat::BestC, econtc, compressed_bc, decompressed, mdata.getTC(emultc).isTcTp1(), mdata.getTC(emultc).isTcTp2(), mdata.getTC(emultc).isTcTp3()) ;
 	  tcrawdatalist.push_back(tcdata);
 	}
 	batcherOEMSort(tcrawdatalist);
@@ -696,7 +704,7 @@ namespace TPGFEModuleEmulation{
 	TPGFEDataformat::TcRawData lastMax = isAllZero(tcrawdatalist) ? tcrawdatalist[tcrawdatalist.size()-1] : tcrawdatalist[0] ;
 	uint16_t compressed_energy = CompressEcontStc5E4M(decompressedSTC16);
 	emulOut.second.setTBM(outputType, bx, 0); 
-	emulOut.second.setTcData(outputType, (lastMax.address())%16, compressed_energy, decompressedSTC16, isTcTp1);
+	emulOut.second.setTcData(outputType, (lastMax.address())%16, compressed_energy, decompressedSTC16, isTcTp1, isTcTp2, isTcTp3);
 	tcrawdatalist.clear();
       }//stc16 loop
     }//STC16 select condition
