@@ -320,25 +320,29 @@ namespace TPGFEReader{
 	    if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqM)))!=seqToRocpin.end()){
 	      uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqM))) ;
 	      ch = rocpin%36 ; //36 for halfroc
-	      if(trigflagM>=0x2)
+	      if(trigflagM>=0x2){
 		chdata[ch].setTot(uint16_t(totM),uint16_t(trigflagM));
-	      else if(trigflagM==0)
+		//chdata[ch].setAdc(uint16_t(adcmM),0);
+	      }else if(trigflagM==0)
 		chdata[ch].setAdc(uint16_t(adcM),uint16_t(trigflagM));
-	      else if(trigflagM==0x1)
+	      else if(trigflagM==0x1){
 		chdata[ch].setAdc(0,uint16_t(trigflagM)); //uint16_t(adcM)
-	      else
+		//chdata[ch].setTot(uint16_t(toaM),uint16_t(trigflagM));
+	      }else
 		chdata[ch].setZero();
 	    }
 	    if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqL)))!=seqToRocpin.end()){
 	      uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqL))) ;
 	      ch = rocpin%36 ; //36 for halfroc
-	      if(trigflagL>=0x2)
+	      if(trigflagL>=0x2){
 		chdata[ch].setTot(uint16_t(totL),uint16_t(trigflagL));
-	      else if(trigflagL==0)
+		//chdata[ch].setAdc(uint16_t(adcmL),0);
+	      }else if(trigflagL==0)
 		chdata[ch].setAdc(uint16_t(adcL),uint16_t(trigflagL));
-	      else if(trigflagL==0x1)
+	      else if(trigflagL==0x1){
 		chdata[ch].setAdc(0,uint16_t(trigflagL)); //uint16_t(adcL)
-	      else
+		//chdata[ch].setTot(uint16_t(toaL),uint16_t(trigflagL));
+	      }else
 		chdata[ch].setZero();
 	    }
 	    index++;
@@ -478,6 +482,7 @@ namespace TPGFEReader{
 		nofecons++;
 	      }
 	    }
+	    if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)) std::cout << "icapblk: " << icapblk << ", nofecons: " << nofecons << std::endl;
 	    //assert(nofecons!=0);
 	    if(nofecons!=3) {
 	      isThreeEcons = false;
@@ -505,17 +510,25 @@ namespace TPGFEReader{
 	      zeroloc[iecond] = (econsize-1)/2 + (econpos+1) ; //(econ0pos+1): +1 to start from first eRx header
 	      zeropos_lst[icapblk].push_back(zeroloc[iecond]);
 	      next_econd_pos = zeroloc[iecond]+1 ;
+	      if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
+		std::cout << "icapblk: " << icapblk << ", iecond: " << iecond << ", econh0: " << econh0 << ", econh1: " << econh1
+			  <<", econsize: " << econsize
+			  << ", zeroloc[iecond]: " << zeroloc[iecond] << std::endl;
+	      }
 	    }
 	    capturepos = zeroloc[nofecons-1] + 1 ;
 	    icapblk++;
 	  }//find the block positions
 	  if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){
+	    std::cout<< " icapblk: " << icapblk << std::endl;
 	    std::cout<< " econheaderpos_lst.size(): " << econheaderpos_lst.size() << std::endl;
+	    std::cout<< " isThreeEcons: "<< isThreeEcons << ", isallPassthrough: "<< isallPassthrough << ", isValideRxSize: " << isValideRxSize << std::endl;
 	    for (const auto&  econhpos : econheaderpos_lst)
 	      for(int iecond = 0 ; iecond < econheaderpos_lst[econhpos.first].size() ; iecond++)
 		std::cout<<"icapblk: "<<econhpos.first<<" zero position for econ " << iecond << ", "<<zeropos_lst[econhpos.first].at(iecond)<<std::endl;
 	  }
-	  if(isThreeEcons and isallPassthrough and isValideRxSize){
+	  //if(isThreeEcons and isallPassthrough and isValideRxSize){
+	  if(isallPassthrough and isValideRxSize){
 	    getModuleData(nEvents, hrocarray, events);
 	    events.push_back(boe->eventId());
 	  }

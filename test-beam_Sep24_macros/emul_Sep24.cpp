@@ -235,14 +235,26 @@ int main(int argc, char** argv)
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(3);
       econTPar[it.first].setSTCType(3);
+      if(relayNumber>=1727111828){ //1727211141
+	econTPar[it.first].setNElinks(2);
+	econTPar[it.first].setSTCType(1);
+      }
     }else if (it.first==lp1_stc4a1){
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(2);
       econTPar[it.first].setSTCType(3);
+      if(relayNumber>=1727111828){ //1727211141
+	econTPar[it.first].setNElinks(2);
+	econTPar[it.first].setSTCType(1);
+      }
     }else if (it.first==lp1_stc4a2){
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(2);
       econTPar[it.first].setSTCType(3);
+      if(relayNumber>=1727111828){ //1727211141
+	econTPar[it.first].setNElinks(2);
+	econTPar[it.first].setSTCType(1);
+      }
     }
     std::cout << "Modtype " << it.first
 	      << ", getOuttype: " << econTPar[it.first].getOutType()
@@ -268,8 +280,8 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   TPGFEReader::ECONDReader econDReader(cfgs);
   econDReader.setTotUp(0);
-  //econDReader.checkEvent(1);
-  //econDReader.showFirstEvents(10);
+  econDReader.checkEvent(1);
+  // econDReader.showFirstEvents(10);
   //===============================================================================================================================
   //Set and Initialize the Emulator
   //===============================================================================================================================
@@ -280,21 +292,15 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Set refernce eventlist
   //===============================================================================================================================
-  //uint64_t refEvt[] = {1560, 2232, 2584, 2968, 3992, 4344, 5048, 5848, 6168, 8248, 9976};
-  //uint64_t refEvt[] = {1, 2, 3, 4, 5};
-  //uint64_t refEvt[30] = {3128, 9954, 16733, 19162, 33927, 34190, 37363, 37827, 40369, 45842, 46118, 46373, 46419, 46506, 52079, 53856, 58912, 60802, 62177, 62275, 64008, 65645, 67282, 77309, 84325, 86764, 87628, 91094, 97064, 99445};
-  
-  //uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
+  /*TcTp2 events */ uint64_t refEvt[50] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1809836, 1829961, 1871023, 1932945, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
+  // /*Nonzero diff events*/ uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648, };
+  // /*Unexpect TC in Data in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
+  // /*Unexpect TC in Emul in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
+  // /*Difference in elink and Stage1 output in event*/ uint64_t refEvt[21] = {66235, 151731, 471496, 633065, 873524, 1366513, 1589006, 1623036, 1763515, 1968826, 1984675, 2000515, 2091972, 2165732, 2245408, 2250959, 2259447, 2264639, 2335560, 2390648, 2489154, };
 
-  //uint64_t refEvt[20] = {1, 2, 3, 66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213};
-
-  //uint64_t refEvt[20] = {1, 2, 3, 66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213};
-  //uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648};
-  int64_t refEvt[45] = {66235, 471496, 1763515, 1968826, 2245408, 2390648, 127532, 145302, 194816, 260756, 269698, 383736, 391481, 397781, 534349, 605680, 613325, 694404, 873524, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1769677, 1871023, 1967257, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2259447, 2462559, 2514946};
   std::vector<uint64_t> refEvents;
-  //for(int ievent=0;ievent<25702;ievent++) refEvents.push_back(refEvt[ievent]);
   //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
-  for(int ievent=0;ievent<45;ievent++) refEvents.push_back(refEvt[ievent]);
+  for(int ievent=0;ievent<50;ievent++) refEvents.push_back(refEvt[ievent]);
   refEvents.resize(0);
   //===============================================================================================================================
   
@@ -307,17 +313,20 @@ int main(int argc, char** argv)
   std::vector<uint64_t> unExDataTC;
   std::vector<uint64_t> unExEmulTC;
   std::vector<uint64_t> elStg1Event;
+  std::vector<uint64_t> TcTp1Events;
+  std::vector<uint64_t> TcTp2Events;
+  std::vector<uint64_t> TcTp3Events;
+
+  TcTp1Events.clear();
+  TcTp2Events.clear();
+  TcTp3Events.clear();
   
   uint64_t minEventDAQ, maxEventDAQ;  
-  //const long double maxEvent = 882454  ; 
-  //const long double maxEvent = 1038510 ;
-  //const long double maxEvent = 6377139 ; 
-  //const long double maxEvent = 1138510 ;
   //const long double maxEvent = 1000000 ;
-  const long double maxEvent = 2557415 ;
-  long double nloopEvent =  100000;
-  // const long double maxEvent = 100  ; //1722870998:24628, 1722871979:31599
-  // long double nloopEvent = 100 ;
+  // const long double maxEvent = 2557415 ;
+  // long double nloopEvent =  100000;
+  const long double maxEvent = 1000  ; //1722870998:24628, 1722871979:31599
+  long double nloopEvent = 1000 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -353,23 +362,22 @@ int main(int argc, char** argv)
     // }
     // continue;
     
-    //std::vector<uint64_t> totEvents;
     for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
       uint64_t ievent = eventList[ievt] ;
       if(econtarray.at(ievent).size()!=6 or hrocarray.at(ievent).size()!=36) continue;
       std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
       if(ievt<100) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
-      bool hasTOT = false;
       for(const auto& hrocit : datalist){
 	const TPGFEDataformat::HalfHgcrocData& hrocdata = hrocit.second ;
 	//if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
 	//if(event<100 and (iecond==1 and ilink==0)){
 	if(ievt<100) std::cout << "ievent: "<< ievent<< "\t data for modid : "<< pck.getModIdFromRocId(uint32_t(hrocit.first)) << ",\t half-roc_id: "<< hrocit.first <<  std::endl;
 	if(ievt<100) hrocdata.print();
-	if(hrocdata.hasTOT()) hasTOT = true;
-	//}
+	if(hrocdata.hasTcTp(1) and (std::find(TcTp1Events.begin(),TcTp1Events.end(),ievent) == TcTp1Events.end())) TcTp1Events.push_back(ievent);
+	if(hrocdata.hasTcTp(2) and (std::find(TcTp2Events.begin(),TcTp2Events.end(),ievent) == TcTp2Events.end())) TcTp2Events.push_back(ievent);
+	if(hrocdata.hasTcTp(3) and (std::find(TcTp3Events.begin(),TcTp3Events.end(),ievent) == TcTp3Events.end())) TcTp3Events.push_back(ievent);
       }
-      //if(hasTOT) totEvents.push_back(ievent);
+
     }
     
     //===============================================================================================================================
@@ -396,7 +404,7 @@ int main(int argc, char** argv)
 
       //bool eventCondn = (event<1000 or event==1560 or event==2232 or event==2584 or event==2968 or event==3992);
       //bool eventCondn = (event<1000);
-      bool eventCondn = (ievt<10);
+      bool eventCondn = (refEvents.size()==0) ? (ievt<10) : (ievt<refEvents.size());
       if( eventCondn or event%100000==0)
 	std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
       
@@ -482,6 +490,11 @@ int main(int argc, char** argv)
 	  uint32_t *elinkemul = new uint32_t[econTPar[moduleId].getNElinks()];
 	  TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(emul_bx_4b, TcRawdata.second, elinkemul);
 	  
+	  // if(TcRawdata.second.isTcTp1() and (std::find(TcTp1Events.begin(),TcTp1Events.end(),event) == TcTp1Events.end())) TcTp1Events.push_back(event);
+	  // if(TcRawdata.second.isTcTp2() and (std::find(TcTp2Events.begin(),TcTp2Events.end(),event) == TcTp2Events.end())) TcTp2Events.push_back(event);
+	  // if(TcRawdata.second.isTcTp3() and (std::find(TcTp3Events.begin(),TcTp3Events.end(),event) == TcTp3Events.end())) TcTp3Events.push_back(event);
+
+	  
 	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];
 	  
 	  TPGBEDataformat::UnpackerOutputStreamPair upemul,up1;
@@ -508,12 +521,12 @@ int main(int argc, char** argv)
 	      if(eventCondn and iecond==0 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, el, vTC1);
 	      if(eventCondn and iecond==1 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
 	      if(eventCondn and iecond==2 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
-	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 10, el, vTC1);
-	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
-	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 5, el, vTC1);
+	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
 	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
-	      //if(eventCondn) vTC1.print();
-	      //if(eventCondn and iecond==0 and ilink==1) up1.print();
+	      if(eventCondn) vTC1.print();
+	      // if(eventCondn) up1.print();
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
 	    if(hasMatched) break;
@@ -587,8 +600,9 @@ int main(int argc, char** argv)
 	  //if(printCondn) modTcdata.second.print();
 	  if(printCondn) TcRawdata.second.print();
 	  if(printCondn) vTC1.print();
-          //if(printCondn) up1.print();
-	  // if(printCondn) upemul.print();
+          if(printCondn) up1.print();
+	  if(printCondn) upemul.print();
+	  if(printCondn) trdata.print();
 	  // 
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if(printCondn) std::cout<<"Elink emul : 0x" << std::hex << std::setfill('0') << std::setw(8) << elinkemul[iel] << std::dec ;
@@ -616,6 +630,18 @@ int main(int argc, char** argv)
     }//event loop
   }//ieloop
   //===============================================================================================================================
+  if(TcTp1Events.size()>0) std::cerr<< "/*TcTp1 events */ uint64_t refEvt["<< TcTp1Events.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp1Events) std::cerr<<totEvt << ", ";
+  if(TcTp1Events.size()>0) std::cerr<< "};" << std::endl;
+
+  if(TcTp2Events.size()>0) std::cerr<< "/*TcTp2 events */ uint64_t refEvt["<< TcTp2Events.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp2Events) std::cerr<<totEvt << ", ";
+  if(TcTp2Events.size()>0) std::cerr<< "};" << std::endl;
+
+  if(TcTp3Events.size()>0) std::cerr<< "/*TcTp3 events */ uint64_t refEvt["<< TcTp3Events.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp3Events) std::cerr<<totEvt << ", ";
+  if(TcTp3Events.size()>0) std::cerr<< "};" << std::endl;
+
   if(nonZeroEvents.size()>0) std::cerr<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
   for(const uint64_t& totEvt : nonZeroEvents) std::cerr<<totEvt << ", ";
   if(nonZeroEvents.size()>0) std::cerr<< "};" << std::endl;
@@ -1065,7 +1091,15 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 	else
 	  ((TH1D *) list->FindObject("hUWord_1"))->Fill( diff );
 	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
-	if(iw>0 and diff!=0 and std::find(elStg1Event.begin(),elStg1Event.end(),event) == elStg1Event.end()) elStg1Event.push_back(event);
+	if(iw>0 and diff!=0 and std::find(elStg1Event.begin(),elStg1Event.end(),event) == elStg1Event.end()) {
+	  elStg1Event.push_back(event);
+	  std::cout << "Error:: iw: " << iw << ", unpkMsTc[iw]: 0x"
+		    << std::hex << std::setfill('0') << std::setw(4) << unpkMsTc[iw] << ", word: 0x" << unpkWords[iw] 
+		    << std::dec << std::setfill(' ')
+		    << ", diff: " << diff
+		    <<", TC energy : " << tcdata.getTcData().at(iw-1).energy() <<", TC address : " << tcdata.getTcData().at(iw-1).address()
+		    << std::endl;
+	}
       }
     }else if (tcdata.size()>7 and tcdata.size()<=14) {
       int diff = 99;
@@ -1087,7 +1121,15 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 	else
 	  ((TH1D *) list->FindObject("hUWord_1"))->Fill( diff );
 	if(iw>0) ((TH1D *) list->FindObject( Form("hUnpkWordDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,iw-1) ))->Fill( diff );
-	if(iw>0 and diff!=0 and std::find(elStg1Event.begin(),elStg1Event.end(),event) == elStg1Event.end()) elStg1Event.push_back(event);
+	if(iw>0 and diff!=0 and std::find(elStg1Event.begin(),elStg1Event.end(),event) == elStg1Event.end()) {
+	  elStg1Event.push_back(event);
+	  std::cout << "Error1:: iw: " << iw << ", unpkMsTc[iw]: 0x"
+		    << std::hex << std::setfill('0') << std::setw(4) << unpkMsTc[iw] << ", word: 0x" << word
+		    << std::dec << std::setfill(' ')
+		    << ", diff: " << diff
+		    <<", TC energy : " << tcdata.getTcData().at(iw-1).energy() <<", TC address : " << tcdata.getTcData().at(iw-1).address()
+		    << std::endl;
+	}
       }
       ;
     }
