@@ -235,14 +235,26 @@ int main(int argc, char** argv)
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(3);
       econTPar[it.first].setSTCType(3);
+      if(relayNumber>=1727111828){ //1727211141
+	econTPar[it.first].setNElinks(2);
+	econTPar[it.first].setSTCType(1);
+      }
     }else if (it.first==lp1_stc4a1){
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(2);
       econTPar[it.first].setSTCType(3);
+      if(relayNumber>=1727111828){ //1727211141
+	econTPar[it.first].setNElinks(2);
+	econTPar[it.first].setSTCType(1);
+      }
     }else if (it.first==lp1_stc4a2){
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(2);
       econTPar[it.first].setSTCType(3);
+      if(relayNumber>=1727111828){ //1727211141
+	econTPar[it.first].setNElinks(2);
+	econTPar[it.first].setSTCType(1);
+      }
     }
     std::cout << "Modtype " << it.first
 	      << ", getOuttype: " << econTPar[it.first].getOutType()
@@ -268,8 +280,8 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   TPGFEReader::ECONDReader econDReader(cfgs);
   econDReader.setTotUp(0);
-  //econDReader.checkEvent(1);
-  //econDReader.showFirstEvents(10);
+  econDReader.checkEvent(1);
+  // econDReader.showFirstEvents(10);
   //===============================================================================================================================
   //Set and Initialize the Emulator
   //===============================================================================================================================
@@ -280,14 +292,15 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Set refernce eventlist
   //===============================================================================================================================
-  // /*Nonzero diff events*/ uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648};
-  // /*Unexpected TC in Data in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
-  // /*Unexpected TC in Emul in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
-  /*Difference in elink and Stage1 output in event*/ uint64_t refEvt[21] = {66235, 151731, 471496, 633065, 873524, 1366513, 1589006, 1623036, 1763515, 1968826, 1984675, 2000515, 2091972, 2165732, 2245408, 2250959, 2259447, 2264639, 2335560, 2390648, 2489154};
+  /*TcTp2 events */ uint64_t refEvt[50] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1809836, 1829961, 1871023, 1932945, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
+  // /*Nonzero diff events*/ uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648, };
+  // /*Unexpect TC in Data in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
+  // /*Unexpect TC in Emul in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
+  // /*Difference in elink and Stage1 output in event*/ uint64_t refEvt[21] = {66235, 151731, 471496, 633065, 873524, 1366513, 1589006, 1623036, 1763515, 1968826, 1984675, 2000515, 2091972, 2165732, 2245408, 2250959, 2259447, 2264639, 2335560, 2390648, 2489154, };
+
   std::vector<uint64_t> refEvents;
-  //for(int ievent=0;ievent<25702;ievent++) refEvents.push_back(refEvt[ievent]);
   //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
-  for(int ievent=0;ievent<21;ievent++) refEvents.push_back(refEvt[ievent]);
+  for(int ievent=0;ievent<50;ievent++) refEvents.push_back(refEvt[ievent]);
   refEvents.resize(0);
   //===============================================================================================================================
   
@@ -309,15 +322,11 @@ int main(int argc, char** argv)
   TcTp3Events.clear();
   
   uint64_t minEventDAQ, maxEventDAQ;  
-  //const long double maxEvent = 882454  ; 
-  //const long double maxEvent = 1038510 ;
-  //const long double maxEvent = 6377139 ; 
-  //const long double maxEvent = 1138510 ;
   //const long double maxEvent = 1000000 ;
-  const long double maxEvent = 2557415 ;
-  long double nloopEvent =  100000;
-  // const long double maxEvent = 100000  ; //1722870998:24628, 1722871979:31599
-  // long double nloopEvent = 100000 ;
+  // const long double maxEvent = 2557415 ;
+  // long double nloopEvent =  100000;
+  const long double maxEvent = 1000  ; //1722870998:24628, 1722871979:31599
+  long double nloopEvent = 1000 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -512,9 +521,9 @@ int main(int argc, char** argv)
 	      if(eventCondn and iecond==0 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, el, vTC1);
 	      if(eventCondn and iecond==1 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
 	      if(eventCondn and iecond==2 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
-	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 10, el, vTC1);
-	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
-	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 5, el, vTC1);
+	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
 	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
 	      if(eventCondn) vTC1.print();
 	      // if(eventCondn) up1.print();

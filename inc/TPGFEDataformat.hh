@@ -65,6 +65,8 @@ namespace TPGFEDataformat{
 		<< "TcTp: " << getTcTp() << ", "
 		<< (isTot()?"TOT = ":"ADC = ") << std::setw(4)
 		<< (isTot()?getTot():getAdc())
+		// << "ADC = " << std::setw(4) << getAdc() <<", "
+		// << ((getTcTp()!=0) ? Form("TOT = %u",getTot()) : "")
 		<< std::endl;
 
     }
@@ -104,8 +106,8 @@ namespace TPGFEDataformat{
     bool hasTcTp(uint16_t tctpval) const {
       for(unsigned i(0);i<NumberOfChannels;i++)
 	if(_data[i].getTcTp()==tctpval) {
-	  std::cout << "ich : " << i ; 
-	  _data[i].print();
+	  // std::cout << "TOT/TOA noted for ich : " << i << std::endl; 
+	  // _data[i].print();
 	  return true;
 	}
       return false;
@@ -138,6 +140,8 @@ namespace TPGFEDataformat{
 		  << " TcTp: " << _data[i].getTcTp() << ", "
 		  << (_data[i].isTot()?"TOT = ":"ADC = ") << std::setw(4)
 		  << (_data[i].isTot()?_data[i].getTot():_data[i].getAdc())
+		  // << "ADC = " << std::setw(4) << _data[i].getAdc() <<", "
+		  // << ((_data[i].getTcTp()!=0) ? Form("TOT = %u",_data[i].getTot()) : "")
 		  << std::endl;
       }    
     }
