@@ -11,9 +11,9 @@
 // Email : Indranil.Das@cern.ch
 // Affiliation : Imperial College, London
 
-//Command to execute : 1. ./compile.sh
-//                     2. ./read_lpGBT.exe $Relay $rname
-//                     3. ./read_lpGBT.exe 1722081291 1722081291
+//Command to execute : 1. ./make
+//                     2. ./read_hgcroc-econd_zs.exe $Relay $run
+
 
 using namespace std;
 
