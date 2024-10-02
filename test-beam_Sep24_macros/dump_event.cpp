@@ -22,7 +22,8 @@ using namespace std;
 void event_dump(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
   const uint64_t *p64(((const uint64_t*)rEvent)+1);
   for(unsigned i(0);i<rEvent->payloadLength();i++){
-    std::cout << "Word " << std::setw(3) << i << " ";
+    std::cout << "EventId : " << std::setw(3) << rEvent->slinkBoe()->eventId() ;
+    std::cout << "\t Word " << std::setw(3) << i << " ";
     std::cout << std::hex << std::setfill('0');
     std::cout << "0x" << std::setw(16) << p64[i] << std::endl;
     std::cout << std::dec << std::setfill(' ');
@@ -164,6 +165,7 @@ int main(int argc, char** argv){
 	boe->print();
 	eoe->print();
 	beh->print();
+	event_dump(rEvent);
       }
       if(nEvents<=2) cout<<"========= End of event : "<< nEvents << "============="<< endl;
       //Increment event counter and reset error state

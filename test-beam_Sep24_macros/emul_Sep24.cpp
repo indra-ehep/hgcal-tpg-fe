@@ -113,17 +113,30 @@ int main(int argc, char** argv)
   
   std::string cfgrocname[2][3][3] = { //nof lpGBTs, nofModules, nofHGCROC per modules
     {
-      {"320MLF3WXIH0019_roc0_e2.yaml", "320MLF3WXIH0019_roc1_e2.yaml", "320MLF3WXIH0019_roc2_e2.yaml"},
-      {"320MLF3WXIH0020_roc0_e1.yaml", "320MLF3WXIH0020_roc1_e1.yaml", "320MLF3WXIH0020_roc2_e1.yaml"},
-      {"320MLF3WXIH0018_roc0_e0.yaml", "320MLF3WXIH0018_roc1_e0.yaml", "320MLF3WXIH0018_roc2_e0.yaml"}
+     {"320MLF3WXIH0019_roc0_e2.yaml", "320MLF3WXIH0019_roc1_e2.yaml", "320MLF3WXIH0019_roc2_e2.yaml"},
+     {"320MLF3WXIH0020_roc0_e1.yaml", "320MLF3WXIH0020_roc1_e1.yaml", "320MLF3WXIH0020_roc2_e1.yaml"},
+     {"320MLF3WXIH0018_roc0_e0.yaml", "320MLF3WXIH0018_roc1_e0.yaml", "320MLF3WXIH0018_roc2_e0.yaml"}
     },
     {
-      {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc2_e2.yaml"},
-      {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
-      {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
+     {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc2_e2.yaml"},
+     {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
+     {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
     }
   };
-  
+
+  // std::string cfgrocname[2][3][3] = { //nof lpGBTs, nofModules, nofHGCROC per modules
+  //   {
+  //    {"320MLF3WXIH0019_roc0_e2.yaml", "320MLF3WXIH0019_roc1_e2.yaml", "320MLF3WXIH0019_roc2_e2.yaml"},
+  //    {"320MLF3WXIH0020_roc0_e1.yaml", "320MLF3WXIH0020_roc1_e1.yaml", "320MLF3WXIH0020_roc2_e1.yaml"},
+  //    {"320MLF3WXIH0018_roc0_e0.yaml", "320MLF3WXIH0018_roc1_e0.yaml", "320MLF3WXIH0018_roc2_e0.yaml"}
+  //   },
+  //   {
+  //    {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc2_e2.yaml"},
+  //    {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
+  //    {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
+  //   }
+  // };
+
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     for(int iecond=0;iecond<3;iecond++){
       uint32_t idx = pck.packModId(zside, sector, ilink, det, iecond, selTC4, module); //we assume same ECONT and ECOND number for a given module
@@ -279,8 +292,8 @@ int main(int argc, char** argv)
   //Set and Initialize the ECOND reader
   //===============================================================================================================================
   TPGFEReader::ECONDReader econDReader(cfgs);
-  econDReader.setTotUp(0);
-  econDReader.checkEvent(1);
+  // econDReader.setTotUp(0);
+  // econDReader.checkEvent(1);
   // econDReader.showFirstEvents(10);
   //===============================================================================================================================
   //Set and Initialize the Emulator
@@ -292,16 +305,23 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Set refernce eventlist
   //===============================================================================================================================
-  /*TcTp2 events */ uint64_t refEvt[50] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1809836, 1829961, 1871023, 1932945, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
+  // /*TcTp2 events */ uint64_t refEvt[50] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1809836, 1829961, 1871023, 1932945, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
   // /*Nonzero diff events*/ uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648, };
   // /*Unexpect TC in Data in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
   // /*Unexpect TC in Emul in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
   // /*Difference in elink and Stage1 output in event*/ uint64_t refEvt[21] = {66235, 151731, 471496, 633065, 873524, 1366513, 1589006, 1623036, 1763515, 1968826, 1984675, 2000515, 2091972, 2165732, 2245408, 2250959, 2259447, 2264639, 2335560, 2390648, 2489154, };
 
+  // /*Nonzero diff events*/ uint64_t refEvt[599] = {501, 1228, 1979, 2178, 2380, 3681, 4379, 4388, 5466, 8940, 8947, 9052, 9150, 10813, 13445, 13813, 14269, 16630, 16706, 17084, 17704, 18150, 18255, 18317, 18895, 21495, 21877, 22730, 22923, 23262, 23752, 24340, 24452, 25429, 26124, 26322, 26570, 29583, 30058, 31233, 32440, 32477, 32846, 32899, 33033, 33355, 33892, 34767, 37255, 37449, 39264, 40088, 40288, 42198, 42355, 43779, 44198, 44846, 45149, 47482, 47827, 48283, 48989, 50258, 50307, 51188, 51867, 52122, 52433, 53122, 53246, 53594, 55754, 55863, 56248, 57255, 59359, 59448, 60112, 60205, 61344, 61817, 61920, 61954, 61998, 62007, 62759, 64261, 69530, 69903, 70944, 71777, 71951, 71962, 72231, 73507, 74296, 74363, 74371, 75623, 76238, 76620, 77216, 77410, 79129, 80132, 80627, 80773, 81230, 82271, 83465, 86179, 86466, 91284, 91508, 92434, 92519, 92762, 93599, 93652, 93813, 95240, 96274, 96971, 100078, 101000, 101567, 102935, 102974, 103251, 103638, 104323, 105362, 105747, 107379, 108193, 109121, 109452, 110169, 112965, 113587, 114239, 116182, 116244, 118269, 119496, 120113, 120173, 122610, 123616, 125292, 126640, 127434, 130092, 130274, 130723, 131459, 132242, 132429, 132452, 133164, 133194, 133369, 133603, 134263, 136255, 136404, 136833, 138315, 138428, 138454, 139678, 140837, 142420, 144039, 144578, 147351, 147996, 148028, 148644, 149259, 149327, 149684, 150533, 151614, 153956, 154429, 154450, 155116, 156033, 156548, 156612, 158696, 161478, 161675, 161933, 163438, 164637, 166176, 166827, 166925, 167621, 167748, 168309, 168467, 168887, 169855, 171068, 172554, 172813, 173705, 174416, 174742, 175530, 177883, 178176, 179676, 180198, 180228, 181490, 182946, 183192, 183301, 183870, 183896, 184711, 185770, 185850, 185876, 186747, 187132, 187854, 188741, 191168, 191601, 192468, 193457, 195624, 195704, 198607, 199148, 200205, 200403, 200596, 201380, 201406, 202761, 204234, 205918, 206319, 209122, 210303, 212292, 212937, 213354, 214575, 214989, 216693, 217454, 218165, 219202, 219535, 220286, 221250, 223128, 223259, 224638, 225720, 225932, 226536, 226654, 227974, 228898, 229216, 229523, 230011, 233745, 233988, 234331, 234410, 235128, 236719, 236766, 238963, 239364, 239522, 239850, 241031, 242335, 244280, 245480, 246189, 247629, 248210, 248438, 248902, 249448, 250259, 250426, 251375, 253417, 253444, 253639, 254308, 254473, 255453, 255539, 255548, 257294, 257396, 258822, 258930, 259392, 260267, 261438, 261905, 264202, 266090, 266339, 266375, 268465, 270534, 272028, 273200, 273343, 273574, 275391, 275557, 275586, 275684, 276466, 276484, 278236, 279523, 280685, 280694, 280761, 281956, 282453, 287568, 288238, 288265, 288474, 288671, 288952, 290171, 293324, 293754, 294123, 302456, 304376, 307535, 308665, 310190, 311004, 311899, 312449, 312885, 312989, 313814, 314962, 315386, 316604, 317961, 318294, 318503, 319656, 319784, 320711, 320986, 326464, 326650, 326713, 327681, 328145, 329127, 331681, 331944, 333993, 334678, 336428, 337060, 338253, 338456, 339257, 339686, 341109, 341165, 342017, 344105, 344339, 344803, 346261, 347128, 347180, 347724, 348755, 350848, 353024, 354049, 354262, 354825, 355068, 357923, 359931, 360062, 360889, 360906, 361197, 361521, 362145, 362156, 362820, 363223, 363859, 363901, 365343, 366179, 367996, 368827, 369290, 371662, 371842, 373486, 375588, 377732, 378566, 379465, 379496, 379506, 380036, 380556, 380675, 381311, 382065, 383543, 386388, 386925, 387775, 388552, 389355, 389500, 390063, 390581, 390696, 392122, 392953, 394361, 395645, 397333, 397545, 398689, 402780, 403039, 404389, 405279, 405973, 406145, 406277, 406863, 407570, 407752, 408287, 408729, 409453, 409685, 411123, 411422, 413127, 414396, 415172, 415372, 416492, 417178, 417436, 419395, 419623, 419979, 420923, 421046, 422401, 424883, 425337, 425660, 425853, 425935, 427105, 429577, 429637, 430696, 431549, 431857, 432358, 433485, 436520, 436630, 437676, 439479, 439974, 442913, 442969, 443218, 446320, 446744, 447255, 447611, 447909, 448422, 448814, 450377, 450818, 452659, 452790, 453222, 453694, 453747, 457125, 457277, 457618, 458773, 458791, 460125, 460826, 464808, 464810, 464846, 465169, 465623, 467478, 467591, 468038, 468130, 470938, 471782, 472300, 473416, 473956, 474238, 474249, 474738, 475435, 476611, 477610, 477805, 480346, 480893, 481754, 482813, 484218, 485041, 487451, 488623, 490151, 490341, 490796, 491044, 491658, 491979, 493966, 494270, 494437, 494695, 495806, 497785, 499102, 499573, 502922, 502997, 503640, 504806, 505895, 506899, 507106, 507239, 507365, 509698, 509713, 510766, 511146, 511186, 512441, 512946, 514361, 514437, 514846, 516025, 516090, 516124, 521430, 521858, 522127, 522489, 523397, 523566, 523916, 524586, 525766, 526835, 527124};
+  // /*Possible corruped events */ uint64_t refEvt[1] = {337371, };
+
+  ///*Nonzero diff events*/ uint64_t refEvt[392] = {2178, 2380, 4379, 4388, 5466, 8940, 8947, 9052, 10813, 13445, 13813, 16706, 17084, 17704, 18255, 18895, 21877, 22923, 24340, 24452, 26322, 26570, 29583, 30058, 31233, 32846, 32899, 33033, 33892, 34767, 37255, 37449, 39264, 40288, 42198, 42355, 43779, 45149, 47482, 48283, 48989, 50258, 50307, 51188, 51867, 52433, 53246, 55754, 55863, 56248, 57255, 59359, 59448, 60205, 61344, 61954, 61998, 64261, 69530, 69903, 70944, 71777, 71951, 71962, 73507, 74296, 74363, 75623, 76620, 77410, 80132, 80627, 80773, 86179, 91284, 91508, 92434, 92762, 93652, 93813, 95240, 96971, 100078, 102935, 103251, 103638, 104323, 105362, 107379, 109121, 109452, 110169, 114239, 116244, 120113, 120173, 125292, 127434, 130092, 130274, 130723, 131459, 132242, 132429, 132452, 133164, 133194, 133369, 133603, 134263, 136255, 136404, 138428, 139678, 140837, 142420, 144039, 147351, 147996, 148028, 149684, 150533, 151614, 153956, 154429, 154450, 156612, 161478, 161675, 161933, 163438, 164637, 166176, 166827, 167621, 167748, 168309, 168887, 169855, 172554, 173705, 174416, 174742, 177883, 180228, 181490, 182946, 183896, 184711, 185876, 186747, 187854, 188741, 192468, 195704, 198607, 199148, 200205, 200403, 200596, 201406, 202761, 204234, 206319, 209122, 210303, 212292, 212937, 213354, 214575, 216693, 218165, 219202, 219535, 223128, 223259, 224638, 225720, 225932, 226536, 226654, 227974, 229216, 229523, 233745, 233988, 234410, 236719, 236766, 238963, 239850, 241031, 242335, 247629, 248210, 248438, 248902, 249448, 250259, 250426, 251375, 254308, 254473, 255548, 257396, 258822, 258930, 261438, 261905, 264202, 266090, 268465, 272028, 273200, 273343, 273574, 275557, 276466, 276484, 278236, 279523, 280685, 280694, 281956, 287568, 288265, 288474, 290171, 293324, 302456, 304376, 308665, 310190, 311004, 312989, 313814, 316604, 317961, 318503, 319784, 320711, 320986, 326464, 326650, 326713, 327681, 329127, 331681, 334678, 336428, 338253, 338456, 339257, 341109, 342017, 346261, 347128, 347724, 348755, 353024, 354049, 355068, 357923, 360906, 361197, 361521, 362820, 363859, 363901, 366179, 367996, 369290, 371662, 371842, 373486, 378566, 379465, 379496, 379506, 380675, 381311, 386388, 387775, 388552, 389355, 390063, 390581, 390696, 392953, 394361, 395645, 397333, 397545, 398689, 402780, 403039, 404389, 406145, 406863, 407752, 408287, 408729, 411123, 411422, 413127, 415172, 416492, 417178, 419395, 419623, 420923, 421046, 424883, 425337, 425660, 425853, 427105, 429577, 429637, 431857, 436520, 439479, 439974, 442913, 443218, 447611, 447909, 448422, 448814, 452790, 453222, 457125, 457277, 457618, 458791, 460125, 460826, 464846, 465169, 470938, 471782, 473416, 473956, 474238, 474249, 474738, 475435, 477610, 477805, 480346, 480893, 481754, 482813, 484218, 485041, 487451, 490341, 491044, 491658, 491979, 493966, 494270, 494437, 494695, 497785, 499102, 499573, 502922, 502997, 503640, 504806, 505895, 506899, 507239, 507365, 509713, 510766, 511146, 511186, 512441, 514361, 514437, 514846, 516025, 516090, 516124, 521858, 522127, 523566, 523916, 524586, 527124};
+
+  /*Nonzero diff events*/ uint64_t refEvt[63] = {2380, 8947, 17084, 29583, 31233, 37255, 37449, 43779, 45149, 47482, 53246, 61998, 69903, 107379, 130274, 133164, 154429, 164637, 169855, 174742, 186747, 188741, 195704, 200596, 216693, 226654, 248438, 254473, 266090, 268465, 272028, 288265, 304376, 308665, 310190, 312989, 313814, 319784, 326650, 347128, 363859, 369290, 381311, 388552, 402780, 421046, 448814, 452790, 453222, 457618, 458791, 460826, 471782, 473956, 474238, 475435, 477610, 480893, 504806, 512441, 516025, 521858, 523916};
+  
   std::vector<uint64_t> refEvents;
   //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
-  for(int ievent=0;ievent<50;ievent++) refEvents.push_back(refEvt[ievent]);
-  refEvents.resize(0);
+  for(int ievent=0;ievent<63;ievent++) refEvents.push_back(refEvt[ievent]);
+  //refEvents.resize(0);
   //===============================================================================================================================
   
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>> hrocarray; //event,rocId
@@ -309,21 +329,21 @@ int main(int argc, char** argv)
   std::vector<uint64_t> eventList;
   std::vector<uint64_t> nonZeroEvents;
   std::vector<uint64_t> shiftedBxEvent;
-  std::vector<uint64_t> corrruptEvent;
+  std::vector<uint64_t> corruptEvent;
   std::vector<uint64_t> unExDataTC;
   std::vector<uint64_t> unExEmulTC;
   std::vector<uint64_t> elStg1Event;
   std::vector<uint64_t> TcTp1Events;
   std::vector<uint64_t> TcTp2Events;
   std::vector<uint64_t> TcTp3Events;
-
-  TcTp1Events.clear();
-  TcTp2Events.clear();
-  TcTp3Events.clear();
+  std::vector<uint64_t> TcTp1TrigEvents;
+  std::vector<uint64_t> TcTp2TrigEvents;
+  std::vector<uint64_t> TcTp3TrigEvents;
   
   uint64_t minEventDAQ, maxEventDAQ;  
   //const long double maxEvent = 1000000 ;
-  // const long double maxEvent = 2557415 ;
+  // const long double maxEvent = 2557415 ;     //relay:1726581356
+  //const long double maxEvent = 528447 ;         //relay:1727211141
   // long double nloopEvent =  100000;
   const long double maxEvent = 1000  ; //1722870998:24628, 1722871979:31599
   long double nloopEvent = 1000 ;
@@ -344,6 +364,7 @@ int main(int argc, char** argv)
     econtarray.clear();
     
     econTReader.setNofCAFESep(11);
+    if(relayNumber>=1727211141) econTReader.setNofCAFESep(14);
     econTReader.init(relayNumber,runNumber,0);
     std::cout<<"TRIG Before Link "<<trig_linkNumber<<", size : " << econtarray.size() <<std::endl;
     econTReader.getEvents(refEvents, minEventDAQ, maxEventDAQ, econtarray);
@@ -366,13 +387,13 @@ int main(int argc, char** argv)
       uint64_t ievent = eventList[ievt] ;
       if(econtarray.at(ievent).size()!=6 or hrocarray.at(ievent).size()!=36) continue;
       std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
-      if(ievt<100) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
+      if(ievt<10) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
       for(const auto& hrocit : datalist){
 	const TPGFEDataformat::HalfHgcrocData& hrocdata = hrocit.second ;
 	//if(testmodid==pck.getModIdFromRocId(uint32_t(hrocit.first))){
 	//if(event<100 and (iecond==1 and ilink==0)){
-	if(ievt<100) std::cout << "ievent: "<< ievent<< "\t data for modid : "<< pck.getModIdFromRocId(uint32_t(hrocit.first)) << ",\t half-roc_id: "<< hrocit.first <<  std::endl;
-	if(ievt<100) hrocdata.print();
+	if(ievt<10) std::cout << "ievent: "<< ievent<< "\t data for modid : "<< pck.getModIdFromRocId(uint32_t(hrocit.first)) << ",\t half-roc_id: "<< hrocit.first <<  std::endl;
+	if(ievt<10) hrocdata.print();
 	if(hrocdata.hasTcTp(1) and (std::find(TcTp1Events.begin(),TcTp1Events.end(),ievent) == TcTp1Events.end())) TcTp1Events.push_back(ievent);
 	if(hrocdata.hasTcTp(2) and (std::find(TcTp2Events.begin(),TcTp2Events.end(),ievent) == TcTp2Events.end())) TcTp2Events.push_back(ievent);
 	if(hrocdata.hasTcTp(3) and (std::find(TcTp3Events.begin(),TcTp3Events.end(),ievent) == TcTp3Events.end())) TcTp3Events.push_back(ievent);
@@ -397,7 +418,7 @@ int main(int argc, char** argv)
       
       //first check that both econd and econt data has the same eventid otherwise skip the event
       if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=6 or hrocarray.at(event).size()!=36) {
-	if(std::find(corrruptEvent.begin(),corrruptEvent.end(),event) == corrruptEvent.end()) corrruptEvent.push_back(event);
+	if(std::find(corruptEvent.begin(),corruptEvent.end(),event) == corruptEvent.end()) corruptEvent.push_back(event);
 	continue;
       }
       //if(econtarray.find(event) == econtarray.end()) break;
@@ -490,10 +511,9 @@ int main(int argc, char** argv)
 	  uint32_t *elinkemul = new uint32_t[econTPar[moduleId].getNElinks()];
 	  TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(emul_bx_4b, TcRawdata.second, elinkemul);
 	  
-	  // if(TcRawdata.second.isTcTp1() and (std::find(TcTp1Events.begin(),TcTp1Events.end(),event) == TcTp1Events.end())) TcTp1Events.push_back(event);
-	  // if(TcRawdata.second.isTcTp2() and (std::find(TcTp2Events.begin(),TcTp2Events.end(),event) == TcTp2Events.end())) TcTp2Events.push_back(event);
-	  // if(TcRawdata.second.isTcTp3() and (std::find(TcTp3Events.begin(),TcTp3Events.end(),event) == TcTp3Events.end())) TcTp3Events.push_back(event);
-
+	  if(TcRawdata.second.isTcTp1() and (std::find(TcTp1TrigEvents.begin(),TcTp1TrigEvents.end(),event) == TcTp1TrigEvents.end())) TcTp1TrigEvents.push_back(event);
+	  if(TcRawdata.second.isTcTp2() and (std::find(TcTp2TrigEvents.begin(),TcTp2TrigEvents.end(),event) == TcTp2TrigEvents.end())) TcTp2TrigEvents.push_back(event);
+	  if(TcRawdata.second.isTcTp3() and (std::find(TcTp3TrigEvents.begin(),TcTp3TrigEvents.end(),event) == TcTp3TrigEvents.end())) TcTp3TrigEvents.push_back(event);
 	  
 	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];
 	  
@@ -521,9 +541,15 @@ int main(int argc, char** argv)
 	      if(eventCondn and iecond==0 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, el, vTC1);
 	      if(eventCondn and iecond==1 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
 	      if(eventCondn and iecond==2 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
-	      if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
-	      if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
-	      if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+	      if(relayNumber>=1727111828){
+		if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+		if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+		if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
+	      }else{
+		if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 10, el, vTC1);
+		if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+		if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
+	      }
 	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
 	      if(eventCondn) vTC1.print();
 	      // if(eventCondn) up1.print();
@@ -586,8 +612,8 @@ int main(int argc, char** argv)
 	  bool isLargeDiff = false;
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and hasTcTp1==false) isLargeDiff = true;
+	    //if((eldata[iel]-elinkemul[iel]) != 0) isLargeDiff = true;
 	  }
-	  //isLargeDiff = false;
 	  bool printCondn = (eventCondn or isLargeDiff);
 	  //bool printCondn = isLargeDiff;
 	  if(isLargeDiff)
@@ -600,9 +626,9 @@ int main(int argc, char** argv)
 	  //if(printCondn) modTcdata.second.print();
 	  if(printCondn) TcRawdata.second.print();
 	  if(printCondn) vTC1.print();
-          if(printCondn) up1.print();
-	  if(printCondn) upemul.print();
-	  if(printCondn) trdata.print();
+          // if(printCondn) up1.print();
+	  // if(printCondn) upemul.print();
+	  // if(printCondn) trdata.print();
 	  // 
 	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
 	    if(printCondn) std::cout<<"Elink emul : 0x" << std::hex << std::setfill('0') << std::setw(8) << elinkemul[iel] << std::dec ;
@@ -642,6 +668,18 @@ int main(int argc, char** argv)
   for(const uint64_t& totEvt : TcTp3Events) std::cerr<<totEvt << ", ";
   if(TcTp3Events.size()>0) std::cerr<< "};" << std::endl;
 
+  if(TcTp1TrigEvents.size()>0) std::cerr<< "/*TcTp1 Trig events */ uint64_t refEvt["<< TcTp1TrigEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp1TrigEvents) std::cerr<<totEvt << ", ";
+  if(TcTp1TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+
+  if(TcTp2TrigEvents.size()>0) std::cerr<< "/*TcTp2 Trig events */ uint64_t refEvt["<< TcTp2TrigEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp2TrigEvents) std::cerr<<totEvt << ", ";
+  if(TcTp2TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+
+  if(TcTp3TrigEvents.size()>0) std::cerr<< "/*TcTp3 Trig events */ uint64_t refEvt["<< TcTp3TrigEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp3TrigEvents) std::cerr<<totEvt << ", ";
+  if(TcTp3TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+
   if(nonZeroEvents.size()>0) std::cerr<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
   for(const uint64_t& totEvt : nonZeroEvents) std::cerr<<totEvt << ", ";
   if(nonZeroEvents.size()>0) std::cerr<< "};" << std::endl;
@@ -650,9 +688,9 @@ int main(int argc, char** argv)
   for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
   if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
 
-  if(corrruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corrruptEvent.size() <<"] = {";
-  for(const uint64_t& totEvt : corrruptEvent) std::cerr<<totEvt << ", ";
-  if(corrruptEvent.size()>0) std::cerr<< "};" << std::endl;
+  if(corruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corruptEvent.size() <<"] = {";
+  for(const uint64_t& totEvt : corruptEvent) std::cerr<<totEvt << ", ";
+  if(corruptEvent.size()>0) std::cerr<< "};" << std::endl;
 
   if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
   for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
@@ -692,6 +730,16 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hElinkDiff_1->GetYaxis()->SetTitle("Entries");
   hElinkDiff_1->SetDirectory(dir_diff);
 
+  TH1D *hElinkDiff_2 = new TH1D("hElinkDiff_2", Form("Elink diff for Relay: %u, for tctp case : 2",relay), 1000, -10., 10.);
+  hElinkDiff_2->GetXaxis()->SetTitle("Difference in (ECONT - Emulator)");
+  hElinkDiff_2->GetYaxis()->SetTitle("Entries");
+  hElinkDiff_2->SetDirectory(dir_diff);
+
+  TH1D *hElinkDiff_3 = new TH1D("hElinkDiff_3", Form("Elink diff for Relay: %u, for tctp case : 3",relay), 1000, -10., 10.);
+  hElinkDiff_3->GetXaxis()->SetTitle("Difference in (ECONT - Emulator)");
+  hElinkDiff_3->GetYaxis()->SetTitle("Entries");
+  hElinkDiff_3->SetDirectory(dir_diff);
+  
   TH1D *hUWord = new TH1D("hUWord", Form("Unpacker word diff for Relay: %u",relay), 1000, -10., 10.);
   hUWord->GetXaxis()->SetTitle("Difference in (ECONT - Emulator)");
   hUWord->GetYaxis()->SetTitle("Entries");
@@ -707,12 +755,12 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hUWord_1->GetYaxis()->SetTitle("Entries");
   hUWord_1->SetDirectory(dir_diff);
 
-  TH1D *hElDiff[2][2][3]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT
-  TH1D *hUnpkWordDiff[2][2][3][11]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT 8 words max
-  TH1D *hTCEDiff[2][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC energies 
-  TH1D *hTCADiff[2][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC addresses
+  TH1D *hElDiff[4][2][3]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT
+  TH1D *hUnpkWordDiff[4][2][3][11]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT 8 words max
+  TH1D *hTCEDiff[4][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC energies 
+  TH1D *hTCADiff[4][2][3][10]; //2 modes(tctp==any or 1), 2 lpGBTs, 3 modules in each lpGBT, 8 TC addresses
   
-  for(int imode=0;imode<2;imode++)
+  for(int imode=0;imode<=3;imode++)
     for(int ilp=0;ilp<2;ilp++)
       for(int imdl=0;imdl<3;imdl++){
 	//compressed elinks
@@ -728,7 +776,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
       }//imdl loop
   
   
-  for(int imode=0;imode<2;imode++)
+  for(int imode=0;imode<=3;imode++)
     for(int ilp=0;ilp<2;ilp++)
       for(int imdl=0;imdl<3;imdl++)
 	for(int itc=0;itc<10;itc++){
@@ -758,7 +806,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
 	}//TC/STC loop
       
 
-  for(int imode=0;imode<2;imode++)
+  for(int imode=0;imode<=3;imode++)
     for(int ilp=0;ilp<2;ilp++)
       for(int imdl=0;imdl<3;imdl++)
 	for(int iw=0;iw<11;iw++){
@@ -904,7 +952,15 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hSTCUnExTCEmul->GetXaxis()->SetTitle("unexpected TC");
   hSTCUnExTCEmul->GetYaxis()->SetTitle("module");
   hSTCUnExTCEmul->SetDirectory(dir_diff);
-  
+
+  const char *cutnames[5] = {"", "TcTp==1", "TcTp==2", "TcTp==3", ""};
+  TH1D *hTOTCounts = new TH1D("hTOTCounts", Form("TOT counts in trig data for relay : %u",relay), 5, -0.5, 4.5);
+  hTOTCounts->GetYaxis()->SetTitle("Entries");
+  for (int ibin=1;ibin<hTOTCounts->GetNbinsX();ibin++){
+   hTOTCounts->GetXaxis()->SetBinLabel(ibin, cutnames[ibin-1]);
+  }
+  hTOTCounts->SetDirectory(dir_diff);
+
 }
 
 void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uint32_t relayNumber, uint64_t event, uint16_t inputbxId,
@@ -954,7 +1010,11 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
     }
   };
 
-  int imode = (tcemul.isTcTp1()) ? 1 : 0 ;
+  int imode = 0;
+  if(tcemul.isTcTp1()) imode = 1;
+  if(tcemul.isTcTp2()) imode = 2;
+  if(tcemul.isTcTp3()) imode = 3;
+
   TList *list = (TList *)dir_diff->GetList();
   
   uint16_t bxIdmod8 = (inputbxId==3564) ? 0xf : (inputbxId%8);
@@ -973,10 +1033,11 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
     bool hasDiffData = false;
     for(uint32_t iel=0;iel<nelinks;iel++){
       ((TH1D *) list->FindObject("hElinkDiff"))->Fill( (eldata[iel] - elemul[iel]) );
-      if(imode==0)
-	((TH1D *) list->FindObject("hElinkDiff_0"))->Fill( (eldata[iel] - elemul[iel]) );
-      else
-	((TH1D *) list->FindObject("hElinkDiff_1"))->Fill( (eldata[iel] - elemul[iel]) );
+      if(imode==0) ((TH1D *) list->FindObject("hElinkDiff_0"))->Fill( (eldata[iel] - elemul[iel]) );
+      if(imode==1) ((TH1D *) list->FindObject("hElinkDiff_1"))->Fill( (eldata[iel] - elemul[iel]) );
+      if(imode==2) ((TH1D *) list->FindObject("hElinkDiff_2"))->Fill( (eldata[iel] - elemul[iel]) );
+      if(imode==3) ((TH1D *) list->FindObject("hElinkDiff_3"))->Fill( (eldata[iel] - elemul[iel]) );
+	
       ((TH1D *) list->FindObject(Form("hElDiff_%d_%d_%d",imode,ilp,imdl)))->Fill( (eldata[iel] - elemul[iel]) );
       if( ((eldata[iel] - elemul[iel]) != 0) and imode==0) hasDiff = true;
       emullink = (iel==0) ? (elemul[iel] & 0x0fffffff) : elemul[iel] ;
@@ -987,11 +1048,11 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
     if(hasDiff) ((TH2D *) list->FindObject("hNZModules"))->Fill( ilp, imdl );
     if(hasDiffData) {
       ((TH2D *) list->FindObject("hNZDataModules"))->Fill( ilp, imdl );
-      if(std::find(unExDataTC.begin(),unExDataTC.end(),event) == unExDataTC.end()) unExDataTC.push_back(event);
+      if(std::find(unExDataTC.begin(),unExDataTC.end(),event) == unExDataTC.end() and relayNumber==1726581356) unExDataTC.push_back(event);
     }
     if(hasDiffEmul) {
       ((TH2D *) list->FindObject("hNZEmulModules"))->Fill( ilp, imdl );
-      if(std::find(unExEmulTC.begin(),unExEmulTC.end(),event) == unExEmulTC.end()) unExEmulTC.push_back(event);
+      if(std::find(unExEmulTC.begin(),unExEmulTC.end(),event) == unExEmulTC.end() and relayNumber==1726581356) unExEmulTC.push_back(event);
     }
     
     if(imode==0 and imdl==0 and ilp==0){
@@ -1008,6 +1069,10 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
       ((TH1D *) list->FindObject(Form("hTCEDiff_%d_%d_%d_%d",imodeloc,ilp,imdl,itc)))->Fill( (tcdata.getTcData().at(itc).energy() - tcemul.getTcData().at(itc).energy()) );
       ((TH1D *) list->FindObject(Form("hTCADiff_%d_%d_%d_%d",imodeloc,ilp,imdl,itc)))->Fill( (tcdata.getTcData().at(itc).address() - tcemul.getTcData().at(itc).address()) );
 
+      if(tcemul.getTcData().at(itc).isTcTp1()) ((TH1D *) list->FindObject("hTOTCounts"))->Fill(1);
+      if(tcemul.getTcData().at(itc).isTcTp2()) ((TH1D *) list->FindObject("hTOTCounts"))->Fill(2);
+      if(tcemul.getTcData().at(itc).isTcTp3()) ((TH1D *) list->FindObject("hTOTCounts"))->Fill(3);
+      
       uint32_t ideal_stc = 4*itc + IdealA[ilp][imdl][itc];
       uint32_t data_stc = 4*itc + tcdata.getTcData().at(itc).address();
       uint32_t emul_stc = 4*itc + tcemul.getTcData().at(itc).address();
