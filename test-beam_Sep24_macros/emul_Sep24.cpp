@@ -85,6 +85,7 @@ int main(int argc, char** argv)
 		     TPGFEDataformat::TcRawDataPacket&, TPGFEDataformat::TcRawDataPacket&, const uint32_t *, const uint32_t *,
 		     TPGBEDataformat::UnpackerOutputStreamPair&, TPGBEDataformat::UnpackerOutputStreamPair&,
 		     std::vector<uint64_t>&, std::vector<uint64_t>&, std::vector<uint64_t>&);
+		     //std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>&);
   
   TFile *fout = new TFile(Form("Diff_Relay-%u.root",relayNumber), "recreate");
   TDirectory *dir_diff = fout->mkdir("diff_plots");
@@ -563,6 +564,7 @@ int main(int argc, char** argv)
 	    econt_slink_bx = trdata.getSlinkBx();
 	    FillHistogram(false, false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, up1, upemul,
 			  unExEmulTC, unExDataTC, elStg1Event);
+			  //hrocarray);
 	    delete []elinkemul;
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Skipping event: " << event <<std::endl<<std::endl<<std::endl;
 	    std::cout << "Skip Event: "<< event
@@ -625,7 +627,7 @@ int main(int argc, char** argv)
 	  //   if(printCondn) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
 	  //   }	    
 	  FillHistogram(true, isLargeDiff, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, up1, upemul,
-			unExEmulTC, unExDataTC, elStg1Event);	  
+			unExEmulTC, unExDataTC, elStg1Event);//, hrocarray);	  
 	  delete []elinkemul;
 	  // delete []unpkMsTc;
 	}//econd loop
@@ -957,6 +959,7 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 		   const uint32_t *unpkWords, const uint32_t *unpkWords1,
 		   TPGBEDataformat::UnpackerOutputStreamPair& updata, TPGBEDataformat::UnpackerOutputStreamPair& upemul,
 		   std::vector<uint64_t>& unExEmulTC, std::vector<uint64_t>& unExDataTC, std::vector<uint64_t>& elStg1Event){
+  //std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>& hrocarray){
   
   uint32_t IdealE[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
     {
@@ -1003,7 +1006,13 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
   if(tcemul.isTcTp3()) imode = 3;
 
   TList *list = (TList *)dir_diff->GetList();
-  
+
+  // std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> hrocvec =  hrocarray.at(event);	  
+  // for(const auto& data : hrocvec){
+  //   const TPGFEDataformat::HalfHgcrocData& hrocdata = data.second ;
+  //   if(hrocdata.hasTcTp(1) or hrocdata.hasTcTp(12 or hrocdata.hasTcTp(3)) ((TH1D *) list->FindObject("hTOT"))->Fill( hrocdata.getTot() );
+  // }
+
   uint16_t bxIdmod8 = (inputbxId==3564) ? 0xf : (inputbxId%8);
   if(imdl==0 and ilp==0){
     ((TH1D *) list->FindObject("hSlinkBx8All"))->Fill( bxIdmod8 );
