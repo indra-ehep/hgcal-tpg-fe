@@ -253,8 +253,9 @@ int main(int argc, char** argv){
 	  uint32_t tctp_i = (p32[i] >> 30) & 0x3 ;
 	  uint32_t adcseg_tctp01_i = (p32[i] >> 10) & 0xfffff ;
 	  uint32_t adcseg_tctp23_i = (p32[i] >> 20) & 0x3ff ;
-	  uint32_t diff = (tctp_i==tctp_r[i] and (tctp_i==0 or tctp_i==1)) ? (adcseg_tctp01_i-adcseg_tctp01_r[i]) :  (adcseg_tctp23_i-adcseg_tctp23_r[i]) ;
-	  if((diff != 0) and (std::find(nonZeroEvents.begin(),nonZeroEvents.end(),rEvent->slinkBoe()->eventId()) == nonZeroEvents.end())) nonZeroEvents.push_back(rEvent->slinkBoe()->eventId());
+	  uint32_t diff = ((tctp_r[i]==0 or tctp_r[i]==1) and (tctp_i==0 or tctp_i==1)) ? (adcseg_tctp01_i-adcseg_tctp01_r[i]) :  (adcseg_tctp23_i-adcseg_tctp23_r[i]) ;
+	  //if((diff != 0) and (std::find(nonZeroEvents.begin(),nonZeroEvents.end(),rEvent->slinkBoe()->eventId()) == nonZeroEvents.end())) nonZeroEvents.push_back(rEvent->slinkBoe()->eventId());
+	  if(diff != 0) nonZeroEvents.push_back(rEvent->slinkBoe()->eventId());
 	}
       }//word loop
       

@@ -322,7 +322,7 @@ int main(int argc, char** argv)
   std::vector<uint64_t> refEvents;
   //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
   for(int ievent=0;ievent<50;ievent++) refEvents.push_back(refEvt[ievent]);
-  refEvents.resize(0);
+  //refEvents.resize(0);
   //===============================================================================================================================
   
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>> hrocarray; //event,rocId
