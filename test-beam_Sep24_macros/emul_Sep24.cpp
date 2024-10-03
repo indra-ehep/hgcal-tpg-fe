@@ -279,7 +279,23 @@ int main(int argc, char** argv)
     econTPar[it.first].print();
   }//econt loop
   //===============================================================================================================================
-  
+
+  //===============================================================================================================================
+  //Modify the HGCROC parameters for special cases
+  //===============================================================================================================================
+  // std::map<uint64_t,TPGFEConfiguration::ConfigCh>& hrocchcfg =  cfgs.getChPara();
+  link = 1; econt = 0; uint32_t roc = 2, hroc = 0;
+  uint32_t rocid_0 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, roc, hroc);  
+  std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& hroccfg =  cfgs.getRocPara();
+  for(auto const& hroc : hroccfg){
+    if(hroc.first == rocid_0) {
+      hroccfg[hroc.first].setTotP(2, 13);
+      hroccfg[hroc.first].setTotP(3, 0);
+      hroccfg[hroc.first].setTotTH(2, 107);
+    }
+  }
+  // ===============================================================================================================================
+
   // ===============================================================================================================================
   // Set and Initialize the ECONT reader
   // ===============================================================================================================================

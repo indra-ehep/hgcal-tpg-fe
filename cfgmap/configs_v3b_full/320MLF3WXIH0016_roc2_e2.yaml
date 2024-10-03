@@ -9,11 +9,11 @@ DigitalHalf:
     MultFactor: 14
     Tot_P0: 19
     Tot_P1: 33
-    Tot_P2: 13
-    Tot_P3: 0
+    Tot_P2: 20
+    Tot_P3: 20
     Tot_TH0: 117
     Tot_TH1: 106
-    Tot_TH2: 107
+    Tot_TH2: 100
     Tot_TH3: 100
   1:
     Adc_TH: 5
