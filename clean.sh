@@ -6,6 +6,7 @@ do
     cd $dir
     rm *#
     rm *~
+    rm *.d *.pcm *.so
     #clear
     cd $curdir
 done

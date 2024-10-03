@@ -1,3 +1,9 @@
+/**********************************************************************
+ Created on : 02/10/2024
+ Purpose    : Validate the ADC values in each event of fixed pattern run
+ Author     : Indranil Das, Imperial
+ Email      : indranil.das@cern.ch | indra.ehep@gmail.com
+**********************************************************************/
 #include <iostream>
 
 #include "TFileHandlerLocal.h"
@@ -26,6 +32,31 @@ void event_dump(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
     std::cout << "\t Word " << std::setw(3) << i << " ";
     std::cout << std::hex << std::setfill('0');
     std::cout << "0x" << std::setw(16) << p64[i] << std::endl;
+    std::cout << std::dec << std::setfill(' ');
+  }
+  std::cout << std::endl;
+}
+
+void event_dump32(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
+  const uint32_t *p32(((const uint32_t*)rEvent)+2);
+  for(unsigned i(0);i<2*rEvent->payloadLength();i+=2){
+    std::cout << "EventId : " << std::setw(3) << rEvent->slinkBoe()->eventId() ;
+    std::cout << "\t Word " << std::setw(3) << i/2 << " ";
+    std::cout << std::hex << std::setfill('0');
+    std::cout << "MSB: 0x" << std::setw(8) << p32[i+1] ; 
+    std::cout << ", LSB: 0x" << std::setw(8) << p32[i] << std::endl;
+    std::cout << std::dec << std::setfill(' ');
+  }
+  std::cout << std::endl;
+}
+
+void event_dump32s(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
+  const uint32_t *p32(((const uint32_t*)rEvent)+2);
+  for(unsigned i(0);i<2*rEvent->payloadLength();i++){
+    std::cout << "EventId : " << std::setw(3) << rEvent->slinkBoe()->eventId() ;
+    std::cout << "\t Word " << std::setw(3) << i << " ";
+    std::cout << std::hex << std::setfill('0');
+    std::cout << "0x" << std::setw(8) << p32[i] << std::endl;
     std::cout << std::dec << std::setfill(' ');
   }
   std::cout << std::endl;
@@ -101,7 +132,24 @@ int main(int argc, char** argv){
     std::cerr << "Link number "<< argv[3] <<"is out of bound (use: 0 or 1)" << std::endl;
     return false;
   }
-
+  
+  uint32_t wordrange32[7][2] = {{0, 9}, {242, 247}, {480, 485}, {718, 725}, {958, 963}, {1196, 1201}, {1434, 1439}};
+  uint32_t wordlist32[60] = {
+     46,   49,   86,   87,  124,  127,  164,  165,  202,  205,
+    284,  287,  324,  325,  362,  365,  402,  403,  440,  443,
+    522,  525,  562,  563,  600,  203,  640,  641,  678,  681,
+    762,  765,  802,  803,  840,  843,  880,  881,  918,  921,
+   1000, 1003, 1040, 1041, 1078, 1081, 1118, 1119, 1156, 1159,
+   1238, 1241, 1278, 1279, 1316, 1319, 1356, 1357, 1394, 1397
+  };
+  std::vector<uint32_t> skipWords;
+  for(int ilpos=0;ilpos<60;ilpos++) skipWords.push_back(wordlist32[ilpos]);
+  for(int irg=0;irg<7;irg++)
+    for(int iwpos=wordrange32[irg][0];iwpos<=wordrange32[irg][1];iwpos++)
+      skipWords.push_back(iwpos);
+  std::sort(skipWords.begin(), skipWords.end());
+  // for(auto iw : skipWords) std::cout <<"word to be skipped : " << iw << std::endl;
+  
   //Create the file reader
   Hgcal10gLinkReceiver::FileReader _fileReader;
 
@@ -118,7 +166,13 @@ int main(int argc, char** argv){
   uint64_t nEvents = 0;    
   //Keep a record of status of last 100 events
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
-
+  const uint32_t maxWord = 1440;
+  uint32_t refWords32[maxWord];
+  uint32_t tctp_r[maxWord];
+  uint32_t adcseg_tctp01_r[maxWord];
+  uint32_t adcseg_tctp23_r[maxWord];
+  std::vector<uint64_t> nonZeroEvents;
+  
   //Use the fileReader to read the records
   while(_fileReader.read(r)) {
     //Check the state of the record and print the record accordingly
@@ -158,7 +212,7 @@ int main(int argc, char** argv){
       // 	std::cout <<"=========================================================="<< std::endl;
       // 	//event_dump(rEvent);
       // }
-
+      
       if (nEvents < 2 ) {
 	std::cout <<"Event: " << boe->eventId() << std::endl;
 	rEvent->RecordHeader::print();
@@ -166,16 +220,60 @@ int main(int argc, char** argv){
 	eoe->print();
 	beh->print();
 	event_dump(rEvent);
+	event_dump32(rEvent);
+	event_dump32s(rEvent);
       }
       if(nEvents<=2) cout<<"========= End of event : "<< nEvents << "============="<< endl;
       //Increment event counter and reset error state
-      nEvents++;      
+
+      const uint32_t *p32(((const uint32_t*)rEvent)+2);
+      
+      if(rEvent->slinkBoe()->eventId()==1){
+	if(maxWord<(2*rEvent->payloadLength())) {
+	  std::cerr << "The payload dimension " << (2*rEvent->payloadLength()) << " words is more than maximum allowed dimension, i.e. " << maxWord <<" words." << std::endl;
+	  _fileReader.close();
+	  if(!r) delete r;
+	  return -1;	  						    
+	}
+	for(unsigned i(0);i<2*rEvent->payloadLength();i++) {
+	  refWords32[i] = p32[i];
+	  tctp_r[i] = (refWords32[i] >> 30) & 0x3 ;
+	  adcseg_tctp01_r[i] = (refWords32[i] >> 10) & 0xfffff ;
+	  adcseg_tctp23_r[i] = (refWords32[i] >> 20) & 0x3ff ;
+	}
+      }
+      
+      for(unsigned i(0);i<2*rEvent->payloadLength();i++){
+	if(std::find(skipWords.begin(),skipWords.end(),i) == skipWords.end()){
+	  // std::cout << "EventId : " << std::setw(3) << rEvent->slinkBoe()->eventId() ;
+	  // std::cout << "\t Word " << std::setw(3) << i << " ";
+	  // std::cout << std::hex << std::setfill('0');
+	  // std::cout << "0x" << std::setw(8) << p32[i] << std::endl;
+	  // std::cout << std::dec << std::setfill(' ');
+	  uint32_t tctp_i = (p32[i] >> 30) & 0x3 ;
+	  uint32_t adcseg_tctp01_i = (p32[i] >> 10) & 0xfffff ;
+	  uint32_t adcseg_tctp23_i = (p32[i] >> 20) & 0x3ff ;
+	  uint32_t diff = ((tctp_r[i]==0 or tctp_r[i]==1) and (tctp_i==0 or tctp_i==1)) ? (adcseg_tctp01_i-adcseg_tctp01_r[i]) :  (adcseg_tctp23_i-adcseg_tctp23_r[i]) ;
+	  //if((diff != 0) and (std::find(nonZeroEvents.begin(),nonZeroEvents.end(),rEvent->slinkBoe()->eventId()) == nonZeroEvents.end())) nonZeroEvents.push_back(rEvent->slinkBoe()->eventId());
+	  if(diff != 0) nonZeroEvents.push_back(rEvent->slinkBoe()->eventId());
+	}
+      }//word loop
+      
+      if(nEvents%10000==0) std::cout << "Processing event : " << nEvents << std::endl;
+      
+      nEvents++;
     }//loop event
   }
   
   std::cout << "========== Total Events : " << nEvents << std::endl;
   
-  delete r;
+  std::cout<< "Nof Nonzero diff events are "<< nonZeroEvents.size() << std::endl;
+  if(nonZeroEvents.size()>0) std::cout<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : nonZeroEvents) std::cout<<totEvt << ", ";
+  if(nonZeroEvents.size()>0) std::cout<< "};" << std::endl;
+  
+  _fileReader.close();
+  if(!r) delete r;
   
   return 0;
 }

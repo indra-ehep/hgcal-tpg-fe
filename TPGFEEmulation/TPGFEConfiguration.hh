@@ -545,8 +545,8 @@ namespace TPGFEConfiguration{
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& getModIdxToName() {return modIdxToName;}
     const std::map<uint32_t,uint32_t>& getMuxMapping() {return refMuxMap;}
     
-    const std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& getRocPara() { return hroccfg;}
-    const std::map<uint64_t,TPGFEConfiguration::ConfigCh>& getChPara() { return hrocchcfg;}
+    std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& getRocPara() { return hroccfg;}
+    std::map<uint64_t,TPGFEConfiguration::ConfigCh>& getChPara() { return hrocchcfg;}
     std::map<uint32_t,TPGFEConfiguration::ConfigEconD>& getEconDPara() { return econDcfg;}
     std::map<uint32_t,TPGFEConfiguration::ConfigEconT>& getEconTPara() { return econTcfg;}
     ////////////////////////////////////////
