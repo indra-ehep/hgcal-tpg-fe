@@ -548,8 +548,11 @@ namespace TPGFEDataformat{
     }
 
     void setCharge(uint32_t a) {
-      assert(a<0x1000000); //assuming 21bit for HD module, then bit shift of 3, then +1
-      _data=a;
+      //assert(a<0x1000000); //assuming 21bit for HD module, then bit shift of 3, then +1
+      // if(a<0x1000000)
+      // 	_data=a;
+      // else
+      _data=(a<0x1000000)?a:0xffffff;
     }
   
     void setTot(bool a) {
