@@ -675,7 +675,10 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   uint64_t refEvt[7] = {66235, 471496, 873524, 1763515, 1968826, 2245408, 2390648};
   TH2D *hTotPvsTotTH_Event[7];
   for(int ievent=0;ievent<7;ievent++){
-    hTotPvsTotTH_Event[ievent] = new TH2D(Form("hTotPvsTotTH_Event_%llu",refEvt[ievent]), Form("TotP-vs-TotTH for n==3 of Relay: %u and Event : %llu",relay,refEvt[ievent]), 100, -0.5, 99.5, 200, -0.5, 199.5);
+    if(refEvt[ievent]==2245408)
+      hTotPvsTotTH_Event[ievent] = new TH2D(Form("hTotPvsTotTH_Event_%llu",refEvt[ievent]), Form("TotP-vs-TotTH for n==3 of Relay: %u and Event : %llu",relay,refEvt[ievent]), 100, -0.5, 99.5, 200, -0.5, 199.5);
+    else
+      hTotPvsTotTH_Event[ievent] = new TH2D(Form("hTotPvsTotTH_Event_%llu",refEvt[ievent]), Form("TotP-vs-TotTH for n==2 of Relay: %u and Event : %llu",relay,refEvt[ievent]), 100, -0.5, 99.5, 200, -0.5, 199.5);
     hTotPvsTotTH_Event[ievent]->GetXaxis()->SetTitle("Tot_P");
     hTotPvsTotTH_Event[ievent]->GetYaxis()->SetTitle("Tot_TH");
     hTotPvsTotTH_Event[ievent]->SetDirectory(dir_diff);
