@@ -119,7 +119,7 @@ int main(int argc, char** argv)
       {"320MLF3WXIH0018_roc0_e0.yaml", "320MLF3WXIH0018_roc1_e0.yaml", "320MLF3WXIH0018_roc2_e0.yaml"}
     },
     {
-      {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc2_e2.yaml"},
+      {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml"},
       {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
       {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
     }
@@ -360,7 +360,7 @@ int main(int argc, char** argv)
   uint64_t minEventDAQ, maxEventDAQ;  
   //const long double maxEvent = 1000000 ;
   //const long double maxEvent = 2557415 ;     //relay:1726581356
-  const long double maxEvent = 528447 ;         //relay:1727211141
+  const long double maxEvent = 139484 ;         //relay:1727211141
   long double nloopEvent =  100000;
   //const long double maxEvent = 1000  ; //1722870998:24628, 1722871979:31599
   //long double nloopEvent = 1000 ;
