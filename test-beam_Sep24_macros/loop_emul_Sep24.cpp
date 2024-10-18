@@ -1,6 +1,6 @@
 /**********************************************************************
- Created on : 16/09/2024
- Purpose    : Emulation for test-beam of September 2024
+ Created on : 16/10/2024
+ Purpose    : Loop over Sep-24 HGCAL testbeam runs for emulation tests
  Author     : Indranil Das, Research Associate
  Email      : indranil.das@cern.ch | indra.ehep@gmail.com
 **********************************************************************/
@@ -58,23 +58,26 @@ int main(int argc, char** argv)
   bool isTrimming(0);
   uint32_t density(0);
   uint32_t droplsb(1);
+  long double maxEvent = 528447 ;         
   std::istringstream issRelay(argv[1]);
   issRelay >> relayNumber;
   std::istringstream issRun(argv[2]);
   issRun >> runNumber;
-  std::istringstream issLink(argv[3]);
+  std::istringstream issEvents(argv[3]);
+  issEvents >> maxEvent;
+  std::istringstream issLink(argv[4]);
   issLink >> linkNumber;
   if(linkNumber!=1 and linkNumber!=2){
     std::cerr << "Link number "<< argv[3] <<"is out of bound (use: 1 or 2)" << std::endl;
     return false;
   }
   uint32_t trig_linkNumber = TMath::FloorNint((linkNumber-1)/2);
-  std::istringstream issTrimming(argv[4]);
+  std::istringstream issTrimming(argv[5]);
   issTrimming >> isTrimming;
-  std::istringstream issDensity(argv[5]);
-  issDensity >> density;
-  std::istringstream issDropLSB(argv[6]);
-  issDropLSB >> droplsb;
+  // std::istringstream issDensity(argv[5]);
+  // issDensity >> density;
+  // std::istringstream issDropLSB(argv[6]);
+  // issDropLSB >> droplsb;
   //===============================================================================================================================
 
   //===============================================================================================================================
@@ -87,7 +90,7 @@ int main(int argc, char** argv)
 		     std::vector<uint64_t>&, std::vector<uint64_t>&, std::vector<uint64_t>&);
 		     //std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>&);
   
-  TFile *fout = new TFile(Form("Diff_Relay-%u.root",relayNumber), "recreate");
+  TFile *fout = new TFile(Form("Diff_Relay-%u-%u.root",relayNumber,runNumber), "recreate");
   TDirectory *dir_diff = fout->mkdir("diff_plots");
   BookHistograms(dir_diff, relayNumber);
   //===============================================================================================================================
@@ -119,12 +122,12 @@ int main(int argc, char** argv)
       {"320MLF3WXIH0018_roc0_e0.yaml", "320MLF3WXIH0018_roc1_e0.yaml", "320MLF3WXIH0018_roc2_e0.yaml"}
     },
     {
-     {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml"},
-     {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
-     {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
+      {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml"},
+      {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
+      {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
     }
   };
-  
+
   // std::string cfgrocname[2][3][3] = { //nof lpGBTs, nofModules, nofHGCROC per modules
   //   {
   //    {"320MLF3WXIH0019_roc0_e2.yaml", "320MLF3WXIH0019_roc1_e2.yaml", "320MLF3WXIH0019_roc2_e2.yaml"},
@@ -137,7 +140,7 @@ int main(int argc, char** argv)
   //    {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
   //   }
   // };
-  
+
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     for(int iecond=0;iecond<3;iecond++){
       uint32_t idx = pck.packModId(zside, sector, ilink, det, iecond, selTC4, module); //we assume same ECONT and ECOND number for a given module
@@ -287,13 +290,13 @@ int main(int argc, char** argv)
   link = 1; econt = 0; uint32_t roc = 2, hroc = 0;
   uint32_t rocid_0 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, roc, hroc);  
   std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& hroccfg =  cfgs.getRocPara();
-  // for(auto const& hroc : hroccfg){
-  //   if(hroc.first == rocid_0) {
-  //     hroccfg[hroc.first].setTotP(2, 13);
-  //     hroccfg[hroc.first].setTotP(3, 0);
-  //     hroccfg[hroc.first].setTotTH(2, 107);
-  //   }
-  // }
+  for(auto const& hroc : hroccfg){
+    if(hroc.first == rocid_0) {
+      hroccfg[hroc.first].setTotP(2, 13);
+      hroccfg[hroc.first].setTotP(3, 0);
+      hroccfg[hroc.first].setTotTH(2, 107);
+    }
+  }
   // ===============================================================================================================================
 
   // ===============================================================================================================================
@@ -334,12 +337,11 @@ int main(int argc, char** argv)
   ///*Nonzero diff events*/ uint64_t refEvt[392] = {2178, 2380, 4379, 4388, 5466, 8940, 8947, 9052, 10813, 13445, 13813, 16706, 17084, 17704, 18255, 18895, 21877, 22923, 24340, 24452, 26322, 26570, 29583, 30058, 31233, 32846, 32899, 33033, 33892, 34767, 37255, 37449, 39264, 40288, 42198, 42355, 43779, 45149, 47482, 48283, 48989, 50258, 50307, 51188, 51867, 52433, 53246, 55754, 55863, 56248, 57255, 59359, 59448, 60205, 61344, 61954, 61998, 64261, 69530, 69903, 70944, 71777, 71951, 71962, 73507, 74296, 74363, 75623, 76620, 77410, 80132, 80627, 80773, 86179, 91284, 91508, 92434, 92762, 93652, 93813, 95240, 96971, 100078, 102935, 103251, 103638, 104323, 105362, 107379, 109121, 109452, 110169, 114239, 116244, 120113, 120173, 125292, 127434, 130092, 130274, 130723, 131459, 132242, 132429, 132452, 133164, 133194, 133369, 133603, 134263, 136255, 136404, 138428, 139678, 140837, 142420, 144039, 147351, 147996, 148028, 149684, 150533, 151614, 153956, 154429, 154450, 156612, 161478, 161675, 161933, 163438, 164637, 166176, 166827, 167621, 167748, 168309, 168887, 169855, 172554, 173705, 174416, 174742, 177883, 180228, 181490, 182946, 183896, 184711, 185876, 186747, 187854, 188741, 192468, 195704, 198607, 199148, 200205, 200403, 200596, 201406, 202761, 204234, 206319, 209122, 210303, 212292, 212937, 213354, 214575, 216693, 218165, 219202, 219535, 223128, 223259, 224638, 225720, 225932, 226536, 226654, 227974, 229216, 229523, 233745, 233988, 234410, 236719, 236766, 238963, 239850, 241031, 242335, 247629, 248210, 248438, 248902, 249448, 250259, 250426, 251375, 254308, 254473, 255548, 257396, 258822, 258930, 261438, 261905, 264202, 266090, 268465, 272028, 273200, 273343, 273574, 275557, 276466, 276484, 278236, 279523, 280685, 280694, 281956, 287568, 288265, 288474, 290171, 293324, 302456, 304376, 308665, 310190, 311004, 312989, 313814, 316604, 317961, 318503, 319784, 320711, 320986, 326464, 326650, 326713, 327681, 329127, 331681, 334678, 336428, 338253, 338456, 339257, 341109, 342017, 346261, 347128, 347724, 348755, 353024, 354049, 355068, 357923, 360906, 361197, 361521, 362820, 363859, 363901, 366179, 367996, 369290, 371662, 371842, 373486, 378566, 379465, 379496, 379506, 380675, 381311, 386388, 387775, 388552, 389355, 390063, 390581, 390696, 392953, 394361, 395645, 397333, 397545, 398689, 402780, 403039, 404389, 406145, 406863, 407752, 408287, 408729, 411123, 411422, 413127, 415172, 416492, 417178, 419395, 419623, 420923, 421046, 424883, 425337, 425660, 425853, 427105, 429577, 429637, 431857, 436520, 439479, 439974, 442913, 443218, 447611, 447909, 448422, 448814, 452790, 453222, 457125, 457277, 457618, 458791, 460125, 460826, 464846, 465169, 470938, 471782, 473416, 473956, 474238, 474249, 474738, 475435, 477610, 477805, 480346, 480893, 481754, 482813, 484218, 485041, 487451, 490341, 491044, 491658, 491979, 493966, 494270, 494437, 494695, 497785, 499102, 499573, 502922, 502997, 503640, 504806, 505895, 506899, 507239, 507365, 509713, 510766, 511146, 511186, 512441, 514361, 514437, 514846, 516025, 516090, 516124, 521858, 522127, 523566, 523916, 524586, 527124};
 
   // /*Nonzero diff events*/ uint64_t refEvt[63] = {2380, 8947, 17084, 29583, 31233, 37255, 37449, 43779, 45149, 47482, 53246, 61998, 69903, 107379, 130274, 133164, 154429, 164637, 169855, 174742, 186747, 188741, 195704, 200596, 216693, 226654, 248438, 254473, 266090, 268465, 272028, 288265, 304376, 308665, 310190, 312989, 313814, 319784, 326650, 347128, 363859, 369290, 381311, 388552, 402780, 421046, 448814, 452790, 453222, 457618, 458791, 460826, 471782, 473956, 474238, 475435, 477610, 480893, 504806, 512441, 516025, 521858, 523916};
-
-  // /*Nonzero diff events*/ uint64_t refEvt[368] = {1334, 1618, 3653, 4077, 4234, 7198, 7768, 8464, 8905, 9879, 11661, 14823, 14894, 15051, 16027, 16693, 17626, 18052, 20183, 21900, 22917, 23574, 24086, 25053, 26036, 32358, 33592, 34657, 36000, 36241, 38297, 39116, 39760, 41205, 42179, 42830, 48634, 50824, 50946, 52504, 52948, 55653, 56036, 57381, 60310, 60884, 60934, 61415, 61763, 62042, 62461, 62659, 63459, 63675, 64288, 64527, 66709, 67024, 68048, 68919, 71162, 71191, 71679, 71879, 72226, 73636, 76436, 78142, 80401, 81350, 81637, 82754, 84659, 85024, 85969, 86305, 86309, 90608, 96356, 100610, 101780, 101822, 102418, 103045, 103295, 103578, 103645, 104737, 104760, 106172, 107067, 107270, 108183, 108566, 108854, 111196, 112455, 116400, 117537, 119096, 119558, 119889, 120502, 120592, 121992, 122583, 122769, 127226, 127612, 128639, 128745, 129631, 129836, 132623, 133060, 133669, 136479, 138274, 139843, 141141, 142723, 145313, 146450, 148257, 149417, 152207, 155042, 156807, 157463, 160929, 161101, 161904, 162186, 162317, 162696, 165103, 166914, 167265, 169007, 169023, 172636, 172638, 173889, 177168, 177663, 179286, 179448, 179522, 181102, 181105, 182040, 185132, 185805, 186058, 188049, 189681, 190352, 192195, 192432, 192705, 194669, 196264, 199716, 200524, 203721, 204417, 204702, 205271, 205899, 206136, 206696, 206921, 207512, 208166, 208716, 209288, 210722, 211408, 211511, 212968, 214593, 214655, 216487, 217951, 218598, 223231, 224159, 225547, 226601, 229268, 229309, 229757, 233563, 234044, 236594, 238064, 238874, 242512, 246280, 247047, 248260, 249908, 252590, 253219, 253648, 254494, 254614, 254842, 259855, 260924, 263812, 263897, 264705, 264893, 265370, 266110, 266382, 266885, 269538, 271482, 272611, 274790, 275032, 275764, 276872, 277445, 277723, 278090, 278384, 279295, 279681, 279904, 280210, 281817, 282047, 282850, 284076, 284300, 285647, 286521, 287244, 287491, 288056, 288767, 289854, 290994, 293292, 296917, 297624, 298511, 300301, 301453, 302532, 304847, 305605, 306137, 306574, 307693, 307713, 308777, 309417, 311259, 312387, 312833, 313073, 313470, 315920, 317824, 318760, 323237, 324453, 325122, 325466, 326361, 326467, 327474, 334143, 335537, 337161, 337603, 337723, 339475, 341744, 342127, 342623, 343240, 343478, 343768, 348449, 348513, 349642, 350460, 351423, 352483, 352489, 355021, 356164, 357065, 357449, 359425, 359565, 362489, 364223, 364247, 364335, 364639, 366753, 367686, 368533, 371720, 373931, 374100, 375568, 376200, 377146, 377381, 378848, 379022, 380619, 381368, 382119, 382651, 383491, 383621, 384900, 385285, 386296, 386375, 386418, 387910, 388702, 388917, 390749, 391372, 394230, 394389, 395500, 397300, 400024, 400200, 401085, 403514, 403889, 406469, 406973, 407240, 408096, 411657, 412338, 412451, 412512, 413977, 415248, 415857, 416629, 417719, 419419, 423122, 423285, 424062, 425163, 427824, 431928, 432112, 432580, 434004, 434333, 434547};
+  
   std::vector<uint64_t> refEvents;
   //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
   for(int ievent=0;ievent<50;ievent++) refEvents.push_back(refEvt[ievent]);
-  //refEvents.resize(0);
+  refEvents.resize(0);
   //===============================================================================================================================
   
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>> hrocarray; //event,rocId
@@ -357,17 +359,23 @@ int main(int argc, char** argv)
   std::vector<uint64_t> TcTp1TrigEvents;
   std::vector<uint64_t> TcTp2TrigEvents;
   std::vector<uint64_t> TcTp3TrigEvents;
+  std::vector<uint64_t> nonZeroTcTp0Events;
+  std::vector<uint64_t> nonZeroTcTp1Events;
+  std::vector<uint64_t> nonZeroTcTp2Events;
+  std::vector<uint64_t> nonZeroTcTp3Events;
   
   uint64_t minEventDAQ, maxEventDAQ;  
   //const long double maxEvent = 1000000 ;
   //const long double maxEvent = 2557415 ;     //relay:1726581356
-  const long double maxEvent = 436221 ;         //relay:1727211141
+  //const long double maxEvent = 528447 ;         //relay:1727211141
   long double nloopEvent =  100000;
   //const long double maxEvent = 1000  ; //1722870998:24628, 1722871979:31599
   //long double nloopEvent = 1000 ;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
+  std::cerr<<"nloop: "<<nloop<<std::endl;
+  uint64_t processed_events = 0;
   for(int ieloop=0;ieloop<nloop;ieloop++){
     
     minEventDAQ = ieloop*nloopEvent ;
@@ -403,7 +411,7 @@ int main(int argc, char** argv)
     
     for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
       uint64_t ievent = eventList[ievt] ;
-      if(econtarray.at(ievent).size()!=12 or hrocarray.at(ievent).size()!=36) continue;
+      if(econtarray.at(ievent).size()!=6 or hrocarray.at(ievent).size()!=36) continue;
       std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
       if(ievt<10) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
       for(const auto& hrocit : datalist){
@@ -434,12 +442,12 @@ int main(int argc, char** argv)
       uint64_t event = eventList[ievt] ;
       
       //first check that both econd and econt data has the same eventid otherwise skip the event
-      if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=12 or hrocarray.at(event).size()!=36) {
+      if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=6 or hrocarray.at(event).size()!=36) {
 	if(std::find(corruptEvent.begin(),corruptEvent.end(),event) == corruptEvent.end()) corruptEvent.push_back(event);
 	continue;
       }
       //if(econtarray.find(event) == econtarray.end()) break;
-      
+
       //bool eventCondn = (event<1000 or event==1560 or event==2232 or event==2584 or event==2968 or event==3992);
       //bool eventCondn = (event<1000);
       bool eventCondn = (refEvents.size()==0) ? (ievt<10) : (ievt<refEvents.size());
@@ -484,25 +492,6 @@ int main(int argc, char** argv)
 		  emul_bx_4b = 0x0;
 		else
 		  emul_bx_4b += 1;	      
-	      // if(relayNumber==1726593188 and ilink==1)
-	      // 	if(rocdata[data.first].getBx()==1)
-	      // 	  emul_bx_4b = 0xf;
-	      // 	else if(rocdata[data.first].getBx()==3564)
-	      // 	  emul_bx_4b = 3563%8;
-	      // 	else if(emul_bx_4b==0)
-	      // 	  emul_bx_4b = 7;
-	      // 	else
-	      // 	  emul_bx_4b -= 1;	      
-	      // if(relayNumber==1726593188 and ilink==1)
-	      // 	if(rocdata[data.first].getBx()==3564)
-	      // 	  emul_bx_4b = 1;
-	      // 	else if(rocdata[data.first].getBx()==3563)
-	      // 	  emul_bx_4b = 0xF;
-	      // 	else if(emul_bx_4b==7)
-	      // 	  emul_bx_4b = 0x0;
-	      // 	else
-	      // 	  emul_bx_4b += 1;	      
-	      
 	      if(relayNumber==1726435152) emul_bx_4b += 0;
 	      if(relayNumber==1722698259) emul_bx_4b += 7;
 	      if(relayNumber==1723627575) emul_bx_4b += 2;
@@ -561,7 +550,7 @@ int main(int argc, char** argv)
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
-	    if(eventCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
+	    if(eventCondn) std::cout << "event: " << event << ", moduleId : " << econtit.first << std::endl;
 	    //if(eventCondn and iecond==0 and ilink==0) TcRawdata.second.print();
 	    bool hasMatched = false;
 	    for(int ibx=0;ibx<7;ibx++){
@@ -587,9 +576,9 @@ int main(int argc, char** argv)
 		if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
 	      }
 	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
-	      if(eventCondn) vTC1.print();
+	      //if(eventCondn) vTC1.print();
 	      // if(eventCondn) up1.print();
-	      //if(hasMatched) break;
+	      if(hasMatched) break;
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
 	    //if(hasMatched) break;
@@ -650,6 +639,10 @@ int main(int argc, char** argv)
 	    if(printCondn) std::cout<<"\t Elink data : 0x" << std::hex << std::setfill('0') << std::setw(8) << eldata[iel] << std::dec ;//<< std::endl;
 	    if(printCondn) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << (eldata[iel]-elinkemul[iel])  << ", XOR: " << std::bitset<32>{(eldata[iel] ^ elinkemul[iel])} << std::endl;
 	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroEvents.begin(),nonZeroEvents.end(),event) == nonZeroEvents.end())) nonZeroEvents.push_back(event);
+	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroTcTp0Events.begin(),nonZeroTcTp0Events.end(),event) == nonZeroTcTp0Events.end()) and  !(TcRawdata.second.isTcTp1()) and !(TcRawdata.second.isTcTp2()) and !(TcRawdata.second.isTcTp3())) nonZeroTcTp0Events.push_back(event);
+	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroTcTp1Events.begin(),nonZeroTcTp1Events.end(),event) == nonZeroTcTp1Events.end()) and TcRawdata.second.isTcTp1() ) nonZeroTcTp1Events.push_back(event);
+	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroTcTp2Events.begin(),nonZeroTcTp2Events.end(),event) == nonZeroTcTp2Events.end()) and TcRawdata.second.isTcTp2() ) nonZeroTcTp2Events.push_back(event);
+	    if( ((eldata[iel]-elinkemul[iel]) != 0) and (std::find(nonZeroTcTp3Events.begin(),nonZeroTcTp3Events.end(),event) == nonZeroTcTp3Events.end()) and TcRawdata.second.isTcTp3() ) nonZeroTcTp3Events.push_back(event);
 	  }
 	  // uint16_t *unpkMsTc = new uint16_t[TcRawdata.second.size()+1];
 	  // uint32_t strm = 0;
@@ -667,53 +660,97 @@ int main(int argc, char** argv)
 	  delete []elinkemul;
 	  // delete []unpkMsTc;
 	}//econd loop
-      }//ilink loop    
+      }//ilink loop
+      processed_events++;
     }//event loop
   }//ieloop
   //===============================================================================================================================
-  if(TcTp1Events.size()>0) std::cerr<< "/*TcTp1 events */ uint64_t refEvt["<< TcTp1Events.size() <<"] = {";
-  for(const uint64_t& totEvt : TcTp1Events) std::cerr<<totEvt << ", ";
-  if(TcTp1Events.size()>0) std::cerr<< "};" << std::endl;
+  // uint32_t relayNumber(0);
+  // uint32_t runNumber(0);
+  // uint32_t linkNumber(0);
+  // const uint32_t noflpGBTs(2);
+  // bool isTrimming(0);
+  // uint32_t density(0);
+  // uint32_t droplsb(1);
+  // long double maxEvent = 528447 ;         
+  
+  std::cerr << " RelayNo. " << "| "
+	    << " RunN. " << "| "
+	    << " maxEvent " << "| "
+	    << " processed " << "| "
+	    << " TcTp1_ROC/TcTp1_TPG | "
+    	    << " TcTp2_ROC/TcTp2_TPG | "
+    	    << " TcTp3_ROC/TcTp3_TPG | "
+	    << " NCorrp " << "| "
+	    << " NSftBx " << "| "
+	    << " NFEEmulMM " << "| "
+    	    << " NFEEmulTcTp0MM " << "| "
+	    << " NFEEmulTcTp1MM " << "| "
+	    << " NFEEmulTcTp2MM " << "| "
+	    << " NFEEmulTcTp3MM " << "| "
+	    << " NElStg1MM " << "| "
+	    << std::endl;
 
-  if(TcTp2Events.size()>0) std::cerr<< "/*TcTp2 events */ uint64_t refEvt["<< TcTp2Events.size() <<"] = {";
-  for(const uint64_t& totEvt : TcTp2Events) std::cerr<<totEvt << ", ";
-  if(TcTp2Events.size()>0) std::cerr<< "};" << std::endl;
+  std::cerr << relayNumber << "| "
+	    << runNumber << "| "
+	    << (maxEvent-1) << "| "
+	    << processed_events << "| "
+	    << TcTp1Events.size() << "/" << TcTp1TrigEvents.size() << "| "
+    	    << TcTp2Events.size() << "/" << TcTp2TrigEvents.size() << "| "
+    	    << TcTp3Events.size() << "/" << TcTp3TrigEvents.size() << "| "
+	    << corruptEvent.size() << "| "
+	    << shiftedBxEvent.size() << "| "
+	    << nonZeroEvents.size() << "| "
+    	    << nonZeroTcTp0Events.size() << "| "
+	    << nonZeroTcTp1Events.size() << "| "
+	    << nonZeroTcTp2Events.size() << "| "
+	    << nonZeroTcTp3Events.size() << "| "
+	    << elStg1Event.size() << "| "
+	    << std::endl;
 
-  if(TcTp3Events.size()>0) std::cerr<< "/*TcTp3 events */ uint64_t refEvt["<< TcTp3Events.size() <<"] = {";
-  for(const uint64_t& totEvt : TcTp3Events) std::cerr<<totEvt << ", ";
-  if(TcTp3Events.size()>0) std::cerr<< "};" << std::endl;
+  // if(TcTp1Events.size()>0) std::cerr<< "/*TcTp1 events */ uint64_t refEvt["<< TcTp1Events.size() <<"] = {";
+  // for(const uint64_t& totEvt : TcTp1Events) std::cerr<<totEvt << ", ";
+  // if(TcTp1Events.size()>0) std::cerr<< "};" << std::endl;
 
-  if(TcTp1TrigEvents.size()>0) std::cerr<< "/*TcTp1 Trig events */ uint64_t refEvt["<< TcTp1TrigEvents.size() <<"] = {";
-  for(const uint64_t& totEvt : TcTp1TrigEvents) std::cerr<<totEvt << ", ";
-  if(TcTp1TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+  // if(TcTp2Events.size()>0) std::cerr<< "/*TcTp2 events */ uint64_t refEvt["<< TcTp2Events.size() <<"] = {";
+  // for(const uint64_t& totEvt : TcTp2Events) std::cerr<<totEvt << ", ";
+  // if(TcTp2Events.size()>0) std::cerr<< "};" << std::endl;
 
-  if(TcTp2TrigEvents.size()>0) std::cerr<< "/*TcTp2 Trig events */ uint64_t refEvt["<< TcTp2TrigEvents.size() <<"] = {";
-  for(const uint64_t& totEvt : TcTp2TrigEvents) std::cerr<<totEvt << ", ";
-  if(TcTp2TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+  // if(TcTp3Events.size()>0) std::cerr<< "/*TcTp3 events */ uint64_t refEvt["<< TcTp3Events.size() <<"] = {";
+  // for(const uint64_t& totEvt : TcTp3Events) std::cerr<<totEvt << ", ";
+  // if(TcTp3Events.size()>0) std::cerr<< "};" << std::endl;
 
-  if(TcTp3TrigEvents.size()>0) std::cerr<< "/*TcTp3 Trig events */ uint64_t refEvt["<< TcTp3TrigEvents.size() <<"] = {";
-  for(const uint64_t& totEvt : TcTp3TrigEvents) std::cerr<<totEvt << ", ";
-  if(TcTp3TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+  // if(TcTp1TrigEvents.size()>0) std::cerr<< "/*TcTp1 Trig events */ uint64_t refEvt["<< TcTp1TrigEvents.size() <<"] = {";
+  // for(const uint64_t& totEvt : TcTp1TrigEvents) std::cerr<<totEvt << ", ";
+  // if(TcTp1TrigEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  if(nonZeroEvents.size()>0) std::cerr<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
-  for(const uint64_t& totEvt : nonZeroEvents) std::cerr<<totEvt << ", ";
-  if(nonZeroEvents.size()>0) std::cerr<< "};" << std::endl;
+  // if(TcTp2TrigEvents.size()>0) std::cerr<< "/*TcTp2 Trig events */ uint64_t refEvt["<< TcTp2TrigEvents.size() <<"] = {";
+  // for(const uint64_t& totEvt : TcTp2TrigEvents) std::cerr<<totEvt << ", ";
+  // if(TcTp2TrigEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  if(shiftedBxEvent.size()>0) std::cerr<< "/*Shifted Bx/events */ uint64_t refEvt["<< shiftedBxEvent.size() <<"] = {";
-  for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
-  if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
+  // if(TcTp3TrigEvents.size()>0) std::cerr<< "/*TcTp3 Trig events */ uint64_t refEvt["<< TcTp3TrigEvents.size() <<"] = {";
+  // for(const uint64_t& totEvt : TcTp3TrigEvents) std::cerr<<totEvt << ", ";
+  // if(TcTp3TrigEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  if(corruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corruptEvent.size() <<"] = {";
-  for(const uint64_t& totEvt : corruptEvent) std::cerr<<totEvt << ", ";
-  if(corruptEvent.size()>0) std::cerr<< "};" << std::endl;
+  // if(nonZeroEvents.size()>0) std::cerr<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
+  // for(const uint64_t& totEvt : nonZeroEvents) std::cerr<<totEvt << ", ";
+  // if(nonZeroEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
-  for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
-  if(unExDataTC.size()>0) std::cerr<< "};" << std::endl;
+  // if(shiftedBxEvent.size()>0) std::cerr<< "/*Shifted Bx/events */ uint64_t refEvt["<< shiftedBxEvent.size() <<"] = {";
+  // for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
+  // if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
 
-  if(unExEmulTC.size()>0) std::cerr<< "/*Unexpect TC in Emul in event*/ uint64_t refEvt["<< unExEmulTC.size() <<"] = {";
-  for(const uint64_t& totEvt : unExEmulTC) std::cerr<<totEvt << ", ";
-  if(unExEmulTC.size()>0) std::cerr<< "};" << std::endl;
+  // if(corruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corruptEvent.size() <<"] = {";
+  // for(const uint64_t& totEvt : corruptEvent) std::cerr<<totEvt << ", ";
+  // if(corruptEvent.size()>0) std::cerr<< "};" << std::endl;
+
+  // if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
+  // for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
+  // if(unExDataTC.size()>0) std::cerr<< "};" << std::endl;
+
+  // if(unExEmulTC.size()>0) std::cerr<< "/*Unexpect TC in Emul in event*/ uint64_t refEvt["<< unExEmulTC.size() <<"] = {";
+  // for(const uint64_t& totEvt : unExEmulTC) std::cerr<<totEvt << ", ";
+  // if(unExEmulTC.size()>0) std::cerr<< "};" << std::endl;
 
   // if(elStg1Event.size()>0) std::cerr<< "/*Difference in elink and Stage1 output in event*/ uint64_t refEvt["<< elStg1Event.size() <<"] = {";
   // for(const uint64_t& totEvt : elStg1Event) std::cerr<<totEvt << ", ";
@@ -997,44 +1034,44 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
 		   std::vector<uint64_t>& unExEmulTC, std::vector<uint64_t>& unExDataTC, std::vector<uint64_t>& elStg1Event){
   //std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>& hrocarray){
   
-  uint32_t IdealE[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
-    {
-      {48, 48, 48, 48, 48, 49, 00, 00, 00, 00},
-      {43, 43, 43, 44, 00, 00, 00, 00, 00, 00},
-      {35, 35, 35, 36, 00, 00, 00, 00, 00, 00}
-    },
-    {
-      {60, 60, 61, 61, 62, 62, 63, 63, 64, 64},
-      {52, 53, 54, 55, 56, 56, 00, 00, 00, 00},
-      {02, 27, 35, 39, 41, 43, 00, 00, 00, 00}
-    }
-  };
+  // uint32_t IdealE[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
+  //   {
+  //     {48, 48, 48, 48, 48, 49, 00, 00, 00, 00},
+  //     {43, 43, 43, 44, 00, 00, 00, 00, 00, 00},
+  //     {35, 35, 35, 36, 00, 00, 00, 00, 00, 00}
+  //   },
+  //   {
+  //     {60, 60, 61, 61, 62, 62, 63, 63, 64, 64},
+  //     {52, 53, 54, 55, 56, 56, 00, 00, 00, 00},
+  //     {02, 27, 35, 39, 41, 43, 00, 00, 00, 00}
+  //   }
+  // };
   
-  uint32_t IdealA[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
-    {
-      {32, 33, 34, 36, 37, 47, 99, 99, 99, 99},
-      {40, 41, 42, 47, 99, 99, 99, 99, 99, 99},
-      {44, 45, 46, 47, 99, 99, 99, 99, 99, 99}
-    },
-    {
-      {0, 3, 0, 3, 0, 3, 0, 3, 0, 0},
-      {3, 3, 3, 3, 0, 3, 9, 9, 9, 9},
-      {0, 3, 3, 3, 3, 3, 9, 9, 9, 9}
-    }
-  };
+  // uint32_t IdealA[2][3][10] = { //nof lpGBTs, nofModules, nofTC/STCs
+  //   {
+  //     {32, 33, 34, 36, 37, 47, 99, 99, 99, 99},
+  //     {40, 41, 42, 47, 99, 99, 99, 99, 99, 99},
+  //     {44, 45, 46, 47, 99, 99, 99, 99, 99, 99}
+  //   },
+  //   {
+  //     {0, 3, 0, 3, 0, 3, 0, 3, 0, 0},
+  //     {3, 3, 3, 3, 0, 3, 9, 9, 9, 9},
+  //     {0, 3, 3, 3, 3, 3, 9, 9, 9, 9}
+  //   }
+  // };
   
-  uint32_t IdealL[2][3][3] = { //nof lpGBTs, nofModules, maxElinks
-    {
-      {0x05b8218a, 0x496f60c1, 0x83060c40},
-      {0x055a29aa, 0xf56ad5ac, 0xffffffff},
-      {0x049b2dba, 0xf468d1a4, 0xffffffff}
-    },
-    {
-      {0x03333078, 0xf1ebd7cf, 0x9fbf8100},
-      {0x0ff368d5, 0xb3770e00, 0xffffffff},
-      {0x03ff046d, 0x1a752ac0, 0xffffffff}
-    }
-  };
+  // uint32_t IdealL[2][3][3] = { //nof lpGBTs, nofModules, maxElinks
+  //   {
+  //     {0x05b8218a, 0x496f60c1, 0x83060c40},
+  //     {0x055a29aa, 0xf56ad5ac, 0xffffffff},
+  //     {0x049b2dba, 0xf468d1a4, 0xffffffff}
+  //   },
+  //   {
+  //     {0x03333078, 0xf1ebd7cf, 0x9fbf8100},
+  //     {0x0ff368d5, 0xb3770e00, 0xffffffff},
+  //     {0x03ff046d, 0x1a752ac0, 0xffffffff}
+  //   }
+  // };
 
   int imode = 0;
   if(tcemul.isTcTp1()) imode = 1;
@@ -1074,18 +1111,18 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
       if( ((eldata[iel] - elemul[iel]) != 0) and imode==0) hasDiff = true;
       emullink = (iel==0) ? (elemul[iel] & 0x0fffffff) : elemul[iel] ;
       datalink = (iel==0) ? (eldata[iel] & 0x0fffffff) : eldata[iel] ;
-      if( ((IdealL[ilp][imdl][iel] - emullink) != 0)) hasDiffEmul = true;
-      if( ((IdealL[ilp][imdl][iel] - datalink) != 0)) hasDiffData = true;
+      // if( ((IdealL[ilp][imdl][iel] - emullink) != 0)) hasDiffEmul = true;
+      // if( ((IdealL[ilp][imdl][iel] - datalink) != 0)) hasDiffData = true;
     }
     if(hasDiff) ((TH2D *) list->FindObject("hNZModules"))->Fill( ilp, imdl );
-    if(hasDiffData) {
-      ((TH2D *) list->FindObject("hNZDataModules"))->Fill( ilp, imdl );
-      if(std::find(unExDataTC.begin(),unExDataTC.end(),event) == unExDataTC.end() and relayNumber==1726581356) unExDataTC.push_back(event);
-    }
-    if(hasDiffEmul) {
-      ((TH2D *) list->FindObject("hNZEmulModules"))->Fill( ilp, imdl );
-      if(std::find(unExEmulTC.begin(),unExEmulTC.end(),event) == unExEmulTC.end() and relayNumber==1726581356) unExEmulTC.push_back(event);
-    }
+    // if(hasDiffData) {
+    //   ((TH2D *) list->FindObject("hNZDataModules"))->Fill( ilp, imdl );
+    //   if(std::find(unExDataTC.begin(),unExDataTC.end(),event) == unExDataTC.end() and relayNumber==1726581356) unExDataTC.push_back(event);
+    // }
+    // if(hasDiffEmul) {
+    //   ((TH2D *) list->FindObject("hNZEmulModules"))->Fill( ilp, imdl );
+    //   if(std::find(unExEmulTC.begin(),unExEmulTC.end(),event) == unExEmulTC.end() and relayNumber==1726581356) unExEmulTC.push_back(event);
+    // }
     
     if(imode==0 and imdl==0 and ilp==0){
       if(hasDiff)
@@ -1095,7 +1132,7 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
       ((TH1D *) list->FindObject("hSlinkBx8Matched"))->Fill( bxIdmod8 );
     }
   
-    std::vector<int> ideallist, emulist,econtlist;
+    std::vector<int> emulist,econtlist; //ideallist, 
     for(uint32_t itc=0;itc<tcdata.size();itc++){
       //int imodeloc = (tcemul.getTcData().at(itc).isTcTp1()) ? 1 : 0 ;
       int imodeloc = 0;
@@ -1110,73 +1147,73 @@ void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uin
       if(tcemul.getTcData().at(itc).isTcTp2()) ((TH1D *) list->FindObject("hTOTCounts"))->Fill(2);
       if(tcemul.getTcData().at(itc).isTcTp3()) ((TH1D *) list->FindObject("hTOTCounts"))->Fill(3);
       
-      uint32_t ideal_stc = 4*itc + IdealA[ilp][imdl][itc];
+      //uint32_t ideal_stc = 4*itc + IdealA[ilp][imdl][itc];
       uint32_t data_stc = 4*itc + tcdata.getTcData().at(itc).address();
       uint32_t emul_stc = 4*itc + tcemul.getTcData().at(itc).address();
-      if(isLargeDiff){
-	if(ilp==0){
-	  ((TH2D *) list->FindObject(Form("hBCEnergyData_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcdata.getTcData().at(itc).energy());
-	  ((TH2D *) list->FindObject(Form("hBCEnergyEmul_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcemul.getTcData().at(itc).energy());
-	  ((TH2D *) list->FindObject(Form("hBCPosData_%d",imdl)))->Fill(IdealA[ilp][imdl][itc],tcdata.getTcData().at(itc).address());
-	  ((TH2D *) list->FindObject(Form("hBCPosEmul_%d",imdl)))->Fill(IdealA[ilp][imdl][itc],tcemul.getTcData().at(itc).address());
-	}else{
-	  ((TH2D *) list->FindObject(Form("hSTCEnergyData_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcdata.getTcData().at(itc).energy());
-	  ((TH2D *) list->FindObject(Form("hSTCEnergyEmul_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcemul.getTcData().at(itc).energy());
-	  ((TH2D *) list->FindObject(Form("hSTCPosData_%d",imdl)))->Fill(ideal_stc, data_stc);
-	  ((TH2D *) list->FindObject(Form("hSTCPosEmul_%d",imdl)))->Fill(ideal_stc, emul_stc);
-	}
-      }//only for problematic module with elink mismatch
+      // if(isLargeDiff){
+      // 	// if(ilp==0){
+      // 	//   ((TH2D *) list->FindObject(Form("hBCEnergyData_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcdata.getTcData().at(itc).energy());
+      // 	//   ((TH2D *) list->FindObject(Form("hBCEnergyEmul_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcemul.getTcData().at(itc).energy());
+      // 	//   ((TH2D *) list->FindObject(Form("hBCPosData_%d",imdl)))->Fill(IdealA[ilp][imdl][itc],tcdata.getTcData().at(itc).address());
+      // 	//   ((TH2D *) list->FindObject(Form("hBCPosEmul_%d",imdl)))->Fill(IdealA[ilp][imdl][itc],tcemul.getTcData().at(itc).address());
+      // 	// }else{
+      // 	//   ((TH2D *) list->FindObject(Form("hSTCEnergyData_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcdata.getTcData().at(itc).energy());
+      // 	//   ((TH2D *) list->FindObject(Form("hSTCEnergyEmul_%d",imdl)))->Fill(IdealE[ilp][imdl][itc],tcemul.getTcData().at(itc).energy());
+      // 	//   ((TH2D *) list->FindObject(Form("hSTCPosData_%d",imdl)))->Fill(ideal_stc, data_stc);
+      // 	//   ((TH2D *) list->FindObject(Form("hSTCPosEmul_%d",imdl)))->Fill(ideal_stc, emul_stc);
+      // 	// }
+      // }//only for problematic module with elink mismatch
       
       if(imdl==0){
 	((TH1D *) list->FindObject("hOccuTCData"))->Fill( tcdata.getTcData().at(itc).address() );
 	((TH1D *) list->FindObject("hOccuTCEmul"))->Fill( tcemul.getTcData().at(itc).address() );
       }
       if(ilp==0){
-	ideallist.push_back(IdealA[ilp][imdl][itc]);
+	//ideallist.push_back(IdealA[ilp][imdl][itc]);
 	emulist.push_back(tcemul.getTcData().at(itc).address());
 	econtlist.push_back(tcdata.getTcData().at(itc).address());
       }else{
-	ideallist.push_back( ideal_stc );
+	//ideallist.push_back( ideal_stc );
 	emulist.push_back( emul_stc );
 	econtlist.push_back( data_stc );
       }
       
     }
-    if(isLargeDiff){
-      int *missingEmulTC = new int[tcdata.size()];
-      int nofemulmismatches = 0;
-      for(const auto& itcemul : emulist)
-	if(std::find(ideallist.begin(), ideallist.end(), itcemul) == ideallist.end())
-	  missingEmulTC[nofemulmismatches++] = itcemul;
+    // if(isLargeDiff){
+    //   int *missingEmulTC = new int[tcdata.size()];
+    //   int nofemulmismatches = 0;
+    //   for(const auto& itcemul : emulist)
+    // 	if(std::find(ideallist.begin(), ideallist.end(), itcemul) == ideallist.end())
+    // 	  missingEmulTC[nofemulmismatches++] = itcemul;
       
-      int *missingDataTC = new int[tcdata.size()];;
-      int nofdatamismatches = 0;
-      for(const auto& itcdata : econtlist)
-	if(std::find(ideallist.begin(), ideallist.end(), itcdata) == ideallist.end())
-	  missingDataTC[nofdatamismatches++] = itcdata;
+    //   int *missingDataTC = new int[tcdata.size()];;
+    //   int nofdatamismatches = 0;
+    //   for(const auto& itcdata : econtlist)
+    // 	if(std::find(ideallist.begin(), ideallist.end(), itcdata) == ideallist.end())
+    // 	  missingDataTC[nofdatamismatches++] = itcdata;
       
-      if(nofemulmismatches==1 and nofdatamismatches==1 and imdl==0) {
-	((TH2D *) list->FindObject("hMissedTCs"))->Fill( missingEmulTC[0], missingDataTC[0] );
-	//std::cout<<"Event with single mismatch : " << event << std::endl;
-      }
+    //   if(nofemulmismatches==1 and nofdatamismatches==1 and imdl==0) {
+    // 	((TH2D *) list->FindObject("hMissedTCs"))->Fill( missingEmulTC[0], missingDataTC[0] );
+    // 	//std::cout<<"Event with single mismatch : " << event << std::endl;
+    //   }
 
-      for(int idatamm = 0 ; idatamm < nofdatamismatches ; idatamm++){
-	if(ilp==0){
-	  ((TH2D *) list->FindObject("hBCUnExTCData"))->Fill( missingDataTC[idatamm], imdl );
-	}else{
-	  ((TH2D *) list->FindObject("hSTCUnExTCData"))->Fill( missingDataTC[idatamm], imdl );
-	}
-      }//if TC is not expected in data
-      for(int iemulmm = 0 ; iemulmm < nofemulmismatches ; iemulmm++){
-	if(ilp==0){
-	  ((TH2D *) list->FindObject("hBCUnExTCEmul"))->Fill( missingEmulTC[iemulmm], imdl );
-	}else{
-	  ((TH2D *) list->FindObject("hSTCUnExTCEmul"))->Fill( missingEmulTC[iemulmm], imdl );
-	}
-      }//if one missing TC is absent
-      delete []missingEmulTC;
-      delete []missingDataTC;
-    }
+    //   for(int idatamm = 0 ; idatamm < nofdatamismatches ; idatamm++){
+    // 	if(ilp==0){
+    // 	  ((TH2D *) list->FindObject("hBCUnExTCData"))->Fill( missingDataTC[idatamm], imdl );
+    // 	}else{
+    // 	  ((TH2D *) list->FindObject("hSTCUnExTCData"))->Fill( missingDataTC[idatamm], imdl );
+    // 	}
+    //   }//if TC is not expected in data
+    //   for(int iemulmm = 0 ; iemulmm < nofemulmismatches ; iemulmm++){
+    // 	if(ilp==0){
+    // 	  ((TH2D *) list->FindObject("hBCUnExTCEmul"))->Fill( missingEmulTC[iemulmm], imdl );
+    // 	}else{
+    // 	  ((TH2D *) list->FindObject("hSTCUnExTCEmul"))->Fill( missingEmulTC[iemulmm], imdl );
+    // 	}
+    //   }//if one missing TC is absent
+    //   delete []missingEmulTC;
+    //   delete []missingDataTC;
+    // }
     
     uint16_t *unpkMsTc = new uint16_t[tcdata.size()+1];
     uint32_t strm = 0;

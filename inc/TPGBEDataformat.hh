@@ -404,10 +404,10 @@ private:
   class Trig24Data{
   public:
     Trig24Data() : nofElinks(0){nofUnpkdWords[0] = 0; nofUnpkdWords[1] = 0;}
-    void setNofElinks(uint32_t nelinks) {assert(nelinks<=3) ; nofElinks = uint8_t(nelinks);}
+    void setNofElinks(uint32_t nelinks) {assert(nelinks<=7) ; nofElinks = uint8_t(nelinks);}
     void setNofUnpkWords(uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords[0] = uint8_t(nwords);}
     void setNofUnpkWords(uint32_t istrm, uint32_t nwords) {assert(nwords<=8) ; nofUnpkdWords[istrm] = uint8_t(nwords);}
-    void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<3) ; elinks[ib][iw] = val;}
+    void setElink(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<=7) ; elinks[ib][iw] = val;}
     void setUnpkWord(uint32_t ib, uint32_t iw, uint32_t val) { assert(ib<7) ; assert(iw<8); unpackedWords[ib][0][iw] = val;}
     void setUnpkWord(uint32_t ib, uint32_t istrm, uint32_t iw, uint32_t val) {
       assert(ib<7) ; assert(istrm<=2) ; assert(iw<8) ;
@@ -477,7 +477,7 @@ private:
   private:
     uint8_t nofElinks, nofUnpkdWords[2];
     uint16_t bxId ; //from Slink trailer
-    uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
+    uint32_t elinks[7][7]; //the first 7 is for bx and second one for number of elinks
     uint32_t unpackedWords[7][2][8]; //7:bxs,2:stream,8:words per half 
   };
 

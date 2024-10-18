@@ -568,7 +568,8 @@ namespace TPGFEReader{
     void setNofCAFESep(int maxsep) { maxCAFESeps = maxsep;}
     void init(uint32_t, uint32_t, uint32_t);
         
-    void getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray);
+    void getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray,
+		   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& tcprocarray);
     void terminate();
     
   private:
@@ -693,7 +694,7 @@ namespace TPGFEReader{
 
       return picked_bits;
     }
-
+    
     uint64_t pick_bits64(uint64_t number, int start_bit, int number_of_bits) {
       // Create a mask to extract the desired bits.
       uint64_t mask = (1 << number_of_bits) - 1;
@@ -711,7 +712,7 @@ namespace TPGFEReader{
 	packet_locations[i] = pick_bits32(packet[0], 4+i*2, 2);
       }
     }
-
+    
     // 12 energies, 7 bits long, immediately after the packet energies
     void set_packet_energies(uint64_t packet_energies[12], uint32_t* packet) {
       uint64_t packet64[4];
@@ -737,7 +738,6 @@ namespace TPGFEReader{
       }
     }
     
-
     ////////////////////////////////////////
     bool scanMode;
     uint64_t inspectEvent;
@@ -775,7 +775,7 @@ namespace TPGFEReader{
     // _fileReader.setDirectory(std::string("dat/Relay")+std::to_string(relayNumber));
     // _fileReader.openRun(runNumber,trig_linkNumber);
     // isMSB = (linkNumber%2==0) ? true : false;
-
+    
     r = new Hgcal10gLinkReceiver::RecordT<4095>;
     _fileReader.setDirectory(std::string("dat/Relay")+std::to_string(relayNumber));
     _fileReader.openRun(runNumber,linkNumber);  
@@ -783,7 +783,9 @@ namespace TPGFEReader{
   }
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
-  void ECONTReader::getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray){
+  void ECONTReader::getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray,
+			      //class for tcprocarray is temporarily set to TPGBEDataformat::Trig24Data, plan to change appropriate TC-Processor format in future
+			      std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& tcprocarray){
 
     //Set up specific records to interpet the formats
     const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
@@ -958,7 +960,7 @@ namespace TPGFEReader{
 	  //if(ievent>(maxEvents-1)) continue;
 	  if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)) std::cout<<"iEvent: " << ievent <<  std::endl;
 	  
-	  //////////// Read raw elink inputs for ch 1 /////////////////////
+	  //////////// Read raw elink inputs for train 1 /////////////////////
 	  int iblock = 1;
 	  int elBgnOffset = 0;
 	  int elIndx = 0;
@@ -987,7 +989,7 @@ namespace TPGFEReader{
 	  }
 	  /////////////////////////////////////////////////////////////////
 
-	  //////////// Read raw elink inputs for ch 2 /////////////////////
+	  //////////// Read raw elink inputs for train 2 /////////////////////
 	  iblock = 2;
 	  elBgnOffset = 0;
 	  elIndx = 0;
@@ -1015,7 +1017,7 @@ namespace TPGFEReader{
 	  }
 	  /////////////////////////////////////////////////////////////////
 
-	  //////////// Read raw elink inputs for ch 3 /////////////////////
+	  //////////// Read raw elink inputs for train 3 /////////////////////
 	  iblock = 3;
 	  elBgnOffset = 0;
 	  elIndx = 0;
@@ -1043,7 +1045,7 @@ namespace TPGFEReader{
 	  }
 	  /////////////////////////////////////////////////////////////////
 	  
-	  //////////// Read raw elink inputs for ch 4 /////////////////////
+	  //////////// Read raw elink inputs for train 4 /////////////////////
 	  iblock = 4;
 	  elBgnOffset = 0;
 	  elIndx = 0;
@@ -1071,7 +1073,7 @@ namespace TPGFEReader{
 	  }
 	  /////////////////////////////////////////////////////////////////	  
 	  
-	  //////////// Print unpacker output for ch 1 /////////////////////
+	  //////////// Print unpacker output for train 1 /////////////////////
 	  iblock = 5;
 	  int unpkBgnOffset = 0;
 	  int unpkIndx = 0;
@@ -1105,7 +1107,7 @@ namespace TPGFEReader{
 	  }
 	  /////////////////////////////////////////////////////////////////
 	  
-	  //////////// Print unpacker output for ch 2 /////////////////////
+	  //////////// Print unpacker output for train 2 /////////////////////
 	  iblock = 6;
 	  unpkBgnOffset = 0;
 	  unpkIndx = 0;
@@ -1119,10 +1121,9 @@ namespace TPGFEReader{
 	    uint32_t col3 = p64[iw] & 0xFFFF ;
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
-	      unpackedWord[1][0][ibx][0][iunpkw] = col3; //STC4A-10 //col3 and col2 contains (stream0:11,48) and (stream1:24576) to be implemented correctly
-	      unpackedWord[1][0][ibx][1][iunpkw] = col2; //STC4A-10 //col3 and col2 contains (stream0:11,48) and (stream1:24576) to be implemented correctly
-	      unpackedWord[1][1][ibx][0][iunpkw] = col1; //STC4A-6
-	      unpackedWord[1][2][ibx][0][iunpkw] = col0; //STC4A-6
+	      unpackedWord[1][0][ibx][0][iunpkw] = col3; //STC16
+	      unpackedWord[1][1][ibx][0][iunpkw] = col2; //STC16
+	      unpackedWord[1][2][ibx][0][iunpkw] = col1; //STC16
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1139,7 +1140,7 @@ namespace TPGFEReader{
 	    if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
 	  }
 	  
-	  //////////// Print unpacker output for ch 3 /////////////////////
+	  //////////// Print unpacker output for train 3 /////////////////////
 	  iblock = 7;
 	  unpkBgnOffset = 0;
 	  unpkIndx = 0;
@@ -1152,9 +1153,9 @@ namespace TPGFEReader{
 	    uint32_t col3 = p64[iw] & 0xFFFF ;
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
-	      unpackedWord[2][0][ibx][0][iunpkw] = col3; //STC16
-	      unpackedWord[2][1][ibx][0][iunpkw] = col2; //STC16
-	      unpackedWord[2][2][ibx][0][iunpkw] = col1; //STC16
+	      unpackedWord[2][0][ibx][0][iunpkw] = col3; //STC4-12TCs
+	      unpackedWord[2][0][ibx][1][iunpkw] = col2; //STC4-12TCs
+	      unpackedWord[2][1][ibx][0][iunpkw] = col1; //STC4-6 //partial module
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1171,7 +1172,7 @@ namespace TPGFEReader{
 	    if(unpkIndx>0 and (unpkIndx-unpkBgnOffset)%8==0) ibx++;
 	  }
 	  
-	  //////////// Print unpacker output for ch 4 /////////////////////
+	  //////////// Print unpacker output for train 4 /////////////////////
 	  iblock = 8;
 	  unpkBgnOffset = 0;
 	  unpkIndx = 0;
@@ -1184,10 +1185,10 @@ namespace TPGFEReader{
 	    uint32_t col3 = p64[iw] & 0xFFFF ;
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
-	      unpackedWord[3][0][ibx][0][iunpkw] = col3; //STC4A-12
-	      unpackedWord[3][0][ibx][1][iunpkw] = col2; //STC4A-12
-	      unpackedWord[3][1][ibx][0][iunpkw] = col1; //STC4A-10
-	      unpackedWord[3][1][ibx][1][iunpkw] = col0; //STC4A-10
+	      unpackedWord[3][0][ibx][0][iunpkw] = col3; //STC4A-12TCs
+	      unpackedWord[3][0][ibx][1][iunpkw] = col2; //STC4A-12TCs
+	      unpackedWord[3][1][ibx][0][iunpkw] = col1; //STC4A-10TCs
+	      unpackedWord[3][1][ibx][1][iunpkw] = col0; //STC4A-10TCs
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1227,44 +1228,9 @@ namespace TPGFEReader{
 	    }
 	  }
 	  /////////////////////////////////////////////////////////////////
-	  
-	  /////////////////////////////////////////////////////////////////
-	  // struct Trig24Data{
-	  //   uint8_t nofElinks, nofUnpkdWords;
-	  //   uint32_t elpckt[7][3]; //the first 7 is for bx and second one for number of elinks
-	  //   uint32_t unpkdW[7][8]; //7:bxs,8:words
-	  // };
-	  // struct Trig24Data{
-	  //   uint8_t nofElinks, nofUnpkdWords;
-	  //   uint32_t elinks[7][3]; //the first 7 is for bx and second one for number of elinks
-	  //   uint32_t unpackedWords[7][8]; //7:bxs,8:words
-	  // };
-	  
-	  // TPGBEDataformat::Trig24Data trdata[2][3]; //2:lpGBTs, 3:econts
-	  // for(int ilp=0;ilp<2;ilp++){
-	  //   for(int iecon=0;iecon<3;iecon++){
-	  //     moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
-	  //     trdata[ilp][iecon].setNofElinks( ((iecon==0)?3:2) );
-	  //     trdata[ilp][iecon].setNofUnpkWords(8);
-	  //     if(ilp==1 and iecon==0) trdata[ilp][iecon].setNofUnpkWords(1,8);
-	  //     for(uint32_t ib=0;ib<7;ib++){
-	  // 	for(uint32_t iel=0;iel<trdata[ilp][iecon].getNofElinks();iel++){
-	  // 	  if(iecon==0)
-	  // 	    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel]) ;
-	  // 	  else if(iecon==1)
-	  // 	    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()]) ;
-	  // 	  else
-	  // 	    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+trdata[ilp][1].getNofElinks()]) ;
-	  // 	}
-	  // 	for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords();iw++) trdata[ilp][iecon].setUnpkWord(ib, iw, unpackedWord[ilp][iecon][ib][0][iw]) ;
-	  // 	if(ilp==1 and iecon==0) for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords(1);iw++) trdata[ilp][iecon].setUnpkWord(ib, 1, iw, unpackedWord[ilp][iecon][ib][1][iw]) ;
-	  //     }//nof bxs
-	  //     trdata[ilp][iecon].setSlinkBx(eoe->bxId());
-	  //     econtarray[eventId].push_back( std::make_pair(moduleId,trdata[ilp][iecon]) );
-	  //   }//nof ECONTs
-	  // }//nof lpGBTs
 
-	  TPGBEDataformat::Trig24Data trdata[5][3]; //2:lpGBTs, 3:econts
+	  ///////////////////// Fill to econtarray ///////////////////////
+	  TPGBEDataformat::Trig24Data trdata[5][3]; //(3:trains+1:motherboard+1:external-trigger), 3:econts
 	  for(int ilp=0;ilp<5;ilp++){
 	    int nofecons = 0;
 	    if(ilp==4)
@@ -1299,6 +1265,85 @@ namespace TPGFEReader{
 	      econtarray[eventId].push_back( std::make_pair(moduleId,trdata[ilp][iecon]) );
 	    }//nof ECONTs
 	  }//nof lpGBTs
+	  ///////////////////////////////////////////////////////////////
+	  
+	  //////////// TC proc block 10-13  /////////////////////
+	  uint32_t TCProcWord[4][4][7][8]; //4:TDAQs, 4:columns, 7:bxs, 8:words
+	  for(int iblk=12;iblk<=13;iblk++){ //we start with 12/13 as it corresponds to LD1/2 trains
+	    unpkIndx = 0;
+	    iunpkw = 0;
+	    ibx = 0;
+	    int itdaq = (iblk==12)?0:1 ; //0 and 1 for TDAQ 12/13
+	    for(int iw = loc[iblk]+1; iw <= (loc[iblk]+size[iblk]) ; iw++ ){
+	      uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+	      uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+	      uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+	      uint32_t col3 = p64[iw] & 0xFFFF ;
+	      TCProcWord[itdaq][0][ibx][iunpkw] = col3; //0-15 bits
+	      TCProcWord[itdaq][1][ibx][iunpkw] = col2; //16-31 bits
+	      TCProcWord[itdaq][2][ibx][iunpkw] = col1; //32-47 bits
+	      TCProcWord[itdaq][3][ibx][iunpkw] = col0; //48-63 bits
+	      iunpkw++;
+	      if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
+		std::cout<<"iblock: " << iblk <<", iloc: "<< iw 
+			 << std::hex
+			 <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
+			 <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
+			 <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
+			 <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
+			 << std::dec << std::setfill(' ')
+			 << std::endl;		
+	      unpkIndx++;
+	      if(unpkIndx%8==0) {ibx++; iunpkw=0;}
+	    }//loop over words for 7 bxs
+	  }//loop over TC proc TDAQ blocks
+	  
+	  for(int iblk=10;iblk<=11;iblk++){ //Next we read 10/11 as it corresponds to LD3/MB1 trains
+	    unpkIndx = 0;
+	    iunpkw = 0;
+	    ibx = 0;
+	    int itdaq = (iblk==10)?2:3 ; //2 and 3 for TDAQ 10/11
+	    for(int iw = loc[iblk]+1; iw <= (loc[iblk]+size[iblk]) ; iw++ ){
+	      uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+	      uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+	      uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+	      uint32_t col3 = p64[iw] & 0xFFFF ;
+	      TCProcWord[itdaq][0][ibx][iunpkw] = col3; //0-15 bits
+	      TCProcWord[itdaq][1][ibx][iunpkw] = col2; //16-31 bits
+	      TCProcWord[itdaq][2][ibx][iunpkw] = col1; //32-47 bits
+	      TCProcWord[itdaq][3][ibx][iunpkw] = col0; //48-63 bits
+	      iunpkw++;
+	      if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
+		std::cout<<"iblock: " << iblk <<", iloc: "<< iw 
+			 << std::hex
+			 <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
+			 <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
+			 <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
+			 <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
+			 << std::dec << std::setfill(' ')
+			 << std::endl;		
+	      unpkIndx++;
+	      if(unpkIndx%8==0) {ibx++; iunpkw=0;}
+	    }//loop over words for 7 bxs
+	  }//loop over TC proc TDAQ blocks
+	  
+	  ///////////////////// Fill to tcprocarray ///////////////////////
+	  TPGBEDataformat::Trig24Data tcprocdata[4][4]; //4:TC proc TDAQs, 4:columns
+	  for(int ilp=0;ilp<4;ilp++){
+	    for(int icol=0;icol<4;icol++){
+	      moduleId = pck.packModId(zside, sector, ilp, det, icol, selTC4, module);
+	      tcprocdata[ilp][icol].setNofElinks(0);
+	      tcprocdata[ilp][icol].setNofUnpkWords(8);
+	      for(uint32_t ib=0;ib<7;ib++){
+		for(uint8_t iw=0;iw<tcprocdata[ilp][icol].getNofUnpkWords();iw++)
+		  tcprocdata[ilp][icol].setUnpkWord(ib, iw, TCProcWord[ilp][icol][ib][iw]) ;
+	      }//nof bxs
+	      tcprocdata[ilp][icol].setSlinkBx(eoe->bxId());
+	      tcprocarray[eventId].push_back( std::make_pair(moduleId,tcprocdata[ilp][icol]) );
+	    }//nof ECONTs
+	  }//nof lpGBTs
+	  ///////////////////////////////////////////////////////////////
+	  
 	  
 	}//MinMaxEvent
 	if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)) std::cout<<"========= End of event : "<< nEvents << "============="<<  std::endl;
