@@ -91,6 +91,7 @@ int main(int argc, char** argv){
   // ./econt_data_validation.exe $Relay $rname
   unsigned relayNumber(0);
   unsigned runNumber(0);
+  unsigned dumpEvent(0);
   std::istringstream issRelay(argv[1]);
   issRelay >> relayNumber;
   std::istringstream issRun(argv[2]);
@@ -101,6 +102,8 @@ int main(int argc, char** argv){
     std::cerr << "Link number "<< argv[3] <<"is out of bound (use: 0 or 1)" << std::endl;
     return false;
   }
+  std::istringstream issDumpEvent(argv[4]);
+  issDumpEvent >> dumpEvent;
 
   //Create the file reader
   Hgcal10gLinkReceiver::FileReader _fileReader;
@@ -159,7 +162,7 @@ int main(int argc, char** argv){
       // 	//event_dump(rEvent);
       // }
 
-      if (nEvents < 2 ) {
+      if (nEvents < 2 or dumpEvent==boe->eventId()) {
 	std::cout <<"Event: " << boe->eventId() << std::endl;
 	rEvent->RecordHeader::print();
 	boe->print();
