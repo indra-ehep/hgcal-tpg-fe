@@ -421,9 +421,10 @@ private:
     uint32_t  getUnpkWord(uint32_t ib, uint32_t iw, uint32_t istrm = 0) const { return unpackedWords[ib][istrm][iw];}
     const uint32_t *getElinks(uint32_t ib) const { return elinks[ib];}
     const uint32_t *getUnpkWords(uint32_t ib, uint32_t istrm = 0) const { return unpackedWords[ib][istrm];}
-    void print(){
+    void print(uint32_t bxindex = 0){
       
       for(unsigned ib(0);ib<7;ib++){
+	if(ib!=bxindex) continue;
 	for(unsigned iel(0);iel<getNofElinks();iel++)
 	  std::cout << " ib " << ib << ", iel  " << iel
 		    << ", elinks = 0x"
@@ -435,6 +436,7 @@ private:
 
       std::cout << "NofUnpkdWords[0]: " << getNofUnpkWords(0) << ", NofUnpkdWords[1]: " << getNofUnpkWords(1) << std::endl;
       for(unsigned ib(0);ib<7;ib++){
+	if(ib!=bxindex) continue;
 	TPGBEDataformat::UnpackerOutputStreamPair up;
 	uint16_t* tc = up.setTcData(0);
 	

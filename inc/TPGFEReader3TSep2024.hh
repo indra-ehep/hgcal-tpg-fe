@@ -929,7 +929,7 @@ namespace TPGFEReader{
 	  for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {
 	    bool checksize = false;
 	    if(iloc==(maxCAFESeps-1)){
-	      int totsize = loc[iloc] + size[iloc] + 3 ;
+	      int totsize = loc[iloc] + size[iloc] + 4 ; //made 4 explicity for 3-train system where there is a extra 64-bit word not accounted in cafecafe seprator header otherwise it should be 3
 	      checksize = (totsize==rEvent->payloadLength());
 	      if(!checksize){
 		std::cerr << " Event: "<< eventId << " has mismatch in last cafe position : " << iloc << ", size from block " << totsize << ", payload size " << rEvent->payloadLength() << std::endl;
@@ -1122,8 +1122,8 @@ namespace TPGFEReader{
 	    if(unpkIndx>=unpkBgnOffset and (unpkIndx-unpkBgnOffset)%8==0) iunpkw=0;
 	    if(unpkIndx>=unpkBgnOffset){
 	      unpackedWord[1][0][ibx][0][iunpkw] = col3; //STC16
-	      unpackedWord[1][1][ibx][0][iunpkw] = col2; //STC16
-	      unpackedWord[1][2][ibx][0][iunpkw] = col1; //STC16
+	      unpackedWord[1][1][ibx][0][iunpkw] = col1; //STC16
+	      unpackedWord[1][2][ibx][0][iunpkw] = col0; //STC16
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
@@ -1235,7 +1235,7 @@ namespace TPGFEReader{
 	    int nofecons = 0;
 	    if(ilp==4)
 	      nofecons = 1;
-	    else if(ilp==3)
+	    else if(ilp==3 or ilp==2)
 	      nofecons = 2;
 	    else
 	      nofecons = 3;
@@ -1245,21 +1245,31 @@ namespace TPGFEReader{
 		trdata[ilp][iecon].setNofElinks( 7 );
 	      else if(ilp==3)
 		trdata[ilp][iecon].setNofElinks( ((iecon==0)?4:3) );
+	      else if(ilp==2)
+		trdata[ilp][iecon].setNofElinks( ((iecon==0)?4:2) );
+	      else if(ilp==1)
+		trdata[ilp][iecon].setNofElinks( 2 );
 	      else
 		trdata[ilp][iecon].setNofElinks( ((iecon==0)?3:2) );
 	      trdata[ilp][iecon].setNofUnpkWords(8);
-	      if((ilp==1 and iecon==0) or ilp==3) trdata[ilp][iecon].setNofUnpkWords(1,8);
+	      if((ilp==2 and iecon==0) or ilp==3) trdata[ilp][iecon].setNofUnpkWords(1,8);
 	      for(uint32_t ib=0;ib<7;ib++){
 		for(uint32_t iel=0;iel<trdata[ilp][iecon].getNofElinks();iel++){
 		  if(iecon==0)
 		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel]) ;
 		  else if(iecon==1)
-		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()]) ;
+		    if(ilp==1)
+		      trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+1]) ;
+		    else
+		      trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()]) ;
 		  else
-		    trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+trdata[ilp][1].getNofElinks()]) ;
+		    if(ilp==1)
+		      trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+trdata[ilp][1].getNofElinks()+1]) ;
+		    else
+		      trdata[ilp][iecon].setElink(ib, iel, elpckt[ilp][ib][iel+trdata[ilp][0].getNofElinks()+trdata[ilp][1].getNofElinks()]) ;
 		}
 		for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords();iw++) trdata[ilp][iecon].setUnpkWord(ib, iw, unpackedWord[ilp][iecon][ib][0][iw]) ;
-		if((ilp==1 and iecon==0) or ilp==3) for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords(1);iw++) trdata[ilp][iecon].setUnpkWord(ib, 1, iw, unpackedWord[ilp][iecon][ib][1][iw]) ;
+		if((ilp==2 and iecon==0) or ilp==3) for(uint8_t iw=0;iw<trdata[ilp][iecon].getNofUnpkWords(1);iw++) trdata[ilp][iecon].setUnpkWord(ib, 1, iw, unpackedWord[ilp][iecon][ib][1][iw]) ;
 	      }//nof bxs
 	      trdata[ilp][iecon].setSlinkBx(eoe->bxId());
 	      econtarray[eventId].push_back( std::make_pair(moduleId,trdata[ilp][iecon]) );
