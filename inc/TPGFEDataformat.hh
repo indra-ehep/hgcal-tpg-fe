@@ -121,7 +121,7 @@ namespace TPGFEDataformat{
       for(unsigned i(0);i<=NumberOfChannels;i++)
 	_data[i] = data[i];
     }
-    const HalfHgcrocChannelData& getChannelData(uint32_t i) const {
+    HalfHgcrocChannelData& getChannelData(uint32_t i) {
       return _data[i];
     }
     ///////////////////////////////////////////////////////////////////////////////////////

@@ -149,6 +149,7 @@ namespace TPGFEConfiguration{
     uint32_t getSelect() const { assert(select==1 or select==2); return uint32_t(select);}
     uint32_t getSTCType() const { assert(stc_type>=0 and stc_type<=4); return uint32_t(stc_type);}
     uint32_t getNElinks() const { assert(eporttx_numen!=0);  return uint32_t(eporttx_numen);}
+    uint32_t getNofTCs() const { return getBCType(); }
     uint32_t getBCType() const {
       uint32_t maxTcs = 0;
       if(getOutType()==TPGFEDataformat::BestC){	

@@ -16,7 +16,7 @@ namespace TPGFEModuleEmulation{
   public:
     HGCROCTPGEmulation(TPGFEConfiguration::Configuration& cfgs) : configs(cfgs) {}
     //The following emulation function performs 1) pedestal subtraction, 2) linearization, 3) compression
-    void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::HalfHgcrocData>&, std::pair<uint32_t,TPGFEDataformat::ModuleTcData>&, uint64_t);
+    void Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, std::map<uint32_t,TPGFEDataformat::HalfHgcrocData>&, std::pair<uint32_t,TPGFEDataformat::ModuleTcData>&, uint64_t);
     
     uint16_t CompressHgroc(uint32_t val, bool isldm){
       
@@ -62,7 +62,7 @@ namespace TPGFEModuleEmulation{
     TPGFEConfiguration::TPGFEIdPacking pck;
   };
   
-  void HGCROCTPGEmulation::Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, const std::map<uint32_t,TPGFEDataformat::HalfHgcrocData>& rocdata, std::pair<uint32_t,TPGFEDataformat::ModuleTcData>& moddata, uint64_t refEvent = 0xFFFFFFFFFFFFFFFF){
+  void HGCROCTPGEmulation::Emulate(bool isSim, uint64_t ievent, uint32_t& moduleId, std::map<uint32_t,TPGFEDataformat::HalfHgcrocData>& rocdata, std::pair<uint32_t,TPGFEDataformat::ModuleTcData>& moddata, uint64_t refEvent = 0xFFFFFFFFFFFFFFFF){
 
     pck.setModId(moduleId);    
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
@@ -96,7 +96,7 @@ namespace TPGFEModuleEmulation{
 	  continue ; 
 	}
 	if(ievent==refEvent) std::cout<<"TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: TC : " << itc << ", tcch: " << tcch <<", rocpin : "<<rocpin<<", rocid: "<<rocid<<", rocn: "<<rocn<<", half: "<<half<<std::endl;
-	const TPGFEDataformat::HalfHgcrocChannelData& chdata = rocdata.at(rocid).getChannelData(rocpin);
+	TPGFEDataformat::HalfHgcrocChannelData& chdata = rocdata.at(rocid).getChannelData(rocpin);
 	bx = rocdata.at(rocid).getBx();
 	if(chdata.getTcTp()==1) isTcTp1 = true;
 	if(chdata.getTcTp()==2) isTcTp2 = true;
