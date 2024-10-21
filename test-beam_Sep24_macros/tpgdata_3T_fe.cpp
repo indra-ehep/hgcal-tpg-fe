@@ -225,29 +225,31 @@ int main(int argc, char** argv)
 	for(int iecont=0;iecont<maxecons;iecont++){
 	  uint32_t moduleId = pck.packModId(zside, sector, ilink, det, iecont, selTC4, module); 
 	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];	  
-	  TPGBEDataformat::UnpackerOutputStreamPair up1;
-	  TPGFEDataformat::TcRawDataPacket vTC1;	
+	  TPGBEDataformat::UnpackerOutputStreamPair upemul,updata;
+	  TPGFEDataformat::TcRawDataPacket vTCel;	
 	  TPGBEDataformat::Trig24Data trdata;
 	  
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
 	    std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
-	    for(int ibx=0;ibx<7;ibx++){
+	    //for(int ibx=0;ibx<7;ibx++){
+	    for(int ibx=3;ibx<4;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
 	      uint32_t bx_2 = (el[0]>>28) & 0xF;
-	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTC1);
-	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTC1);
-	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTC1);	      
-	      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
+	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
+	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
+	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);	      
+	      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTCel, upemul);
 	      std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
 	      std::cout << "========== TC as read from elink for ibx : " << ibx << " ==========" << std::endl;
-	      vTC1.print();
-	      std::cout << "========== Unpacker emulated from TC for ibx : " << ibx << " ==========" << std::endl;
-	      up1.print();
-	      std::cout << "========== trigger data (elink+unpacked words) for ibx : " << ibx << " ==========" << std::endl;
-	      trdata.print(ibx);
-	      std::cout << "========== end of trigger data (elink+unpacked words) for ibx : " << ibx << " ==========" << std::endl;
+	      vTCel.print();
+	      std::cout << "========== Emulated Stage1 unpacker output stream from TC for ibx : " << ibx << " ==========" << std::endl;
+	      upemul.print();
+	      std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
+	      trdata.getUnpkStream(ibx,updata);
+	      updata.print();
+	      std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
 	  }//loop over econt data for a given run
