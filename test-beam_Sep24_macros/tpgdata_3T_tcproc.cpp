@@ -31,6 +31,9 @@
 #include "TPGFEModuleEmulation.hh"
 #include "TPGFEReader3TSep2024.hh"
 #include "Stage1IO.hh"
+#include "HGCalLayer1PhiOrderFwConfig.h"
+#include "HGCalLayer1PhiOrderFwImpl.h"
+#include "HGCalTriggerCell_SA.h"
 
 int main(int argc, char** argv)
 {
@@ -41,7 +44,6 @@ int main(int argc, char** argv)
     std::cerr << argv[0] << ": no relay and/or run numbers specified" << std::endl;
     return false;
   }
-  
   uint64_t getTotalNofEvents(uint32_t, uint32_t);
   //===============================================================================================================================
   //Assign relay,run and numbers of events from input
@@ -50,7 +52,7 @@ int main(int argc, char** argv)
   uint32_t runNumber(0);
   uint32_t linkNumber(0);
   uint64_t totEvents(0);
-  uint64_t nofEvents(1);
+  uint64_t nofEvents(100);
   std::istringstream issRelay(argv[1]);
   issRelay >> relayNumber;
   //Notes:
@@ -60,23 +62,40 @@ int main(int argc, char** argv)
   // 4. swap back roc2 config of mod16 for relays after 1727116899 (not necessary for this code, kept as bookkeeping)
   // 5. List of run flagged as green by Paul for TC Processor are Relay1727219172 to Run1727219175 and probably Relay1727211141
   
+
   if(relayNumber<1727099251){
     std::cerr << "Third layer is not properly configured" << std::endl;
     return false;
   }
+
   std::istringstream issRun(argv[2]);
   issRun >> runNumber;
-  if(argc = 4){
+
+  std::cout<<argc<<std::endl;
+  if(argc == 4){
     std::istringstream issnEvents(argv[3]);
     issnEvents >> nofEvents;
   }
+
   totEvents = getTotalNofEvents(relayNumber, runNumber);
   if(nofEvents>totEvents){
     nofEvents = totEvents ;
     std::cout << "Setting number of events to process to " << nofEvents << std::endl;
   }
   //===============================================================================================================================
-  
+  //Helper functions
+  l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDataformat::UnpackerOutputStreamPair> &);
+  bool hasDifferentTCs(l1thgcfirmware::HGCalTriggerCellSACollection, l1thgcfirmware::HGCalTriggerCellSACollection);
+  std::map<uint32_t,l1thgcfirmware::HGCalTriggerCellSACollection> createTCsFromTriggerData(uint32_t, TPGBEDataformat::TrigTCProcData);//ibx
+
+  //===============================================================================================================================
+  //Book histograms
+  //===============================================================================================================================
+  void BookHistograms(TDirectory*&, uint32_t);
+  void FillHistogram( TDirectory*&, l1thgcfirmware::HGCalTriggerCellSACollection, l1thgcfirmware::HGCalTriggerCellSACollection);
+  TFile *fout = new TFile(Form("Diff_TCProc_Relay-%u.root",relayNumber),"recreate");
+  TDirectory *dir_diff = fout->mkdir("diff_plots");
+  BookHistograms(dir_diff, relayNumber);
   //===============================================================================================================================
   //Read channel mapping
   //===============================================================================================================================
@@ -89,7 +108,7 @@ int main(int argc, char** argv)
   cfgs.loadModIdxToNameMapping();
   cfgs.loadMuxMapping();
   //===============================================================================================================================
-  
+
   //===============================================================================================================================
   //Read ECON-T config : note that we are not reading any ECON-D config
   //===============================================================================================================================
@@ -180,18 +199,24 @@ int main(int argc, char** argv)
   // ===============================================================================================================================
   TPGFEReader::ECONTReader econTReader(cfgs);
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
-  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> tcprocarray; //event,moduleId (from link)
+  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>>> tcprocarray; //event,moduleId (from link)
   econTReader.setNofCAFESep(14);
   // ===============================================================================================================================
-  
+
   //===============================================================================================================================
-  //Process certain refernce eventlist
+  //Set mapping info for TC processor bins
+  //===============================================================================================================================
+  l1thgcfirmware::HGCalLayer1PhiOrderFwConfig theConfiguration_;
+  theConfiguration_.configureSeptemberTestBeamMappingInfo();
+
+  //===============================================================================================================================
+  //Process certain reference eventlist
   //===============================================================================================================================
   /*TcTp1 events */ uint64_t refEvt[2] = {19, 137};
   std::vector<uint64_t> refEvents;
   for(int ievent=0;ievent<2;ievent++) refEvents.push_back(refEvt[ievent]);
   //when the following line is "commented" only the events filled in "refEvents" will be processed instead of nofevents set in the command line
-  //refEvents.resize(0);
+  refEvents.resize(0);
   //===============================================================================================================================
 
   uint64_t minEventTPG, maxEventTPG;  
@@ -217,22 +242,33 @@ int main(int argc, char** argv)
     std::cout<<"TRIG After:  elink and unpacker size : " << econtarray.size() << ", tcprocarray.size(): " << tcprocarray.size() <<std::endl;
     econTReader.terminate();
     
-    for(const auto& it :  econtarray){ //this is essencially event loop
+    for( auto& it :  econtarray){ //this is essencially event loop
       uint64_t event = it.first ;
       std::cout << "Processing event: " << event << std::endl;
+      std::map<uint32_t,l1thgcfirmware::HGCalTriggerCellSACollection> triggerCellsFromTriggerData;
       for(int ilink=0;ilink<noflpGBTs;ilink++){
 	int maxecons = (ilink<=1)?3:2;
 	for(int iecont=0;iecont<maxecons;iecont++){
 	  uint32_t moduleId = pck.packModId(zside, sector, ilink, det, iecont, selTC4, module); 
-	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];	  
+	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];
+    std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>> tcprocdata = tcprocarray[event];	  
 	  TPGBEDataformat::UnpackerOutputStreamPair upemul,updata;
 	  TPGFEDataformat::TcRawDataPacket vTCel;	
 	  TPGBEDataformat::Trig24Data trdata;
+    TPGBEDataformat::TrigTCProcData tcpdata;
+    std::vector<TPGBEDataformat::UnpackerOutputStreamPair> theOutputStreams;
+    l1thgcfirmware::HGCalTriggerCellSACollection theTCsFromOS;
+    l1thgcfirmware::HGCalTriggerCellSACollection tcs_out_SA; //output from elink data
+    l1thgcfirmware::HGCalTriggerCellSACollection tcs_out_tcproc_TB; //trigger cell output from tc processor in testbeam
+    l1thgcfirmware::HGCalLayer1PhiOrderFwImpl theAlgo_;
 	  
-	  for(const auto& econtit : econtdata){
-	    if(econtit.first!=moduleId) continue;
-	    trdata = econtit.second ;
-	    std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
+	  //for(const auto& econtit : econtdata){
+    for(uint32_t ietd= 0; ietd < econtdata.size(); ietd++){
+	    if(econtdata.at(ietd).first!=moduleId) continue;//Need to assume that order of econtdata and tcprocdata entries is the same.
+	    trdata = econtdata.at(ietd).second ;
+      tcpdata = tcprocdata.at(ietd).second;
+      triggerCellsFromTriggerData = createTCsFromTriggerData(moduleId,tcpdata);
+	    std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtdata.at(ietd).first << " moduleId from tcproc data "<<tcprocdata.at(ietd).first << std::endl;
 	    //for(int ibx=0;ibx<7;ibx++){
 	    for(int ibx=3;ibx<4;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
@@ -241,6 +277,7 @@ int main(int argc, char** argv)
 	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
 	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);
 	      trdata.getUnpkStream(ibx,updata);
+        updata.setModuleId(moduleId);
 	      //==================================================================
 	      //TC proc emulation something similar to below
 	      //==================================================================
@@ -252,9 +289,46 @@ int main(int argc, char** argv)
 	      //==================================================================
 	      //TC proc emulation comparison with data something similar to below
 	      //==================================================================
-	      std::cout << "========== Emulated TC proc results using firmware data of Stage1 unpacker output stream for ibx : " << ibx << " ==========" << std::endl;
+        theOutputStreams.resize(0);
+
+        theOutputStreams.push_back(updata);//Always a single UnpackerOutputStreamPair, vector only for generality
+
+        //Convert unpacker output to standalone HGCal trigger cells
+        theTCsFromOS.resize(0);
+        theTCsFromOS = convertOSPToTCs(theOutputStreams);
+
+
+        //Run TC processor emulator
+        tcs_out_SA.resize(0);
+        unsigned error_code = theAlgo_.run(theTCsFromOS, theConfiguration_, tcs_out_SA);
+
+        tcs_out_tcproc_TB.resize(0);
+        bool isDataTCsAssigned=false;
+        if(triggerCellsFromTriggerData[ibx].size()>0) tcs_out_tcproc_TB=triggerCellsFromTriggerData[ibx]; isDataTCsAssigned = true;
+
+
+            
+        if(isDataTCsAssigned){//Only try to do comparison if we have read out TB data since some modules are missing
+          bool diffTCs=hasDifferentTCs(tcs_out_SA,tcs_out_tcproc_TB);
+
+          if(diffTCs || 1){
+            std::cout << "========== Emulated TC proc results using firmware data of Stage1 unpacker output stream for ibx : " << ibx << " ==========" << std::endl;
+
+            std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from ECON-T elink input"<<std::endl;
+            for (auto& tcobj : tcs_out_SA){
+              std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+            }
+
+	          std::cout << "========== TPG data: TC proc results as read in data link for ibx : " << ibx << " ==========" << std::endl;
+
+            std::cout<<"Printing TCs with column, channel, frame mapping - as read out from TB data"<<std::endl;
+            for (auto& tcobj : tcs_out_tcproc_TB){
+              std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+            }
+          }
+          FillHistogram(dir_diff,tcs_out_SA,tcs_out_tcproc_TB);
+        }
 	      //tcprocemul.print();
-	      std::cout << "========== TPG data: TC proc results as read in data link for ibx : " << ibx << " ==========" << std::endl;
 	      //trdata.getTCData(ibx,tcprocdata);
 	      //tcprocdata.print();
 	      //==================================================================
@@ -268,6 +342,12 @@ int main(int argc, char** argv)
     }//this is essencially event loop
     
   }//ieloop
+
+  fout->cd();
+  dir_diff->Write();
+  fout->Close();
+  delete fout;
+  
   return true;
 }
 
@@ -280,6 +360,7 @@ uint64_t getTotalNofEvents(uint32_t relayNumber, uint32_t runNumber){
   //Make the buffer space for the records
   Hgcal10gLinkReceiver::RecordT<4095> *r(new Hgcal10gLinkReceiver::RecordT<4095>);
   
+
   //Set up specific records to interpet the formats
   const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
   const Hgcal10gLinkReceiver::RecordStopping *rStop ((Hgcal10gLinkReceiver::RecordStopping*)r);
@@ -289,6 +370,7 @@ uint64_t getTotalNofEvents(uint32_t relayNumber, uint32_t runNumber){
   //We open linkNumber=0 which contains trigger data
   fReader.openRun(runNumber,0); 
   
+
   while(fReader.read(r)) {
     //Check the state of the record and print the record accordingly
     if( r->state()==Hgcal10gLinkReceiver::FsmState::Starting){
@@ -321,3 +403,89 @@ uint64_t getTotalNofEvents(uint32_t relayNumber, uint32_t runNumber){
   return nEvents;
 }
 
+l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDataformat::UnpackerOutputStreamPair> &upVec){
+  l1thgcfirmware::HGCalTriggerCellSACollection theTCVec;
+  for (auto& up : upVec){
+      unsigned theModId_ = up.getModuleId();
+      unsigned nChans_ = up.numberOfValidChannels();
+      for (unsigned iChn = 0; iChn < nChans_; iChn++){
+        unsigned nTC=0;
+        unsigned nStream=0;
+        if(nChans_<7){
+            nTC=iChn;
+        } else {
+            nStream = iChn%2;
+            nTC = (iChn-nStream)/2;
+        } 
+        theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.channelEnergy(nStream,nTC));
+        theTCVec.back().setModuleId(theModId_);
+      }
+  }
+  return theTCVec;
+}
+
+bool hasDifferentTCs(l1thgcfirmware::HGCalTriggerCellSACollection tcOrig, l1thgcfirmware::HGCalTriggerCellSACollection tcToComp){
+   if(tcOrig.size()!=tcToComp.size()) return true;
+   for(unsigned i = 0; i<tcOrig.size(); i++){ 
+       if (tcOrig.at(i).energy()!=tcToComp.at(i).energy() || tcOrig.at(i).phi()!=tcToComp.at(i).phi() || tcOrig.at(i).channel()!=tcToComp.at(i).channel() || tcOrig.at(i).frame()!=tcToComp.at(i).frame() || tcOrig.at(i).column()!=tcToComp.at(i).column()){
+	       return true;
+       }
+   }
+   return false;
+}
+
+std::map<uint32_t,l1thgcfirmware::HGCalTriggerCellSACollection> createTCsFromTriggerData(uint32_t moduleId, TPGBEDataformat::TrigTCProcData tcdata_){//ibx
+    std::map<uint32_t,l1thgcfirmware::HGCalTriggerCellSACollection> theTCsFromTriggerData_;
+    for(int ibx=0;ibx<7;ibx++){
+      l1thgcfirmware::HGCalTriggerCellSACollection tmp_tcs;
+      for(int ibin=0;ibin<9;ibin++){
+        for(int iinstance=0;iinstance<2;iinstance++){
+          int tcoutputword = tcdata_.getUnpkWord(ibx,ibin,iinstance);
+          if(tcoutputword > -1){
+            uint32_t tcout_energy = tcoutputword&0x1FF;
+            uint32_t tcout_channel = (tcoutputword>>9)&0x3F;
+            tmp_tcs.emplace_back(1,1,0,tcout_channel,0,tcout_energy);
+            tmp_tcs.back().setColumn(ibin);
+            tmp_tcs.back().setChannel(0);
+            tmp_tcs.back().setFrame(0);
+            tmp_tcs.back().setModuleId(moduleId);
+          }
+        }
+      }
+      theTCsFromTriggerData_[ibx]=tmp_tcs;
+    }
+  return theTCsFromTriggerData_;
+}
+
+void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
+  TH1D *hTCProcDiff_nonzero_size = new TH1D("hTCProcDiff_nonzero_size", Form("TC processor difference in output size if both TC lists are nonzero in length for Relay: %u", relay),51,-25.5,25.5);
+  hTCProcDiff_nonzero_size->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator (nonzero TC list length)");
+  hTCProcDiff_nonzero_size->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff_nonzero_size->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff_size = new TH1D("hTCProcDiff_size", Form("TC processor difference in output size for Relay: %u", relay),51,-25.5,25.5);
+  hTCProcDiff_size->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator");
+  hTCProcDiff_size->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff_size->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff_quantities = new TH1D("hTCProcDiff_quantities", Form("TC processor difference in output quantities for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator");
+  hTCProcDiff_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff_quantities->SetDirectory(dir_diff);
+}
+
+void FillHistogram(TDirectory*& dir_diff, l1thgcfirmware::HGCalTriggerCellSACollection tcProcEmulator, l1thgcfirmware::HGCalTriggerCellSACollection tcProcTB){
+    TList *list = (TList *)dir_diff->GetList();
+
+    int theTCListSizeDiff = tcProcEmulator.size()-tcProcTB.size();
+    if (tcProcEmulator.size()>0 && tcProcTB.size()>0){
+      int theTCListNonzeroSizeDiff = tcProcEmulator.size()-tcProcTB.size();
+      ((TH1D *) list->FindObject("hTCProcDiff_nonzero_size"))->Fill(theTCListNonzeroSizeDiff);
+    }
+    ((TH1D *) list->FindObject("hTCProcDiff_size"))->Fill(theTCListSizeDiff);
+    unsigned theSizeToTest = std::min(tcProcEmulator.size(),tcProcTB.size());
+    for(unsigned i=0; i<theSizeToTest; i++){
+      unsigned diffsize = std::abs(int(tcProcEmulator.at(i).energy()-tcProcTB.at(i).energy()))+std::abs(int(tcProcEmulator.at(i).phi()-tcProcTB.at(i).phi()))+std::abs(int(tcProcEmulator.at(i).channel()-tcProcTB.at(i).channel()))+std::abs(int(tcProcEmulator.at(i).frame()-tcProcTB.at(i).frame()))+std::abs(int(tcProcEmulator.at(i).column()-tcProcTB.at(i).column()));
+      ((TH1D *) list->FindObject("hTCProcDiff_quantities"))->Fill(diffsize);
+    }
+}

@@ -23,7 +23,9 @@ unsigned HGCalLayer1PhiOrderFwImpl::run(const l1thgcfirmware::HGCalTriggerCellSA
     tcs_per_bin[module_id].push_back(tc);
   }
 
+
   for (auto& bin_tcs : tcs_per_bin) {
+
     std::vector<l1thgcfirmware::HGCalTriggerCell> sorted_tcs;
 
     sorted_tcs = bin_tcs.second;
@@ -31,18 +33,24 @@ unsigned HGCalLayer1PhiOrderFwImpl::run(const l1thgcfirmware::HGCalTriggerCellSA
     std::vector<std::pair<l1thgcfirmware::HGCalTriggerCell, int>> tcs_per_col = assignTCToCol(theConf, sorted_tcs);
     std::vector<std::pair<l1thgcfirmware::HGCalTriggerCell, int>> tcs_with_ccf =
         assignTCToChnAndFrame(theConf, tcs_per_col);
+      
+
 
     for (auto& tcobj : tcs_with_ccf) {
+
       tcs_out.push_back(tcobj.first);
       int col = 0;
       unsigned ch = 0;
       unsigned fr = 0;
       unpackColChnFrame(tcobj.second, col, ch, fr);
+
       tcs_out.back().setColumn(col);
       tcs_out.back().setChannel(ch);
       tcs_out.back().setFrame(fr);
     }
   }
+
+
 
   return 0;
 }
@@ -52,17 +60,25 @@ std::vector<std::pair<l1thgcfirmware::HGCalTriggerCell, int>> HGCalLayer1PhiOrde
     std::vector<l1thgcfirmware::HGCalTriggerCell> tcs) const {
   std::vector<std::pair<l1thgcfirmware::HGCalTriggerCell, int>> theOrderedTCs;
   std::sort(tcs.begin(), tcs.end(), sortByPhi);
-  unsigned theColumnIndex =
-      0;  //start filling the first associated column. This assumes the columns are already ordered correctly! NB this is an index, not the column ID
+
+  unsigned theColumnIndex = 0;  //start filling the first associated column. This assumes the columns are already ordered correctly! NB this is an index, not the column ID
   unsigned nTCinColumn = 0;  //Number of TCs already in column
+
   for (auto& tc : tcs) {
+
     uint32_t theModuleId = tc.moduleId();
-    while (!(nTCinColumn < theConf.getColBudgetAtIndex(theModuleId, theColumnIndex))) {
-      theColumnIndex += 1;
-      nTCinColumn = 0;
+    if(theConf.modIsConfigured(theModuleId)){ //Check if the module has been configured in the first place
+      if(theColumnIndex < theConf.getNumberOfColumns(theModuleId)){
+        if (!(nTCinColumn < theConf.getColBudgetAtIndex(theModuleId, theColumnIndex))) {
+          theColumnIndex += 1;
+          nTCinColumn = 0;
+        }
+        if(theColumnIndex < theConf.getNumberOfColumns(theModuleId)){
+          theOrderedTCs.push_back(std::make_pair(tc, theConf.getColFromBudgetMapAtIndex(theModuleId, theColumnIndex)));
+          nTCinColumn += 1;
+        }
+      }
     }
-    theOrderedTCs.push_back(std::make_pair(tc, theConf.getColFromBudgetMapAtIndex(theModuleId, theColumnIndex)));
-    nTCinColumn += 1;
   }
   return theOrderedTCs;
 }
