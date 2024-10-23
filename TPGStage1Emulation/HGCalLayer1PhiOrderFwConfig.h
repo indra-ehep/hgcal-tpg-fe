@@ -95,30 +95,51 @@ namespace l1thgcfirmware {
     }
 
     void configureSeptemberTestBeamMappingInfo(){
-      for(unsigned j=0;j<9; j++){ //Module 256 - BC, and 8448 - STC16, 9 bins with first two bins having two slots; and 8960 - STC16, 9 bins. Treat 9472 similarly, even if not read out
+      for(unsigned j=0;j<9; j++){ //Module 256 - BC, 9 bins with first two having 2 slots, Module 768 - BC, 9 bins, Module 1280 - BC, 9 bins, 5 with 2 TC/bin, 8448 - STC16, 9 bins with first first 5 bins having two slots; and 8960 - STC16, 9 bins. Treat 9472 similarly, even if not read out
       //In the third train: 16640 - STC4, as 256
         chn_frame_slots_per_mod_and_col_[256][j].push_back(std::make_pair(0,0));
+        chn_frame_slots_per_mod_and_col_[768][j].push_back(std::make_pair(0,0));
+        chn_frame_slots_per_mod_and_col_[1280][j].push_back(std::make_pair(0,0));
         chn_frame_slots_per_mod_and_col_[8448][j].push_back(std::make_pair(0,0));
         chn_frame_slots_per_mod_and_col_[8960][j].push_back(std::make_pair(0,0));
         chn_frame_slots_per_mod_and_col_[9472][j].push_back(std::make_pair(0,0));
         chn_frame_slots_per_mod_and_col_[16640][j].push_back(std::make_pair(0,0));
         if (j<2){
           chn_frame_slots_per_mod_and_col_[256][j].push_back(std::make_pair(0,0));
-          chn_frame_slots_per_mod_and_col_[8448][j].push_back(std::make_pair(0,0));
           chn_frame_slots_per_mod_and_col_[16640][j].push_back(std::make_pair(0,0));
         }
+        if (j<5){
+          chn_frame_slots_per_mod_and_col_[1280][j].push_back(std::make_pair(0,0));
+          chn_frame_slots_per_mod_and_col_[8448][j].push_back(std::make_pair(0,0));
+
+        }
         max_tcs_per_module_and_column_[256].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[256][j].size()));
+        max_tcs_per_module_and_column_[768].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[768][j].size()));
+        max_tcs_per_module_and_column_[1280].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[1280][j].size()));
         max_tcs_per_module_and_column_[8448].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[8448][j].size()));
         max_tcs_per_module_and_column_[8960].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[8960][j].size()));
         max_tcs_per_module_and_column_[9472].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[9472][j].size()));
         max_tcs_per_module_and_column_[16640].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[16640][j].size()));
       }
 
-      for(unsigned j=0;j<4;j++) { //Module 768, 1280 - BC, 4 bins read out
-        chn_frame_slots_per_mod_and_col_[768][j].push_back(std::make_pair(0,0));
-        chn_frame_slots_per_mod_and_col_[1280][j].push_back(std::make_pair(0,0));
-        max_tcs_per_module_and_column_[768].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[768][j].size()));
-        max_tcs_per_module_and_column_[1280].push_back(std::make_pair(j,chn_frame_slots_per_mod_and_col_[1280][j].size()));
+    }
+
+    void configureTDAQReadoutInfo(){
+      for(unsigned j=0; j<9; j++){
+        //Module 256: 9 bins, 2 slots for the first two. 768: 4 bins, 1 slot/bin. 1280: 4 bins, 1 slot/bin. 8448: 9 bins, 2 slots for the first two. 8960: 9 bins. 9472: 0 bins. 16640: 9 bins, 2 slots for the first 2.
+        tdaq_slots_per_bin_per_mod_[256].push_back(std::make_pair(j,0)); //This means bin j, slot 0. 
+        tdaq_slots_per_bin_per_mod_[8448].push_back(std::make_pair(j,0));
+        tdaq_slots_per_bin_per_mod_[16640].push_back(std::make_pair(j,0));
+        tdaq_slots_per_bin_per_mod_[8960].push_back(std::make_pair(j,0));
+        if(j<2){
+          tdaq_slots_per_bin_per_mod_[256].push_back(std::make_pair(j,1));
+          tdaq_slots_per_bin_per_mod_[8448].push_back(std::make_pair(j,1));
+          tdaq_slots_per_bin_per_mod_[16640].push_back(std::make_pair(j,1));
+        } 
+        if(j<4){
+          tdaq_slots_per_bin_per_mod_[768].push_back(std::make_pair(j,0));
+          tdaq_slots_per_bin_per_mod_[1280].push_back(std::make_pair(j,0));
+        }
       }
     }
 
@@ -142,6 +163,12 @@ namespace l1thgcfirmware {
     unsigned getFrameAtIndex(unsigned moduleId, int theColumn, unsigned theChnFrameIndex) const {
       return chn_frame_slots_per_mod_and_col_.at(moduleId).at(theColumn).at(theChnFrameIndex).second;
     }  //Extract frame number for colnr theColumn, at given channel+frame index in the vector
+    std::vector<std::pair<unsigned,unsigned>> getTDAQSlotsForModule(unsigned moduleId) const {
+      return tdaq_slots_per_bin_per_mod_.at(moduleId);
+    }
+    unsigned isModuleReadByTDAQ(unsigned moduleId) const {
+      return tdaq_slots_per_bin_per_mod_.count(moduleId);
+    }
 
 
   private:
@@ -150,6 +177,8 @@ namespace l1thgcfirmware {
     std::unordered_map<unsigned, std::vector<std::pair<int, unsigned>>> max_tcs_per_module_and_column_;
     std::unordered_map<unsigned, std::unordered_map<int, std::vector<std::pair<unsigned, unsigned>>>>
         chn_frame_slots_per_mod_and_col_;
+    std::unordered_map<unsigned, std::vector<std::pair<unsigned, unsigned>>>
+        tdaq_slots_per_bin_per_mod_;
     //const uint32_t dummyModId_ = 1879048191;  // Just to avoid filling maps for random module ID values. Temporary!!
   };
 

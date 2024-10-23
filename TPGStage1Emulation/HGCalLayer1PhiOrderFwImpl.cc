@@ -68,16 +68,16 @@ std::vector<std::pair<l1thgcfirmware::HGCalTriggerCell, int>> HGCalLayer1PhiOrde
 
     uint32_t theModuleId = tc.moduleId();
     if(theConf.modIsConfigured(theModuleId)){ //Check if the module has been configured in the first place
-      if(theColumnIndex < theConf.getNumberOfColumns(theModuleId)){
-        if (!(nTCinColumn < theConf.getColBudgetAtIndex(theModuleId, theColumnIndex))) {
-          theColumnIndex += 1;
-          nTCinColumn = 0;
-        }
         if(theColumnIndex < theConf.getNumberOfColumns(theModuleId)){
-          theOrderedTCs.push_back(std::make_pair(tc, theConf.getColFromBudgetMapAtIndex(theModuleId, theColumnIndex)));
-          nTCinColumn += 1;
+          if (!(nTCinColumn < theConf.getColBudgetAtIndex(theModuleId, theColumnIndex))) {
+            theColumnIndex += 1;
+            nTCinColumn = 0;
+          }
+          if(theColumnIndex < theConf.getNumberOfColumns(theModuleId)){
+            theOrderedTCs.push_back(std::make_pair(tc, theConf.getColFromBudgetMapAtIndex(theModuleId, theColumnIndex)));
+            nTCinColumn += 1;
+          }
         }
-      }
     }
   }
   return theOrderedTCs;
@@ -94,14 +94,20 @@ std::vector<std::pair<l1thgcfirmware::HGCalTriggerCell, int>> HGCalLayer1PhiOrde
   for (auto& tc : ord_tcs) {
     int theCol = tc.second;
     uint32_t theModuleId = tc.first.moduleId();
-    if (chnAndFrameCounterForCol[theModuleId].count(theCol) == 0)
-      chnAndFrameCounterForCol[theModuleId][theCol] = 0;
-    unsigned theChnFrameIndex = chnAndFrameCounterForCol[theModuleId][theCol];
-    chnAndFrameCounterForCol[theModuleId][theCol] += 1;
-    int thePackedCCF = packColChnFrame(theCol,
+    if(theConf.isModuleReadByTDAQ(theModuleId)) {
+      std::vector<std::pair<unsigned,unsigned>> theSlotsForThisModule = theConf.getTDAQSlotsForModule(theModuleId);
+      if (chnAndFrameCounterForCol[theModuleId].count(theCol) == 0)
+        chnAndFrameCounterForCol[theModuleId][theCol] = 0;
+      std::pair<unsigned, unsigned> thisModulesColAndSlot = std::make_pair(theCol,chnAndFrameCounterForCol[theModuleId][theCol]);
+      if (std::find(theSlotsForThisModule.begin(), theSlotsForThisModule.end(), thisModulesColAndSlot) != theSlotsForThisModule.end()){
+        unsigned theChnFrameIndex = chnAndFrameCounterForCol[theModuleId][theCol];
+        chnAndFrameCounterForCol[theModuleId][theCol] += 1;
+        int thePackedCCF = packColChnFrame(theCol,
                                        theConf.getChannelAtIndex(theModuleId, theCol, theChnFrameIndex),
                                        theConf.getFrameAtIndex(theModuleId, theCol, theChnFrameIndex));
-    theTCsWithChnFrame.push_back(std::make_pair(tc.first, thePackedCCF));
+        theTCsWithChnFrame.push_back(std::make_pair(tc.first, thePackedCCF));
+      }
+    }
   }
   return theTCsWithChnFrame;
 }

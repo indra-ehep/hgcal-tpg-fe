@@ -208,6 +208,7 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   l1thgcfirmware::HGCalLayer1PhiOrderFwConfig theConfiguration_;
   theConfiguration_.configureSeptemberTestBeamMappingInfo();
+  theConfiguration_.configureTDAQReadoutInfo();
 
   //===============================================================================================================================
   //Process certain reference eventlist
