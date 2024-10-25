@@ -1191,7 +1191,7 @@ namespace TPGFEReader{
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
-	      std::cout<<"iloc: "<< iw
+		  std::cout<<"iloc: "<< iw
 		       << std::hex
 		       <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
 		       <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
@@ -1330,7 +1330,7 @@ namespace TPGFEReader{
 			 <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
 			 <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
 			 << std::dec << std::setfill(' ')
-			 << std::endl;		
+			 << std::endl;	
 	      unpkIndx++;
 	      if(unpkIndx%8==0) {ibx++; iunpkw=0;}
 	    }//loop over words for 7 bxs
@@ -1339,7 +1339,8 @@ namespace TPGFEReader{
 	  ///////////////////// Fill tcprocarray ///////////////////////
 	  TPGBEDataformat::TrigTCProcData tcprocdata[4][3]; //4:lpGBT, 3:econT
 	  for(int ilp=0;ilp<4;ilp++){
-	    for(int iecon=0;iecon<3;iecon++){
+		unsigned maxecons = ilp<2 ? 3:2;
+	    for(int iecon=0;iecon< maxecons;iecon++){//2 ECON-Ts in trains 3 and 4
 	      moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
 		  int theTDAQEntry = tcprocdata[ilp][iecon].getTDAQEntry(ilp,iecon);
 		  std::map<int, std::vector<std::pair<int, int>>> theWordAndColPerBin = tcprocdata[ilp][iecon].getWordAndColPerBin(ilp,iecon);

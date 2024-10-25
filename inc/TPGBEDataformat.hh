@@ -520,8 +520,8 @@ private:
     int getTDAQEntry(int ilp, int iecon) {
       if (ilp==0) return 0;//first lpGBT link: all 3 ECON-Ts in first TDAQ block
       else if (ilp==1&&iecon<2) return iecon; //second lpGBT link: first ECON-T is in first TDAQ block, second ECON-T in 2nd TDAQ block; third ECON-T not read out
-      else if(ilp==2) return 2; //third lpGBT link: all 3 ECON-Ts in the third TDAQ block
-      else if (ilp==3&&iecon<2) return iecon+2; //fourth lpGBT link: first ECON-T is in the third TDAQ block, second ECON-T is in the last TDAQ block; third ECON-T is not read out
+      else if(ilp==2 && iecon<2) return 2; //third lpGBT link: has two ECON-Ts, both in the third TDAQ block
+      else if (ilp==3&&iecon<2) return 2; //fourth lpGBT link: two ECON-T, both in the third TDAQ block
       else return -1;
     }
     std::map<int, std::vector<std::pair<int, int>>> getWordAndColPerBin(int ilp, int iecon ) {
@@ -542,14 +542,21 @@ private:
           }
           theTmpMap[ibin] = theTmpVec;
         }
-      } else if((ilp==0 || ilp==2) &&iecon<3) {//first, third lpGBT link, second and third ECON-T: read out in the next 2 words, 4 bins (so 1 word per module)
+      } else if(ilp==0 &&iecon<3) {//first lpGBT link, second and third ECON-T: read out in the next 2 words, 4 bins (so 1 word per module)
         theTmpMap.clear();
         for(int ibin=0;ibin<4;ibin++){
           theTmpVec.resize(0);
           theTmpVec.push_back(std::make_pair(iecon+2,ibin)); //2nd and 3d module have 4 bins, one entry each
           theTmpMap[ibin] = theTmpVec;
         }
-      } else if((ilp==1 || ilp==3) && iecon ==0){//second, fourth lpGBT link, first ECON-T: last words of the TDAQ block, 9 bins (2TC/bin in the first 2), 3 words in total
+      } else if(ilp==2 && iecon<2){//third lpGBT link only has two econTs. Second one: read out 1 word per module
+        theTmpMap.clear();
+        for(int ibin=0;ibin<4;ibin++){
+          theTmpVec.resize(0);
+          theTmpVec.push_back(std::make_pair(iecon+2,ibin)); //2nd module has 4 bins, one entry each
+          theTmpMap[ibin] = theTmpVec;
+        }
+      } else if((ilp==1) && iecon ==0){//second lpGBT link, first ECON-T: last words of the TDAQ block, 9 bins (2TC/bin in the first 2), 3 words in total
         theTmpMap.clear();
         for(int ibin=0; ibin < 9 ; ibin++){
           theTmpVec.resize(0);
@@ -564,7 +571,29 @@ private:
           }
           theTmpMap[ibin] = theTmpVec;
         }
-      } else if ((ilp==1 || ilp==3) && iecon ==1){//second, fourth lpGBT link, second ECON-T: first words of the next TDAQ block, 9 bins, 3 words in total. 
+      } else if ((ilp==3) && iecon ==0){//fourth lpGBT link, first ECON-T: 1 word per module (4 bins read out)
+        theTmpMap.clear();
+        for(int ibin=0;ibin<4;ibin++){
+          theTmpVec.resize(0);
+          theTmpVec.push_back(std::make_pair(4,ibin)); //3d module has 4 bins, one entry each
+          theTmpMap[ibin] = theTmpVec;
+        }
+      } else if (ilp==3 && iecon ==1){//fourth lpGBT link, second ECON-T: last words of the TDAQ block, 9 bins (2TC/bin in the first 2), 3 words in total
+        theTmpMap.clear();
+        for(int ibin=0; ibin < 9 ; ibin++){
+          theTmpVec.resize(0);
+          if(ibin==0){
+            theTmpVec.push_back(std::make_pair(5,0));
+            theTmpVec.push_back(std::make_pair(5,1));
+          } else if (ibin==1){
+            theTmpVec.push_back(std::make_pair(5,2));
+            theTmpVec.push_back(std::make_pair(5,3));
+          } else {
+            theTmpVec.push_back(std::make_pair(std::floor((ibin-2)/4)+6,(ibin-2)%4));
+          }
+          theTmpMap[ibin] = theTmpVec;
+        }
+      } else if ((ilp==1) && iecon ==1){//second lpGBT link, second ECON-T: first words of the next TDAQ block, 9 bins, 3 words in total. 
         theTmpMap.clear();
         for(int ibin=0; ibin<9;ibin++){
           theTmpVec.resize(0);
@@ -573,6 +602,24 @@ private:
         }
       }
       return theTmpMap;
+    }
+
+    void print(uint32_t bxindex = 0){
+      
+      for(unsigned ib(0);ib<7;ib++){
+	      if(ib!=bxindex) continue;
+        for(unsigned ibin=0;ibin<9;ibin++){
+          for (unsigned iinst=0;iinst<2;iinst++){
+            if(unpkWordIsValid(ib,ibin,iinst))
+            std::cout<<" ib "<< ib <<", bin number "<<ibin<<", entry in bin"<<iinst
+                <<", unpackedWord = 0x"
+                << std::hex << ::std::setfill('0') << std::setw(4)
+                << getUnpkWord(ib, ibin, iinst)
+                << std::dec
+                << std::endl;
+          }
+        }
+      }
     }
 
   private:

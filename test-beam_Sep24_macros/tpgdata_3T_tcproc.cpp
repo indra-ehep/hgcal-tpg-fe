@@ -52,7 +52,7 @@ int main(int argc, char** argv)
   uint32_t runNumber(0);
   uint32_t linkNumber(0);
   uint64_t totEvents(0);
-  uint64_t nofEvents(100);
+  uint64_t nofEvents(10);
   std::istringstream issRelay(argv[1]);
   issRelay >> relayNumber;
   //Notes:
@@ -268,10 +268,14 @@ int main(int argc, char** argv)
 	    if(econtdata.at(ietd).first!=moduleId) continue;//Need to assume that order of econtdata and tcprocdata entries is the same.
 	    trdata = econtdata.at(ietd).second ;
       tcpdata = tcprocdata.at(ietd).second;
+      std::cout<<"=======================TC processor data==================="<<std::endl;
+      std::cout<<moduleId <<std::endl;
+      //tcpdata.print(3);
+
       triggerCellsFromTriggerData = createTCsFromTriggerData(moduleId,tcpdata);
-	    std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtdata.at(ietd).first << " moduleId from tcproc data "<<tcprocdata.at(ietd).first << std::endl;
-	    //for(int ibx=0;ibx<7;ibx++){
-	    for(int ibx=3;ibx<4;ibx++){
+	    //std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtdata.at(ietd).first << " moduleId from tcproc data "<<tcprocdata.at(ietd).first << std::endl;
+	    for(int ibx=0;ibx<7;ibx++){
+	    //for(int ibx=3;ibx<4;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
 	      uint32_t bx_2 = (el[0]>>28) & 0xF;
 	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
@@ -284,9 +288,9 @@ int main(int argc, char** argv)
 	      //==================================================================
 	      //TPGStage1Emulation::Stage1IO::convertUnpackerOutputStreamPairToTCProc(bx_2, updata, tcprocemul);
 	      //==================================================================
-	      std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
-	      std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
-	      updata.print();
+	      //std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
+	      //std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
+	      //updata.print();
 	      //==================================================================
 	      //TC proc emulation comparison with data something similar to below
 	      //==================================================================
@@ -312,7 +316,10 @@ int main(int argc, char** argv)
         if(isDataTCsAssigned){//Only try to do comparison if we have read out TB data since some modules are missing
           bool diffTCs=hasDifferentTCs(tcs_out_SA,tcs_out_tcproc_TB);
 
-          if(diffTCs || 1){
+          if(diffTCs){
+
+            std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
+	          updata.print();
             std::cout << "========== Emulated TC proc results using firmware data of Stage1 unpacker output stream for ibx : " << ibx << " ==========" << std::endl;
 
             std::cout<<"Printing TCs with column, channel, frame mapping - after TCprocEmul, from ECON-T elink input"<<std::endl;
@@ -326,6 +333,8 @@ int main(int argc, char** argv)
             for (auto& tcobj : tcs_out_tcproc_TB){
               std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
             }
+
+            std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
           }
           FillHistogram(dir_diff,tcs_out_SA,tcs_out_tcproc_TB);
         }
@@ -333,7 +342,6 @@ int main(int argc, char** argv)
 	      //trdata.getTCData(ibx,tcprocdata);
 	      //tcprocdata.print();
 	      //==================================================================
-	      std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
 	  }//loop over econt data for a given run
@@ -473,6 +481,57 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hTCProcDiff_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator");
   hTCProcDiff_quantities->GetYaxis()->SetTitle("Entries");
   hTCProcDiff_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff256_quantities = new TH1D("hTCProcDiff256_quantities", Form("TC processor difference in output quantities mod 256 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff256_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 256");
+  hTCProcDiff256_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff256_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff768_quantities = new TH1D("hTCProcDiff768_quantities", Form("TC processor difference in output quantities mod 768 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff768_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 768");
+  hTCProcDiff768_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff768_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff1280_quantities = new TH1D("hTCProcDiff1280_quantities", Form("TC processor difference in output quantities mod 1280 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff1280_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 1280");
+  hTCProcDiff1280_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff1280_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff8448_quantities = new TH1D("hTCProcDiff8448_quantities", Form("TC processor difference in output quantities mod 8448 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff8448_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 8448");
+  hTCProcDiff8448_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff8448_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff8960_quantities = new TH1D("hTCProcDiff8960_quantities", Form("TC processor difference in output quantities mod 8960 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff8960_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 8960");
+  hTCProcDiff8960_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff8960_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff9472_quantities = new TH1D("hTCProcDiff9472_quantities", Form("TC processor difference in output quantities mod 9472 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff9472_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 9472");
+  hTCProcDiff9472_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff9472_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff16640_quantities = new TH1D("hTCProcDiff16640_quantities", Form("TC processor difference in output quantities mod 16640 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff16640_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 16640");
+  hTCProcDiff16640_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff16640_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff17152_quantities = new TH1D("hTCProcDiff17152_quantities", Form("TC processor difference in output quantities mod 17152 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff17152_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 17152");
+  hTCProcDiff17152_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff17152_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff24832_quantities = new TH1D("hTCProcDiff24832_quantities", Form("TC processor difference in output quantities mod 24832 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff24832_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 24832");
+  hTCProcDiff24832_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff24832_quantities->SetDirectory(dir_diff);
+
+  TH1D *hTCProcDiff25344_quantities = new TH1D("hTCProcDiff25344_quantities", Form("TC processor difference in output quantities mod 25344 for Relay: %u", relay),52,-0.5,25.5);
+  hTCProcDiff25344_quantities->GetXaxis()->SetTitle("Difference between firmware TC processor and emulator in module 25344");
+  hTCProcDiff25344_quantities->GetYaxis()->SetTitle("Entries");
+  hTCProcDiff25344_quantities->SetDirectory(dir_diff);
+
 }
 
 void FillHistogram(TDirectory*& dir_diff, l1thgcfirmware::HGCalTriggerCellSACollection tcProcEmulator, l1thgcfirmware::HGCalTriggerCellSACollection tcProcTB){
@@ -485,8 +544,20 @@ void FillHistogram(TDirectory*& dir_diff, l1thgcfirmware::HGCalTriggerCellSAColl
     }
     ((TH1D *) list->FindObject("hTCProcDiff_size"))->Fill(theTCListSizeDiff);
     unsigned theSizeToTest = std::min(tcProcEmulator.size(),tcProcTB.size());
+    unsigned theModuleId = 0;
+    if(theSizeToTest>0) theModuleId = tcProcEmulator.at(0).moduleId();
     for(unsigned i=0; i<theSizeToTest; i++){
       unsigned diffsize = std::abs(int(tcProcEmulator.at(i).energy()-tcProcTB.at(i).energy()))+std::abs(int(tcProcEmulator.at(i).phi()-tcProcTB.at(i).phi()))+std::abs(int(tcProcEmulator.at(i).channel()-tcProcTB.at(i).channel()))+std::abs(int(tcProcEmulator.at(i).frame()-tcProcTB.at(i).frame()))+std::abs(int(tcProcEmulator.at(i).column()-tcProcTB.at(i).column()));
       ((TH1D *) list->FindObject("hTCProcDiff_quantities"))->Fill(diffsize);
+      if(theModuleId==256) ((TH1D *) list->FindObject("hTCProcDiff256_quantities"))->Fill(diffsize);
+      else if(theModuleId==768) ((TH1D *) list->FindObject("hTCProcDiff768_quantities"))->Fill(diffsize);
+      else if(theModuleId==1280) ((TH1D *) list->FindObject("hTCProcDiff1280_quantities"))->Fill(diffsize);
+      else if(theModuleId==8448) ((TH1D *) list->FindObject("hTCProcDiff8448_quantities"))->Fill(diffsize);
+      else if(theModuleId==8960) ((TH1D *) list->FindObject("hTCProcDiff8960_quantities"))->Fill(diffsize);
+      else if(theModuleId==9472) ((TH1D *) list->FindObject("hTCProcDiff9472_quantities"))->Fill(diffsize);
+      else if(theModuleId==16640) ((TH1D *) list->FindObject("hTCProcDiff16640_quantities"))->Fill(diffsize);
+      else if(theModuleId==17152) ((TH1D *) list->FindObject("hTCProcDiff17152_quantities"))->Fill(diffsize);
+      else if(theModuleId==24832) ((TH1D *) list->FindObject("hTCProcDiff24832_quantities"))->Fill(diffsize);
+      else if(theModuleId==25344) ((TH1D *) list->FindObject("hTCProcDiff25344_quantities"))->Fill(diffsize);
     }
 }
