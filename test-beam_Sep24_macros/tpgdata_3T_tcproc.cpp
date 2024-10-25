@@ -1,8 +1,8 @@
 /**********************************************************************
  Created on : 18/10/2024
  Purpose    : Example to read TPG data for TC processor
- Author     : Indranil Das, Research Associate, Imperial
- Email      : indranil.das@cern.ch | indra.ehep@gmail.com
+ Author     : Indranil Das, Research Associate, Imperial (TPG data reading framework) / Adinda de Wit (TC processor emulation)
+ Email      : indranil.das@cern.ch | indra.ehep@gmail.com / adinda.dewit@cern.ch
 **********************************************************************/
 #include <iostream>
 
