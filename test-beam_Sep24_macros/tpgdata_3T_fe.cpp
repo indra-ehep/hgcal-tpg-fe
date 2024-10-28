@@ -180,7 +180,7 @@ int main(int argc, char** argv)
   // ===============================================================================================================================
   TPGFEReader::ECONTReader econTReader(cfgs);
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
-  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> tcprocarray; //event,moduleId (from link)
+  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>>> tcprocarray; //event,moduleId (from link)
   econTReader.setNofCAFESep(14);
   // ===============================================================================================================================
   

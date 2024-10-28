@@ -295,7 +295,7 @@ int main(int argc, char** argv)
   //output array
   //econTReader.checkEvent(1);
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
-  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> tcprocarray; //event,moduleId (from link)
+  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>>> tcprocarray; //event,moduleId (from link)
   // ===============================================================================================================================
 
   int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_t maxTestEvent,
