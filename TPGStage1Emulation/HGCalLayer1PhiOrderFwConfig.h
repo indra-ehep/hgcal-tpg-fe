@@ -150,7 +150,7 @@ namespace l1thgcfirmware {
           tdaq_slots_per_bin_per_mod_[17152].push_back(std::make_pair(j,0));
           tdaq_slots_per_bin_per_mod_[24832].push_back(std::make_pair(j,0));
         }
-        if(j<8){
+        if(j<8){ //Only to match the observed output where the last TC that is supposed to be read out is missing. In reality 9 TCs read out.
           tdaq_slots_per_bin_per_mod_[16640].push_back(std::make_pair(j,0));
         }
       }
