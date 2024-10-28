@@ -29,14 +29,14 @@
 #include "TPGBEDataformat.hh"
 #include "TPGFEConfiguration.hh"
 #include "TPGFEModuleEmulation.hh"
-#include "TPGFEReaderSep2024.hh"
+#include "TPGFEReader3TSep2024.hh"
 #include "Stage1IO.hh"
 
 int main(int argc, char** argv)
 {
   //===============================================================================================================================
   // make
-  // ./emul_Jul24.exe $Relay $rname $link_number $istrimming $density $dropLSB 
+  // ./emul_Jul24.exe $Relay $rname $link_number $istrimming
   //===============================================================================================================================  
   if(argc < 3){
     std::cerr << argv[0] << ": no relay and/or run numbers specified" << std::endl;
@@ -47,46 +47,47 @@ int main(int argc, char** argv)
     return false;
   }
   //===============================================================================================================================
-
+  
+  //===============================================================================================================================
+  //Assign relay,run and link numbers from input
+  //===============================================================================================================================
+  uint32_t relayNumber(0);
+  uint32_t runNumber(0);
+  uint32_t linkNumber(1);
+  const uint32_t noflpGBTs(2);
+  bool isTrimming(1);
+  long double maxEvent = 100;
+  std::istringstream issRelay(argv[1]);
+  issRelay >> relayNumber;
   //Notes:
   // 1. firmware test for third train 1727007636 (old ECON-T configuration so should not be analyzed)
   // 2. first pedestal with 3rd layer in configuration 1727033054 and installed 1727099251 (with correct ECON-T configuration)
   // 3. first technical with third layer : 1727099443 //https://cmsonline.cern.ch/webcenter/portal/cmsonline/Common/Elog?__adfpwp_action_portlet=683379043&__adfpwp_backurl=https%3A%2F%2Fcmsonline.cern.ch%3A443%2Fwebcenter%2Fportal%2Fcmsonline%2FCommon%2FElog%3F_afrRedirect%3D23225796808764440&_piref683379043.strutsAction=%2FviewMessageDetails.do%3FmsgId%3D1237840
   // 4. swap back roc2 config of mod16 for relays after 1727116899 (not necessary for this code, kept as bookkeeping)
   // 5. List of run flagged as green by Paul for TC Processor are Relay1727219172 to Run1727219175 and probably Relay1727211141
-  //===============================================================================================================================
-  //Assign relay,run and link numbers from input
-  //===============================================================================================================================
-  uint32_t relayNumber(0);
-  uint32_t runNumber(0);
-  uint32_t linkNumber(0);
-  const uint32_t noflpGBTs(2);
-  bool isTrimming(0);
-  std::istringstream issRelay(argv[1]);
-  issRelay >> relayNumber;
-  if(relayNumber>=1727099251){
-  //if(relayNumber>=1727007636){
-    std::cerr << "Relaynumber should corresponds to those with two silicon layers configuration" << std::endl;
+  // 6. Sampling phase issue has been solved for relays after 1727123194, muon relay : 1727132796
+  if(relayNumber<1727007636){
+    //if(relayNumber<1727099251){
+    std::cerr << "Third layer is not properly configured" << std::endl;
     return false;
   }
-  
+
   std::istringstream issRun(argv[2]);
   issRun >> runNumber;
-  std::istringstream issLink(argv[3]);
-  issLink >> linkNumber;
+  std::istringstream issEvents(argv[3]);
+  issEvents >> maxEvent;
+  // std::istringstream issLink(argv[3]);
+  // issLink >> linkNumber;
   if(linkNumber!=1 and linkNumber!=2){
     std::cerr << "Link number "<< argv[3] <<"is out of bound (use: 1 or 2)" << std::endl;
     return false;
   }
   uint32_t trig_linkNumber = TMath::FloorNint((linkNumber-1)/2);
-  std::istringstream issTrimming(argv[4]);
-  issTrimming >> isTrimming;
-  // std::istringstream issDensity(argv[5]);
-  // issDensity >> density;
-  // std::istringstream issDropLSB(argv[6]);
-  // issDropLSB >> droplsb;
-  //===============================================================================================================================
+  // std::istringstream issTrimming(argv[4]);
+  // issTrimming >> isTrimming;
   
+  //===============================================================================================================================
+
   //===============================================================================================================================
   //Book histograms
   //===============================================================================================================================
@@ -97,7 +98,7 @@ int main(int argc, char** argv)
 		     std::vector<uint64_t>&, std::vector<uint64_t>&, std::vector<uint64_t>&);
 		     //std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>>>&);
   
-  TFile *fout = new TFile(Form("Diff_Relay-%u.root",relayNumber), "recreate");
+  TFile *fout = new TFile(Form("Diff_3T_Relay-%u.root",relayNumber), "recreate");
   TDirectory *dir_diff = fout->mkdir("diff_plots");
   BookHistograms(dir_diff, relayNumber);
   //===============================================================================================================================
@@ -129,7 +130,7 @@ int main(int argc, char** argv)
       {"320MLF3WXIH0018_roc0_e0.yaml", "320MLF3WXIH0018_roc1_e0.yaml", "320MLF3WXIH0018_roc2_e0.yaml"}
     },
     {
-      {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml"},
+      {"320MLF3WXIH0016_roc0_e2.yaml", "320MLF3WXIH0016_roc1_e2.yaml", "320MLF3WXIH0016_roc2_e2.yaml"},
       {"320MLF3WXIH0017_roc0_e1.yaml", "320MLF3WXIH0017_roc1_e1.yaml", "320MLF3WXIH0017_roc2_e1.yaml"},
       {"320MLF3WXIH0014_roc0_e0.yaml", "320MLF3WXIH0014_roc1_e0.yaml", "320MLF3WXIH0014_roc2_e0.yaml"}
     }
@@ -140,7 +141,7 @@ int main(int argc, char** argv)
       uint32_t idx = pck.packModId(zside, sector, ilink, det, iecond, selTC4, module); //we assume same ECONT and ECOND number for a given module
       
       cfgs.setModulePath(zside, sector, ilink, det, iecond, selTC4, module);
-      
+
       switch(ilink){
       case 0:
 	switch(iecond){
@@ -171,15 +172,10 @@ int main(int argc, char** argv)
 	  break;
       }
       cfgs.readEconTConfigYaml();
-      
-      // if(ilink==1 and (iecond==0)){
-      // 	cfgs.setEconTFile("cfgmap/init_econt_mux_test1.yaml");
-      // 	cfgs.readEconTConfigYaml();
-      // }
-      
+
       cfgs.setEconTFile("cfgmap/init_econt_mux_test1.yaml");
       cfgs.readEconTConfigYaml();
-      
+
       cfgs.setEconDFile("cfgmap/init_econd.yaml");
       cfgs.readEconDConfigYaml();      
       
@@ -187,19 +183,13 @@ int main(int argc, char** argv)
 	std::cout<<"idx: "<<idx<<", ilink: " << ilink << ", iecond: "<<iecond<<", iroc: "<<iroc << ", fname : " << cfgrocname[ilink][iecond][iroc] << std::endl;
 	uint32_t rocid_0 = pck.packRocId(zside, sector, ilink, det, iecond, selTC4, module, iroc, 0);
 	uint32_t rocid_1 = pck.packRocId(zside, sector, ilink, det, iecond, selTC4, module, iroc, 1);
-	//cfgs.setRocFile(Form("cfgmap/slow_control_configuration/configs_with_MasterTDC_and_TPGTRM/%s",cfgrocname[ilink][iecond][iroc].c_str()));
-	//cfgs.setRocFile(Form("cfgmap/bt2024-fe-config-trimmed/%s",cfgrocname[ilink][iecond][iroc].c_str()));
 	cfgs.setRocFile(Form("cfgmap/configs_v3b_full/%s",cfgrocname[ilink][iecond][iroc].c_str()));
-	//cfgs.setRocFile(Form("cfgmap/configs_v3b_full_aggressive/%s",cfgrocname[ilink][iecond][iroc].c_str()));
 	cfgs.readRocConfigYaml(rocid_0, rocid_1);	
       }//roc loop
     }//econd loop
   }//lpGBT loop
   if(!isTrimming){
-    if(relayNumber==1726581356) //This is for fixed ADC pattern run
-      cfgs.setPedZero();
-    else
-      cfgs.setPedThZero();
+    cfgs.setPedThZero();
   }
   link = 1; econt = 2;
   uint32_t testmodid = pck.packModId(zside, sector, link, det, econt, selTC4, module); //we assume same ECONT and ECOND number for a given module
@@ -215,18 +205,17 @@ int main(int argc, char** argv)
     econDPar.at(it.first).setPassThrough(true);
     econDPar.at(it.first).setNeRx(6);
   }
-  link = 0; econt = 0;
-  uint32_t lp0_bc0 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  link = 0; econt = 1;
-  uint32_t lp0_bc1 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  link = 0; econt = 2;
-  uint32_t lp0_bc2 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  link = 1; econt = 0;
-  uint32_t lp1_stc4a0 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  link = 1; econt = 1;
-  uint32_t lp1_stc4a1 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
-  link = 1; econt = 2;
-  uint32_t lp1_stc4a2 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 0; econt = 0; uint32_t lp0_bc0 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 0; econt = 1; uint32_t lp0_bc1 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 0; econt = 2; uint32_t lp0_bc2 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 1; econt = 0; uint32_t lp1_stc160 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 1; econt = 1; uint32_t lp1_stc161 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 1; econt = 2; uint32_t lp1_stc162 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 2; econt = 0; uint32_t lp2_stc4a0 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 2; econt = 1; uint32_t lp2_stc4a1 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 3; econt = 0; uint32_t lp3_stc4a0 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 3; econt = 1; uint32_t lp3_stc4a1 = pck.packModId(zside, sector, link, det, econt, selTC4, module);
+  link = 4; econt = 0; uint32_t lp4_ext_trigger = pck.packModId(zside, sector, link, det, econt, selTC4, module);
   
   uint32_t density(0);
   uint32_t droplsb(1);
@@ -235,7 +224,7 @@ int main(int argc, char** argv)
     econTPar[it.first].setDensity(density);
     econTPar[it.first].setDropLSB(droplsb);
     
-    if(it.first==lp0_bc0){
+    if(it.first==lp0_bc0){              //// starting 1st train
       econTPar[it.first].setSelect(2);
       econTPar[it.first].setNElinks(3);      
     }else if (it.first==lp0_bc1){
@@ -244,17 +233,33 @@ int main(int argc, char** argv)
     }else if (it.first==lp0_bc2){
       econTPar[it.first].setSelect(2);
       econTPar[it.first].setNElinks(2);
-    }else if (it.first==lp1_stc4a0){
+    }else if (it.first==lp1_stc160){    //// starting 2nd train
+      econTPar[it.first].setSelect(1);
+      econTPar[it.first].setNElinks(2);
+      econTPar[it.first].setSTCType(1);
+    }else if (it.first==lp1_stc161){
+      econTPar[it.first].setSelect(1);
+      econTPar[it.first].setNElinks(2);
+      econTPar[it.first].setSTCType(1);
+    }else if (it.first==lp1_stc162){
+      econTPar[it.first].setSelect(1);
+      econTPar[it.first].setNElinks(2);
+      econTPar[it.first].setSTCType(1);
+    }else if (it.first==lp2_stc4a0){    //// starting 3rd train
+      econTPar[it.first].setSelect(1);
+      econTPar[it.first].setNElinks(4);
+      econTPar[it.first].setSTCType(3);
+    }else if (it.first==lp2_stc4a1){
+      econTPar[it.first].setSelect(1);
+      econTPar[it.first].setNElinks(2);
+      econTPar[it.first].setSTCType(3);
+    }else if (it.first==lp3_stc4a0){    //// starting motherboard
+      econTPar[it.first].setSelect(1);
+      econTPar[it.first].setNElinks(4);
+      econTPar[it.first].setSTCType(3);
+    }else if (it.first==lp3_stc4a1){
       econTPar[it.first].setSelect(1);
       econTPar[it.first].setNElinks(3);
-      econTPar[it.first].setSTCType(3);
-    }else if (it.first==lp1_stc4a1){
-      econTPar[it.first].setSelect(1);
-      econTPar[it.first].setNElinks(2);
-      econTPar[it.first].setSTCType(3);
-    }else if (it.first==lp1_stc4a2){
-      econTPar[it.first].setSelect(1);
-      econTPar[it.first].setNElinks(2);
       econTPar[it.first].setSTCType(3);
     }
     std::cout << "Modtype " << it.first
@@ -273,7 +278,24 @@ int main(int argc, char** argv)
   // std::map<uint64_t,TPGFEConfiguration::ConfigCh>& hrocchcfg =  cfgs.getChPara();
   link = 1; econt = 0; uint32_t roc = 2, hroc = 0;
   uint32_t rocid_0 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, roc, hroc);  
-  //std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& hroccfg =  cfgs.getRocPara();
+  std::map<uint32_t,TPGFEConfiguration::ConfigHfROC>& hroccfg =  cfgs.getRocPara();
+  // for(auto const& hroc : hroccfg){
+  //   if(hroc.first == rocid_0) {
+  //     hroccfg[hroc.first].setTotP(2, 13);
+  //     hroccfg[hroc.first].setTotP(3, 0);
+  //     hroccfg[hroc.first].setTotTH(2, 107);
+  //   }
+  // }
+  // ===============================================================================================================================
+  
+  // ===============================================================================================================================
+  // Set and Initialize the ECONT reader
+  // ===============================================================================================================================
+  TPGFEReader::ECONTReader econTReader(cfgs);
+  //output array
+  //econTReader.checkEvent(1);
+  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
+  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> tcprocarray; //event,moduleId (from link)
   // ===============================================================================================================================
 
   int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_t maxTestEvent,
@@ -284,15 +306,6 @@ int main(int argc, char** argv)
 		  TPGFEModuleEmulation::HGCROCTPGEmulation& rocTPGEmul,
 		  TPGFEModuleEmulation::ECONTEmulation& econtEmul
 		  );
-  // ===============================================================================================================================
-  // Set and Initialize the ECONT reader
-  // ===============================================================================================================================
-  TPGFEReader::ECONTReader econTReader(cfgs);
-  //output array
-  //econTReader.checkEvent(1);
-  std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
-  // ===============================================================================================================================
-  
   //===============================================================================================================================
   //Set and Initialize the ECOND reader
   //===============================================================================================================================
@@ -310,18 +323,10 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Set refernce eventlist
   //===============================================================================================================================
-  // /*TcTp2 events */ uint64_t refEvt[50] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1809836, 1829961, 1871023, 1932945, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946};
-  // /*Nonzero diff events*/ uint64_t refEvt[6] = {66235, 471496, 1763515, 1968826, 2245408, 2390648, };
-  // /*Unexpect TC in Data in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
-  // /*Unexpect TC in Emul in event*/ uint64_t refEvt[48] = {66235, 127532, 145302, 151731, 194816, 260756, 269698, 383736, 391481, 397781, 471496, 534349, 605680, 613325, 694404, 873524, 919213, 1085378, 1124673, 1164106, 1222670, 1247896, 1278016, 1322821, 1453497, 1486909, 1533310, 1623036, 1661345, 1763515, 1769677, 1829961, 1871023, 1967257, 1968826, 1981516, 1984675, 2043998, 2060794, 2068723, 2165732, 2172380, 2237980, 2245408, 2259447, 2390648, 2462559, 2514946, };
-  // /*Difference in elink and Stage1 output in event*/ uint64_t refEvt[21] = {66235, 151731, 471496, 633065, 873524, 1366513, 1589006, 1623036, 1763515, 1968826, 1984675, 2000515, 2091972, 2165732, 2245408, 2250959, 2259447, 2264639, 2335560, 2390648, 2489154, };
-  
-  ///*TcTp1 events */ uint64_t refEvt[15] = {14428, 48493, 67503, 98432, 120863, 219727, 264253, 269227, 282427, 287117, 303531, 343240, 377844, 398262, 434333};
-  ///*TcTp1 events */ uint64_t refEvt[2] = {343240, 434333};
-  uint64_t refEvt[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  //uint64_t refEvt[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+  uint64_t refEvt[7] = {473, 1380, 1623, 2149, 5840, 5987, 7677};
   std::vector<uint64_t> refEvents;
-  //for(int ievent=0;ievent<1020;ievent++) refEvents.push_back(refEvt[ievent]);
-  for(int ievent=0;ievent<10;ievent++) refEvents.push_back(refEvt[ievent]);
+  for(int ievent=0;ievent<7;ievent++) refEvents.push_back(refEvt[ievent]);
   refEvents.resize(0);
   //===============================================================================================================================
   
@@ -340,12 +345,10 @@ int main(int argc, char** argv)
   std::vector<uint64_t> TcTp1TrigEvents;
   std::vector<uint64_t> TcTp2TrigEvents;
   std::vector<uint64_t> TcTp3TrigEvents;
+  uint32_t link1_bx_diff(1), link2_bx_diff(0);
   
-  uint64_t minEventDAQ, maxEventDAQ;  
-  const long double maxEvent = 10000 ;         
-  long double nloopEvent =  10000;
-  //const long double maxEvent = 1000  ; //1722870998:24628, 1722871979:31599
-  //long double nloopEvent = 1000 ;
+  uint64_t minEventDAQ, maxEventDAQ; 
+  long double nloopEvent =  100000;
   int nloop = TMath::CeilNint(maxEvent/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
@@ -361,12 +364,12 @@ int main(int argc, char** argv)
     hrocarray.clear();
     eventList.clear();
     econtarray.clear();
+    tcprocarray.clear();
     
-    econTReader.setNofCAFESep(11);
-    if(relayNumber>=1727211141) econTReader.setNofCAFESep(14);
     econTReader.init(relayNumber,runNumber,0);
+    econTReader.setNofCAFESep(14);
     std::cout<<"TRIG Before Link "<<trig_linkNumber<<", size : " << econtarray.size() <<std::endl;
-    econTReader.getEvents(refEvents, minEventDAQ, maxEventDAQ, econtarray);
+    econTReader.getEvents(refEvents, minEventDAQ, maxEventDAQ, econtarray, tcprocarray);
     std::cout<<"TRIG After Link "<<trig_linkNumber<<", size : " << econtarray.size() <<std::endl;
     econTReader.terminate();
     
@@ -378,13 +381,18 @@ int main(int argc, char** argv)
     
     // for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
     //   uint64_t ievent = eventList[ievt] ;
-    //   std::cout << "Event: " << ievent << ", ECONT: " << econtarray.at(ievent).size() << ", ROC: "<< hrocarray.at(ievent).size() << std::endl;
+    //   std::cout << "Event: " << ievent << ", ECONT: " << econtarray.at(ievent).size() << ", ROC: "<< hrocarray.at(ievent).size() << ", tcprocarray: " << tcprocarray.size() << std::endl;
+    //   std::cout << "lp4 ext trigger  ID " << lp4_ext_trigger << std::endl;
+    //   std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[ievent];
+    //   for(uint32_t iecon=0;iecon<econtarray.at(ievent).size();iecon++){
+    // 	std::cout<<"\tecon numbers : " << econtdata.at(iecon).first << std::endl;
+    //   }
     // }
     // continue;
     
     for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
       uint64_t ievent = eventList[ievt] ;
-      if(econtarray.at(ievent).size()!=6 or hrocarray.at(ievent).size()!=36) continue;
+      if(econtarray.at(ievent).size()!=11 or hrocarray.at(ievent).size()!=36) continue;
       std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> datalist = hrocarray[ievent] ;
       if(ievt<10) std::cout << "ROC ievent: "<< ievent<< ", datalist size: "<< datalist.size() << std::endl;
       for(const auto& hrocit : datalist){
@@ -398,33 +406,49 @@ int main(int argc, char** argv)
 	if(hrocdata.hasTcTp(3) and (std::find(TcTp3Events.begin(),TcTp3Events.end(),ievent) == TcTp3Events.end())) TcTp3Events.push_back(ievent);
       }
     }
-
-    uint32_t maxTestEvent = (refEvents.size()>0)?refEvents.size():nloopEvent;
-    FindBxShift(dir_diff, eventList, maxTestEvent, pck, econTPar, hrocarray, econtarray, rocTPGEmul, econtEmul);
     
+    uint32_t maxTestEvent = (refEvents.size()>0)?refEvents.size():nloopEvent-1;
+    FindBxShift(dir_diff, eventList, maxTestEvent, pck, econTPar, hrocarray, econtarray, rocTPGEmul, econtEmul);
+    if(ieloop==0 and refEvents.size()==0){
+      TList *list = (TList *)dir_diff->GetList();
+      TH1D *projX_link1[7];
+      for(int ibin=0;ibin<7;ibin++){
+	projX_link1[ibin] = ((TH2D *)list->FindObject(Form("hBxCorr_0")))->ProjectionX(Form("projX_link1_%d",ibin),ibin+1,ibin+1);
+	if(projX_link1[ibin]->GetEntries()>0){
+	  link1_bx_diff = projX_link1[ibin]->GetXaxis()->GetBinCenter(projX_link1[ibin]->GetMaximumBin()) - float(ibin) ;
+	  break;
+	}
+      }//bin loop
+      TH1D *projX_link2[7];
+      for(int ibin=0;ibin<7;ibin++){
+	projX_link2[ibin] = ((TH2D *)list->FindObject(Form("hBxCorr_1")))->ProjectionX(Form("projX_link2_%d",ibin),ibin+1,ibin+1);
+	if(projX_link2[ibin]->GetEntries()>0){
+	  link2_bx_diff = projX_link2[ibin]->GetXaxis()->GetBinCenter(projX_link2[ibin]->GetMaximumBin()) - float(ibin) ;
+	  break;
+	}
+      }//bin loop
+      std::cout << "link1_bx_diff: " << link1_bx_diff << ", link2_bx_diff: " << link2_bx_diff << std::endl;
+    }//for first iteration only
+
     //===============================================================================================================================
     // Emulate
     //===============================================================================================================================
     std::map<uint64_t,std::vector<std::pair<uint32_t,TPGFEDataformat::ModuleTcData>>> modarray; //event,moduleId
     modarray.clear();
-    std::map<uint32_t,TPGFEDataformat::HalfHgcrocData> rocdata;
-    std::map<uint32_t,TPGFEDataformat::ModuleTcData> moddata;
     /////////////////////////////////////////////////////////////
     //// The following part should be in a loop over modules
     /////////////////////////////////////////////////////////////
     std::cout<<"eventList size: " << eventList.size() <<std::endl;
-
+    
     for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
       uint64_t event = eventList[ievt] ;
       
       //first check that both econd and econt data has the same eventid otherwise skip the event
-      if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=12 or hrocarray.at(event).size()!=36) {
+      if(econtarray.find(event) == econtarray.end() or hrocarray.find(event) == hrocarray.end() or econtarray.at(event).size()!=11 or hrocarray.at(event).size()!=36) {
 	if(std::find(corruptEvent.begin(),corruptEvent.end(),event) == corruptEvent.end()) corruptEvent.push_back(event);
 	continue;
       }
-      //if(econtarray.find(event) == econtarray.end()) break;
-
-      //bool eventCondn = (event<1000 or event==1560 or event==2232 or event==2584 or event==2968 or event==3992);
+      
       //bool eventCondn = (event<1000);
       bool eventCondn = (refEvents.size()==0) ? (ievt<10) : (ievt<refEvents.size());
       if( eventCondn or event%100000==0)
@@ -433,33 +457,27 @@ int main(int argc, char** argv)
       for(int ilink=0;ilink<2;ilink++){
 	for(int iecond=0;iecond<3;iecond++){
 	  uint32_t moduleId = pck.packModId(zside, sector, ilink, det, iecond, selTC4, module); //we assume same ECONT and ECOND number for a given module
-	  
+	  std::map<uint32_t,TPGFEDataformat::HalfHgcrocData> rocdata;
 	  std::pair<uint32_t,TPGFEDataformat::ModuleTcData> modTcdata;   
-	  rocdata.clear();
+	  std::map<uint32_t,TPGFEDataformat::ModuleTcData> moddata;
+	  
 	  int emul_bx;
 	  uint32_t econd_bx, econd_bx_4b, emul_bx_4b;
 	  uint32_t econt_central_bx_4b;
 	  uint16_t econt_slink_bx, econd_slink_bx; 
 	  std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> hrocvec ;
-	  // if(event==1560 or event==2232 or event==2584 or event==2968 or event==3992)
-	  //   hrocvec =  hrocarray.at(event+1);
-	  // else
-	  hrocvec =  hrocarray.at(event);
-	  
+	  hrocvec =  hrocarray.at(event);	  
 	  for(const auto& data : hrocvec){
 	    rocdata[data.first] = data.second ;
 	    const TPGFEDataformat::HalfHgcrocData& hrocdata = data.second ;
-	    //if(moduleId==pck.getModIdFromRocId(uint32_t(data.first)))
-	    
+	    //if(moduleId==pck.getModIdFromRocId(uint32_t(data.first)))	    
 	    if(data.first==moduleId){
 	      econd_bx = rocdata[data.first].getBx();
 	      econd_slink_bx = rocdata[data.first].getSlinkBx();
-	      emul_bx = econd_bx - 0;
-	      if(emul_bx<0) emul_bx = (3564+emul_bx) + 1;
-	      emul_bx_4b = (rocdata[data.first].getBx()==3564) ? 0xF : (emul_bx%8);
-	      econd_bx_4b = (rocdata[data.first].getBx()==3564) ? 0xF : (econd_bx%8);
+	      econd_bx_4b = (econd_bx==3564) ? 0xF : (econd_bx%8);
+	      emul_bx_4b = econd_bx_4b ;
 	      //tune the bx here to match the TPG
-	      if(relayNumber==1726581356)
+	      if((link1_bx_diff==1 and ilink==0) or (link2_bx_diff==1 and ilink==1)){ //note these changes only work for cases with bxdiff = +1
 		if(rocdata[data.first].getBx()==3564)
 		  emul_bx_4b = 1;
 		else if(rocdata[data.first].getBx()==3563)
@@ -467,34 +485,11 @@ int main(int argc, char** argv)
 		else if(emul_bx_4b==7)
 		  emul_bx_4b = 0x0;
 		else
-		  emul_bx_4b += 1;	      
-	      // if(relayNumber==1726593188 and ilink==1)
-	      // 	if(rocdata[data.first].getBx()==1)
-	      // 	  emul_bx_4b = 0xf;
-	      // 	else if(rocdata[data.first].getBx()==3564)
-	      // 	  emul_bx_4b = 3563%8;
-	      // 	else if(emul_bx_4b==0)
-	      // 	  emul_bx_4b = 7;
-	      // 	else
-	      // 	  emul_bx_4b -= 1;	      
-	      // if(relayNumber==1726593188 and ilink==1)
-	      // 	if(rocdata[data.first].getBx()==3564)
-	      // 	  emul_bx_4b = 1;
-	      // 	else if(rocdata[data.first].getBx()==3563)
-	      // 	  emul_bx_4b = 0xF;
-	      // 	else if(emul_bx_4b==7)
-	      // 	  emul_bx_4b = 0x0;
-	      // 	else
-	      // 	  emul_bx_4b += 1;	      
-	      
-	      if(relayNumber==1726435152) emul_bx_4b += 0;
-	      if(relayNumber==1722698259) emul_bx_4b += 7;
-	      if(relayNumber==1723627575) emul_bx_4b += 2;
-	      if(relayNumber==1722702638) emul_bx_4b += 7;
-	      if(relayNumber==1722870998) emul_bx_4b += 2;
-	      if(relayNumber==1722871974) emul_bx_4b += 2;
-	    }
-	  }
+		  emul_bx_4b += 1;
+	      }//link1 or link2
+	    }//match moduleId
+	  }//loop halfHGCROCs
+
 	  
 	  //================================================
 	  //HGCROC emulation for a given module
@@ -534,55 +529,44 @@ int main(int argc, char** argv)
 	  if(TcRawdata.second.isTcTp1() and (std::find(TcTp1TrigEvents.begin(),TcTp1TrigEvents.end(),event) == TcTp1TrigEvents.end())) TcTp1TrigEvents.push_back(event);
 	  if(TcRawdata.second.isTcTp2() and (std::find(TcTp2TrigEvents.begin(),TcTp2TrigEvents.end(),event) == TcTp2TrigEvents.end())) TcTp2TrigEvents.push_back(event);
 	  if(TcRawdata.second.isTcTp3() and (std::find(TcTp3TrigEvents.begin(),TcTp3TrigEvents.end(),event) == TcTp3TrigEvents.end())) TcTp3TrigEvents.push_back(event);
+
 	  
-	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];
-	  
+	  std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>> econtdata =  econtarray[event];	  
 	  TPGBEDataformat::UnpackerOutputStreamPair upemul,up1;
-	  TPGFEDataformat::TcRawDataPacket vTC1;	
-    	  int refbx = -1;
-	  TPGBEDataformat::Trig24Data trdata;
+	  TPGFEDataformat::TcRawDataPacket vTCel;	
+    	  int refbx[2]; refbx[0] = -1; refbx[1] = -1;
 	  int tpg_m3_bxid = -1, tpg_p3_bxid = -1; 
+	  TPGBEDataformat::Trig24Data trdata;
+	  uint32_t nofMatches = 0;
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
-	    if(eventCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
-	    //if(eventCondn and iecond==0 and ilink==0) TcRawdata.second.print();
-	    bool hasMatched = false;
+	    //if(eventCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
 	    for(int ibx=0;ibx<7;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
 	      uint32_t bx_2 = (el[0]>>28) & 0xF;
 	      if(ibx==0) tpg_m3_bxid = bx_2;
 	      if(ibx==6) tpg_p3_bxid = bx_2;
-	      if(bx_2==emul_bx_4b) {
-	      //if(ibx==3) {
-		refbx = ibx;
-		hasMatched = true;
+	      if(bx_2==emul_bx_4b and nofMatches<=1) {
+		refbx[nofMatches] = ibx;
+		nofMatches++;
 	      }//match found;
-	      if(eventCondn and iecond==0 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 6, el, vTC1);
-	      if(eventCondn and iecond==1 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
-	      if(eventCondn and iecond==2 and ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, 4, el, vTC1);
-	      if(relayNumber>=1727111828){
-		if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
-		if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
-		if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, 3, el, vTC1);
-	      }else{
-		if(eventCondn and iecond==0 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 10, el, vTC1);
-		if(eventCondn and iecond==1 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
-		if(eventCondn and iecond==2 and ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, 6, el, vTC1);
-	      }
-	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTC1, up1);
-	      if(eventCondn) vTC1.print();
+	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
+	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
+	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);
+	      if(eventCondn) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTCel, up1);
+	      //if(eventCondn) vTCel.print();
 	      // if(eventCondn) up1.print();
 	      //if(hasMatched) break;
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
 	    //if(hasMatched) break;
 	  }//loop over econt data for a given run
-	  if(refbx==-1){
+	  if(refbx[0]==-1 and refbx[1]==-1){
 	    //std::cout << "refbx: " << refbx << std::endl ;
 	    if(std::find(shiftedBxEvent.begin(),shiftedBxEvent.end(),event) == shiftedBxEvent.end()) shiftedBxEvent.push_back(event);
 	    econt_slink_bx = trdata.getSlinkBx();
-	    FillHistogram(false, false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTC1, TcRawdata.second, 0x0, 0x0, up1, upemul,
+	    FillHistogram(false, false, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), 0x0, elinkemul, ilink, iecond, vTCel, TcRawdata.second, 0x0, 0x0, up1, upemul,
 			  unExEmulTC, unExDataTC, elStg1Event);
 			  //hrocarray);
 	    delete []elinkemul;
@@ -591,32 +575,35 @@ int main(int argc, char** argv)
 		      << ", ECOND:: (econd_slink_bx: " << econd_slink_bx <<", econd_bx: "<<econd_bx<<", econd econd_bx_4b : " <<  econd_bx_4b
 		      << ") ECONT:: (econt_slink_bx: " << trdata.getSlinkBx() <<", econt_slink_bx%8: "<< (trdata.getSlinkBx()%8) <<", TPG bxid range : [" << tpg_m3_bxid << ", " << tpg_p3_bxid << "] "
 		      <<"), moduleId : " << moduleId << std::endl;
+	    TcRawdata.second.print();
 	    continue;
 	  }
-	  // if(iecond==0) refbx = 5;
 	  const uint32_t *elmid = trdata.getElinks(3);
 	  econt_central_bx_4b = (elmid[0]>>28) & 0xF;
 	  econt_slink_bx = trdata.getSlinkBx();
-	  const uint32_t *eldata = trdata.getElinks(refbx);
-	  const uint32_t *unpkWords = trdata.getUnpkWords(refbx);
-	  const uint32_t *unpkWords1 = trdata.getUnpkWords(refbx,1);
+	  int selbx = -1;
+	  if(nofMatches==1)
+	    selbx = refbx[0];
+	  else
+	    selbx = (TMath::Abs(refbx[0]-3)<TMath::Abs(refbx[1]-3))?refbx[0]:refbx[1];
+	  const uint32_t *eldata = trdata.getElinks(selbx);
+	  const uint32_t *unpkWords = trdata.getUnpkWords(selbx);
+	  const uint32_t *unpkWords1 = trdata.getUnpkWords(selbx,1);
 	  uint32_t bx_data = (eldata[0]>>28) & 0xF;
-	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TcRawdata.second.type(), TcRawdata.second.size(), eldata, vTC1);	  
+	  TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TcRawdata.second.type(), TcRawdata.second.size(), eldata, vTCel);	  
 	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(emul_bx_4b, TcRawdata.second, upemul);
-	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_data, vTC1, up1);
+	  TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_data, vTCel, up1);
+
 	  
 	  bool hasTcTp1 = false;
 	  if(TcRawdata.second.isTcTp1()) hasTcTp1 = true;
 	  bool isLargeDiff = false;
-	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++){
-	    //if( ((eldata[iel]-elinkemul[iel]) != 0) and hasTcTp1==false) isLargeDiff = true;
-	    if((eldata[iel]-elinkemul[iel]) != 0) isLargeDiff = true;
-	  }
-	  //bool printCondn = (eventCondn or isLargeDiff);
-	  bool printCondn = eventCondn;
-	  //bool printCondn = (eventCondn or isLargeDiff) and (ilink==1 and iecond==0);
-	  //bool printCondn = isLargeDiff;
-	  if(printCondn)
+	  for(uint32_t iel=0;iel<econTPar[moduleId].getNElinks();iel++) if((eldata[iel]-elinkemul[iel]) != 0) isLargeDiff = true;
+	  
+	  bool printCondn = (eventCondn or isLargeDiff);
+	  //bool printCondn = eventCondn;
+	  
+	  if(isLargeDiff)
 	    std::cout<<std::endl<<std::endl<<"=========================================================================="<<std::endl<<"Processing event: " << event <<std::endl<<std::endl<<std::endl;
 	  if(printCondn) std::cout << "Elink comparison for  ievent: "<< event << ", moduleId : " << moduleId << std::endl;
 	  if(printCondn) std::cout << "Event: "<< event
@@ -625,7 +612,7 @@ int main(int argc, char** argv)
 						  <<"), moduleId : " << moduleId <<", isLargeDiff: " << isLargeDiff << std::endl;
 	  //if(printCondn) modTcdata.second.print();
 	  if(printCondn) TcRawdata.second.print();
-	  if(printCondn) vTC1.print();
+	  if(printCondn) vTCel.print();
           // if(printCondn) up1.print();
 	  // if(printCondn) upemul.print();
 	  // if(printCondn) trdata.print();
@@ -647,7 +634,7 @@ int main(int argc, char** argv)
 	  //   if(printCondn) std::cout<<"\t  data : 0x" << std::hex << ::std::setfill('0') << std::setw(4) << unpkMsTc[iw] << std::dec ;
 	  //   if(printCondn) std::cout<<"\t Diff: " << std::setfill(' ') << std::setw(10) << diff  << ", XOR: " << std::bitset<32>{XOR} << std::dec << std::endl;
 	  //   }	    
-	  FillHistogram(true, isLargeDiff, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTC1, TcRawdata.second, unpkWords, unpkWords1, up1, upemul,
+	  FillHistogram(true, isLargeDiff, dir_diff, relayNumber, event, econt_slink_bx, econTPar[moduleId].getNElinks(), eldata, elinkemul, ilink, iecond, vTCel, TcRawdata.second, unpkWords, unpkWords1, up1, upemul,
 			unExEmulTC, unExDataTC, elStg1Event);//, hrocarray);	  
 	  delete []elinkemul;
 	  // delete []unpkMsTc;
@@ -656,54 +643,54 @@ int main(int argc, char** argv)
     }//event loop
   }//ieloop
   //===============================================================================================================================
-  // if(TcTp1Events.size()>0) std::cerr<< "/*TcTp1 events */ uint64_t refEvt["<< TcTp1Events.size() <<"] = {";
-  // for(const uint64_t& totEvt : TcTp1Events) std::cerr<<totEvt << ", ";
-  // if(TcTp1Events.size()>0) std::cerr<< "};" << std::endl;
+  if(TcTp1Events.size()>0) std::cerr<< "/*TcTp1 events */ uint64_t refEvt["<< TcTp1Events.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp1Events) std::cerr<<totEvt << ", ";
+  if(TcTp1Events.size()>0) std::cerr<< "};" << std::endl;
+  
+  if(TcTp2Events.size()>0) std::cerr<< "/*TcTp2 events */ uint64_t refEvt["<< TcTp2Events.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp2Events) std::cerr<<totEvt << ", ";
+  if(TcTp2Events.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(TcTp2Events.size()>0) std::cerr<< "/*TcTp2 events */ uint64_t refEvt["<< TcTp2Events.size() <<"] = {";
-  // for(const uint64_t& totEvt : TcTp2Events) std::cerr<<totEvt << ", ";
-  // if(TcTp2Events.size()>0) std::cerr<< "};" << std::endl;
+  if(TcTp3Events.size()>0) std::cerr<< "/*TcTp3 events */ uint64_t refEvt["<< TcTp3Events.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp3Events) std::cerr<<totEvt << ", ";
+  if(TcTp3Events.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(TcTp3Events.size()>0) std::cerr<< "/*TcTp3 events */ uint64_t refEvt["<< TcTp3Events.size() <<"] = {";
-  // for(const uint64_t& totEvt : TcTp3Events) std::cerr<<totEvt << ", ";
-  // if(TcTp3Events.size()>0) std::cerr<< "};" << std::endl;
+  if(TcTp1TrigEvents.size()>0) std::cerr<< "/*TcTp1 Trig events */ uint64_t refEvt["<< TcTp1TrigEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp1TrigEvents) std::cerr<<totEvt << ", ";
+  if(TcTp1TrigEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(TcTp1TrigEvents.size()>0) std::cerr<< "/*TcTp1 Trig events */ uint64_t refEvt["<< TcTp1TrigEvents.size() <<"] = {";
-  // for(const uint64_t& totEvt : TcTp1TrigEvents) std::cerr<<totEvt << ", ";
-  // if(TcTp1TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+  if(TcTp2TrigEvents.size()>0) std::cerr<< "/*TcTp2 Trig events */ uint64_t refEvt["<< TcTp2TrigEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp2TrigEvents) std::cerr<<totEvt << ", ";
+  if(TcTp2TrigEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(TcTp2TrigEvents.size()>0) std::cerr<< "/*TcTp2 Trig events */ uint64_t refEvt["<< TcTp2TrigEvents.size() <<"] = {";
-  // for(const uint64_t& totEvt : TcTp2TrigEvents) std::cerr<<totEvt << ", ";
-  // if(TcTp2TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+  if(TcTp3TrigEvents.size()>0) std::cerr<< "/*TcTp3 Trig events */ uint64_t refEvt["<< TcTp3TrigEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : TcTp3TrigEvents) std::cerr<<totEvt << ", ";
+  if(TcTp3TrigEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(TcTp3TrigEvents.size()>0) std::cerr<< "/*TcTp3 Trig events */ uint64_t refEvt["<< TcTp3TrigEvents.size() <<"] = {";
-  // for(const uint64_t& totEvt : TcTp3TrigEvents) std::cerr<<totEvt << ", ";
-  // if(TcTp3TrigEvents.size()>0) std::cerr<< "};" << std::endl;
+  if(nonZeroEvents.size()>0) std::cerr<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
+  for(const uint64_t& totEvt : nonZeroEvents) std::cerr<<totEvt << ", ";
+  if(nonZeroEvents.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(nonZeroEvents.size()>0) std::cerr<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
-  // for(const uint64_t& totEvt : nonZeroEvents) std::cerr<<totEvt << ", ";
-  // if(nonZeroEvents.size()>0) std::cerr<< "};" << std::endl;
+  if(shiftedBxEvent.size()>0) std::cerr<< "/*Shifted Bx/events */ uint64_t refEvt["<< shiftedBxEvent.size() <<"] = {";
+  for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
+  if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(shiftedBxEvent.size()>0) std::cerr<< "/*Shifted Bx/events */ uint64_t refEvt["<< shiftedBxEvent.size() <<"] = {";
-  // for(const uint64_t& totEvt : shiftedBxEvent) std::cerr<<totEvt << ", ";
-  // if(shiftedBxEvent.size()>0) std::cerr<< "};" << std::endl;
+  if(corruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corruptEvent.size() <<"] = {";
+  for(const uint64_t& totEvt : corruptEvent) std::cerr<<totEvt << ", ";
+  if(corruptEvent.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(corruptEvent.size()>0) std::cerr<< "/*Possible corruped events */ uint64_t refEvt["<< corruptEvent.size() <<"] = {";
-  // for(const uint64_t& totEvt : corruptEvent) std::cerr<<totEvt << ", ";
-  // if(corruptEvent.size()>0) std::cerr<< "};" << std::endl;
+  if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
+  for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
+  if(unExDataTC.size()>0) std::cerr<< "};" << std::endl;
 
-  // if(unExDataTC.size()>0) std::cerr<< "/*Unexpect TC in Data in event*/ uint64_t refEvt["<< unExDataTC.size() <<"] = {";
-  // for(const uint64_t& totEvt : unExDataTC) std::cerr<<totEvt << ", ";
-  // if(unExDataTC.size()>0) std::cerr<< "};" << std::endl;
-
-  // if(unExEmulTC.size()>0) std::cerr<< "/*Unexpect TC in Emul in event*/ uint64_t refEvt["<< unExEmulTC.size() <<"] = {";
-  // for(const uint64_t& totEvt : unExEmulTC) std::cerr<<totEvt << ", ";
-  // if(unExEmulTC.size()>0) std::cerr<< "};" << std::endl;
-
-  // // if(elStg1Event.size()>0) std::cerr<< "/*Difference in elink and Stage1 output in event*/ uint64_t refEvt["<< elStg1Event.size() <<"] = {";
-  // // for(const uint64_t& totEvt : elStg1Event) std::cerr<<totEvt << ", ";
-  // // if(elStg1Event.size()>0) std::cerr<< "};" << std::endl;
-
+  if(unExEmulTC.size()>0) std::cerr<< "/*Unexpect TC in Emul in event*/ uint64_t refEvt["<< unExEmulTC.size() <<"] = {";
+  for(const uint64_t& totEvt : unExEmulTC) std::cerr<<totEvt << ", ";
+  if(unExEmulTC.size()>0) std::cerr<< "};" << std::endl;
+  
+  // if(elStg1Event.size()>0) std::cerr<< "/*Difference in elink and Stage1 output in event*/ uint64_t refEvt["<< elStg1Event.size() <<"] = {";
+  // for(const uint64_t& totEvt : elStg1Event) std::cerr<<totEvt << ", ";
+  // if(elStg1Event.size()>0) std::cerr<< "};" << std::endl;
+  
   fout->cd();
   dir_diff->Write();
   TList *list = (TList *)dir_diff->GetList();
@@ -1001,6 +988,7 @@ void BookHistograms(TDirectory*& dir_diff, uint32_t relay){
   hBxCorr_1->GetXaxis()->SetTitle("bx data");
   hBxCorr_1->GetYaxis()->SetTitle("bx emul");
   hBxCorr_1->SetDirectory(dir_diff);
+  
 }
 
 void FillHistogram(bool matchFound, bool isLargeDiff, TDirectory*& dir_diff, uint32_t relayNumber, uint64_t event, uint16_t inputbxId,
@@ -1271,7 +1259,7 @@ int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_
   uint32_t zside = 0, sector = 0, link = 0, det = 0;
   uint32_t econt = 0, selTC4 = 1, module = 0;
   
-  for(uint64_t ievt = 0 ; ievt < maxTestEvent; ievt++ ){
+  for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
     uint64_t event = eventList[ievt] ;
     for(int ilink=0;ilink<2;ilink++){
       for(int iecond=0;iecond<3;iecond++){
@@ -1279,7 +1267,6 @@ int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_
 	
 	uint32_t emul_bx_4b ;
 	std::map<uint32_t,TPGFEDataformat::HalfHgcrocData> rocdata;
-	rocdata.clear();
 	std::vector<std::pair<uint32_t,TPGFEDataformat::HalfHgcrocData>> hrocvec =  hrocarray[event];
 	for(const auto& data : hrocvec){
 	  rocdata[data.first] = data.second ;
@@ -1294,8 +1281,8 @@ int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_
 	//================================================
 	rocTPGEmul.Emulate(false, event, moduleId, rocdata, modTcdata);
 	//================================================
-	modarray.clear() ; modarray[event].push_back(modTcdata);	  
-	moddata.clear(); for(const auto& data : modarray.at(event)) if(data.first==moduleId) moddata[data.first] = data.second ;
+	modarray[event].push_back(modTcdata);	  
+	for(const auto& data : modarray.at(event)) if(data.first==moduleId) moddata[data.first] = data.second ;
 	//================================================
 	//ECONT emulation for a given module
 	//================================================
@@ -1319,8 +1306,8 @@ int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_
 	    const uint32_t *el = trdata.getElinks(ibx); 
 	    uint32_t bx_2 = (el[0]>>28) & 0xF;
 	    if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
-	    if(ilink==1 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);
-	    if(ilink==2) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
+	    if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
+	    if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);
 	    if(vTCel==TcRawdata.second){
 	      // std::cout << "Found a match: event:"<< event << ", ModuleId:" << moduleId << ", ibx: " << ibx << ", bx_2: " << bx_2 <<", emul_bx_4b: " << emul_bx_4b << std::endl;
 	      // TcRawdata.second.print();
@@ -1337,5 +1324,7 @@ int FindBxShift(TDirectory*& dir_diff, std::vector<uint64_t>& eventList, uint32_
   }//event loop
 
   
+  
   return true;
 } 
+
