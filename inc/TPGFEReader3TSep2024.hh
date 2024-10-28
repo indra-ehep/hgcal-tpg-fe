@@ -569,7 +569,7 @@ namespace TPGFEReader{
     void init(uint32_t, uint32_t, uint32_t);
         
     void getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray,
-		   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& tcprocarray);
+		   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>>>& tcprocarray);
     void terminate();
     
   private:
@@ -784,8 +784,7 @@ namespace TPGFEReader{
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////  
   void ECONTReader::getEvents(std::vector<uint64_t>& refEvents, uint64_t& minEventTrig, uint64_t& maxEventTrig, std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& econtarray,
-			      //class for tcprocarray is temporarily set to TPGBEDataformat::Trig24Data, plan to change appropriate TC-Processor format in future
-			      std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>>& tcprocarray){
+			      std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>>>& tcprocarray){
 
     //Set up specific records to interpet the formats
     const Hgcal10gLinkReceiver::RecordStarting *rStart((Hgcal10gLinkReceiver::RecordStarting*)r);
@@ -1192,7 +1191,7 @@ namespace TPGFEReader{
 	      iunpkw++;
 	    }
 	    if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
-	      std::cout<<"iloc: "<< iw
+		  std::cout<<"iloc: "<< iw
 		       << std::hex
 		       <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
 		       <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
@@ -1331,25 +1330,30 @@ namespace TPGFEReader{
 			 <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
 			 <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
 			 << std::dec << std::setfill(' ')
-			 << std::endl;		
+			 << std::endl;	
 	      unpkIndx++;
 	      if(unpkIndx%8==0) {ibx++; iunpkw=0;}
 	    }//loop over words for 7 bxs
 	  }//loop over TC proc TDAQ blocks
 	  
-	  ///////////////////// Fill to tcprocarray ///////////////////////
-	  TPGBEDataformat::Trig24Data tcprocdata[4][4]; //4:TC proc TDAQs, 4:columns
+	  ///////////////////// Fill tcprocarray ///////////////////////
+	  TPGBEDataformat::TrigTCProcData tcprocdata[4][3]; //4:lpGBT, 3:econT
 	  for(int ilp=0;ilp<4;ilp++){
-	    for(int icol=0;icol<4;icol++){
-	      moduleId = pck.packModId(zside, sector, ilp, det, icol, selTC4, module);
-	      tcprocdata[ilp][icol].setNofElinks(0);
-	      tcprocdata[ilp][icol].setNofUnpkWords(8);
+		unsigned maxecons = ilp<2 ? 3:2;
+	    for(int iecon=0;iecon< maxecons;iecon++){//2 ECON-Ts in trains 3 and 4
+	      moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
+		  int theTDAQEntry = tcprocdata[ilp][iecon].getTDAQEntry(ilp,iecon);
+		  std::map<int, std::vector<std::pair<int, int>>> theWordAndColPerBin = tcprocdata[ilp][iecon].getWordAndColPerBin(ilp,iecon);
 	      for(uint32_t ib=0;ib<7;ib++){
-		for(uint8_t iw=0;iw<tcprocdata[ilp][icol].getNofUnpkWords();iw++)
-		  tcprocdata[ilp][icol].setUnpkWord(ib, iw, TCProcWord[ilp][icol][ib][iw]) ;
+		    for(uint32_t ibin=0;ibin<theWordAndColPerBin.size();ibin++){ 
+			    uint32_t iinst=0;
+				for(const auto& thePair : theWordAndColPerBin[ibin]){
+			        tcprocdata[ilp][iecon].setUnpkWord(ib, ibin, iinst, TCProcWord[theTDAQEntry][thePair.second][ib][thePair.first]) ;
+					iinst++;
+				}
+			}
 	      }//nof bxs
-	      tcprocdata[ilp][icol].setSlinkBx(eoe->bxId());
-	      tcprocarray[eventId].push_back( std::make_pair(moduleId,tcprocdata[ilp][icol]) );
+	      tcprocarray[eventId].push_back( std::make_pair(moduleId,tcprocdata[ilp][iecon]) );
 	    }//nof ECONTs
 	  }//nof lpGBTs
 	  ///////////////////////////////////////////////////////////////
