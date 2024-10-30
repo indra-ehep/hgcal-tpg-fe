@@ -59,6 +59,8 @@ int main(int argc, char** argv)
   // 3. first technical with third layer : 1727099443 //https://cmsonline.cern.ch/webcenter/portal/cmsonline/Common/Elog?__adfpwp_action_portlet=683379043&__adfpwp_backurl=https%3A%2F%2Fcmsonline.cern.ch%3A443%2Fwebcenter%2Fportal%2Fcmsonline%2FCommon%2FElog%3F_afrRedirect%3D23225796808764440&_piref683379043.strutsAction=%2FviewMessageDetails.do%3FmsgId%3D1237840
   // 4. swap back roc2 config of mod16 for relays after 1727116899 (not necessary for this code, kept as bookkeeping)
   // 5. List of run flagged as green by Paul for TC Processor are Relay1727219172 to Run1727219175 and probably Relay1727211141
+  // 6. Sampling phase issue has been solved for relays between 1727123194 to 1727153189
+  // 7. 14 0xcafecafe separators from Relay 1727191081 onwards
   
   if(relayNumber<1727099251){
     std::cerr << "Third layer is not properly configured" << std::endl;
@@ -70,11 +72,11 @@ int main(int argc, char** argv)
     std::istringstream issnEvents(argv[3]);
     issnEvents >> nofEvents;
   }
-  totEvents = getTotalNofEvents(relayNumber, runNumber);
-  if(nofEvents>totEvents){
-    nofEvents = totEvents ;
-    std::cout << "Setting number of events to process to " << nofEvents << std::endl;
-  }
+  // totEvents = getTotalNofEvents(relayNumber, runNumber);
+  // if(nofEvents>totEvents){
+  //   nofEvents = totEvents ;
+  //   std::cout << "Setting number of events to process to " << nofEvents << std::endl;
+  // }
   //===============================================================================================================================
   
   //===============================================================================================================================
@@ -96,7 +98,8 @@ int main(int argc, char** argv)
   //First ready a dummy config
   uint32_t zside = 0, sector = 0, link = 0, det = 0;
   uint32_t econt = 0, selTC4 = 1, module = 0;
-  uint32_t noflpGBTs = 4;
+  const uint32_t noflpGBTs = 4;
+  const uint32_t nofECONs = 3; //actually less for two links, see below
   TPGFEConfiguration::TPGFEIdPacking pck;
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     int maxecons = (ilink<=1)?3:2;
@@ -181,7 +184,8 @@ int main(int argc, char** argv)
   TPGFEReader::ECONTReader econTReader(cfgs);
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::Trig24Data>>> econtarray; //event,moduleId (from link)
   std::map<uint64_t,std::vector<std::pair<uint32_t,TPGBEDataformat::TrigTCProcData>>> tcprocarray; //event,moduleId (from link)
-  econTReader.setNofCAFESep(14);
+  econTReader.setNofCAFESep(11);
+  if(relayNumber>=1727191081) econTReader.setNofCAFESep(14);
   // ===============================================================================================================================
   
   //===============================================================================================================================
@@ -191,15 +195,22 @@ int main(int argc, char** argv)
   std::vector<uint64_t> refEvents;
   for(int ievent=0;ievent<2;ievent++) refEvents.push_back(refEvt[ievent]);
   //when the following line is "commented" only the events filled in "refEvents" will be processed instead of nofevents set in the command line
-  //refEvents.resize(0);
+  refEvents.resize(0);
   //===============================================================================================================================
-
+  
   uint64_t minEventTPG, maxEventTPG;  
   long double nloopEvent =  100000;
   int nloop = TMath::CeilNint(nofEvents/nloopEvent) ;
   if(refEvents.size()>0) nloop = 1;
   std::cout<<"nloop: "<<nloop<<std::endl;
-
+  uint64_t processed_events = 0;
+  
+  bool printCondn = false;
+  bool allTCszero[noflpGBTs][nofECONs];
+  uint32_t nofZeroBxs[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofAnyZeroEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofAllZeroEvents[noflpGBTs][nofECONs];
+  
   for(int ieloop=0;ieloop<nloop;ieloop++){
     
     minEventTPG = ieloop*nloopEvent ;
@@ -207,7 +218,7 @@ int main(int argc, char** argv)
     maxEventTPG = (maxEventTPG>uint64_t(nofEvents)) ? uint64_t(nofEvents) : maxEventTPG ;
     printf("iloop : %d, minEventTPG = %lu, maxEventTPG = %lu\n",ieloop,minEventTPG, maxEventTPG);
     std::cerr<<"iloop : "<< ieloop <<", minEventTPG = "<< minEventTPG <<", maxEventTPG = " << maxEventTPG << std::endl;
-
+    
     econtarray.clear();
     tcprocarray.clear();
     
@@ -219,7 +230,7 @@ int main(int argc, char** argv)
     
     for(const auto& it :  econtarray){ //this is essencially event loop
       uint64_t event = it.first ;
-      std::cout << "Processing event: " << event << std::endl;
+      if(printCondn) std::cout << "Processing event: " << event << std::endl;
       for(int ilink=0;ilink<noflpGBTs;ilink++){
 	int maxecons = (ilink<=1)?3:2;
 	for(int iecont=0;iecont<maxecons;iecont++){
@@ -229,36 +240,143 @@ int main(int argc, char** argv)
 	  TPGFEDataformat::TcRawDataPacket vTCel;	
 	  TPGBEDataformat::Trig24Data trdata;
 	  
+	  allTCszero[ilink][iecont] = false;
+	  nofZeroBxs[ilink][iecont] = 0;          
+	  
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
-	    std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
-	    //for(int ibx=0;ibx<7;ibx++){
-	    for(int ibx=3;ibx<4;ibx++){
+	    if(printCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
+	    for(int ibx=0;ibx<7;ibx++){
+	    //for(int ibx=3;ibx<4;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
 	      uint32_t bx_2 = (el[0]>>28) & 0xF;
 	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
 	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
 	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);	      
 	      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTCel, upemul);
-	      std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
-	      std::cout << "========== TC as read from elink for ibx : " << ibx << " ==========" << std::endl;
-	      vTCel.print();
-	      std::cout << "========== Emulated Stage1 unpacker output stream from TC for ibx : " << ibx << " ==========" << std::endl;
-	      upemul.print();
-	      std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
-	      trdata.getUnpkStream(ibx,updata);
-	      updata.print();
-	      std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
+	      if(printCondn){		
+		std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
+		std::cout << "========== TC as read from elink for ibx : " << ibx << " ==========" << std::endl;
+		vTCel.print();
+		std::cout << "========== Emulated Stage1 unpacker output stream from TC for ibx : " << ibx << " ==========" << std::endl;
+		upemul.print();
+		std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
+		trdata.getUnpkStream(ibx,updata);
+		updata.print();
+		std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
+	      }
+	      
+	      uint32_t maxzeroenergy;
+	      if(ilink==0) maxzeroenergy = 0;
+	      if(ilink==1) maxzeroenergy = 16*econTPar[moduleId].getNofSTCs();
+	      if(ilink==2 or ilink==3) maxzeroenergy = 2*econTPar[moduleId].getNofSTCs();
+	      uint32_t totenergy = 0;
+	      for(int itc=0;itc<vTCel.size();itc++) totenergy += vTCel.getTc(itc).energy();
+	      if(totenergy==maxzeroenergy) {
+		allTCszero[ilink][iecont] = true;
+		nofZeroBxs[ilink][iecont]++;
+	      }
+	      
 	    }//bx loop
 	    //if(eventCondn) trdata.print();
 	  }//loop over econt data for a given run
-
+	  
+	  if(nofZeroBxs[ilink][iecont]>0 and allTCszero[ilink][iecont]) NofAnyZeroEvents[ilink][iecont].push_back(event);
+          if(nofZeroBxs[ilink][iecont]==7 and allTCszero[ilink][iecont]) NofAllZeroEvents[ilink][iecont].push_back(event);
+	  
 	}//econt loop
       }//link loop
+      processed_events++;
     }//this is essencially event loop
     
   }//ieloop
+
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){
+      //std::sort(NofAnyZeroEvents[ilink][iecont].begin(), NofAnyZeroEvents[ilink][iecont].end());
+      auto it = std::unique(NofAnyZeroEvents[ilink][iecont].begin(), NofAnyZeroEvents[ilink][iecont].end());
+      NofAnyZeroEvents[ilink][iecont].erase(it, NofAnyZeroEvents[ilink][iecont].end());
+      std::sort(NofAllZeroEvents[ilink][iecont].begin(), NofAllZeroEvents[ilink][iecont].end());
+      auto it1 = std::unique(NofAllZeroEvents[ilink][iecont].begin(), NofAllZeroEvents[ilink][iecont].end());
+      NofAllZeroEvents[ilink][iecont].erase(it1, NofAllZeroEvents[ilink][iecont].end());
+    }//iecont
+  }//ilink
+  
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){
+      if(NofAllZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*all zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAllZeroEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofAllZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofAllZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*any zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAnyZeroEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofAnyZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  std::cerr << " RelayNo. " << "| "
+	    << " RunN. " << "| "
+	    << " maxEvent " << "| "
+	    << " processed " << "| "
+	    << " Mod-19 (All 0) | "
+    	    << " Mod-20 (All 0) | "
+    	    << " Mod-18 (All 0) | "
+	    << " Mod-16 (All 0) | "
+    	    << " Mod-17 (All 0) | "
+    	    << " Mod-14 (All 0) | "
+    	    << " Mod-15 (All 0) | "
+	    << " Mod-p (All 0) | "
+    	    << " MB-E0 (All 0) | "
+	    << " MB-E1 (All 0) | "
+	    << " Mod-19 (Any 0) | "
+    	    << " Mod-20 (Any 0) | "
+    	    << " Mod-18 (Any 0) | "
+	    << " Mod-16 (Any 0) | "
+    	    << " Mod-17 (Any 0) | "
+    	    << " Mod-14 (Any 0) | "
+    	    << " Mod-15 (Any 0) | "
+	    << " Mod-p (Any 0) | "
+    	    << " MB-E0 (Any 0) | "
+	    << " MB-E1 (Any 0) | "
+	    << std::endl;
+  
+  std::cerr << relayNumber << "| "
+	    << runNumber << "| "
+	    << (nofEvents-1) << "| "
+	    << processed_events << "| "
+	    <<std::fixed
+    	    << std::setprecision(1)
+    	    << std::setw(4)
+	    << NofAllZeroEvents[0][0].size() << " (" << 100.0*NofAllZeroEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAllZeroEvents[0][1].size() << " (" << 100.0*NofAllZeroEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAllZeroEvents[0][2].size() << " (" << 100.0*NofAllZeroEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAllZeroEvents[1][0].size() << " (" << 100.0*NofAllZeroEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAllZeroEvents[1][1].size() << " (" << 100.0*NofAllZeroEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAllZeroEvents[1][2].size() << " (" << 100.0*NofAllZeroEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAllZeroEvents[2][0].size() << " (" << 100.0*NofAllZeroEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAllZeroEvents[2][1].size() << " (" << 100.0*NofAllZeroEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAllZeroEvents[3][0].size() << " (" << 100.0*NofAllZeroEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAllZeroEvents[3][1].size() << " (" << 100.0*NofAllZeroEvents[3][1].size()/processed_events << " %)" << "| "
+	    << NofAnyZeroEvents[0][0].size() << " (" << 100.0*NofAnyZeroEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyZeroEvents[0][1].size() << " (" << 100.0*NofAnyZeroEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAnyZeroEvents[0][2].size() << " (" << 100.0*NofAnyZeroEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAnyZeroEvents[1][0].size() << " (" << 100.0*NofAnyZeroEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyZeroEvents[1][1].size() << " (" << 100.0*NofAnyZeroEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAnyZeroEvents[1][2].size() << " (" << 100.0*NofAnyZeroEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAnyZeroEvents[2][0].size() << " (" << 100.0*NofAnyZeroEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyZeroEvents[2][1].size() << " (" << 100.0*NofAnyZeroEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAnyZeroEvents[3][0].size() << " (" << 100.0*NofAnyZeroEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyZeroEvents[3][1].size() << " (" << 100.0*NofAnyZeroEvents[3][1].size()/processed_events << " %)" << "| "
+   	    << std::endl;
+
   return true;
 }
 

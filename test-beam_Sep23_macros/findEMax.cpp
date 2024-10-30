@@ -50,20 +50,24 @@ int main(int argc, char** argv)
   //Sci:==
   //LD: A5A6(0), B11B12(1), C5(2), D8(3), E8(4), G3(5), G5(6), G7(7), G8(8)
   //HD: K6(0), K8(1), K11(2), K12(3), J12(4)
-  uint32_t det = 1, selTC4 = 0, module = 4;
+  uint32_t det = 0, selTC4 = 1, module = 0;
   
   uint32_t multfactor = 31;//TOT mult factor other values could be 14 or 8
   uint32_t inputLSB = (selTC4==0) ? 1 : 0; //lsb at the input TC from ROC
-  uint32_t dropLSB = 0;  //lsb at the output during the packing [0 to 4]
+  uint32_t dropLSB = 1;  //lsb at the output during the packing [0 to 4]
   uint32_t select = 1 ;  //1 = Super Trigger Cell (STC), 2 = Best Choice (BC)
   //Not in use: 0 = Threshold Sum (TS), 3 = Repeater, 4=Autoencoder (AE).
   uint32_t stc_type = 1; //0 = STC4B(5E+4M), 1 = STC16(5E+4M), 2 = CTC4A(4E+3M), 3 = STC4A(4E+3M), 4 = CTC4B(5E+3M)
-  const uint32_t nelinks = 5; //1 = BC1, 2 = BC4, 3 = BC6, 4 = BC9, 5 = BC14..... (see details https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs)
-  uint32_t calibration = 0xFFF; //0x400 = 0.5, 0x800 = 1.0, 0xFFF = 1.99951 (max)
+  const uint32_t nelinks = 2; //1 = BC1, 2 = BC4, 3 = BC6, 4 = BC9, 5 = BC14..... (see details https://edms.cern.ch/ui/#!master/navigator/document?P:100053490:100430098:subDocs)
+  uint32_t calibration = 0x800; //0x400 = 0.5, 0x800 = 1.0, 0xFFF = 1.99951 (max)
   
-  uint32_t maxADC = 0x3FF ; //10 bit input in TPG path
-  uint32_t maxTOT = 0xFFF ; //12 bit input in TPG path
+  // uint32_t maxADC = 0x3FF ; //10 bit input in TPG path
+  // uint32_t maxTOT = 0xFFF ; //12 bit input in TPG path
+  uint32_t maxADC = 134 ; //10 bit input in TPG path
+  uint32_t maxTOT = 0x0 ; //12 bit input in TPG path
   uint16_t bx = 4;
+  uint32_t ped = 144;
+  uint32_t adcTh = 5;
   //===============================================================================================================================
   
   
@@ -104,7 +108,7 @@ int main(int argc, char** argv)
     uint32_t rocid_1 = pck.packRocId(zside, sector, link, det, econt, selTC4, module, iroc, half1);      
     TPGFEConfiguration::ConfigHfROC hroc_0, hroc_1;
       
-    hroc_0.setAdcTH(0);
+    hroc_0.setAdcTH(adcTh);
     hroc_0.setClrAdcTottrig(0);
     hroc_0.setMultFactor(multfactor);
     for(int itot=0;itot<4;itot++){
@@ -112,7 +116,7 @@ int main(int argc, char** argv)
       hroc_0.setTotP(itot, 0);
     }
 
-    hroc_1.setAdcTH(0);
+    hroc_1.setAdcTH(adcTh);
     hroc_1.setClrAdcTottrig(0);
     hroc_1.setMultFactor(multfactor);
     for(int itot=0;itot<4;itot++){
@@ -126,7 +130,6 @@ int main(int argc, char** argv)
     for(uint32_t ich=0;ich<nchs;ich++){
       uint32_t ihalf = (ich<TPGFEDataformat::HalfHgcrocData::NumberOfChannels)?0:1;
       uint32_t chnl = ich%TPGFEDataformat::HalfHgcrocData::NumberOfChannels;
-      uint32_t ped = 0;
       if(ihalf==0){
 	TPGFEConfiguration::ConfigCh ch_0;
 	ch_0.setAdcpedestal(ped);
@@ -175,8 +178,10 @@ int main(int argc, char** argv)
   for(uint32_t ihroc = 0 ; ihroc < nhfrocs ; ihroc++){
     uint32_t half = (ihroc%2==0) ? 0 : 1 ;
     TPGFEDataformat::HalfHgcrocChannelData chdata[TPGFEDataformat::HalfHgcrocData::NumberOfChannels];
-    for(uint32_t ich = 0 ; ich < TPGFEDataformat::HalfHgcrocData::NumberOfChannels ; ich++)
-      chdata[ich].setTot(maxTOT);    
+    for(uint32_t ich = 0 ; ich < TPGFEDataformat::HalfHgcrocData::NumberOfChannels ; ich++){
+      //chdata[ich].setTot(maxTOT,0x3);
+      chdata[ich].setAdc(maxADC,0x0);
+    }
     TPGFEDataformat::HalfHgcrocData hrocdata;
     hrocdata.setBx(bx);
     hrocdata.setChannels(chdata);
@@ -227,7 +232,7 @@ int main(int argc, char** argv)
   /////////////////////////////////////////////////////////////////
   
   //emulation output format
-  TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();  
+  TPGFEDataformat::TcModulePacket& TcRawdata = econtEmul.accessTcRawDataPacket();
   //===============================================================================================================================
   
   //===============================================================================================================================
