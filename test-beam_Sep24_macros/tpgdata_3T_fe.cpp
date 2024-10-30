@@ -210,6 +210,7 @@ int main(int argc, char** argv)
   uint32_t nofZeroBxs[noflpGBTs][nofECONs];
   std::vector<uint64_t> NofAnyZeroEvents[noflpGBTs][nofECONs];
   std::vector<uint64_t> NofAllZeroEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofS1EmulDataMM[noflpGBTs][nofECONs];
   
   for(int ieloop=0;ieloop<nloop;ieloop++){
     
@@ -255,17 +256,19 @@ int main(int argc, char** argv)
 	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
 	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);	      
 	      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTCel, upemul);
+	      trdata.getUnpkStream(ibx,updata);
 	      if(printCondn){		
 		std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
 		std::cout << "========== TC as read from elink for ibx : " << ibx << " ==========" << std::endl;
 		vTCel.print();
 		std::cout << "========== Emulated Stage1 unpacker output stream from TC for ibx : " << ibx << " ==========" << std::endl;
 		upemul.print();
-		std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;
-		trdata.getUnpkStream(ibx,updata);
+		std::cout << "========== TPG data: Stage1 unpacker output stream from firmware output for ibx : " << ibx << " ==========" << std::endl;	    
 		updata.print();
 		std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
 	      }
+	      if((ilink==0 and !updata.isEqualBC(upemul)) or (ilink>0 and !updata.isEqualSTC(upemul)))
+		NofS1EmulDataMM[ilink][iecont].push_back(event);
 	      
 	      uint32_t maxzeroenergy;
 	      if(ilink==0) maxzeroenergy = 0;
@@ -301,6 +304,9 @@ int main(int argc, char** argv)
       std::sort(NofAllZeroEvents[ilink][iecont].begin(), NofAllZeroEvents[ilink][iecont].end());
       auto it1 = std::unique(NofAllZeroEvents[ilink][iecont].begin(), NofAllZeroEvents[ilink][iecont].end());
       NofAllZeroEvents[ilink][iecont].erase(it1, NofAllZeroEvents[ilink][iecont].end());
+      std::sort(NofS1EmulDataMM[ilink][iecont].begin(), NofS1EmulDataMM[ilink][iecont].end());
+      auto it2 = std::unique(NofS1EmulDataMM[ilink][iecont].begin(), NofS1EmulDataMM[ilink][iecont].end());
+      NofS1EmulDataMM[ilink][iecont].erase(it2, NofS1EmulDataMM[ilink][iecont].end());
     }//iecont
   }//ilink
   
@@ -319,6 +325,15 @@ int main(int argc, char** argv)
       if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*any zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAnyZeroEvents[ilink][iecont].size() <<"] = {";
       // for(const uint64_t& totEvt : NofAnyZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
       if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofS1EmulDataMM[ilink][iecont].size()>0) std::cerr<< "/*any zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofS1EmulDataMM[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofS1EmulDataMM[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofS1EmulDataMM[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
     }
   }
   std::cerr<<std::endl;
@@ -346,6 +361,16 @@ int main(int argc, char** argv)
 	    << " Mod-p (Any 0) | "
     	    << " MB-E0 (Any 0) | "
 	    << " MB-E1 (Any 0) | "
+	    << " Mod-19 (S1MM) | "
+    	    << " Mod-20 (S1MM) | "
+    	    << " Mod-18 (S1MM) | "
+	    << " Mod-16 (S1MM) | "
+    	    << " Mod-17 (S1MM) | "
+    	    << " Mod-14 (S1MM) | "
+    	    << " Mod-15 (S1MM) | "
+	    << " Mod-p (S1MM) | "
+    	    << " MB-E0 (S1MM) | "
+	    << " MB-E1 (S1MM) | "
 	    << std::endl;
   
   std::cerr << relayNumber << "| "
@@ -375,6 +400,16 @@ int main(int argc, char** argv)
     	    << NofAnyZeroEvents[2][1].size() << " (" << 100.0*NofAnyZeroEvents[2][1].size()/processed_events << " %)" << "| "
 	    << NofAnyZeroEvents[3][0].size() << " (" << 100.0*NofAnyZeroEvents[3][0].size()/processed_events << " %)" << "| "
     	    << NofAnyZeroEvents[3][1].size() << " (" << 100.0*NofAnyZeroEvents[3][1].size()/processed_events << " %)" << "| "
+	    << NofS1EmulDataMM[0][0].size() << " (" << 100.0*NofS1EmulDataMM[0][0].size()/processed_events << " %)" << "| "
+    	    << NofS1EmulDataMM[0][1].size() << " (" << 100.0*NofS1EmulDataMM[0][1].size()/processed_events << " %)" << "| "
+	    << NofS1EmulDataMM[0][2].size() << " (" << 100.0*NofS1EmulDataMM[0][2].size()/processed_events << " %)" << "| "
+	    << NofS1EmulDataMM[1][0].size() << " (" << 100.0*NofS1EmulDataMM[1][0].size()/processed_events << " %)" << "| "
+    	    << NofS1EmulDataMM[1][1].size() << " (" << 100.0*NofS1EmulDataMM[1][1].size()/processed_events << " %)" << "| "
+	    << NofS1EmulDataMM[1][2].size() << " (" << 100.0*NofS1EmulDataMM[1][2].size()/processed_events << " %)" << "| "
+	    << NofS1EmulDataMM[2][0].size() << " (" << 100.0*NofS1EmulDataMM[2][0].size()/processed_events << " %)" << "| "
+    	    << NofS1EmulDataMM[2][1].size() << " (" << 100.0*NofS1EmulDataMM[2][1].size()/processed_events << " %)" << "| "
+	    << NofS1EmulDataMM[3][0].size() << " (" << 100.0*NofS1EmulDataMM[3][0].size()/processed_events << " %)" << "| "
+    	    << NofS1EmulDataMM[3][1].size() << " (" << 100.0*NofS1EmulDataMM[3][1].size()/processed_events << " %)" << "| "
    	    << std::endl;
 
   return true;
