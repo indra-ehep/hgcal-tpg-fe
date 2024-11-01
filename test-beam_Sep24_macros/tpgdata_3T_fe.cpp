@@ -191,9 +191,9 @@ int main(int argc, char** argv)
   //===============================================================================================================================
   //Process certain refernce eventlist
   //===============================================================================================================================
-  /*TcTp1 events */ uint64_t refEvt[2] = {19, 137};
-  std::vector<uint64_t> refEvents;
-  for(int ievent=0;ievent<2;ievent++) refEvents.push_back(refEvt[ievent]);
+  /*TcTp1 events */ uint64_t refEvt[3] = {17249, 17253,  17288};
+  std::vector<uint64_t> refEvents ;
+  for(int ievent=0;ievent<3;ievent++) refEvents.push_back(refEvt[ievent]);
   //when the following line is "commented" only the events filled in "refEvents" will be processed instead of nofevents set in the command line
   refEvents.resize(0);
   //===============================================================================================================================
@@ -211,7 +211,19 @@ int main(int argc, char** argv)
   std::vector<uint64_t> NofAnyZeroEvents[noflpGBTs][nofECONs];
   std::vector<uint64_t> NofAllZeroEvents[noflpGBTs][nofECONs];
   std::vector<uint64_t> NofS1EmulDataMM[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofFixedPatEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofAllSameElinksEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofDuplicateElinksEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofAnyElZeroEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofAllElZeroEvents[noflpGBTs][nofECONs];
+  std::vector<uint32_t> nums;
   
+  uint32_t scan_pattern = 0xffaaffaa;
+  
+  uint32_t nofpatmatch(0);
+  uint32_t nofDuplicates(0);
+  uint32_t nofelzero_anybx(0);
+  uint32_t nofelzero_allbx(0);
   for(int ieloop=0;ieloop<nloop;ieloop++){
     
     minEventTPG = ieloop*nloopEvent ;
@@ -243,22 +255,51 @@ int main(int argc, char** argv)
 	  
 	  allTCszero[ilink][iecont] = false;
 	  nofZeroBxs[ilink][iecont] = 0;          
+	  nofelzero_allbx = 0;
 	  
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
+	    
 	    if(printCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
 	    for(int ibx=0;ibx<7;ibx++){
-	    //for(int ibx=3;ibx<4;ibx++){
+	      //for(int ibx=3;ibx<4;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
 	      uint32_t bx_2 = (el[0]>>28) & 0xF;
+	      //// =========== Check the elinks if they are matching predefined paterrn, whether they are identical elinks ============
+	      nofpatmatch = 0 ;
+	      nofDuplicates = 0 ;
+	      nofelzero_anybx = 0 ;
+	      nums.clear();
+	      for(int iel = 0 ; iel < econTPar[moduleId].getNElinks() ; iel++){
+		if((el[iel]&0xff)==(scan_pattern&0xff) and ((el[iel]>>16)&0xff)==((scan_pattern>>16)&0xff)) nofpatmatch++;
+		if(el[iel]==0) nofelzero_anybx++;
+		if(std::find(nums.begin(),nums.end(),el[iel])==nums.end())
+		  nums.push_back(el[iel]);
+		else
+		  nofDuplicates++;
+	      }	      
+	      bool isAllSame = (((nofDuplicates+1)==econTPar[moduleId].getNElinks()) or (nofelzero_anybx==econTPar[moduleId].getNElinks()))?true:false;
+	      
+	      if(printCondn){
+		std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
+		for(int iel = 0 ; iel < econTPar[moduleId].getNElinks() ; iel++) std::cout << "iel: " << iel << std::hex << " elink: 0x" << el[iel]  << std::dec << std::endl;
+		std::cout <<"Nof elinks with zeros: " << nofelzero_anybx <<", nofpatmatch : " << nofpatmatch << ", isAllSame: " << isAllSame << ", nofDuplicates: " << nofDuplicates << std::endl;
+	      }
+	      if(nofelzero_anybx==econTPar[moduleId].getNElinks())nofelzero_allbx++;
+	      if(nofelzero_anybx>0) NofAnyElZeroEvents[ilink][iecont].push_back(event);
+	      if(isAllSame) NofAllSameElinksEvents[ilink][iecont].push_back(event);
+	      if(nofDuplicates>=2) NofDuplicateElinksEvents[ilink][iecont].push_back(event);
+	      if(nofpatmatch>0) NofFixedPatEvents[ilink][iecont].push_back(event);
+	      if(nofpatmatch==econTPar[moduleId].getNElinks() or nofelzero_anybx==econTPar[moduleId].getNElinks()) continue;
+	      //// =========== Elink checking is complete ===============
+	      
 	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
 	      if(ilink==1) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTPar[moduleId].getNofSTCs(), el, vTCel);
 	      if(ilink==2 or ilink==3) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTPar[moduleId].getNofSTCs(), el, vTCel);	      
 	      TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(bx_2, vTCel, upemul);
 	      trdata.getUnpkStream(ibx,updata);
 	      if(printCondn){		
-		std::cout << "========== ibx : " << ibx << " ==========" << std::endl;
 		std::cout << "========== TC as read from elink for ibx : " << ibx << " ==========" << std::endl;
 		vTCel.print();
 		std::cout << "========== Emulated Stage1 unpacker output stream from TC for ibx : " << ibx << " ==========" << std::endl;
@@ -267,6 +308,7 @@ int main(int argc, char** argv)
 		updata.print();
 		std::cout << "========== end of TPG data for ibx : " << ibx << " ==========" << std::endl;
 	      }
+	      
 	      if((ilink==0 and !updata.isEqualBC(upemul)) or (ilink>0 and !updata.isEqualSTC(upemul)))
 		NofS1EmulDataMM[ilink][iecont].push_back(event);
 	      
@@ -282,11 +324,13 @@ int main(int argc, char** argv)
 	      }
 	      
 	    }//bx loop
+	    
 	    //if(eventCondn) trdata.print();
 	  }//loop over econt data for a given run
 	  
 	  if(nofZeroBxs[ilink][iecont]>0 and allTCszero[ilink][iecont]) NofAnyZeroEvents[ilink][iecont].push_back(event);
           if(nofZeroBxs[ilink][iecont]==7 and allTCszero[ilink][iecont]) NofAllZeroEvents[ilink][iecont].push_back(event);
+	  if(nofelzero_allbx==7) NofAllElZeroEvents[ilink][iecont].push_back(event);
 	  
 	}//econt loop
       }//link loop
@@ -298,22 +342,45 @@ int main(int argc, char** argv)
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     int maxecons = (ilink<=1)?3:2;
     for(int iecont=0;iecont<maxecons;iecont++){
-      //std::sort(NofAnyZeroEvents[ilink][iecont].begin(), NofAnyZeroEvents[ilink][iecont].end());
+      std::sort(NofAnyZeroEvents[ilink][iecont].begin(), NofAnyZeroEvents[ilink][iecont].end());
       auto it = std::unique(NofAnyZeroEvents[ilink][iecont].begin(), NofAnyZeroEvents[ilink][iecont].end());
       NofAnyZeroEvents[ilink][iecont].erase(it, NofAnyZeroEvents[ilink][iecont].end());
+      
       std::sort(NofAllZeroEvents[ilink][iecont].begin(), NofAllZeroEvents[ilink][iecont].end());
       auto it1 = std::unique(NofAllZeroEvents[ilink][iecont].begin(), NofAllZeroEvents[ilink][iecont].end());
       NofAllZeroEvents[ilink][iecont].erase(it1, NofAllZeroEvents[ilink][iecont].end());
+      
       std::sort(NofS1EmulDataMM[ilink][iecont].begin(), NofS1EmulDataMM[ilink][iecont].end());
       auto it2 = std::unique(NofS1EmulDataMM[ilink][iecont].begin(), NofS1EmulDataMM[ilink][iecont].end());
       NofS1EmulDataMM[ilink][iecont].erase(it2, NofS1EmulDataMM[ilink][iecont].end());
+      
+      std::sort(NofFixedPatEvents[ilink][iecont].begin(), NofFixedPatEvents[ilink][iecont].end());
+      auto it3 = std::unique(NofFixedPatEvents[ilink][iecont].begin(), NofFixedPatEvents[ilink][iecont].end());
+      NofFixedPatEvents[ilink][iecont].erase(it3, NofFixedPatEvents[ilink][iecont].end());
+      
+      std::sort(NofAllSameElinksEvents[ilink][iecont].begin(), NofAllSameElinksEvents[ilink][iecont].end());
+      auto it4 = std::unique(NofAllSameElinksEvents[ilink][iecont].begin(), NofAllSameElinksEvents[ilink][iecont].end());
+      NofAllSameElinksEvents[ilink][iecont].erase(it4, NofAllSameElinksEvents[ilink][iecont].end());
+
+      std::sort(NofDuplicateElinksEvents[ilink][iecont].begin(), NofDuplicateElinksEvents[ilink][iecont].end());
+      auto it5 = std::unique(NofDuplicateElinksEvents[ilink][iecont].begin(), NofDuplicateElinksEvents[ilink][iecont].end());
+      NofDuplicateElinksEvents[ilink][iecont].erase(it5, NofDuplicateElinksEvents[ilink][iecont].end());
+
+      std::sort(NofAnyElZeroEvents[ilink][iecont].begin(), NofAnyElZeroEvents[ilink][iecont].end());
+      auto it6 = std::unique(NofAnyElZeroEvents[ilink][iecont].begin(), NofAnyElZeroEvents[ilink][iecont].end());
+      NofAnyElZeroEvents[ilink][iecont].erase(it6, NofAnyElZeroEvents[ilink][iecont].end());
+      
+      std::sort(NofAllElZeroEvents[ilink][iecont].begin(), NofAllElZeroEvents[ilink][iecont].end());
+      auto it7 = std::unique(NofAllElZeroEvents[ilink][iecont].begin(), NofAllElZeroEvents[ilink][iecont].end());
+      NofAllElZeroEvents[ilink][iecont].erase(it7, NofAllElZeroEvents[ilink][iecont].end());
+
     }//iecont
   }//ilink
   
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     int maxecons = (ilink<=1)?3:2;
     for(int iecont=0;iecont<maxecons;iecont++){
-      if(NofAllZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*all zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAllZeroEvents[ilink][iecont].size() <<"] = {";
+      if(NofAllZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*all zero-energy events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAllZeroEvents[ilink][iecont].size() <<"] = {";
       // for(const uint64_t& totEvt : NofAllZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
       if(NofAllZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
     }
@@ -322,7 +389,7 @@ int main(int argc, char** argv)
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     int maxecons = (ilink<=1)?3:2;
     for(int iecont=0;iecont<maxecons;iecont++){      
-      if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*any zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAnyZeroEvents[ilink][iecont].size() <<"] = {";
+      if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*any zero-energy events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAnyZeroEvents[ilink][iecont].size() <<"] = {";
       // for(const uint64_t& totEvt : NofAnyZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
       if(NofAnyZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
     }
@@ -331,9 +398,54 @@ int main(int argc, char** argv)
   for(int ilink=0;ilink<noflpGBTs;ilink++){
     int maxecons = (ilink<=1)?3:2;
     for(int iecont=0;iecont<maxecons;iecont++){      
-      if(NofS1EmulDataMM[ilink][iecont].size()>0) std::cerr<< "/*any zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofS1EmulDataMM[ilink][iecont].size() <<"] = {";
+      if(NofS1EmulDataMM[ilink][iecont].size()>0) std::cerr<< "/*any S1EmulDataMM events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofS1EmulDataMM[ilink][iecont].size() <<"] = {";
       // for(const uint64_t& totEvt : NofS1EmulDataMM[ilink][iecont]) std::cerr<<totEvt << ", ";
       if(NofS1EmulDataMM[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofFixedPatEvents[ilink][iecont].size()>0) std::cerr<< "/*any elinks of 7 bxs has fixed-pattern events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofFixedPatEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofFixedPatEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofFixedPatEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofAllSameElinksEvents[ilink][iecont].size()>0) std::cerr<< "/*all duplicate elinks in any 7 bxs ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAllSameElinksEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofAllSameElinksEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofAllSameElinksEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofDuplicateElinksEvents[ilink][iecont].size()>0) std::cerr<< "/*any duplicates elinks in any 7 bxs ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofDuplicateElinksEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofDuplicateElinksEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofDuplicateElinksEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){
+      if(NofAllElZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*all elink zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAllElZeroEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofAllElZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofAllElZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofAnyElZeroEvents[ilink][iecont].size()>0) std::cerr<< "/*any elink zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAnyElZeroEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofAnyElZeroEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofAnyElZeroEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
     }
   }
   std::cerr<<std::endl;
@@ -341,6 +453,56 @@ int main(int argc, char** argv)
 	    << " RunN. " << "| "
 	    << " maxEvent " << "| "
 	    << " processed " << "| "
+	    << " Mod-19 (allel 0) | "
+    	    << " Mod-20 (allel 0) | "
+    	    << " Mod-18 (allel 0) | "
+	    << " Mod-16 (allel 0) | "
+    	    << " Mod-17 (allel 0) | "
+    	    << " Mod-14 (allel 0) | "
+    	    << " Mod-15 (allel 0) | "
+	    << " Mod-p (allel 0) | "
+    	    << " MB-E0 (allel 0) | "
+	    << " MB-E1 (allel 0) | "
+	    << " Mod-19 (anyel 0) | "
+    	    << " Mod-20 (anyel 0) | "
+    	    << " Mod-18 (anyel 0) | "
+	    << " Mod-16 (anyel 0) | "
+    	    << " Mod-17 (anyel 0) | "
+    	    << " Mod-14 (anyel 0) | "
+    	    << " Mod-15 (anyel 0) | "
+	    << " Mod-p (anyel 0) | "
+    	    << " MB-E0 (anyel 0) | "
+	    << " MB-E1 (anyel 0) | "
+	    << " Mod-19 (fixpat) | "
+    	    << " Mod-20 (fixpat) | "
+    	    << " Mod-18 (fixpat) | "
+	    << " Mod-16 (fixpat) | "
+    	    << " Mod-17 (fixpat) | "
+    	    << " Mod-14 (fixpat) | "
+    	    << " Mod-15 (fixpat) | "
+	    << " Mod-p (fixpat) | "
+    	    << " MB-E0 (fixpat) | "
+	    << " MB-E1 (fixpat) | "
+	    << " Mod-19 (alldup) | "
+    	    << " Mod-20 (alldup) | "
+    	    << " Mod-18 (alldup) | "
+	    << " Mod-16 (alldup) | "
+    	    << " Mod-17 (alldup) | "
+    	    << " Mod-14 (alldup) | "
+    	    << " Mod-15 (alldup) | "
+	    << " Mod-p (alldup) | "
+    	    << " MB-E0 (alldup) | "
+	    << " MB-E1 (alldup) | "
+	    << " Mod-19 (anydup) | "
+    	    << " Mod-20 (anydup) | "
+    	    << " Mod-18 (anydup) | "
+	    << " Mod-16 (anydup) | "
+    	    << " Mod-17 (anydup) | "
+    	    << " Mod-14 (anydup) | "
+    	    << " Mod-15 (anydup) | "
+	    << " Mod-p (anydup) | "
+    	    << " MB-E0 (anydup) | "
+	    << " MB-E1 (anydup) | "
 	    << " Mod-19 (All 0) | "
     	    << " Mod-20 (All 0) | "
     	    << " Mod-18 (All 0) | "
@@ -380,6 +542,56 @@ int main(int argc, char** argv)
 	    <<std::fixed
     	    << std::setprecision(1)
     	    << std::setw(4)
+	    << NofAllElZeroEvents[0][0].size() << " (" << 100.0*NofAllElZeroEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElZeroEvents[0][1].size() << " (" << 100.0*NofAllElZeroEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAllElZeroEvents[0][2].size() << " (" << 100.0*NofAllElZeroEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAllElZeroEvents[1][0].size() << " (" << 100.0*NofAllElZeroEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElZeroEvents[1][1].size() << " (" << 100.0*NofAllElZeroEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAllElZeroEvents[1][2].size() << " (" << 100.0*NofAllElZeroEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAllElZeroEvents[2][0].size() << " (" << 100.0*NofAllElZeroEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElZeroEvents[2][1].size() << " (" << 100.0*NofAllElZeroEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAllElZeroEvents[3][0].size() << " (" << 100.0*NofAllElZeroEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElZeroEvents[3][1].size() << " (" << 100.0*NofAllElZeroEvents[3][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[0][0].size() << " (" << 100.0*NofAnyElZeroEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[0][1].size() << " (" << 100.0*NofAnyElZeroEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[0][2].size() << " (" << 100.0*NofAnyElZeroEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[1][0].size() << " (" << 100.0*NofAnyElZeroEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[1][1].size() << " (" << 100.0*NofAnyElZeroEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[1][2].size() << " (" << 100.0*NofAnyElZeroEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[2][0].size() << " (" << 100.0*NofAnyElZeroEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[2][1].size() << " (" << 100.0*NofAnyElZeroEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[3][0].size() << " (" << 100.0*NofAnyElZeroEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[3][1].size() << " (" << 100.0*NofAnyElZeroEvents[3][1].size()/processed_events << " %)" << "| "
+	    << NofFixedPatEvents[0][0].size() << " (" << 100.0*NofFixedPatEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofFixedPatEvents[0][1].size() << " (" << 100.0*NofFixedPatEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofFixedPatEvents[0][2].size() << " (" << 100.0*NofFixedPatEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofFixedPatEvents[1][0].size() << " (" << 100.0*NofFixedPatEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofFixedPatEvents[1][1].size() << " (" << 100.0*NofFixedPatEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofFixedPatEvents[1][2].size() << " (" << 100.0*NofFixedPatEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofFixedPatEvents[2][0].size() << " (" << 100.0*NofFixedPatEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofFixedPatEvents[2][1].size() << " (" << 100.0*NofFixedPatEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofFixedPatEvents[3][0].size() << " (" << 100.0*NofFixedPatEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofFixedPatEvents[3][1].size() << " (" << 100.0*NofFixedPatEvents[3][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[0][0].size() << " (" << 100.0*NofDuplicateElinksEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[0][1].size() << " (" << 100.0*NofDuplicateElinksEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[0][2].size() << " (" << 100.0*NofDuplicateElinksEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[1][0].size() << " (" << 100.0*NofDuplicateElinksEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[1][1].size() << " (" << 100.0*NofDuplicateElinksEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[1][2].size() << " (" << 100.0*NofDuplicateElinksEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[2][0].size() << " (" << 100.0*NofDuplicateElinksEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[2][1].size() << " (" << 100.0*NofDuplicateElinksEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[3][0].size() << " (" << 100.0*NofDuplicateElinksEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[3][1].size() << " (" << 100.0*NofDuplicateElinksEvents[3][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[0][0].size() << " (" << 100.0*NofAllSameElinksEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[0][1].size() << " (" << 100.0*NofAllSameElinksEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[0][2].size() << " (" << 100.0*NofAllSameElinksEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[1][0].size() << " (" << 100.0*NofAllSameElinksEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[1][1].size() << " (" << 100.0*NofAllSameElinksEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[1][2].size() << " (" << 100.0*NofAllSameElinksEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[2][0].size() << " (" << 100.0*NofAllSameElinksEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[2][1].size() << " (" << 100.0*NofAllSameElinksEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[3][0].size() << " (" << 100.0*NofAllSameElinksEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[3][1].size() << " (" << 100.0*NofAllSameElinksEvents[3][1].size()/processed_events << " %)" << "| "
 	    << NofAllZeroEvents[0][0].size() << " (" << 100.0*NofAllZeroEvents[0][0].size()/processed_events << " %)" << "| "
     	    << NofAllZeroEvents[0][1].size() << " (" << 100.0*NofAllZeroEvents[0][1].size()/processed_events << " %)" << "| "
 	    << NofAllZeroEvents[0][2].size() << " (" << 100.0*NofAllZeroEvents[0][2].size()/processed_events << " %)" << "| "

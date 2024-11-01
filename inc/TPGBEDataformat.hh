@@ -140,7 +140,7 @@ public:
 	if(!validCh && isValidChannel(s,i)) return false;
       }
     }
-
+    
     return true;
   }
   
