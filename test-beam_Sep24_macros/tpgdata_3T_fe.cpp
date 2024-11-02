@@ -216,6 +216,9 @@ int main(int argc, char** argv)
   std::vector<uint64_t> NofDuplicateElinksEvents[noflpGBTs][nofECONs];
   std::vector<uint64_t> NofAnyElZeroEvents[noflpGBTs][nofECONs];
   std::vector<uint64_t> NofAllElZeroEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofAllElDupEvents[noflpGBTs][nofECONs];
+  std::vector<uint64_t> NofGoodEvents[noflpGBTs][nofECONs];
+  
   std::vector<uint32_t> nums;
   
   uint32_t scan_pattern = 0xffaaffaa;
@@ -224,6 +227,9 @@ int main(int argc, char** argv)
   uint32_t nofDuplicates(0);
   uint32_t nofelzero_anybx(0);
   uint32_t nofelzero_allbx(0);
+  uint32_t nofdupel_allbx(0);
+  bool isGood(false);
+  
   for(int ieloop=0;ieloop<nloop;ieloop++){
     
     minEventTPG = ieloop*nloopEvent ;
@@ -256,11 +262,13 @@ int main(int argc, char** argv)
 	  allTCszero[ilink][iecont] = false;
 	  nofZeroBxs[ilink][iecont] = 0;          
 	  nofelzero_allbx = 0;
+	  nofdupel_allbx = 0;
+	  isGood = true;
 	  
 	  for(const auto& econtit : econtdata){
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
-	    
+	    const uint32_t *refel = trdata.getElinks(0); 
 	    if(printCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
 	    for(int ibx=0;ibx<7;ibx++){
 	      //for(int ibx=3;ibx<4;ibx++){
@@ -271,6 +279,7 @@ int main(int argc, char** argv)
 	      nofDuplicates = 0 ;
 	      nofelzero_anybx = 0 ;
 	      nums.clear();
+	      bool isDup = true;
 	      for(int iel = 0 ; iel < econTPar[moduleId].getNElinks() ; iel++){
 		if((el[iel]&0xff)==(scan_pattern&0xff) and ((el[iel]>>16)&0xff)==((scan_pattern>>16)&0xff)) nofpatmatch++;
 		if(el[iel]==0) nofelzero_anybx++;
@@ -278,7 +287,8 @@ int main(int argc, char** argv)
 		  nums.push_back(el[iel]);
 		else
 		  nofDuplicates++;
-	      }	      
+		if(el[iel]!=refel[iel]) isDup = false;
+	      }	     
 	      bool isAllSame = (((nofDuplicates+1)==econTPar[moduleId].getNElinks()) or (nofelzero_anybx==econTPar[moduleId].getNElinks()))?true:false;
 	      
 	      if(printCondn){
@@ -286,12 +296,13 @@ int main(int argc, char** argv)
 		for(int iel = 0 ; iel < econTPar[moduleId].getNElinks() ; iel++) std::cout << "iel: " << iel << std::hex << " elink: 0x" << el[iel]  << std::dec << std::endl;
 		std::cout <<"Nof elinks with zeros: " << nofelzero_anybx <<", nofpatmatch : " << nofpatmatch << ", isAllSame: " << isAllSame << ", nofDuplicates: " << nofDuplicates << std::endl;
 	      }
-	      if(nofelzero_anybx==econTPar[moduleId].getNElinks())nofelzero_allbx++;
+	      if(nofelzero_anybx==econTPar[moduleId].getNElinks()) {nofelzero_allbx++; isGood = false;}  
 	      if(nofelzero_anybx>0) NofAnyElZeroEvents[ilink][iecont].push_back(event);
-	      if(isAllSame) NofAllSameElinksEvents[ilink][iecont].push_back(event);
-	      if(nofDuplicates>=2) NofDuplicateElinksEvents[ilink][iecont].push_back(event);
-	      if(nofpatmatch>0) NofFixedPatEvents[ilink][iecont].push_back(event);
-	      if(nofpatmatch==econTPar[moduleId].getNElinks() or nofelzero_anybx==econTPar[moduleId].getNElinks()) continue;
+	      if(isAllSame) {NofAllSameElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
+	      if(nofDuplicates>=2) {NofDuplicateElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
+	      if(nofpatmatch>0) {NofFixedPatEvents[ilink][iecont].push_back(event);  isGood = false;}  
+	      if(isDup) nofdupel_allbx++;
+	      if(nofpatmatch==econTPar[moduleId].getNElinks()) continue;
 	      //// =========== Elink checking is complete ===============
 	      
 	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);
@@ -328,9 +339,11 @@ int main(int argc, char** argv)
 	    //if(eventCondn) trdata.print();
 	  }//loop over econt data for a given run
 	  
-	  if(nofZeroBxs[ilink][iecont]>0 and allTCszero[ilink][iecont]) NofAnyZeroEvents[ilink][iecont].push_back(event);
-          if(nofZeroBxs[ilink][iecont]==7 and allTCszero[ilink][iecont]) NofAllZeroEvents[ilink][iecont].push_back(event);
 	  if(nofelzero_allbx==7) NofAllElZeroEvents[ilink][iecont].push_back(event);
+	  if(nofdupel_allbx==7) NofAllElDupEvents[ilink][iecont].push_back(event);
+	  if(nofZeroBxs[ilink][iecont]==7 and allTCszero[ilink][iecont] and nofelzero_allbx<7) NofAllZeroEvents[ilink][iecont].push_back(event);
+	  if(nofZeroBxs[ilink][iecont]>0 and allTCszero[ilink][iecont] and nofelzero_allbx<7) NofAnyZeroEvents[ilink][iecont].push_back(event);
+	  if(isGood and nofdupel_allbx<=6 and !allTCszero[ilink][iecont]) NofGoodEvents[ilink][iecont].push_back(event);
 	  
 	}//econt loop
       }//link loop
@@ -374,6 +387,14 @@ int main(int argc, char** argv)
       auto it7 = std::unique(NofAllElZeroEvents[ilink][iecont].begin(), NofAllElZeroEvents[ilink][iecont].end());
       NofAllElZeroEvents[ilink][iecont].erase(it7, NofAllElZeroEvents[ilink][iecont].end());
 
+      std::sort(NofAllElDupEvents[ilink][iecont].begin(), NofAllElDupEvents[ilink][iecont].end());
+      auto it8 = std::unique(NofAllElDupEvents[ilink][iecont].begin(), NofAllElDupEvents[ilink][iecont].end());
+      NofAllElDupEvents[ilink][iecont].erase(it8, NofAllElDupEvents[ilink][iecont].end());
+
+      std::sort(NofGoodEvents[ilink][iecont].begin(), NofGoodEvents[ilink][iecont].end());
+      auto it9 = std::unique(NofGoodEvents[ilink][iecont].begin(), NofGoodEvents[ilink][iecont].end());
+      NofGoodEvents[ilink][iecont].erase(it9, NofGoodEvents[ilink][iecont].end());
+      
     }//iecont
   }//ilink
   
@@ -449,6 +470,24 @@ int main(int argc, char** argv)
     }
   }
   std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofAllElDupEvents[ilink][iecont].size()>0) std::cerr<< "/*all bx duplicates zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofAllElDupEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofAllElDupEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofAllElDupEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
+  for(int ilink=0;ilink<noflpGBTs;ilink++){
+    int maxecons = (ilink<=1)?3:2;
+    for(int iecont=0;iecont<maxecons;iecont++){      
+      if(NofGoodEvents[ilink][iecont].size()>0) std::cerr<< "/*all bx duplicates zero events ilink:"<<ilink<<", iecont: "<<iecont<<"*/ uint64_t refEvt["<< NofGoodEvents[ilink][iecont].size() <<"] = {";
+      // for(const uint64_t& totEvt : NofGoodEvents[ilink][iecont]) std::cerr<<totEvt << ", ";
+      if(NofGoodEvents[ilink][iecont].size()>0) std::cerr<< "};" << std::endl;
+    }
+  }
+  std::cerr<<std::endl;
   std::cerr << " RelayNo. " << "| "
 	    << " RunN. " << "| "
 	    << " maxEvent " << "| "
@@ -463,16 +502,7 @@ int main(int argc, char** argv)
 	    << " Mod-p (allel 0) | "
     	    << " MB-E0 (allel 0) | "
 	    << " MB-E1 (allel 0) | "
-	    << " Mod-19 (anyel 0) | "
-    	    << " Mod-20 (anyel 0) | "
-    	    << " Mod-18 (anyel 0) | "
-	    << " Mod-16 (anyel 0) | "
-    	    << " Mod-17 (anyel 0) | "
-    	    << " Mod-14 (anyel 0) | "
-    	    << " Mod-15 (anyel 0) | "
-	    << " Mod-p (anyel 0) | "
-    	    << " MB-E0 (anyel 0) | "
-	    << " MB-E1 (anyel 0) | "
+
 	    << " Mod-19 (fixpat) | "
     	    << " Mod-20 (fixpat) | "
     	    << " Mod-18 (fixpat) | "
@@ -483,46 +513,29 @@ int main(int argc, char** argv)
 	    << " Mod-p (fixpat) | "
     	    << " MB-E0 (fixpat) | "
 	    << " MB-E1 (fixpat) | "
-	    << " Mod-19 (alldup) | "
-    	    << " Mod-20 (alldup) | "
-    	    << " Mod-18 (alldup) | "
-	    << " Mod-16 (alldup) | "
-    	    << " Mod-17 (alldup) | "
-    	    << " Mod-14 (alldup) | "
-    	    << " Mod-15 (alldup) | "
-	    << " Mod-p (alldup) | "
-    	    << " MB-E0 (alldup) | "
-	    << " MB-E1 (alldup) | "
-	    << " Mod-19 (anydup) | "
-    	    << " Mod-20 (anydup) | "
-    	    << " Mod-18 (anydup) | "
-	    << " Mod-16 (anydup) | "
-    	    << " Mod-17 (anydup) | "
-    	    << " Mod-14 (anydup) | "
-    	    << " Mod-15 (anydup) | "
-	    << " Mod-p (anydup) | "
-    	    << " MB-E0 (anydup) | "
-	    << " MB-E1 (anydup) | "
-	    << " Mod-19 (All 0) | "
-    	    << " Mod-20 (All 0) | "
-    	    << " Mod-18 (All 0) | "
-	    << " Mod-16 (All 0) | "
-    	    << " Mod-17 (All 0) | "
-    	    << " Mod-14 (All 0) | "
-    	    << " Mod-15 (All 0) | "
-	    << " Mod-p (All 0) | "
-    	    << " MB-E0 (All 0) | "
-	    << " MB-E1 (All 0) | "
-	    << " Mod-19 (Any 0) | "
-    	    << " Mod-20 (Any 0) | "
-    	    << " Mod-18 (Any 0) | "
-	    << " Mod-16 (Any 0) | "
-    	    << " Mod-17 (Any 0) | "
-    	    << " Mod-14 (Any 0) | "
-    	    << " Mod-15 (Any 0) | "
-	    << " Mod-p (Any 0) | "
-    	    << " MB-E0 (Any 0) | "
-	    << " MB-E1 (Any 0) | "
+
+	    << " Mod-19 (allTC 0) | "
+    	    << " Mod-20 (allTC 0) | "
+    	    << " Mod-18 (allTC 0) | "
+	    << " Mod-16 (allTC 0) | "
+    	    << " Mod-17 (allTC 0) | "
+    	    << " Mod-14 (allTC 0) | "
+    	    << " Mod-15 (allTC 0) | "
+	    << " Mod-p (allTC 0) | "
+    	    << " MB-E0 (allTC 0) | "
+	    << " MB-E1 (allTC 0) | "
+
+	    << " Mod-19 (anyTC 0) | "
+    	    << " Mod-20 (anyTC 0) | "
+    	    << " Mod-18 (anyTC 0) | "
+	    << " Mod-16 (anyTC 0) | "
+    	    << " Mod-17 (anyTC 0) | "
+    	    << " Mod-14 (anyTC 0) | "
+    	    << " Mod-15 (anyTC 0) | "
+	    << " Mod-p (anyTC 0) | "
+    	    << " MB-E0 (anyTC 0) | "
+	    << " MB-E1 (anyTC 0) | "
+    
 	    << " Mod-19 (S1MM) | "
     	    << " Mod-20 (S1MM) | "
     	    << " Mod-18 (S1MM) | "
@@ -533,6 +546,62 @@ int main(int argc, char** argv)
 	    << " Mod-p (S1MM) | "
     	    << " MB-E0 (S1MM) | "
 	    << " MB-E1 (S1MM) | "
+
+	    << " Mod-19 (allbxdup) | "
+    	    << " Mod-20 (allbxdup) | "
+    	    << " Mod-18 (allbxdup) | "
+	    << " Mod-16 (allbxdup) | "
+    	    << " Mod-17 (allbxdup) | "
+    	    << " Mod-14 (allbxdup) | "
+    	    << " Mod-15 (allbxdup) | "
+	    << " Mod-p (allbxdup) | "
+    	    << " MB-E0 (allbxdup) | "
+	    << " MB-E1 (allbxdup) | "
+    
+	    << " Mod-19 (alleldup) | "
+    	    << " Mod-20 (alleldup) | "
+    	    << " Mod-18 (alleldup) | "
+	    << " Mod-16 (alleldup) | "
+    	    << " Mod-17 (alleldup) | "
+    	    << " Mod-14 (alleldup) | "
+    	    << " Mod-15 (alleldup) | "
+	    << " Mod-p (alleldup) | "
+    	    << " MB-E0 (alleldup) | "
+	    << " MB-E1 (alleldup ) | "
+
+	    << " Mod-19 (anyeldup) | "
+    	    << " Mod-20 (anyeldup) | "
+    	    << " Mod-18 (anyeldup) | "
+	    << " Mod-16 (anyeldup) | "
+    	    << " Mod-17 (anyeldup) | "
+    	    << " Mod-14 (anyeldup) | "
+    	    << " Mod-15 (anyeldup) | "
+	    << " Mod-p (anyeldup) | "
+    	    << " MB-E0 (anyeldup) | "
+	    << " MB-E1 (anyeldup ) | "
+    
+    	    << " Mod-19 (anyel 0) | "
+    	    << " Mod-20 (anyel 0) | "
+    	    << " Mod-18 (anyel 0) | "
+	    << " Mod-16 (anyel 0) | "
+    	    << " Mod-17 (anyel 0) | "
+    	    << " Mod-14 (anyel 0) | "
+    	    << " Mod-15 (anyel 0) | "
+	    << " Mod-p (anyel 0) | "
+    	    << " MB-E0 (anyel 0) | "
+	    << " MB-E1 (anyel 0) | "
+
+    	    << " Mod-19 (good) | "
+    	    << " Mod-20 (good) | "
+    	    << " Mod-18 (good) | "
+	    << " Mod-16 (good) | "
+    	    << " Mod-17 (good) | "
+    	    << " Mod-14 (good) | "
+    	    << " Mod-15 (good) | "
+	    << " Mod-p (good) | "
+    	    << " MB-E0 (good) | "
+	    << " MB-E1 (good) | "
+
 	    << std::endl;
   
   std::cerr << relayNumber << "| "
@@ -552,16 +621,7 @@ int main(int argc, char** argv)
     	    << NofAllElZeroEvents[2][1].size() << " (" << 100.0*NofAllElZeroEvents[2][1].size()/processed_events << " %)" << "| "
 	    << NofAllElZeroEvents[3][0].size() << " (" << 100.0*NofAllElZeroEvents[3][0].size()/processed_events << " %)" << "| "
     	    << NofAllElZeroEvents[3][1].size() << " (" << 100.0*NofAllElZeroEvents[3][1].size()/processed_events << " %)" << "| "
-	    << NofAnyElZeroEvents[0][0].size() << " (" << 100.0*NofAnyElZeroEvents[0][0].size()/processed_events << " %)" << "| "
-    	    << NofAnyElZeroEvents[0][1].size() << " (" << 100.0*NofAnyElZeroEvents[0][1].size()/processed_events << " %)" << "| "
-	    << NofAnyElZeroEvents[0][2].size() << " (" << 100.0*NofAnyElZeroEvents[0][2].size()/processed_events << " %)" << "| "
-	    << NofAnyElZeroEvents[1][0].size() << " (" << 100.0*NofAnyElZeroEvents[1][0].size()/processed_events << " %)" << "| "
-    	    << NofAnyElZeroEvents[1][1].size() << " (" << 100.0*NofAnyElZeroEvents[1][1].size()/processed_events << " %)" << "| "
-	    << NofAnyElZeroEvents[1][2].size() << " (" << 100.0*NofAnyElZeroEvents[1][2].size()/processed_events << " %)" << "| "
-	    << NofAnyElZeroEvents[2][0].size() << " (" << 100.0*NofAnyElZeroEvents[2][0].size()/processed_events << " %)" << "| "
-    	    << NofAnyElZeroEvents[2][1].size() << " (" << 100.0*NofAnyElZeroEvents[2][1].size()/processed_events << " %)" << "| "
-	    << NofAnyElZeroEvents[3][0].size() << " (" << 100.0*NofAnyElZeroEvents[3][0].size()/processed_events << " %)" << "| "
-    	    << NofAnyElZeroEvents[3][1].size() << " (" << 100.0*NofAnyElZeroEvents[3][1].size()/processed_events << " %)" << "| "
+
 	    << NofFixedPatEvents[0][0].size() << " (" << 100.0*NofFixedPatEvents[0][0].size()/processed_events << " %)" << "| "
     	    << NofFixedPatEvents[0][1].size() << " (" << 100.0*NofFixedPatEvents[0][1].size()/processed_events << " %)" << "| "
 	    << NofFixedPatEvents[0][2].size() << " (" << 100.0*NofFixedPatEvents[0][2].size()/processed_events << " %)" << "| "
@@ -572,26 +632,7 @@ int main(int argc, char** argv)
     	    << NofFixedPatEvents[2][1].size() << " (" << 100.0*NofFixedPatEvents[2][1].size()/processed_events << " %)" << "| "
 	    << NofFixedPatEvents[3][0].size() << " (" << 100.0*NofFixedPatEvents[3][0].size()/processed_events << " %)" << "| "
     	    << NofFixedPatEvents[3][1].size() << " (" << 100.0*NofFixedPatEvents[3][1].size()/processed_events << " %)" << "| "
-	    << NofDuplicateElinksEvents[0][0].size() << " (" << 100.0*NofDuplicateElinksEvents[0][0].size()/processed_events << " %)" << "| "
-    	    << NofDuplicateElinksEvents[0][1].size() << " (" << 100.0*NofDuplicateElinksEvents[0][1].size()/processed_events << " %)" << "| "
-	    << NofDuplicateElinksEvents[0][2].size() << " (" << 100.0*NofDuplicateElinksEvents[0][2].size()/processed_events << " %)" << "| "
-	    << NofDuplicateElinksEvents[1][0].size() << " (" << 100.0*NofDuplicateElinksEvents[1][0].size()/processed_events << " %)" << "| "
-    	    << NofDuplicateElinksEvents[1][1].size() << " (" << 100.0*NofDuplicateElinksEvents[1][1].size()/processed_events << " %)" << "| "
-	    << NofDuplicateElinksEvents[1][2].size() << " (" << 100.0*NofDuplicateElinksEvents[1][2].size()/processed_events << " %)" << "| "
-	    << NofDuplicateElinksEvents[2][0].size() << " (" << 100.0*NofDuplicateElinksEvents[2][0].size()/processed_events << " %)" << "| "
-    	    << NofDuplicateElinksEvents[2][1].size() << " (" << 100.0*NofDuplicateElinksEvents[2][1].size()/processed_events << " %)" << "| "
-	    << NofDuplicateElinksEvents[3][0].size() << " (" << 100.0*NofDuplicateElinksEvents[3][0].size()/processed_events << " %)" << "| "
-    	    << NofDuplicateElinksEvents[3][1].size() << " (" << 100.0*NofDuplicateElinksEvents[3][1].size()/processed_events << " %)" << "| "
-	    << NofAllSameElinksEvents[0][0].size() << " (" << 100.0*NofAllSameElinksEvents[0][0].size()/processed_events << " %)" << "| "
-    	    << NofAllSameElinksEvents[0][1].size() << " (" << 100.0*NofAllSameElinksEvents[0][1].size()/processed_events << " %)" << "| "
-	    << NofAllSameElinksEvents[0][2].size() << " (" << 100.0*NofAllSameElinksEvents[0][2].size()/processed_events << " %)" << "| "
-	    << NofAllSameElinksEvents[1][0].size() << " (" << 100.0*NofAllSameElinksEvents[1][0].size()/processed_events << " %)" << "| "
-    	    << NofAllSameElinksEvents[1][1].size() << " (" << 100.0*NofAllSameElinksEvents[1][1].size()/processed_events << " %)" << "| "
-	    << NofAllSameElinksEvents[1][2].size() << " (" << 100.0*NofAllSameElinksEvents[1][2].size()/processed_events << " %)" << "| "
-	    << NofAllSameElinksEvents[2][0].size() << " (" << 100.0*NofAllSameElinksEvents[2][0].size()/processed_events << " %)" << "| "
-    	    << NofAllSameElinksEvents[2][1].size() << " (" << 100.0*NofAllSameElinksEvents[2][1].size()/processed_events << " %)" << "| "
-	    << NofAllSameElinksEvents[3][0].size() << " (" << 100.0*NofAllSameElinksEvents[3][0].size()/processed_events << " %)" << "| "
-    	    << NofAllSameElinksEvents[3][1].size() << " (" << 100.0*NofAllSameElinksEvents[3][1].size()/processed_events << " %)" << "| "
+
 	    << NofAllZeroEvents[0][0].size() << " (" << 100.0*NofAllZeroEvents[0][0].size()/processed_events << " %)" << "| "
     	    << NofAllZeroEvents[0][1].size() << " (" << 100.0*NofAllZeroEvents[0][1].size()/processed_events << " %)" << "| "
 	    << NofAllZeroEvents[0][2].size() << " (" << 100.0*NofAllZeroEvents[0][2].size()/processed_events << " %)" << "| "
@@ -602,6 +643,7 @@ int main(int argc, char** argv)
     	    << NofAllZeroEvents[2][1].size() << " (" << 100.0*NofAllZeroEvents[2][1].size()/processed_events << " %)" << "| "
 	    << NofAllZeroEvents[3][0].size() << " (" << 100.0*NofAllZeroEvents[3][0].size()/processed_events << " %)" << "| "
     	    << NofAllZeroEvents[3][1].size() << " (" << 100.0*NofAllZeroEvents[3][1].size()/processed_events << " %)" << "| "
+
 	    << NofAnyZeroEvents[0][0].size() << " (" << 100.0*NofAnyZeroEvents[0][0].size()/processed_events << " %)" << "| "
     	    << NofAnyZeroEvents[0][1].size() << " (" << 100.0*NofAnyZeroEvents[0][1].size()/processed_events << " %)" << "| "
 	    << NofAnyZeroEvents[0][2].size() << " (" << 100.0*NofAnyZeroEvents[0][2].size()/processed_events << " %)" << "| "
@@ -612,6 +654,7 @@ int main(int argc, char** argv)
     	    << NofAnyZeroEvents[2][1].size() << " (" << 100.0*NofAnyZeroEvents[2][1].size()/processed_events << " %)" << "| "
 	    << NofAnyZeroEvents[3][0].size() << " (" << 100.0*NofAnyZeroEvents[3][0].size()/processed_events << " %)" << "| "
     	    << NofAnyZeroEvents[3][1].size() << " (" << 100.0*NofAnyZeroEvents[3][1].size()/processed_events << " %)" << "| "
+
 	    << NofS1EmulDataMM[0][0].size() << " (" << 100.0*NofS1EmulDataMM[0][0].size()/processed_events << " %)" << "| "
     	    << NofS1EmulDataMM[0][1].size() << " (" << 100.0*NofS1EmulDataMM[0][1].size()/processed_events << " %)" << "| "
 	    << NofS1EmulDataMM[0][2].size() << " (" << 100.0*NofS1EmulDataMM[0][2].size()/processed_events << " %)" << "| "
@@ -622,6 +665,62 @@ int main(int argc, char** argv)
     	    << NofS1EmulDataMM[2][1].size() << " (" << 100.0*NofS1EmulDataMM[2][1].size()/processed_events << " %)" << "| "
 	    << NofS1EmulDataMM[3][0].size() << " (" << 100.0*NofS1EmulDataMM[3][0].size()/processed_events << " %)" << "| "
     	    << NofS1EmulDataMM[3][1].size() << " (" << 100.0*NofS1EmulDataMM[3][1].size()/processed_events << " %)" << "| "
+
+	    << NofAllElDupEvents[0][0].size() << " (" << 100.0*NofAllElDupEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElDupEvents[0][1].size() << " (" << 100.0*NofAllElDupEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAllElDupEvents[0][2].size() << " (" << 100.0*NofAllElDupEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAllElDupEvents[1][0].size() << " (" << 100.0*NofAllElDupEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElDupEvents[1][1].size() << " (" << 100.0*NofAllElDupEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAllElDupEvents[1][2].size() << " (" << 100.0*NofAllElDupEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAllElDupEvents[2][0].size() << " (" << 100.0*NofAllElDupEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElDupEvents[2][1].size() << " (" << 100.0*NofAllElDupEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAllElDupEvents[3][0].size() << " (" << 100.0*NofAllElDupEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAllElDupEvents[3][1].size() << " (" << 100.0*NofAllElDupEvents[3][1].size()/processed_events << " %)" << "| "
+
+	    << NofAllSameElinksEvents[0][0].size() << " (" << 100.0*NofAllSameElinksEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[0][1].size() << " (" << 100.0*NofAllSameElinksEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[0][2].size() << " (" << 100.0*NofAllSameElinksEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[1][0].size() << " (" << 100.0*NofAllSameElinksEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[1][1].size() << " (" << 100.0*NofAllSameElinksEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[1][2].size() << " (" << 100.0*NofAllSameElinksEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[2][0].size() << " (" << 100.0*NofAllSameElinksEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[2][1].size() << " (" << 100.0*NofAllSameElinksEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAllSameElinksEvents[3][0].size() << " (" << 100.0*NofAllSameElinksEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAllSameElinksEvents[3][1].size() << " (" << 100.0*NofAllSameElinksEvents[3][1].size()/processed_events << " %)" << "| "
+
+	    << NofDuplicateElinksEvents[0][0].size() << " (" << 100.0*NofDuplicateElinksEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[0][1].size() << " (" << 100.0*NofDuplicateElinksEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[0][2].size() << " (" << 100.0*NofDuplicateElinksEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[1][0].size() << " (" << 100.0*NofDuplicateElinksEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[1][1].size() << " (" << 100.0*NofDuplicateElinksEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[1][2].size() << " (" << 100.0*NofDuplicateElinksEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[2][0].size() << " (" << 100.0*NofDuplicateElinksEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[2][1].size() << " (" << 100.0*NofDuplicateElinksEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofDuplicateElinksEvents[3][0].size() << " (" << 100.0*NofDuplicateElinksEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofDuplicateElinksEvents[3][1].size() << " (" << 100.0*NofDuplicateElinksEvents[3][1].size()/processed_events << " %)" << "| "
+    
+    	    << NofAnyElZeroEvents[0][0].size() << " (" << 100.0*NofAnyElZeroEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[0][1].size() << " (" << 100.0*NofAnyElZeroEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[0][2].size() << " (" << 100.0*NofAnyElZeroEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[1][0].size() << " (" << 100.0*NofAnyElZeroEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[1][1].size() << " (" << 100.0*NofAnyElZeroEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[1][2].size() << " (" << 100.0*NofAnyElZeroEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[2][0].size() << " (" << 100.0*NofAnyElZeroEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[2][1].size() << " (" << 100.0*NofAnyElZeroEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofAnyElZeroEvents[3][0].size() << " (" << 100.0*NofAnyElZeroEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofAnyElZeroEvents[3][1].size() << " (" << 100.0*NofAnyElZeroEvents[3][1].size()/processed_events << " %)" << "| "
+    
+	    << NofGoodEvents[0][0].size() << " (" << 100.0*NofGoodEvents[0][0].size()/processed_events << " %)" << "| "
+    	    << NofGoodEvents[0][1].size() << " (" << 100.0*NofGoodEvents[0][1].size()/processed_events << " %)" << "| "
+	    << NofGoodEvents[0][2].size() << " (" << 100.0*NofGoodEvents[0][2].size()/processed_events << " %)" << "| "
+	    << NofGoodEvents[1][0].size() << " (" << 100.0*NofGoodEvents[1][0].size()/processed_events << " %)" << "| "
+    	    << NofGoodEvents[1][1].size() << " (" << 100.0*NofGoodEvents[1][1].size()/processed_events << " %)" << "| "
+	    << NofGoodEvents[1][2].size() << " (" << 100.0*NofGoodEvents[1][2].size()/processed_events << " %)" << "| "
+	    << NofGoodEvents[2][0].size() << " (" << 100.0*NofGoodEvents[2][0].size()/processed_events << " %)" << "| "
+    	    << NofGoodEvents[2][1].size() << " (" << 100.0*NofGoodEvents[2][1].size()/processed_events << " %)" << "| "
+	    << NofGoodEvents[3][0].size() << " (" << 100.0*NofGoodEvents[3][0].size()/processed_events << " %)" << "| "
+    	    << NofGoodEvents[3][1].size() << " (" << 100.0*NofGoodEvents[3][1].size()/processed_events << " %)" << "| "
+    
    	    << std::endl;
 
   return true;
