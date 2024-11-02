@@ -269,7 +269,8 @@ int main(int argc, char** argv)
 	    if(econtit.first!=moduleId) continue;
 	    trdata = econtit.second ;
 	    const uint32_t *refel = trdata.getElinks(0); 
-	    if(printCondn) std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
+	    //if(printCondn)
+	    std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtit.first << std::endl;
 	    for(int ibx=0;ibx<7;ibx++){
 	      //for(int ibx=3;ibx<4;ibx++){
 	      const uint32_t *el = trdata.getElinks(ibx); 
@@ -296,13 +297,13 @@ int main(int argc, char** argv)
 		for(int iel = 0 ; iel < econTPar[moduleId].getNElinks() ; iel++) std::cout << "iel: " << iel << std::hex << " elink: 0x" << el[iel]  << std::dec << std::endl;
 		std::cout <<"Nof elinks with zeros: " << nofelzero_anybx <<", nofpatmatch : " << nofpatmatch << ", isAllSame: " << isAllSame << ", nofDuplicates: " << nofDuplicates << std::endl;
 	      }
-	      if(nofelzero_anybx==econTPar[moduleId].getNElinks()) {nofelzero_allbx++; isGood = false;}  
 	      if(nofelzero_anybx>0) NofAnyElZeroEvents[ilink][iecont].push_back(event);
 	      if(isAllSame) {NofAllSameElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
 	      if(nofDuplicates>=1) {NofDuplicateElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
 	      if(isDup) nofdupel_allbx++;
-	      if(nofpatmatch==econTPar[moduleId].getNElinks()) {
+	      if(nofpatmatch==econTPar[moduleId].getNElinks() or nofelzero_anybx==econTPar[moduleId].getNElinks()) {
 		NofFixedPatEvents[ilink][iecont].push_back(event);
+		nofelzero_allbx++;
 		isGood = false;
 		continue;
 	      }
