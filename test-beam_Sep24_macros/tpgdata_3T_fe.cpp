@@ -299,10 +299,13 @@ int main(int argc, char** argv)
 	      if(nofelzero_anybx==econTPar[moduleId].getNElinks()) {nofelzero_allbx++; isGood = false;}  
 	      if(nofelzero_anybx>0) NofAnyElZeroEvents[ilink][iecont].push_back(event);
 	      if(isAllSame) {NofAllSameElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
-	      if(nofDuplicates>=2) {NofDuplicateElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
-	      if(nofpatmatch>0) {NofFixedPatEvents[ilink][iecont].push_back(event);  isGood = false;}  
+	      if(nofDuplicates>=1) {NofDuplicateElinksEvents[ilink][iecont].push_back(event); isGood = false;}  
 	      if(isDup) nofdupel_allbx++;
-	      if(nofpatmatch==econTPar[moduleId].getNElinks()) continue;
+	      if(nofpatmatch==econTPar[moduleId].getNElinks()) {
+		NofFixedPatEvents[ilink][iecont].push_back(event);
+		isGood = false;
+		continue;
+	      }
 	      //// =========== Elink checking is complete ===============
 	      
 	      if(ilink==0) TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::BestC, econTPar[moduleId].getNofTCs(), el, vTCel);

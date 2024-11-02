@@ -3,7 +3,7 @@
 #./emul_Jul24.exe $1 $2 $3 $4 $5 $6 > out_${1}.log &
 
 #relaylist=runlist_sep24-testbeam.txt
-relaylist=ped_runs.csv
+relaylist=dpglist.csv
 while read relaynum
 do
     #echo Relay number : $relaynum
