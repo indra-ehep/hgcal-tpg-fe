@@ -59,9 +59,11 @@ int main(int argc, char **argv) {
   // 3. first technical with third layer : 1727099443 //https://cmsonline.cern.ch/webcenter/portal/cmsonline/Common/Elog?__adfpwp_action_portlet=683379043&__adfpwp_backurl=https%3A%2F%2Fcmsonline.cern.ch%3A443%2Fwebcenter%2Fportal%2Fcmsonline%2FCommon%2FElog%3F_afrRedirect%3D23225796808764440&_piref683379043.strutsAction=%2FviewMessageDetails.do%3FmsgId%3D1237840
   // 4. swap back roc2 config of mod16 for relays after 1727116899 (not necessary for this code, kept as bookkeeping)
   // 5. List of run flagged as green by Paul for TC Processor are Relay1727219172 to Run1727219175 and probably Relay1727211141
-
-  if (relayNumber < 1727099251) {
-    std::cerr << "Third layer is not properly configured" << std::endl;
+  // 6. Sampling phase issue has been solved for relays between 1727123194 to 1727153189
+  // 7. 14 0xcafecafe separators from Relay 1727191081 onwards, which marks the inclusion of blocks for TC processor
+  
+  if (relayNumber < 1727191081) {
+    std::cerr << "TC processor is not configured in firmware" << std::endl;
     return false;
   }
 

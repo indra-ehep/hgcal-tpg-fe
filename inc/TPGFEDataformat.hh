@@ -232,6 +232,9 @@ namespace TPGFEDataformat{
     friend bool operator>=(const TcRawData& lhs, const TcRawData& rhs) {
       return lhs.energy() > rhs.energy();
     }
+    friend bool operator!=(const TcRawData& lhs, const TcRawData& rhs) {
+      return (lhs.energy()!=rhs.energy() or lhs.address()!=rhs.address());
+    }
     friend std::ostream& operator<<(std::ostream& os, TcRawData const& atc){
       return os << "TPGFEDataformat::TcRawData(" << atc << ")::print(): Data = 0x"
 		<< std::hex << ::std::setfill('0')
@@ -474,6 +477,12 @@ namespace TPGFEDataformat{
 		<< std::endl;
       for(const auto& itc: atcp.getTcData()) itc.print(atcp.type());
     }
+    friend bool operator==(TcRawDataPacket& lhs, TcRawDataPacket& rhs) {
+      if(lhs.size()!=rhs.size()) return false;
+      for(uint32_t itc=0;itc<lhs.size();itc++) if(lhs.getTc(itc)!=rhs.getTc(itc)) return false;
+      return true;
+    }
+
     void print() const {
       std::cout << "TPGFEDataformat::TcRawDataPacket(" << this << ")::print(): "
 		<< "type = " << type()

@@ -140,7 +140,7 @@ public:
 	if(!validCh && isValidChannel(s,i)) return false;
       }
     }
-
+    
     return true;
   }
   
@@ -283,7 +283,29 @@ public:
     }
     return true;
   }
-  
+
+  bool isEqualSTC(const UnpackerOutputStreamPair &that) const {
+
+    if(bx(0)!=that.bx(0) and isValidModuleSum(0) and that.isValidModuleSum(0)) return false;
+    if(bx(1)!=that.bx(1) and isValidModuleSum(1) and that.isValidModuleSum(1)) return false;
+    for(unsigned i(0);i<=NumberOfTCs;i++) {
+      if(_tcData[0][i]!=that._tcData[0][i] and isValidChannel(0,i) and that.isValidChannel(0,i)) return false;
+      if(_tcData[1][i]!=that._tcData[1][i] and isValidChannel(1,i) and that.isValidChannel(1,i)) return false;
+    }
+    return true;
+  }
+
+  bool isEqualBC(const UnpackerOutputStreamPair &that) const {
+
+    if(_msData[0]!=that._msData[0] and isValidModuleSum(0) and that.isValidModuleSum(0)) return false;
+    if(_msData[1]!=that._msData[1] and isValidModuleSum(1) and that.isValidModuleSum(1)) return false;
+    for(unsigned i(0);i<=NumberOfTCs;i++) {
+      if(_tcData[0][i]!=that._tcData[0][i] and isValidChannel(0,i) and that.isValidChannel(0,i)) return false;
+      if(_tcData[1][i]!=that._tcData[1][i] and isValidChannel(1,i) and that.isValidChannel(1,i)) return false;
+    }
+    return true;
+  }
+
   void print() {
     std::cout << "UnpackerOutputStreamPair(" << this << ")::print(), format = "
 	      << (checkFormat()?"  valid":"invalid")

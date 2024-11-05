@@ -1,3 +1,9 @@
+/**********************************************************************
+ Created on : 01/11/2024
+ Purpose    : Search for a fixed pattern in TPG data
+ Author     : Indranil Das, Imperial
+ Email      : indranil.das@cern.ch | indra.ehep@gmail.com
+**********************************************************************/
 #include <iostream>
 
 #include "TFileHandlerLocal.h"
@@ -11,12 +17,7 @@
 // Email : Indranil.Das@cern.ch
 // Affiliation : Imperial College, London
 
-//Command to execute : 1. ./compile.sh
-//                     2. ./read_lpGBT.exe $Relay $rname
-//                     3. ./read_lpGBT.exe 1722081291 1722081291
-
 using namespace std;
-
 
 // print all (64-bit) words in event
 void event_dump(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
@@ -31,13 +32,37 @@ void event_dump(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
   std::cout << std::endl;
 }
 
+void event_dump32(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
+  const uint32_t *p32(((const uint32_t*)rEvent)+2);
+  for(unsigned i(0);i<2*rEvent->payloadLength();i+=2){
+    std::cout << "EventId : " << std::setw(3) << rEvent->slinkBoe()->eventId() ;
+    std::cout << "\t Word " << std::setw(3) << i/2 << " ";
+    std::cout << std::hex << std::setfill('0');
+    std::cout << "MSB: 0x" << std::setw(8) << p32[i+1] ; 
+    std::cout << ", LSB: 0x" << std::setw(8) << p32[i] << std::endl;
+    std::cout << std::dec << std::setfill(' ');
+  }
+  std::cout << std::endl;
+}
+
+void event_dump32s(const Hgcal10gLinkReceiver::RecordRunning *rEvent){
+  const uint32_t *p32(((const uint32_t*)rEvent)+2);
+  for(unsigned i(0);i<2*rEvent->payloadLength();i++){
+    std::cout << "EventId : " << std::setw(3) << rEvent->slinkBoe()->eventId() ;
+    std::cout << "\t Word " << std::setw(3) << i << " ";
+    std::cout << std::hex << std::setfill('0');
+    std::cout << "0x" << std::setw(8) << p32[i] << std::endl;
+    std::cout << std::dec << std::setfill(' ');
+  }
+  std::cout << std::endl;
+}
+
 bool is_cafe_word(const uint64_t word) {
   if(((word >> 32) & 0xFFFFFFFF) == 0xcafecafe)
     return true; //0xFECAFE                                                      // 0xFF FFFF masking to be there to compare with 16698110 (could have used the hex of this)
   else
     return false;
-}
-   
+}   
 
 // returns location in this event of the n'th 0xfecafe... line
 int find_cafe_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int n, int cafe_word_loc = -1) {
@@ -60,8 +85,8 @@ int find_cafe_word(const Hgcal10gLinkReceiver::RecordRunning *rEvent, int n, int
     if (is_cafe_word(word)) { // if word == 0xfeca
       cafe_counter++;       
       if (cafe_counter == n){                                                                                    
-        cafe_word_idx = i;
-        break;
+	cafe_word_idx = i;
+	break;
       }
     }
   }
@@ -91,7 +116,6 @@ int main(int argc, char** argv){
   // ./econt_data_validation.exe $Relay $rname
   unsigned relayNumber(0);
   unsigned runNumber(0);
-  unsigned dumpEvent(0);
   std::istringstream issRelay(argv[1]);
   issRelay >> relayNumber;
   std::istringstream issRun(argv[2]);
@@ -101,10 +125,8 @@ int main(int argc, char** argv){
   if(linkNumber!=0 and linkNumber!=1){
     std::cerr << "Link number "<< argv[3] <<"is out of bound (use: 0 or 1)" << std::endl;
     return false;
-  }
-  std::istringstream issDumpEvent(argv[4]);
-  issDumpEvent >> dumpEvent;
-
+  }  
+  
   //Create the file reader
   Hgcal10gLinkReceiver::FileReader _fileReader;
 
@@ -121,7 +143,7 @@ int main(int argc, char** argv){
   uint64_t nEvents = 0;    
   //Keep a record of status of last 100 events
   uint64_t nofRStartErrors = 0, nofRStopErrors = 0;
-
+  
   //Use the fileReader to read the records
   while(_fileReader.read(r)) {
     //Check the state of the record and print the record accordingly
@@ -146,7 +168,7 @@ int main(int argc, char** argv){
     }
     //Else we have an event record 
     else{
-      
+
       const Hgcal10gLinkReceiver::SlinkBoe *boe = rEvent->slinkBoe();
       const Hgcal10gLinkReceiver::SlinkEoe *eoe = rEvent->slinkEoe();
       const Hgcal10gLinkReceiver::BePacketHeader *beh =  rEvent->bePacketHeader();
@@ -162,23 +184,37 @@ int main(int argc, char** argv){
       // 	//event_dump(rEvent);
       // }
       
-      if (nEvents < 10 or dumpEvent==boe->eventId()) {
+      if (nEvents < 2 ) {
 	std::cout <<"Event: " << boe->eventId() << std::endl;
 	rEvent->RecordHeader::print();
 	boe->print();
 	eoe->print();
 	beh->print();
+	uint32_t nCAFEs = 6;
+	for(uint32_t icafe = 0; icafe < nCAFEs ; icafe++){
+	  cout << "icafe: " << icafe << " is at word location : " << find_cafe_word(rEvent, icafe+1) << endl;
+	}
 	event_dump(rEvent);
       }
-      if(nEvents<=10) cout<<"========= End of event : "<< nEvents << "============="<< endl;
+      if(nEvents<=2) cout<<"========= End of event : "<< nEvents << "============="<< endl;
       //Increment event counter and reset error state
-      nEvents++;      
+      
+      
+      if(nEvents%10000==0) std::cout << "Processing event : " << nEvents << std::endl;
+      
+      nEvents++;
     }//loop event
   }
   
   std::cout << "========== Total Events : " << nEvents << std::endl;
   
-  delete r;
+  // std::cout<< "Nof Nonzero diff events are "<< nonZeroEvents.size() << std::endl;
+  // if(nonZeroEvents.size()>0) std::cout<< "/*Nonzero diff events*/ uint64_t refEvt["<< nonZeroEvents.size() <<"] = {";
+  // for(const uint64_t& totEvt : nonZeroEvents) std::cout<<totEvt << ", ";
+  // if(nonZeroEvents.size()>0) std::cout<< "};" << std::endl;
+  
+  _fileReader.close();
+  if(!r) delete r;
   
   return 0;
 }

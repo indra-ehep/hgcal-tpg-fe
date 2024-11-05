@@ -690,7 +690,7 @@ int main(int argc, char** argv)
 	    << " NFEEmulTcTp3MM " << "| "
 	    << " NElStg1MM " << "| "
 	    << std::endl;
-
+  
   std::cerr << relayNumber << "| "
 	    << runNumber << "| "
 	    << (maxEvent-1) << "| "
@@ -755,7 +755,7 @@ int main(int argc, char** argv)
   // if(elStg1Event.size()>0) std::cerr<< "/*Difference in elink and Stage1 output in event*/ uint64_t refEvt["<< elStg1Event.size() <<"] = {";
   // for(const uint64_t& totEvt : elStg1Event) std::cerr<<totEvt << ", ";
   // if(elStg1Event.size()>0) std::cerr<< "};" << std::endl;
-
+  
   fout->cd();
   dir_diff->Write();
   fout->Close();

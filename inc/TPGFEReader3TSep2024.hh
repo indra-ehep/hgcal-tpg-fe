@@ -327,6 +327,7 @@ namespace TPGFEReader{
 		chdata[ch].setAdc(uint16_t(adcM),uint16_t(trigflagM));
 	      else if(trigflagM==0x1){
 		chdata[ch].setAdc(0,uint16_t(trigflagM)); //uint16_t(adcM)
+		//chdata[ch].setAdc(uint16_t(adcM),uint16_t(trigflagM)); //
 		//chdata[ch].setTot(uint16_t(toaM),uint16_t(trigflagM));
 	      }else
 		chdata[ch].setZero();
@@ -341,6 +342,7 @@ namespace TPGFEReader{
 		chdata[ch].setAdc(uint16_t(adcL),uint16_t(trigflagL));
 	      else if(trigflagL==0x1){
 		chdata[ch].setAdc(0,uint16_t(trigflagL)); //uint16_t(adcL)
+		//chdata[ch].setAdc(uint16_t(adcL),uint16_t(trigflagL)); //
 		//chdata[ch].setTot(uint16_t(toaL),uint16_t(trigflagL));
 	      }else
 		chdata[ch].setZero();
@@ -872,7 +874,7 @@ namespace TPGFEReader{
 	  continue;
 	  //break;
 	}
-      
+	
 	prevEvent = eventId;
 	prevSequence = sequenceId;
 	
@@ -881,14 +883,14 @@ namespace TPGFEReader{
 	  std::cerr << " Event: " << eventId << " excess CAFE separator of " <<(maxCAFESeps+1)<< std::endl;
 	  continue;
 	}
-      
+	
 	int first_cafe_word_loc = find_cafe_word(rEvent,1);
 	if( first_cafe_word_loc != 2){
 	  std::cerr << " Event: " << eventId << ", first_cafe_word_loc  "<< first_cafe_word_loc << std::endl;
 	  //Event_Dump(eventId, rEvent);
 	  continue;
 	}
-      
+	
 	const uint64_t *p64(((const uint64_t*)rEvent)+1);
 	
 	if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)){ 
@@ -899,12 +901,12 @@ namespace TPGFEReader{
 	  std::cout<<"2nd : 0x" << p64[2] <<  std::endl;
 	  std::cout<< std::dec << std::setfill(' ') ;
 	}
-
+	
 	bool eventscan = (refEvents.size()==0) ? (eventId>=minEventTrig and eventId<maxEventTrig) : (std::find(refEvents.begin(),refEvents.end(),eventId) != refEvents.end()) ;
-
+	
 	//if(eventId>=minEventTrig and eventId<maxEventTrig){
 	if(eventscan){
-      
+	  
 	  ////////////// First find the block details from header //////////
 	  int loc[maxCAFESeps], size[maxCAFESeps];
 	  for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {loc[iloc] = size[iloc] = -1;}
@@ -928,7 +930,8 @@ namespace TPGFEReader{
 	  for(int iloc = 0 ; iloc < maxCAFESeps ; iloc++) {
 	    bool checksize = false;
 	    if(iloc==(maxCAFESeps-1)){
-	      int totsize = loc[iloc] + size[iloc] + 4 ; //made 4 explicity for 3-train system where there is a extra 64-bit word not accounted in cafecafe seprator header otherwise it should be 3
+	      int withzeropadding = (maxCAFESeps==14)?4:3;
+	      int totsize = loc[iloc] + size[iloc] + withzeropadding ; //zero padding is added to make the event size even
 	      checksize = (totsize==rEvent->payloadLength());
 	      if(!checksize){
 		std::cerr << " Event: "<< eventId << " has mismatch in last cafe position : " << iloc << ", size from block " << totsize << ", payload size " << rEvent->payloadLength() << std::endl;
@@ -954,7 +957,7 @@ namespace TPGFEReader{
 	    //Event_Dump(eventId, rEvent);
 	    continue;
 	  }
-
+	  
 	  //if(nEvents==1) continue;
 	  //if(ievent>(maxEvents-1)) continue;
 	  if ((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)) std::cout<<"iEvent: " << ievent <<  std::endl;
@@ -1276,88 +1279,89 @@ namespace TPGFEReader{
 	  }//nof lpGBTs
 	  ///////////////////////////////////////////////////////////////
 	  
-	  //////////// TC proc block 10-13  /////////////////////
-	  uint32_t TCProcWord[4][4][7][8]; //4:TDAQs, 4:columns, 7:bxs, 8:words
-	  for(int iblk=12;iblk<=13;iblk++){ //we start with 12/13 as it corresponds to LD1/2 trains
-	    unpkIndx = 0;
-	    iunpkw = 0;
-	    ibx = 0;
-	    int itdaq = (iblk==12)?0:1 ; //0 and 1 for TDAQ 12/13
-	    for(int iw = loc[iblk]+1; iw <= (loc[iblk]+size[iblk]) ; iw++ ){
-	      uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-	      uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-	      uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-	      uint32_t col3 = p64[iw] & 0xFFFF ;
-	      TCProcWord[itdaq][0][ibx][iunpkw] = col3; //0-15 bits
-	      TCProcWord[itdaq][1][ibx][iunpkw] = col2; //16-31 bits
-	      TCProcWord[itdaq][2][ibx][iunpkw] = col1; //32-47 bits
-	      TCProcWord[itdaq][3][ibx][iunpkw] = col0; //48-63 bits
-	      iunpkw++;
-	      if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
-		std::cout<<"iblock: " << iblk <<", iloc: "<< iw 
-			 << std::hex
-			 <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
-			 <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
-			 <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
-			 <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
-			 << std::dec << std::setfill(' ')
-			 << std::endl;		
-	      unpkIndx++;
-	      if(unpkIndx%8==0) {ibx++; iunpkw=0;}
-	    }//loop over words for 7 bxs
-	  }//loop over TC proc TDAQ blocks
+	  if(maxCAFESeps>=14){
+	    //////////// TC proc block 10-13  /////////////////////
+	    uint32_t TCProcWord[4][4][7][8]; //4:TDAQs, 4:columns, 7:bxs, 8:words
+	    for(int iblk=12;iblk<=13;iblk++){ //we start with 12/13 as it corresponds to LD1/2 trains
+	      unpkIndx = 0;
+	      iunpkw = 0;
+	      ibx = 0;
+	      int itdaq = (iblk==12)?0:1 ; //0 and 1 for TDAQ 12/13
+	      for(int iw = loc[iblk]+1; iw <= (loc[iblk]+size[iblk]) ; iw++ ){
+		uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+		uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+		uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+		uint32_t col3 = p64[iw] & 0xFFFF ;
+		TCProcWord[itdaq][0][ibx][iunpkw] = col3; //0-15 bits
+		TCProcWord[itdaq][1][ibx][iunpkw] = col2; //16-31 bits
+		TCProcWord[itdaq][2][ibx][iunpkw] = col1; //32-47 bits
+		TCProcWord[itdaq][3][ibx][iunpkw] = col0; //48-63 bits
+		iunpkw++;
+		if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
+		  std::cout<<"iblock: " << iblk <<", iloc: "<< iw 
+			   << std::hex
+			   <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
+			   <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
+			   <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
+			   <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
+			   << std::dec << std::setfill(' ')
+			   << std::endl;		
+		unpkIndx++;
+		if(unpkIndx%8==0) {ibx++; iunpkw=0;}
+	      }//loop over words for 7 bxs
+	    }//loop over TC proc TDAQ blocks
 	  
-	  for(int iblk=10;iblk<=11;iblk++){ //Next we read 10/11 as it corresponds to LD3/MB1 trains
-	    unpkIndx = 0;
-	    iunpkw = 0;
-	    ibx = 0;
-	    int itdaq = (iblk==10)?2:3 ; //2 and 3 for TDAQ 10/11
-	    for(int iw = loc[iblk]+1; iw <= (loc[iblk]+size[iblk]) ; iw++ ){
-	      uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
-	      uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
-	      uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
-	      uint32_t col3 = p64[iw] & 0xFFFF ;
-	      TCProcWord[itdaq][0][ibx][iunpkw] = col3; //0-15 bits
-	      TCProcWord[itdaq][1][ibx][iunpkw] = col2; //16-31 bits
-	      TCProcWord[itdaq][2][ibx][iunpkw] = col1; //32-47 bits
-	      TCProcWord[itdaq][3][ibx][iunpkw] = col0; //48-63 bits
-	      iunpkw++;
-	      if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
-		std::cout<<"iblock: " << iblk <<", iloc: "<< iw 
-			 << std::hex
-			 <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
-			 <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
-			 <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
-			 <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
-			 << std::dec << std::setfill(' ')
-			 << std::endl;	
-	      unpkIndx++;
-	      if(unpkIndx%8==0) {ibx++; iunpkw=0;}
-	    }//loop over words for 7 bxs
-	  }//loop over TC proc TDAQ blocks
+	    for(int iblk=10;iblk<=11;iblk++){ //Next we read 10/11 as it corresponds to LD3/MB1 trains
+	      unpkIndx = 0;
+	      iunpkw = 0;
+	      ibx = 0;
+	      int itdaq = (iblk==10)?2:3 ; //2 and 3 for TDAQ 10/11
+	      for(int iw = loc[iblk]+1; iw <= (loc[iblk]+size[iblk]) ; iw++ ){
+		uint32_t col0 = (p64[iw] >> (32+16)) & 0xFFFF ;
+		uint32_t col1 = (p64[iw] >> 32) & 0xFFFF ;
+		uint32_t col2 = (p64[iw] >> (32-16)) & 0xFFFF ;
+		uint32_t col3 = p64[iw] & 0xFFFF ;
+		TCProcWord[itdaq][0][ibx][iunpkw] = col3; //0-15 bits
+		TCProcWord[itdaq][1][ibx][iunpkw] = col2; //16-31 bits
+		TCProcWord[itdaq][2][ibx][iunpkw] = col1; //32-47 bits
+		TCProcWord[itdaq][3][ibx][iunpkw] = col0; //48-63 bits
+		iunpkw++;
+		if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent))
+		  std::cout<<"iblock: " << iblk <<", iloc: "<< iw 
+			   << std::hex
+			   <<", col0 : 0x" << std::setfill('0') << std::setw(4) << col0 <<", "
+			   <<", col1 : 0x" << std::setfill('0') << std::setw(4) << col1 <<", "
+			   <<", col2 : 0x" << std::setfill('0') << std::setw(4) << col2 <<", "
+			   <<", col3 : 0x" << std::setfill('0') << std::setw(4) << col3 <<", "
+			   << std::dec << std::setfill(' ')
+			   << std::endl;	
+		unpkIndx++;
+		if(unpkIndx%8==0) {ibx++; iunpkw=0;}
+	      }//loop over words for 7 bxs
+	    }//loop over TC proc TDAQ blocks
 	  
-	  ///////////////////// Fill tcprocarray ///////////////////////
-	  TPGBEDataformat::TrigTCProcData tcprocdata[4][3]; //4:lpGBT, 3:econT
-	  for(int ilp=0;ilp<4;ilp++){
-		unsigned maxecons = ilp<2 ? 3:2;
-	    for(int iecon=0;iecon< maxecons;iecon++){//2 ECON-Ts in trains 3 and 4
-	      moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
-		  int theTDAQEntry = tcprocdata[ilp][iecon].getTDAQEntry(ilp,iecon);
-		  std::map<int, std::vector<std::pair<int, int>>> theWordAndColPerBin = tcprocdata[ilp][iecon].getWordAndColPerBin(ilp,iecon);
-	      for(uint32_t ib=0;ib<7;ib++){
-		    for(uint32_t ibin=0;ibin<theWordAndColPerBin.size();ibin++){ 
-			    uint32_t iinst=0;
-				for(const auto& thePair : theWordAndColPerBin[ibin]){
-			        tcprocdata[ilp][iecon].setUnpkWord(ib, ibin, iinst, TCProcWord[theTDAQEntry][thePair.second][ib][thePair.first]) ;
-					iinst++;
-				}
-			}
-	      }//nof bxs
-	      tcprocarray[eventId].push_back( std::make_pair(moduleId,tcprocdata[ilp][iecon]) );
-	    }//nof ECONTs
-	  }//nof lpGBTs
-	  ///////////////////////////////////////////////////////////////
-	  
+	    ///////////////////// Fill tcprocarray ///////////////////////
+	    TPGBEDataformat::TrigTCProcData tcprocdata[4][3]; //4:lpGBT, 3:econT
+	    for(int ilp=0;ilp<4;ilp++){
+	      unsigned maxecons = ilp<2 ? 3:2;
+	      for(int iecon=0;iecon< maxecons;iecon++){//2 ECON-Ts in trains 3 and 4
+		moduleId = pck.packModId(zside, sector, ilp, det, iecon, selTC4, module);
+		int theTDAQEntry = tcprocdata[ilp][iecon].getTDAQEntry(ilp,iecon);
+		std::map<int, std::vector<std::pair<int, int>>> theWordAndColPerBin = tcprocdata[ilp][iecon].getWordAndColPerBin(ilp,iecon);
+		for(uint32_t ib=0;ib<7;ib++){
+		  for(uint32_t ibin=0;ibin<theWordAndColPerBin.size();ibin++){ 
+		    uint32_t iinst=0;
+		    for(const auto& thePair : theWordAndColPerBin[ibin]){
+		      tcprocdata[ilp][iecon].setUnpkWord(ib, ibin, iinst, TCProcWord[theTDAQEntry][thePair.second][ib][thePair.first]) ;
+		      iinst++;
+		    }
+		  }
+		}//nof bxs
+		tcprocarray[eventId].push_back( std::make_pair(moduleId,tcprocdata[ilp][iecon]) );
+	      }//nof ECONTs
+	    }//nof lpGBTs
+	    ///////////////////////////////////////////////////////////////
+	  }
 	  
 	}//MinMaxEvent
 	if((nEvents < nShowEvents) or (scanMode and boe->eventId()==inspectEvent)) std::cout<<"========= End of event : "<< nEvents << "============="<<  std::endl;
