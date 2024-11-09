@@ -20,44 +20,44 @@ public:
   TPGTriggerCellFloats(const TPGTriggerCellWord &w) : TPGTriggerCellWord(w) {
   }
 
-  float getEnergyGeV() const {
+  double getEnergyGeV() const {
     return TPGTriggerCellWord::getEnergy()/_eScale;
   }
 
-  float getXOverZF() const {
+  double getXOverZF() const {
     return TPGTriggerCellWord::getXOverZ()/_xyScale;
   }
 
-  float getYOverZF() const {
+  double getYOverZF() const {
     return TPGTriggerCellWord::getYOverZ()/_xyScale;
   }
 
-  float getZCm() const {
+  double getZCm() const {
     uint16_t l(getLayer());
     return l>0 && l<48?_zLayer[l-1]:0.0;
   }
 
-  void setEnergyGeV(float e) {
+  void setEnergyGeV(double e) {
     setEnergy(uint32_t(_eScale*e+0.5));
   }
   
-  void setXOverZF(float x) {
+  void setXOverZF(double x) {
     setXOverZ(int16_t(x>=0.0?_xyScale*x+0.5:_xyScale*x-0.5));
   }
   
-  void setYOverZF(float y) {
+  void setYOverZF(double y) {
     setYOverZ(int16_t(y>=0.0?_xyScale*y+0.5:_xyScale*y-0.5));
   }
   
-  void setXYOverZF(float x, float y, unsigned s) {
-    static double sn(0.5*sqrt(3.0)),cs(-0.5);
+  void setXYOverZF(double x, double y, unsigned s) {
+    static double s120(0.5*sqrt(3.0)),c120(-0.5);
 
-    if(     s==0) {setXOverZF( x        );setYOverZF( y        );}
-    else if(s==1) {setXOverZF( x*cs+y*sn);setYOverZF( y*cs-x*sn);}
-    else if(s==2) {setXOverZF( x*cs-y*sn);setYOverZF( y*cs+x*sn);}
-    else if(s==3) {setXOverZF(-x        );setYOverZF( y        );}
-    else if(s==4) {setXOverZF(-x*cs+y*sn);setYOverZF( y*cs+x*sn);}
-    else if(s==5) {setXOverZF(-x*cs-y*sn);setYOverZF( y*cs-x*sn);}
+    if(     s==0) {setXOverZF( y            );setYOverZF(-x            );}
+    else if(s==1) {setXOverZF( y*c120-x*s120);setYOverZF(-x*c120-y*s120);}
+    else if(s==2) {setXOverZF( y*c120+x*s120);setYOverZF(-x*c120+y*s120);}
+    else if(s==3) {setXOverZF( y            );setYOverZF( x            );}
+    else if(s==4) {setXOverZF( y*c120+x*s120);setYOverZF( x*c120-y*s120);}
+    else if(s==5) {setXOverZF( y*c120-x*s120);setYOverZF( x*c120+y*s120);}
 
     else assert(false);
   }
@@ -73,12 +73,12 @@ public:
   }
 
 private:
-  static float _zLayer[47];
-  static float _eScale;
-  static float _xyScale;
+  static double _zLayer[47];
+  static double _eScale;
+  static double _xyScale;
 };
 
-float TPGTriggerCellFloats::_zLayer[]={
+double TPGTriggerCellFloats::_zLayer[]={
   322.155,     302, 325.212,     304, 328.269,     306, 331.326,     308, 334.383,     310,
   337.440,     312, 340.497,     314, 343.554,     316, 346.611,     318, 349.993,     320,
   353.375,     322, 356.757,     324, 360.139,     326, 367.976,     374, 380.586, 386.891,
@@ -86,7 +86,7 @@ float TPGTriggerCellFloats::_zLayer[]={
   463.926, 472.151, 480.376, 488.406, 496.826, 505.051, 513.276
 };
 
-float TPGTriggerCellFloats::_eScale=256.0;
-float TPGTriggerCellFloats::_xyScale=2500.0;
+double TPGTriggerCellFloats::_eScale=256.0;
+double TPGTriggerCellFloats::_xyScale=2500.0;
 
 #endif
