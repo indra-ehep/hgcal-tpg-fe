@@ -9,6 +9,8 @@
 
 #include "TPGClusterData.hh"
 
+// Code from Paul, dated 10/11/2024
+
 class TPGClusterFloats : public TPGClusterData {
 public:
   TPGClusterFloats() {
@@ -29,9 +31,9 @@ public:
   double getGlobalPhiRad(unsigned s) const {
     //if(s<3) return -(0.5+2.0*s/3.0)*acos(-1)+getLocalPhiRad();
     //    return (0.5-2.0*(s-3)/3.0)*acos(-1)-getLocalPhiRad();
-
+    
     int32_t gPhi;
-    if(s<3) gPhi=-4*90-4*120*s    +getPhi();
+    if(s<3) gPhi= 4*90+4*120*s    +getPhi();
     else    gPhi= 4*90-4*120*(s-3)-getPhi();
     
     if(gPhi<-720) gPhi+=2*720;
@@ -42,7 +44,11 @@ public:
   double getEtaRad() const {
     return (TPGClusterData::getEta()+_etaOffset)/_etaScale;
   }
-  
+
+  double getGlobalEtaRad(unsigned s) const {
+    return (s<3) ? (-getEtaRad()) : getEtaRad() ;  
+  }
+
   double getLocalXOverZF() const {
     return cos(getLocalPhiRad())/sinh(getEtaRad());
   }

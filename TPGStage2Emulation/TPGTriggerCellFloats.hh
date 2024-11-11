@@ -9,7 +9,7 @@
 
 #include "TPGTriggerCellWord.hh"
 
-// Code from Paul, dated 06/11/2024
+// Code from Paul, dated 06/11/2024 (updated 10/11/2024)
 
 class TPGTriggerCellFloats : public TPGTriggerCellWord {
 public:

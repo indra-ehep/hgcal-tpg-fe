@@ -3,7 +3,7 @@ LDFLAGS=-L$(HOME)/Software/yaml-cpp/lib64
 CPPFLAGS=-I$(HOME)/Software/yaml-cpp/include -I common/inc -I inc -I TPGStage1Emulation/ -I TPGFEEmulation/ -I`root-config --incdir`
 CPPFLAGSSTAGE2=-I inc -I TPGStage2Emulation/ -I`root-config --incdir` 
 
-all:  readNTuple.exe  fillInputData.exe #findFixedpattern.exe findEMax.exe tpgdata_3T_tcproc.exe  tpgdata_3T_fe.exe  scanadc_Sep24.exe dump_event.exe tpgdata_2T_fe.exe emul_Sep24.exe emul_3T_Sep24.exe  #loop_emul_Sep24.exe scanconfigval_Sep24.exe emul_Sep24.exe validateFixedADC.exe # findEMax.exe GenerateEmpRxFile.exe dump_event.exe emul_test-beam_Sep23.exe 
+all:  readNTuple.exe  fillInputData.exe testStage2SemiClustering.exe #findFixedpattern.exe findEMax.exe tpgdata_3T_tcproc.exe  tpgdata_3T_fe.exe  scanadc_Sep24.exe dump_event.exe tpgdata_2T_fe.exe emul_Sep24.exe emul_3T_Sep24.exe  #loop_emul_Sep24.exe scanconfigval_Sep24.exe emul_Sep24.exe validateFixedADC.exe # findEMax.exe GenerateEmpRxFile.exe dump_event.exe emul_test-beam_Sep23.exe 
 
 emul_test-beam_Sep23.exe:  test-beam_Sep23_macros/emul_test-beam_Sep23.cpp inc/*.*  TPGFEEmulation/*.hh TPGStage1Emulation/*.hh common/inc/*.h
 	g++ $(LDFLAGS) $(CPPFLAGS) test-beam_Sep23_macros/emul_test-beam_Sep23.cpp  -l yaml-cpp `root-config --libs --cflags` -o emul_test-beam_Sep23.exe
@@ -64,6 +64,9 @@ readNTuple.exe: test-stage2_Nov24/readNTuple.cpp inc/*.*  TPGStage2Emulation/*.h
 
 fillInputData.exe: test-stage2_Nov24/fillInputData.cpp inc/*.*  TPGStage2Emulation/*.hh
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/fillInputData.cpp `root-config --libs --cflags` -o fillInputData.exe
+
+testStage2SemiClustering.exe: test-stage2_Nov24/testStage2SemiClustering.cpp inc/*.*  TPGStage2Emulation/*.hh
+	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/testStage2SemiClustering.cpp `root-config --libs --cflags` -o testStage2SemiClustering.exe
 
 clean:
 	rm *.exe

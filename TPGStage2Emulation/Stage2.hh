@@ -13,6 +13,8 @@
 #include "TPGTriggerCellFloats.hh"
 #include "TPGClusterFloats.hh"
 
+// Code from Paul, dated 10/11/2024
+
 namespace TPGBEDataformat {
   typedef unsigned Stage2ToL1tDataArray;
 }
@@ -221,7 +223,7 @@ namespace TPGStage2Emulation {
       }
 
     }
-
+    
     void run(const std::vector<TPGTriggerCellWord> &vTcw,
 	     std::vector<TPGClusterData> &vCld) {
 
@@ -338,17 +340,17 @@ namespace TPGStage2Emulation {
   private:
     //static const unsigned _nBins;
     static const double _rOverZ;
-
+    
     std::vector<TPGTriggerCellWord> _vTriggerCellWord;
-
+    
     uint32_t _towerData[2][20][24];
-
+    
     std::vector<TPGClusterData> _vClusterData;
-
+    
     CentreArray<_nBins> *_ca;
     TcAccumulatorArray<_nBins> *_tcaa;
   };
-
+  
   //const double Stage2::_rOverZ(0.032);
   const double Stage2::_rOverZ(0.016*sqrt(3.0));
 }

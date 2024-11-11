@@ -99,12 +99,21 @@ int main(int argc, char** argv)
       double z(fabs(tc_z->at(itc)));
       float phi_deg = TMath::RadToDeg() * tc_phi->at(itc) ;
       uint16_t sec0(7),sec1(7);
-      
-      if((phi_deg>-15. and phi_deg<=0.) or (phi_deg>=0. and phi_deg<=5.)) {sec0 = 2; sec1 = 0;}
-      else if(phi_deg>5. and phi_deg<=105.) {sec0 = sec1 = 0;}
-      else if(phi_deg>105. and phi_deg<=125.) {sec0 = 0; sec1 = 1;}
-      else if((phi_deg>125. and phi_deg<=180.) or (phi_deg>=-180. and phi_deg<=-135.)) {sec0 = sec1 = 1;}
-      else if(phi_deg>-135. and phi_deg<=-115.) {sec0 = 1; sec1 = 2;}
+
+      //The following segmentation is applicable for towers
+      // if((phi_deg>-15. and phi_deg<=0.) or (phi_deg>=0. and phi_deg<=5.)) {sec0 = 2; sec1 = 0;}
+      // else if(phi_deg>5. and phi_deg<=105.) {sec0 = sec1 = 0;}
+      // else if(phi_deg>105. and phi_deg<=125.) {sec0 = 0; sec1 = 1;}
+      // else if((phi_deg>125. and phi_deg<=180.) or (phi_deg>=-180. and phi_deg<=-135.)) {sec0 = sec1 = 1;}
+      // else if(phi_deg>-135. and phi_deg<=-115.) {sec0 = 1; sec1 = 2;}
+      // else {sec0 = sec1 = 2;}
+
+      //The following segmentation is applied for trigger cells
+      if(phi_deg>=0. and phi_deg<=60.) {sec0 = 2; sec1 = 0;}
+      else if(phi_deg>60. and phi_deg<=120.) {sec0 = sec1 = 0;}
+      else if(phi_deg>120. and phi_deg<=180.) {sec0 = 0; sec1 = 1;}
+      else if(phi_deg>=-180. and phi_deg<=-120.) {sec0 = sec1 = 1;}
+      else if(phi_deg>-120. and phi_deg<=-60.) {sec0 = 1; sec1 = 2;}
       else {sec0 = sec1 = 2;}
       
       if(tc_z->at(itc)<0.){sec0 += 3; sec1 += 3;}
