@@ -9,7 +9,7 @@ Run the setup code to download additional dependencies and setup. This setup is 
 ```
 ./setup.sh
 ```
-This setup script downloads requisite files from https://gitlab.cern.ch/pdauncey/hgcal10glinkreceiver.git that are required for FE emulation using the test-beam data.
+This setup script downloads files from https://gitlab.cern.ch/pdauncey/hgcal10glinkreceiver.git that are required for FE emulation using the test-beam data.
 In case of non-lxplus machines, you may need ROOT package in your path for compilation.
 
 ## Compile and run
