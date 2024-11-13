@@ -215,7 +215,7 @@ int main(int argc, char** argv)
 	tcf0.setZero();
 	tcf0.setXYOverZF(tc_x->at(itc)/z,tc_y->at(itc)/z,isect+addisect);
 	if(tcf0.getXOverZF()>=0.0){
-	  tcf0.setEnergyGeV(tc_pt->at(itc));
+	  tcf0.setEnergyGeV(tc_energy->at(itc));
 	  tcf0.setLayer(tc_layer->at(itc));
 	  //if(doPrint) tcf0.print();
 	  vTcw[isect+addisect].push_back(tcf0);
