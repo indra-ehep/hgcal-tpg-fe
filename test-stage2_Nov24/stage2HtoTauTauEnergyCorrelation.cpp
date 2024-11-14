@@ -219,13 +219,13 @@ int main(int argc, char** argv)
   TProfile *hPtCorrGenjetvsTC_pion = new TProfile("hPtCorrGenjetvsTC_pion","hPtCorr Genjet-vs-TC (pion)",200,0.,200.,0.,200.);
   TProfile *hPtCorrGenjetvsClus_pion = new TProfile("hPtCorrGenjetvsClus_pion","hPtCorr Genjet-vs-Cluster (pion)",200,0.,200.,0.,200.);
   
-  TProfile *hPtCorrGenjetvsTC_egamma = new TProfile("hPtCorrGenjetvsTC_egamma","hPtCorr Genjet-vs-TC (egamma)",200,0.,200.,0.,200.);
-  TProfile *hPtCorrGenjetvsClus_egamma = new TProfile("hPtCorrGenjetvsClus_egamma","hPtCorr Genjet-vs-Cluster (egamma)",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsTC_electron = new TProfile("hPtCorrGenjetvsTC_electron","hPtCorr Genjet-vs-TC (electron)",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsClus_electron = new TProfile("hPtCorrGenjetvsClus_electron","hPtCorr Genjet-vs-Cluster (electron)",200,0.,200.,0.,200.);
   
 
   TH1D *hTCLayerEWt = new TH1D("hTCLayerEWt","Energy weighted layer",50,-0.5,49.5);
   TH1D *hTCLayerEWt_pion = new TH1D("hTCLayerEWt_pion","Energy weighted layer (pion)",50,-0.5,49.5);
-  TH1D *hTCLayerEWt_egamma = new TH1D("hTCLayerEWt_egamma","Energy weighted layer (egamma)",50,-0.5,49.5);
+  TH1D *hTCLayerEWt_electron = new TH1D("hTCLayerEWt_electron","Energy weighted layer (electron)",50,-0.5,49.5);
   
   const auto default_precision{std::cout.precision()};
   TPGTriggerCellFloats tcf0,tcf1;
@@ -432,7 +432,7 @@ int main(int argc, char** argv)
 	    hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	    hPtCorrGenjetvsClus->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	    if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	    if(jetlist.at(ipjet).name.find("e")!=std::string::npos or jetlist.at(ipjet).name.find("gamma")!=std::string::npos) hPtCorrGenjetvsClus_egamma->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+	    if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	  }
 	  if(clf.getEnergyGeV()>10.0) {
 	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
@@ -440,25 +440,24 @@ int main(int argc, char** argv)
 	  }
 	}	
       }//isect loop
+      double tot_tc_pt_deltaR = 0;
       for(unsigned itc=0;itc<tc_pt->size();itc++){
 	deltaGentc->Fill(tc_eta->at(itc) - genjet_eta->at(ijet), tc_phi->at(itc) - genjet_phi->at(ijet));
 	double deltaR = TMath::Sqrt((tc_eta->at(itc)-genjet_eta->at(ijet))*(tc_eta->at(itc)-genjet_eta->at(ijet))
 				    +
 				    (tc_phi->at(itc)-genjet_phi->at(ijet))*(tc_phi->at(itc)-genjet_phi->at(ijet)));
-	if(deltaR<0.2 ){
-	//if(fabs(tc_eta->at(itc) - genjet_eta->at(ijet))<0.05 and fabs(tc_phi->at(itc) - genjet_phi->at(ijet))<0.05) {
-	  hPtCorrGenjetvsTC->Fill(genjet_pt->at(ijet),tc_pt->at(itc));
-	  hTCLayerEWt->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	  if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
-	    hPtCorrGenjetvsTC_pion->Fill(genjet_pt->at(ijet),tc_pt->at(itc));
-	    hTCLayerEWt_pion->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	  }
-	  if(jetlist.at(ipjet).name.find("e")!=std::string::npos or jetlist.at(ipjet).name.find("gamma")!=std::string::npos) {
-	    hPtCorrGenjetvsTC_egamma->Fill(genjet_pt->at(ijet),tc_pt->at(itc));
-	    hTCLayerEWt_egamma->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	  }
+	if(deltaR<0.07 ){ //0.3 works for no pileup case
+	  tot_tc_pt_deltaR += tc_pt->at(itc) ;
 	}
+	hTCLayerEWt->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+	if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hTCLayerEWt_pion->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);	
+	if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hTCLayerEWt_electron->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
       }//tc loop
+      hPtCorrGenjetvsTC->Fill(genjet_pt->at(ijet),tot_tc_pt_deltaR);
+      if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsTC_pion->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
+      if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsTC_electron->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
+      
+
     }//jet from decay of pions from tau
     
     hEt->Fill(tot_tc_pt);
@@ -516,11 +515,11 @@ int main(int argc, char** argv)
   hPtCorrGenjetvsClus->Write();
   hPtCorrGenjetvsTC_pion->Write();
   hPtCorrGenjetvsClus_pion->Write();
-  hPtCorrGenjetvsTC_egamma->Write();
-  hPtCorrGenjetvsClus_egamma->Write();
+  hPtCorrGenjetvsTC_electron->Write();
+  hPtCorrGenjetvsClus_electron->Write();
   hTCLayerEWt->Write();
   hTCLayerEWt_pion->Write();
-  hTCLayerEWt_egamma->Write();
+  hTCLayerEWt_electron->Write();
   fout->Close();
   delete fout;
 
