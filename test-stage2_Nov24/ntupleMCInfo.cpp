@@ -176,7 +176,7 @@ int main(int argc, char** argv)
       }
       daughterlist += ")";
       
-      if(gennom.find("h0")!=std::string::npos or gennom.find("tau")!=std::string::npos or (taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),igen)!=taudlist.end()) or (taugdlist.size()>0 and std::find(taugdlist.begin(),taugdlist.end(),igen)!=taugdlist.end()))
+      //if(gennom.find("h0")!=std::string::npos or gennom.find("tau")!=std::string::npos or (taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),igen)!=taudlist.end()) or (taugdlist.size()>0 and std::find(taugdlist.begin(),taugdlist.end(),igen)!=taugdlist.end()))
 	std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", igen: " << std::setw(4) << igen
 		  <<", pid: " << std::setw(5) << gen_pdgid->at(igen) << ", status: " << std::setw(5) << gen_status->at(igen)
 		  <<", Name: " << std::setw(10) << ((!partPDG)?"unknown":partPDG->GetName())
@@ -196,7 +196,8 @@ int main(int argc, char** argv)
 	p.name = (!partPDG)?"unknown":partPDG->GetName();
 	p.index = ipart;
 	partlist.push_back(p);
-	std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ipart: " << std::setw(4) << ipart
+      }
+      	std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ipart: " << std::setw(4) << ipart
 		  <<", pid: " << std::setw(5) << genpart_pid->at(ipart) << ", mother: " << std::setw(4) << genpart_mother->at(ipart)
 		  <<", gen: " << std::setw(4) << (genpart_gen->at(ipart)-1) //<< ", fromBeamPipe: " << std::setw(4) << genpart_fromBeamPipe->at(ipart)
 		  <<", Name: " << std::setw(10) << ((!partPDG)?"unknown":partPDG->GetName())
@@ -206,11 +207,18 @@ int main(int argc, char** argv)
 		  << ", " << std::setw(8) << genpart_energy->at(ipart) << ") "
 		  << std::defaultfloat
 		  << std::endl;
-      }
+
     }
     
     std::vector<JetPart> jetlist;
     for(int ijet=0; ijet<genjet_n; ijet++ ){
+      std::cout << "genjet-ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ijet: " << std::setw(4) << ijet		
+		<<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(8) << genjet_pt->at(ijet)
+		<< ", " << std::setw(8) << genjet_eta->at(ijet) << ", " //<< std::setw(5) << genjet_exeta->at(ijet)
+		<< ", " << std::setw(8) << (TMath::RadToDeg()*genjet_phi->at(ijet)) //<< ", " << std::setw(5) << (TMath::RadToDeg()*genjet_exphi->at(ijet))
+		<< ", " << std::setw(8) << genjet_energy->at(ijet) << ") "
+		<< std::defaultfloat
+		<< std::endl;
       float minDeltaR = 1.0; int minDeltaRindex = -1;
       for(int ipart=0; ipart<partlist.size(); ipart++){
 	int refpart = partlist.at(ipart).index;
