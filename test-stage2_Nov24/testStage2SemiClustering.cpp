@@ -127,26 +127,58 @@ int main(int argc, char** argv)
     clusxy[isect] = new TH2D(Form("CLUSXY_%u",isect),Form("x-y distribution of clusters for sector %u",isect),1000,-0.6,0.6,1000,-0.6,0.6);
     deltaGenclusSeg[isect] = new TH2D(Form("deltaGenclus_%u",isect),Form("deltaGenclus_%u",isect),100,-0.25,0.25,100,-0.25,0.25);
   }
-  TH2D *deltaGenclus = new TH2D("deltaGenclusAll","deltaGenclusAll",100,-0.25,0.25,100,-0.25,0.25);
-  TH2D *deltaTCclus = new TH2D("deltaTcclusAll","deltaTCclusAll",100,-0.25,0.25,100,-0.25,0.25);
-  TH2D *deltaGentc = new TH2D("deltaGentc","deltaGentc",100,-0.25,0.25,100,-0.25,0.25);
-  TH1D *hClusE = new TH1D("hClusE","hClusE",100,0.0,100.0);
-  TH2D *hGenClusE = new TH2D("hGenClusE","hGenClusE",200,0.0,200.0,200,0.0,200.0);
-  
-  TProfile *hEtRatioGenjetvsTC = new TProfile("hEtRatioGenjetvsTC","hEtRatio Genjet-vs-TC",200,0.,200.,0.,200.);
-  TProfile *hEtRatioTCvsClus = new TProfile("hEtRatioTCvsClus","hEtRatio TC-vs-Cluster",200,0.,200.,0.,200.);
-  TProfile *hEtRatioGenjetvsClus = new TProfile("hEtRatioGenjetvsClus","hEtRatio Genjet-vs-Cluster",200,0.,200.,0.,200.);
-  
-  TH1D *hTCLayerEWt = new TH1D("hTCLayerEWt","Energy weighted layer",50,-0.5,49.5);
-  
-  TPGTriggerCellFloats tcf0,tcf1;
-  for (Long64_t ievent = 0 ; ievent < nofEvents ; ievent++ ) {    
-    
-    tr->GetEntry(ievent) ;
+  TH2D *deltaGenclus = new TH2D("deltaGenclusAll", "deltaGenclusAll", 100, -0.25, 0.25, 100, -0.25, 0.25);
+  TH2D *deltaTCclus = new TH2D("deltaTcclusAll", "deltaTCclusAll", 100, -0.25, 0.25, 100, -0.25, 0.25);
+  TH2D *deltaGentc = new TH2D("deltaGentc", "deltaGentc", 100, -0.25, 0.25, 100, -0.25, 0.25);
+  TH1D *hClusE = new TH1D("hClusE", "hClusE", 100, 0.0, 100.0);
+  TH2D *hGenClusE = new TH2D("hGenClusE", "hGenClusE", 200, 0.0, 200.0, 200, 0.0, 200.0);
 
-    if(doPrint) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
-    if(ievent%100==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
-    
+  TProfile *hEtRatioGenjetvsTC = new TProfile("hEtRatioGenjetvsTC", "hEtRatio Genjet-vs-TC", 200, 0., 200., 0., 200.);
+  TProfile *hEtRatioTCvsClus = new TProfile("hEtRatioTCvsClus", "hEtRatio TC-vs-Cluster", 200, 0., 200., 0., 200.);
+  TProfile *hEtRatioGenjetvsClus = new TProfile("hEtRatioGenjetvsClus", "hEtRatio Genjet-vs-Cluster", 200, 0., 200., 0., 200.);
+
+  TH1D *hTCLayerEWt = new TH1D("hTCLayerEWt", "Energy weighted layer", 50, -0.5, 49.5);
+
+  // Output ntuple for jet studies
+  std::string outnameClusters = "clustersOut/Stage2EmulationOut_" + index;
+  TFile *foutClusters = new TFile(Form("%s.root", outnameClusters.c_str()), "recreate");
+  TTree *clusterTree = new TTree("clusters", "Clusters");
+  std::vector<double> clusterE;
+  std::vector<double> clusterPt;
+  std::vector<double> clusterEta;
+  std::vector<double> clusterPhi;
+  clusterTree->Branch("clusEnergy", &clusterE);
+  clusterTree->Branch("clusPt", &clusterPt);
+  clusterTree->Branch("clusEta", &clusterEta);
+  clusterTree->Branch("clusPhi", &clusterPhi);
+
+  TTree *genJetTree = new TTree("genjets", "GenJets");
+  std::vector<double> genJetPt;
+  std::vector<double> genJetEta;
+  std::vector<double> genJetPhi;
+  genJetTree->Branch("genJetPt", &genJetPt);
+  genJetTree->Branch("genJetEta", &genJetEta);
+  genJetTree->Branch("genJetPhi", &genJetPhi);
+
+  TPGTriggerCellFloats tcf0, tcf1;
+  for (Long64_t ievent = 0; ievent < nofEvents; ievent++)
+  {
+
+    clusterE.clear();
+    clusterPt.clear();
+    clusterEta.clear();
+    clusterPhi.clear();
+    genJetPt.clear();
+    genJetEta.clear();
+    genJetPhi.clear();
+
+    tr->GetEntry(ievent);
+
+    if (doPrint)
+      std::cout << "Event : " << ievent << ", nof TCs : " << tc_pt->size() << std::endl;
+    if (ievent % 100 == 0)
+      std::cout << "Event : " << ievent << ", nof TCs : " << tc_pt->size() << std::endl;
+
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
     std::vector<TPGTriggerCellWord> vTcw[6];
     //std::vector<TPGTriggerCellFloats> vTcw[6];    
@@ -237,29 +269,48 @@ int main(int argc, char** argv)
       s2Clustering.run(vTcw[isect],vCld[isect]);
       if(doPrint) std::cout << isect << ", Size of Tcs: " << vTcw[isect].size() << ", Size of Clusters: " << vCld[isect].size() << std::endl;
     }
-    for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
-      for(TPGClusterFloats const& clf : vCld[isect]){
-	clusxyOverZ[isect]->Fill(clf.getLocalXOverZF(),clf.getLocalYOverZF());
-	clusxy[isect]->Fill(clf.getGlobalXOverZF(isect),clf.getGlobalYOverZF(isect));
+    for (uint32_t isect = 0; isect < 6; isect++)
+    {
+      for (TPGClusterFloats const &clf : vCld[isect])
+      {
+        clusterE.push_back(clf.getEnergyGeV());
+        clusterPt.push_back(clf.getEnergyGeV());  // ....no pt, just energy
+        clusterEta.push_back(clf.getGlobalEtaRad(isect));
+        clusterPhi.push_back(clf.getGlobalPhiRad(isect));
+
+        clusxyOverZ[isect]->Fill(clf.getLocalXOverZF(), clf.getLocalYOverZF());
+        clusxy[isect]->Fill(clf.getGlobalXOverZF(isect), clf.getGlobalYOverZF(isect));
       }
     }
-    for(int ijet=0; ijet < genjet_eta->size() ; ijet++ ){
-      for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
-	for(TPGClusterFloats const& clf : vCld[isect]){
-	  hClusE->Fill(clf.getEnergyGeV());
-	  if(fabs(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))<0.05 and fabs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet))<0.05){
-	    hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	    hEtRatioGenjetvsClus->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	  }
-	  if(clf.getEnergyGeV()>10.0) {
-	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
-	    deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
-	  }
-	}	
-      }//isect loop
-      for(unsigned itc=0;itc<tc_pt->size();itc++){
-	deltaGentc->Fill(tc_eta->at(itc) - genjet_eta->at(ijet), tc_phi->at(itc) - genjet_phi->at(ijet));
-	if(fabs(tc_eta->at(itc) - genjet_eta->at(ijet))<0.05 and fabs(tc_phi->at(itc) - genjet_phi->at(ijet))<0.05) hEtRatioGenjetvsTC->Fill(genjet_pt->at(ijet),tc_phi->at(itc));
+    for (int ijet = 0; ijet < genjet_eta->size(); ijet++)
+    {
+
+      genJetPt.push_back(genjet_pt->at(ijet));
+      genJetEta.push_back(genjet_eta->at(ijet));
+      genJetPhi.push_back(genjet_phi->at(ijet));
+
+      for (uint32_t isect = 0; isect < 6; isect++)
+      {
+        for (TPGClusterFloats const &clf : vCld[isect])
+        {
+          hClusE->Fill(clf.getEnergyGeV());
+          if (fabs(clf.getGlobalEtaRad(isect) - genjet_eta->at(ijet)) < 0.05 and fabs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet)) < 0.05)
+          {
+            hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+            hEtRatioGenjetvsClus->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+          }
+          if (clf.getEnergyGeV() > 10.0)
+          {
+            deltaGenclus->Fill(clf.getGlobalEtaRad(isect) - genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
+            deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect) - genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
+          }
+        }
+      } // isect loop
+      for (unsigned itc = 0; itc < tc_pt->size(); itc++)
+      {
+        deltaGentc->Fill(tc_eta->at(itc) - genjet_eta->at(ijet), tc_phi->at(itc) - genjet_phi->at(ijet));
+        if (fabs(tc_eta->at(itc) - genjet_eta->at(ijet)) < 0.05 and fabs(tc_phi->at(itc) - genjet_phi->at(ijet)) < 0.05)
+          hEtRatioGenjetvsTC->Fill(genjet_pt->at(ijet), tc_phi->at(itc));
       }
     }
     
@@ -293,9 +344,11 @@ int main(int argc, char** argv)
     tc_y->clear();
     tc_z->clear();
     tc_energy->clear();
-    
-  }//event loop
-  
+
+    clusterTree->Fill();
+    genJetTree->Fill();
+  } // event loop
+
   std::string outname = "teststage2histos_" + index;
   // hEt->SetTitle(outname.c_str());
   // hEt->GetXaxis()->SetTitle("total p_{T} trigger cells (in GeV)");
@@ -328,5 +381,9 @@ int main(int argc, char** argv)
   fin->Close();
   delete fin;
 
+  foutClusters->cd();
+  clusterTree->Write();
+  genJetTree->Write();
+  foutClusters->Close();
   return true;
 }
