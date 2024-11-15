@@ -31,6 +31,10 @@ public:
     return _data[0]&0x3fff;
   }
 
+  uint8_t getCeeFraction() const {
+    return (_data[0]>>32)&0xff;
+  }
+
   uint16_t getEta() const {
     return _data[1]&0x1ff;
   }
@@ -68,6 +72,11 @@ public:
     _data[0]|=e;
   }
 
+  void setCeeFraction(uint8_t f) {
+    _data[0]&=0xffffff00ffffffff;
+    _data[0]|=uint64_t(f)<<32;
+  }
+
   void setEta(uint16_t h) {
     if(h>0x1ff) h=0x1ff;
     _data[1]&=0xfffffffffffffe00;
@@ -89,7 +98,7 @@ public:
     _data[1]&=0xffffffffc003ffff;
     _data[1]|=uint64_t(z&0xfff)<<18;
   }
-
+  /*
   void setXOverZ(int16_t x) {
     uint64_t xd;
     if(x> 0x7ff) xd= 0x7ff;
@@ -131,7 +140,7 @@ public:
     _data[0]&=0xc07fffffffffffff;
     _data[0]|=uint64_t(u&0x7f)<<55;
   }
-  
+  */  
   void print() {
     std::cout << "TPGClusterData(" << this << ")::print()" << std::endl;
     

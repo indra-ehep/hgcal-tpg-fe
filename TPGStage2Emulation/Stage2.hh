@@ -28,14 +28,20 @@ namespace TPGStage2Emulation {
     }
 
     void accumulate(const TPGTriggerCellFloats &t) {
-      accumulate(t.getEnergy(),t.getXOverZF(),t.getYOverZF());
+      accumulate(t.getEnergy(),t.getXOverZF(),t.getYOverZF(),t.getLayer());
     }
 
-    void accumulate(uint32_t e, double x, double y) {
+    void accumulate(uint32_t e, double x, double y, int16_t l) {
       numE++;
       sumE+=e;
       ssqE+=e*e;
 
+      if(l<=26) {
+	numCee++;
+	sumCee+=e;
+	ssqCee+=e*e;
+      }
+      
       double w(e);
     
       numX+=w;
@@ -59,6 +65,10 @@ namespace TPGStage2Emulation {
       return sumE;
     }
 
+    uint64_t ceeE() const {
+      return sumCee;
+    }
+
     double avgX() const {
       return (numX==0.0?0.0:sumX/numX);
     }
@@ -71,6 +81,9 @@ namespace TPGStage2Emulation {
       numE=0;
       sumE=0;
       ssqE=0;
+      numCee=0;
+      sumCee=0;
+      ssqCee=0;
       numX=0.0;
       sumX=0.0;
       ssqX=0.0;
@@ -104,6 +117,7 @@ namespace TPGStage2Emulation {
     void print() const {
       std::cout << "TcAccumulator"
 		<< " E = " << totE()
+		<< " CE-E E = " << ceeE()
 		<< " x = " << avgX()
 		<< " y = " << avgY()
 		<< " seed = " << (_seed?"True":"False")
@@ -112,6 +126,7 @@ namespace TPGStage2Emulation {
   
   private:
     uint64_t numE,sumE,ssqE;
+    uint64_t numCee,sumCee,ssqCee;
     double numX,sumX,ssqX,numY,sumY,ssqY;
     bool _seed;
 
@@ -279,6 +294,11 @@ namespace TPGStage2Emulation {
 	    if(phiNorm>=-2.0 && phiNorm<2.0 && _tcaa->vTca[c][i][j].isLocalMaximum()) {
 	      TPGClusterData tcd;
 	      tcd.setEnergy(_tcaa->vTca[c][i][j].totE()/64);
+	      if(_tcaa->vTca[c][i][j].ceeE()>=_tcaa->vTca[c][i][j].totE()) {
+		tcd.setCeeFraction(255);
+	      } else {
+		tcd.setCeeFraction((256*_tcaa->vTca[c][i][j].ceeE())/_tcaa->vTca[c][i][j].totE());
+	      }
 	      tcd.setPhi(atan2(_tcaa->vTca[c][i][j].avgY(),_tcaa->vTca[c][i][j].avgX())*720/acos(-1.0));
 	      tcd.setEta(asinh(1.0/sqrt(_tcaa->vTca[c][i][j].avgY()*_tcaa->vTca[c][i][j].avgY()+_tcaa->vTca[c][i][j].avgX()*_tcaa->vTca[c][i][j].avgX()))*720/acos(-1.0)-256);
 	      vCld.push_back(tcd);

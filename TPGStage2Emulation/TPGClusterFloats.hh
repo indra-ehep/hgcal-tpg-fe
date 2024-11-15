@@ -24,6 +24,10 @@ public:
     return TPGClusterData::getEnergy()/_eScale;
   }
 
+  double getCeeFractionF() const {
+    return (TPGClusterData::getCeeFraction()+0.5)/_ceeScale;
+  }
+
   double getLocalPhiRad() const {
     return TPGClusterData::getPhi()/_phiScale;
   }
@@ -113,6 +117,7 @@ public:
   */
 private:
   static double _eScale;
+  static double _ceeScale;
   static double _phiScale;
   static double _etaScale;
   static double _etaOffset;
@@ -121,6 +126,7 @@ private:
 };
 
 double TPGClusterFloats::_eScale=4.0;
+double TPGClusterFloats::_ceeScale=256.0;
 double TPGClusterFloats::_phiScale=720.0/acos(-1);
 double TPGClusterFloats::_etaScale=720.0/acos(-1);
 double TPGClusterFloats::_etaOffset=256.0;
