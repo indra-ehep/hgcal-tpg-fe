@@ -1,4 +1,5 @@
 #!/bin/bash
+mkdir -p CMSSWCode
 cd CMSSWCode
 git init
 git remote add -t S2Emu_standalone_Nov24 my-cmssw git@github.com:EmyrClement/cmssw.git
