@@ -476,7 +476,7 @@ namespace TPGStage2Emulation
       // hwCluster.coreShowerLength = c->coreShowerLen();
       hwCluster.nTC = accumulatedCluster.numberOfTcs();
 
-      hwCluster.w_eta = accumulatedCluster.calcEta();
+      hwCluster.w_eta = accumulatedCluster.calcEta() + 256; // Previously, eta was calculated in the firmware in global coordinates (0->3), but now it's more local.  Add the offset here, as it's what is expected in the final packet
       hwCluster.w_phi = accumulatedCluster.calcPhi();
       bool saturatedPhi = false;  // Need to base this on calculated phi
       bool nominalPhi = false;  // Need to base this on calculated phi
