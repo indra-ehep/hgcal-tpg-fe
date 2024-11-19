@@ -158,10 +158,28 @@ int main(int argc, char** argv)
   std::vector<double> clusterPt_CMSSW;
   std::vector<double> clusterEta_CMSSW;
   std::vector<double> clusterPhi_CMSSW;
+  std::vector<double> clusterZ_CMSSW;
+  std::vector<uint> clusterFracInCEE_CMSSW;
+  std::vector<uint> clusterFracInCoreCEE_CMSSW;
+  std::vector<uint> clusterFracInEarlyCEH_CMSSW;
+  std::vector<uint> clusterFirstLayer_CMSSW;
+  std::vector<uint> clusterLastLayer_CMSSW;
+  std::vector<uint> clusterShowerLength_CMSSW;
+  std::vector<uint> clusterCoreShowerLength_CMSSW;
+  std::vector<uint> clusterNTCs_CMSSW;
   clusterTree->Branch("clusEnergy_CMSSW", &clusterE_CMSSW);
   clusterTree->Branch("clusPt_CMSSW", &clusterPt_CMSSW);
   clusterTree->Branch("clusEta_CMSSW", &clusterEta_CMSSW);
   clusterTree->Branch("clusPhi_CMSSW", &clusterPhi_CMSSW);
+  clusterTree->Branch("clusZ_CMSSW", &clusterZ_CMSSW);
+  clusterTree->Branch("clusFracInCEE_CMSSW", &clusterFracInCoreCEE_CMSSW);
+  clusterTree->Branch("clusFracInCoreCEE_CMSSW", &clusterFracInCoreCEE_CMSSW);
+  clusterTree->Branch("clusFracInEarlyCEH_CMSSW", &clusterFracInEarlyCEH_CMSSW);
+  clusterTree->Branch("clusFirstLayer_CMSSW", &clusterFirstLayer_CMSSW);
+  clusterTree->Branch("clusLastLayer_CMSSW", &clusterLastLayer_CMSSW);
+  clusterTree->Branch("clusShowerLength_CMSSW", &clusterShowerLength_CMSSW);
+  clusterTree->Branch("clusCoreShowerLength_CMSSW", &clusterCoreShowerLength_CMSSW);
+  clusterTree->Branch("clusNTCs_CMSSW", &clusterNTCs_CMSSW);
 
   TTree *genJetTree = new TTree("genjets", "GenJets");
   std::vector<double> genJetPt;
@@ -183,6 +201,15 @@ int main(int argc, char** argv)
     clusterPt_CMSSW.clear();
     clusterEta_CMSSW.clear();
     clusterPhi_CMSSW.clear();
+    clusterZ_CMSSW.clear();
+    clusterFracInCEE_CMSSW.clear();
+    clusterFracInCoreCEE_CMSSW.clear();
+    clusterFracInEarlyCEH_CMSSW.clear();
+    clusterFirstLayer_CMSSW.clear();
+    clusterLastLayer_CMSSW.clear();
+    clusterShowerLength_CMSSW.clear();
+    clusterCoreShowerLength_CMSSW.clear();
+    clusterNTCs_CMSSW.clear();
     genJetPt.clear();
     genJetEta.clear();
     genJetPhi.clear();
@@ -320,6 +347,16 @@ int main(int argc, char** argv)
         rotatedPhi -= (rotatedPhi > M_PI) ? 2 * M_PI : 0;
 
         clusterPhi_CMSSW.push_back(rotatedPhi);
+        clusterZ_CMSSW.push_back(l1thgcfirmware::Scales::floatZ(hwCluster.w_z));
+        clusterFracInCEE_CMSSW.push_back(hwCluster.fractionInCE_E);
+        clusterFracInCoreCEE_CMSSW.push_back(hwCluster.fractionInCoreCE_E);
+        clusterFracInEarlyCEH_CMSSW.push_back(hwCluster.fractionInEarlyCE_E);
+        clusterFirstLayer_CMSSW.push_back(hwCluster.firstLayer);
+        clusterLastLayer_CMSSW.push_back(hwCluster.lastLayer);
+        clusterShowerLength_CMSSW.push_back(hwCluster.showerLength);
+        clusterCoreShowerLength_CMSSW.push_back(hwCluster.coreShowerLength);
+        clusterNTCs_CMSSW.push_back(hwCluster.nTC);
+
       }
 
     }
