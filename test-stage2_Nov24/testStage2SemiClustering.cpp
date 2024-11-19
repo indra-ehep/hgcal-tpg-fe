@@ -278,7 +278,7 @@ int main(int argc, char** argv)
     for (uint32_t isect = 0 ; isect < 6 ; isect++ )
       for(TPGTriggerCellFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
 
-    std::vector<TPGClusterData> vCld[6];
+    std::vector<TPGClusterData> vCld[6];    
     std::vector<std::vector<l1thgcfirmware::HGCalCluster_HW>> vCldCMSSW(6);
     TPGStage2Emulation::Stage2 s2Clustering;
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
@@ -300,14 +300,13 @@ int main(int argc, char** argv)
       }
 
       for ( const auto& hwCluster : vCldCMSSW[isect] ) {
-        clusterE_CMSSW.push_back(hwCluster.e);
-        clusterPt_CMSSW.push_back(hwCluster.e);  // ....no pt, just energy
+        clusterE_CMSSW.push_back(l1thgcfirmware::Scales::floatEt(hwCluster.e));
+        clusterPt_CMSSW.push_back(l1thgcfirmware::Scales::floatEt(hwCluster.e));  // ....no pt, just energy
         double eta = l1thgcfirmware::Scales::floatEta(hwCluster.w_eta);
         eta *= (isect<3) ? -1.0 : 1.0;
         clusterEta_CMSSW.push_back(eta);
         double phi = l1thgcfirmware::Scales::floatPhi(hwCluster.w_phi);
         // Conversion of phi from local/sector coordinates to global taken from CMSSW
-        // Matches implementation in this code-base for -z (isect<3) and for isect==3, but not for isect==4 and 5
         double rotatedPhi = phi;
         unsigned int sector = (isect<3) ? isect : isect-3;
         if (sector == 1) {
@@ -316,11 +315,13 @@ int main(int argc, char** argv)
           rotatedPhi += (4. * M_PI / 3.);
         }
         if (isect>=3) {
-          rotatedPhi = M_PI - phi;
+          rotatedPhi = M_PI - rotatedPhi;
         }
         rotatedPhi -= (rotatedPhi > M_PI) ? 2 * M_PI : 0;
+
         clusterPhi_CMSSW.push_back(rotatedPhi);
       }
+
     }
 
     for (int ijet = 0; ijet < genjet_eta->size(); ijet++)
