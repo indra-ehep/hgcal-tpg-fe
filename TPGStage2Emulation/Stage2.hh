@@ -32,11 +32,13 @@ namespace TPGStage2Emulation {
     }
 
     void accumulate(uint32_t e, double x, double y, int16_t l) {
+      bool cee(l<=26);
+
       numE++;
       sumE+=e;
       ssqE+=e*e;
 
-      if(l<=26) {
+      if(cee) {
 	numCee++;
 	sumCee+=e;
 	ssqCee+=e*e;
@@ -61,6 +63,10 @@ namespace TPGStage2Emulation {
       return _seed;
     }
   
+    uint64_t numberOfTcs() const {
+      return numE;
+    }
+
     uint64_t totE() const {
       return sumE;
     }
@@ -301,11 +307,49 @@ namespace TPGStage2Emulation {
 	      }
 	      tcd.setPhi(atan2(_tcaa->vTca[c][i][j].avgY(),_tcaa->vTca[c][i][j].avgX())*720/acos(-1.0));
 	      tcd.setEta(asinh(1.0/sqrt(_tcaa->vTca[c][i][j].avgY()*_tcaa->vTca[c][i][j].avgY()+_tcaa->vTca[c][i][j].avgX()*_tcaa->vTca[c][i][j].avgX()))*720/acos(-1.0)-256);
+	      tcd.setNumberOfTcs(_tcaa->vTca[c][i][j].numberOfTcs());
 	      vCld.push_back(tcd);
 	    }
 	  }
 	}
       }
+
+      /* DISABLE FOR NOW
+      // TEMP: use TCs to fill towers
+      std::memset(_towerData,0,2*20*24*sizeof(uint16_t));
+      
+      for(unsigned itc(0);itc<vTcw.size();itc++) {
+	TPGTriggerCellFloats vTcf(vTcw[itc]);
+	double phiDegrees(60.0+180.0*atan2(vTcf.getYOverZF(),vTcf.getXOverZF())/acos(-1.0));
+	if(phiDegrees>=0.0 && phiDegrees<120.0) {
+	  unsigned f(phiDegrees/5.0);
+	  assert(f>=0 && f<24);
+	  
+	  double rho=sqrt(vTcf.getXOverZF()*vTcf.getXOverZF()+vTcf.getYOverZF()*vTcf.getYOverZF());
+	  double etaBins(72.0*(asinh(1.0/rho)-3.0)/acos(-1))+20.0);
+	  if(etaBins>=0.0 && etaBins<20.0) {
+	    unsigned h(etaBins);
+	    assert(h>=0 && h<20);
+	    
+	    unsigned e(vTcf.getEnergy());
+	    if(vTcf.getLayer()<=26) _towerData[0][h][f]+=e;
+	    else                    _towerData[1][h][f]+=e;
+	  }
+	}
+      }
+      
+      for(unsigned eta(0);eta<20;eta++) {
+	for(unsigned phi(0);phi<24;phi++) {
+	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
+	  if(total>0xffff) total=0xffff;
+	  
+	  unsigned fraction(7);
+	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
+	  if(fraction>7) fraction=7;
+	  _towerOutput[eta][phi]=total>>6|fraction<<10;
+	}
+      }
+      */
     }
 
     const CentreArray<_nBins>& centreArray() const {
@@ -347,12 +391,12 @@ namespace TPGStage2Emulation {
       for(unsigned eta(0);eta<20;eta++) {
 	for(unsigned phi(0);phi<24;phi++) {
 	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
-	  if(total>0x3ff) total=0x3ff;
+	  if(total>0xffff) total=0xffff;
 
 	  unsigned fraction(7);
 	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
 	  if(fraction>7) fraction=7;
-	  uint16_t tower(total|fraction<<10);
+	  _towerOutput[eta][phi]=total>>6|fraction<<10;
 	}
       }
     }
@@ -364,6 +408,7 @@ namespace TPGStage2Emulation {
     std::vector<TPGTriggerCellWord> _vTriggerCellWord;
     
     uint32_t _towerData[2][20][24];
+    uint16_t _towerOutput[20][24];
     
     std::vector<TPGClusterData> _vClusterData;
     

@@ -47,6 +47,11 @@ public:
   uint16_t getZ() const {
     return (_data[1]>>18)&0xfff;
   }
+  
+  uint16_t getNumberOfTcs() const {
+    return (_data[1]>>32)&0x3ff;
+  }
+
   /*
   int16_t getYOverZ() const {
     uint16_t u((_data[0]>>30)&0xfff);
@@ -98,6 +103,13 @@ public:
     _data[1]&=0xffffffffc003ffff;
     _data[1]|=uint64_t(z&0xfff)<<18;
   }
+  
+  void setNumberOfTcs(uint16_t n) {
+    if(n>0x3ff) n=0x3ff;
+    _data[1]&=0xfffffc00ffffffff;
+    _data[1]|=uint64_t(n)<<32;
+  }
+  
   /*
   void setXOverZ(int16_t x) {
     uint64_t xd;
