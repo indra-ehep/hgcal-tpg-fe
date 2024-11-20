@@ -42,8 +42,9 @@ namespace TPGStage2Emulation
     unsigned int getTriggerLayer(const unsigned layer) const {
       bool cee(layer<=26);
       unsigned triggerLayer = 0;
-      if (cee) triggerLayer = layer/2;
-      else triggerLayer = layer-13;
+      if (cee) triggerLayer = layer/2+1;
+      else triggerLayer = layer-13+1;
+
       return triggerLayer;
     }
 
