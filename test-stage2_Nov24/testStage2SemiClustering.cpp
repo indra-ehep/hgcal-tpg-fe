@@ -345,6 +345,7 @@ int main(int argc, char** argv)
           rotatedPhi = M_PI - rotatedPhi;
         }
         rotatedPhi -= (rotatedPhi > M_PI) ? 2 * M_PI : 0;
+        rotatedPhi += (rotatedPhi < -1.0*M_PI) ? 2 * M_PI : 0;
 
         clusterPhi_CMSSW.push_back(rotatedPhi);
         clusterZ_CMSSW.push_back(l1thgcfirmware::Scales::floatZ(hwCluster.w_z));
