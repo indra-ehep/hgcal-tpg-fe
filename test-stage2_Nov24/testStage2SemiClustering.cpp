@@ -172,7 +172,7 @@ int main(int argc, char** argv)
   clusterTree->Branch("clusEta_CMSSW", &clusterEta_CMSSW);
   clusterTree->Branch("clusPhi_CMSSW", &clusterPhi_CMSSW);
   clusterTree->Branch("clusZ_CMSSW", &clusterZ_CMSSW);
-  clusterTree->Branch("clusFracInCEE_CMSSW", &clusterFracInCoreCEE_CMSSW);
+  clusterTree->Branch("clusFracInCEE_CMSSW", &clusterFracInCEE_CMSSW);
   clusterTree->Branch("clusFracInCoreCEE_CMSSW", &clusterFracInCoreCEE_CMSSW);
   clusterTree->Branch("clusFracInEarlyCEH_CMSSW", &clusterFracInEarlyCEH_CMSSW);
   clusterTree->Branch("clusFirstLayer_CMSSW", &clusterFirstLayer_CMSSW);
