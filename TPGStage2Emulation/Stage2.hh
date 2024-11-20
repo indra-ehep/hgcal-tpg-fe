@@ -8,6 +8,7 @@
 #include <cstring>
 #include <cassert>
 #include <random>
+#include <bitset>
 
 #include "TPGBEDataformat.hh"
 #include "TPGTriggerCellFloats.hh"
@@ -35,12 +36,24 @@ namespace TPGStage2Emulation
 
     void accumulate(const TPGTriggerCellFloats &t)
     {
-      accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getLayer());
+      accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getZCm(), t.getLayer());
     }
 
-    void accumulate(uint32_t e, double x, double y, int16_t l) {
+    unsigned int getTriggerLayer(const unsigned layer) const {
+      bool cee(layer<=26);
+      unsigned triggerLayer = 0;
+      if (cee) triggerLayer = layer/2;
+      else triggerLayer = layer-13;
+      return triggerLayer;
+    }
+
+    void accumulate(uint32_t e, double x, double y, double z, int16_t l) {
       bool cee(l<=26);
 
+      unsigned triggerLayer = getTriggerLayer(l);
+      const unsigned nTriggerLayers = 34;  // Should get from config/elsewhere in CMSSW
+      layerBits_ |= (((unsigned long int)1) << (nTriggerLayers - triggerLayer));
+    
       numE++;
       sumE += e;
       ssqE += e * e;
@@ -58,6 +71,8 @@ namespace TPGStage2Emulation
 
       double w(e);
 
+      sumW_ += w;
+
       numX += w;
       sumX += w * x;
       ssqX += w * w * x * x;
@@ -65,6 +80,10 @@ namespace TPGStage2Emulation
       numY += w;
       sumY += w * y;
       ssqY += w * w * y * y;
+
+      unsigned int hw_z = (z-302) / 0.05;
+      sumZ_ += w * hw_z;
+      ssqZ_ += w * hw_z * hw_z;
     }
 
     void setSeed(bool b)
@@ -110,6 +129,12 @@ namespace TPGStage2Emulation
       return (numY == 0.0 ? 0.0 : sumY / numY);
     }
 
+    unsigned sumW() const { return sumW_; }
+
+    unsigned sumZ() const { return sumZ_; }
+
+    uint64_t layerBits() const { return layerBits_; }
+
     unsigned int calcPhi() const
     {
       return atan2( avgY(), avgX()) * 720 / acos(-1.0);
@@ -130,12 +155,16 @@ namespace TPGStage2Emulation
       ssqCee = 0;
       sumCeeCore = 0;
       sumCehEarly = 0;
+      layerBits_ = 0;
+      sumW_ = 0.0;
       numX = 0.0;
       sumX = 0.0;
       ssqX = 0.0;
       numY = 0.0;
       sumY = 0.0;
       ssqY = 0.0;
+      sumZ_ = 0.0;
+      ssqZ_ = 0.0;
       _seed = false;
     }
 
@@ -181,7 +210,8 @@ namespace TPGStage2Emulation
     uint64_t numE, sumE, ssqE;
     uint64_t numCee, sumCee, ssqCee;
     uint64_t sumCeeCore, sumCehEarly;
-    double numX, sumX, ssqX, numY, sumY, ssqY;
+    uint64_t layerBits_;
+    double sumW_, numX, sumX, ssqX, numY, sumY, ssqY, sumZ_, ssqZ_;
     bool _seed;
 
     std::vector<const TcAccumulator *> vNN;
@@ -465,26 +495,53 @@ namespace TPGStage2Emulation
       hwCluster.fractionInEarlyCE_E = Scales::makeL1EFraction(accumulatedCluster.ceHEarly(), accumulatedCluster.totE());
       hwCluster.setGCTBits(); // Derived from energy and energy fractions that have just been set
 
-      // std::vector<int> layeroutput = showerLengthProperties(c->layerbits());
-      // c->set_firstLayer(layeroutput[0]);
-      // c->set_lastLayer(layeroutput[1]);
-      // c->set_showerLen(layeroutput[2]);
-      // c->set_coreShowerLen(layeroutput[3]);
-      // hwCluster.firstLayer = c->firstLayer();
-      // hwCluster.lastLayer = c->lastLayer();
-      // hwCluster.showerLength = c->showerLen();
-      // hwCluster.coreShowerLength = c->coreShowerLen();
+      std::vector<int> layeroutput = showerLengthProperties(accumulatedCluster.layerBits());
+      hwCluster.firstLayer = layeroutput[0];
+      hwCluster.lastLayer = layeroutput[1];
+      hwCluster.showerLength = layeroutput[2];
+      hwCluster.coreShowerLength = layeroutput[3];
       hwCluster.nTC = accumulatedCluster.numberOfTcs();
 
       hwCluster.w_eta = accumulatedCluster.calcEta() + 256; // Previously, eta was calculated in the firmware in global coordinates (0->3), but now it's more local.  Add the offset here, as it's what is expected in the final packet
       hwCluster.w_phi = accumulatedCluster.calcPhi();
       bool saturatedPhi = false;  // Need to base this on calculated phi
       bool nominalPhi = false;  // Need to base this on calculated phi
-      // hwCluster.w_z = Scales::HGCaltoL1_z( float(c->wz()) / c->w() );
+      hwCluster.w_z = Scales::HGCaltoL1_z( float(accumulatedCluster.sumZ()) / accumulatedCluster.sumW() );
 
       // Quality flags are placeholders at the moment
       hwCluster.setQualityFlags(Scales::HGCaltoL1_et(accumulatedCluster.ceeECore()), Scales::HGCaltoL1_et(accumulatedCluster.ceHEarly()), 0, 0, /*c->sat_tc(), c->shapeq(),*/ saturatedPhi, nominalPhi);
 
+    }
+
+    std::vector<int> showerLengthProperties(unsigned long int layerBits) const {
+      int counter = 0;
+      int firstLayer = 0;
+      bool firstLayerFound = false;
+      int lastLayer = 0;
+      std::vector<int> layerBits_array;
+
+      std::bitset<34> layerBitsBitset(layerBits);
+      for (size_t i = 0; i < layerBitsBitset.size(); ++i) {
+          bool bit = layerBitsBitset[34-1-i];
+          if ( bit ) {
+            if ( !firstLayerFound ) {
+              firstLayer = i + 1;
+              firstLayerFound = true;
+            }
+            lastLayer = i+1;
+            counter += 1;
+          } else {
+            layerBits_array.push_back(counter);
+            counter = 0;
+          }
+      }
+
+      int showerLen = lastLayer - firstLayer + 1;
+      int coreShowerLen = 34;
+      if (!layerBits_array.empty()) {
+        coreShowerLen = *std::max_element(layerBits_array.begin(), layerBits_array.end());
+      }
+      return {firstLayer, lastLayer, showerLen, coreShowerLen};
     }
 
     const CentreArray<_nBins> &centreArray() const
