@@ -172,7 +172,7 @@ int main(int argc, char** argv)
   clusterTree->Branch("clusEta_CMSSW", &clusterEta_CMSSW);
   clusterTree->Branch("clusPhi_CMSSW", &clusterPhi_CMSSW);
   clusterTree->Branch("clusZ_CMSSW", &clusterZ_CMSSW);
-  clusterTree->Branch("clusFracInCEE_CMSSW", &clusterFracInCoreCEE_CMSSW);
+  clusterTree->Branch("clusFracInCEE_CMSSW", &clusterFracInCEE_CMSSW);
   clusterTree->Branch("clusFracInCoreCEE_CMSSW", &clusterFracInCoreCEE_CMSSW);
   clusterTree->Branch("clusFracInEarlyCEH_CMSSW", &clusterFracInEarlyCEH_CMSSW);
   clusterTree->Branch("clusFirstLayer_CMSSW", &clusterFirstLayer_CMSSW);
@@ -345,6 +345,7 @@ int main(int argc, char** argv)
           rotatedPhi = M_PI - rotatedPhi;
         }
         rotatedPhi -= (rotatedPhi > M_PI) ? 2 * M_PI : 0;
+        rotatedPhi += (rotatedPhi < -1.0*M_PI) ? 2 * M_PI : 0;
 
         clusterPhi_CMSSW.push_back(rotatedPhi);
         clusterZ_CMSSW.push_back(l1thgcfirmware::Scales::floatZ(hwCluster.w_z));
