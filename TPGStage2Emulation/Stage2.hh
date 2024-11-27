@@ -136,7 +136,7 @@ namespace TPGStage2Emulation
 
     uint64_t layerBits() const { return layerBits_; }
 
-    unsigned int calcPhi() const
+    int calcPhi() const
     {
       return atan2( avgY(), avgX()) * 720 / acos(-1.0);
     }
