@@ -21,7 +21,7 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
   l1thgcfirmware::HGCalTriggerCellSACollection theTCVec;
   for (auto& up : upVec){
       unsigned theModId_ = up.getModuleId();
-      //std::cout<<"Module ID "<<theModId_<<" subtract per TC "<<subPerTC<<std::endl;
+      //std::cout<<"Module ID "<<theModId_<<std::endl;
       //std::cout<<"Number of valid channels "<<up.numberOfValidChannels()<<std::endl;
       unsigned nChans_ = up.numberOfValidChannels();
       for (unsigned iChn = 0; iChn < nChans_; iChn++){
@@ -37,7 +37,7 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
         theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.unpackedChannelEnergy(nStream,nTC));
         theTCVec.back().setModuleId(theModId_);
 
-        //std::cout<<"number "<<up.channelNumber(nStream,nTC)<<" address "<<up.channelNumber(nStream,nTC)-iChn*subPerTC<<" unpacked energy "<<up.unpackedChannelEnergy(nStream,nTC)<<std::endl;
+        //std::cout<<"number "<<up.channelNumber(nStream,nTC)<<" address "<<up.channelNumber(nStream,nTC)<<" unpacked energy "<<up.unpackedChannelEnergy(nStream,nTC)<<std::endl;
       }
   }
   return theTCVec;
@@ -46,6 +46,7 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
 
 
 int main() {
+  unsigned total_error_code=0;
   TPGStage1Emulation::Stage1IOFwCfg fwCfg;
 
   unsigned ln(0);
@@ -64,7 +65,8 @@ int main() {
   unsigned bxi;
   unsigned obx(8);
 
-  for(unsigned ibx(0);ibx<1;ibx++) { //No messing with bx for test
+  for(unsigned ibx(0);ibx<8;ibx++) { //No messing with bx for test
+    std::cout<<"Bunch crossing "<<ibx<<std::endl;
     unsigned bx=obx+ibx;
     //std::cout<<"bx "<<bx<<" obx "<<obx<<" ibx "<<ibx<<std::endl;
 
@@ -105,28 +107,31 @@ int main() {
 
     }
 
-  }
-
-  //Convert unpacker output to standalone HGCal trigger cells
-  l1thgcfirmware::HGCalTriggerCellSACollection theTCsFromOS;
-  theTCsFromOS = convertOSPToTCs(theOutputStreams);
+    //Convert unpacker output to standalone HGCal trigger cells
+    l1thgcfirmware::HGCalTriggerCellSACollection theTCsFromOS;
+    theTCsFromOS = convertOSPToTCs(theOutputStreams);
  
-  //Configure mapping (should match Florence's configuration)
-  l1thgcfirmware::HGCalLayer1PhiOrderFwConfig theConfiguration_;
-  theConfiguration_.configureMappingInfo();
+    //Configure mapping (should match Florence's configuration)
+    l1thgcfirmware::HGCalLayer1PhiOrderFwConfig theConfiguration_;
+    theConfiguration_.configureTestSetupMappingInfo();
+    theConfiguration_.configureTestSetupTDAQReadoutInfo();
 
-  l1thgcfirmware::HGCalTriggerCellSACollection tcs_out_SA;
-  l1thgcfirmware::HGCalLayer1PhiOrderFwImpl theAlgo_;
+    l1thgcfirmware::HGCalTriggerCellSACollection tcs_out_SA;
+    l1thgcfirmware::HGCalLayer1PhiOrderFwImpl theAlgo_;
 
-  //Run TC processor
-  unsigned error_code = theAlgo_.run(theTCsFromOS, theConfiguration_, tcs_out_SA);
+    //Run TC processor
+    unsigned error_code = theAlgo_.run(theTCsFromOS, theConfiguration_, tcs_out_SA);
 
-  std::cout<<"Printing TCs with column, channel, frame mapping"<<std::endl;
-  for (auto& tcobj : tcs_out_SA){
-    std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+    total_error_code+=error_code;
+
+    std::cout<<"Printing TCs with column, channel, frame mapping"<<std::endl;
+    for (auto& tcobj : tcs_out_SA){
+      std::cout<<"Mod ID "<<tcobj.moduleId()<<" address "<<tcobj.phi()<<" energy "<<tcobj.energy()<<" col "<<tcobj.column()<<" chn "<<tcobj.channel()<<" frame "<<tcobj.frame()<<std::endl;
+    }
+
   }
 
-return error_code;
+return total_error_code;
 }
 
 
