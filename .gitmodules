@@ -1,3 +1,7 @@
 [submodule "EMPTools/HLS_arbitrary_Precision_Types"]
 	path = EMPTools/HLS_arbitrary_Precision_Types
 	url = https://github.com/Xilinx/HLS_arbitrary_Precision_Types.git
+[submodule "mapping"]
+	path = mapping
+	url = ssh://git@gitlab.cern.ch:7999/hgcal-tpg/mapping.git
+	branch = cppInterface
