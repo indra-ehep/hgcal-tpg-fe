@@ -4,3 +4,4 @@
 [submodule "mapping"]
 	path = mapping
 	url = ssh://git@gitlab.cern.ch:7999/hgcal-tpg/mapping.git
+	branch = cppInterface
