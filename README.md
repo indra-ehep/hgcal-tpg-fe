@@ -12,6 +12,22 @@ Run the setup code to download additional dependencies and setup. This setup is 
 
 ## Compile and run
 
+### Examples for EMP pattern file I/O
+
+This requires additional code from CMSSW and submodules:
+```
+cd EMPTools;
+source getCMSSWCode.sh;
+cd ..;
+git submodule init;
+git submodule update;
+```
+Compile and run the examples:
+```
+make testEMP
+./testEMP.exe
+```
+
 ### Test-beam data of August 2024
 To process the test-beam binary files
 ```
