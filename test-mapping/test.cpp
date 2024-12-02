@@ -1,6 +1,6 @@
 #include <iostream>
 #include "HgcConfigReader2.hpp"
-// #include "GUID.hpp"
+#include "GUID.hpp"
 
 int main() {
 
@@ -32,8 +32,12 @@ int main() {
   }
   // Print to screen IDs of modules (just first ten)
   unsigned iModule = 0;
+  std::cout << "Module (ID, u, v, layer) : " << std ::endl;
   for ( const auto& module : modules ) {
-    std::cout << module->ID << std::endl;
+    const auto& moduleUV = get_module_uv( module->ID );
+    const auto modulePlane = get_plane( module->ID );
+    std::cout << module->ID << " " << moduleUV.first << " " << moduleUV.second << " " << modulePlane << std::endl;
+
     ++iModule;
     if ( iModule > 10 ) {
       std::cout << "... and many more ..." << std::endl;
