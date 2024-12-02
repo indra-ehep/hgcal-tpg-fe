@@ -80,4 +80,36 @@ int main() {
   if ( allOK ) {
       std::cout << "All comparisons were fine" << std::endl;
   }
+
+  // ==========================================================
+  // Example exploring output from a S1 FPGA
+  // ==========================================================
+  // Using same "first" S1 board as before as a test
+  // Get all output channels from this FPGA
+  std::set<S1Channel*> channels;
+  std::cout << "Number of output channels : " << testS1->channels.size() << std::endl;
+  unsigned iChannel = 0;
+  for ( const auto& channel : testS1->channels ) {
+    std::cout << "Channel : " << iChannel << " :  " << channel->ID << std::endl;
+    channels.insert(channel);
+    ++iChannel;
+  }
+
+  // Now look at first channel of this FPGA
+  const auto testChannel = *channels.begin();
+  std::cout << "Number of frames on this channel : " << testChannel->frames.size() << std::endl;
+  unsigned iFrame = 0;
+  for ( const auto& frame : testChannel->frames ) {
+    const auto& frameData = frame->data;
+    // frame->ID : clock within TMUX period
+    // frameData.first : index of the TC within the phi-sorted Motherboard/Module 
+    // frameData.second : module ID
+    std::cout << "Frame info : " << frame->ID << " " << frameData.first << " " << frameData.second << std::endl;
+
+    ++iFrame;
+    if ( iFrame > 10 ) {
+      std::cout << "... and many more ..." << std::endl;
+      break;
+    }
+  }
 }
