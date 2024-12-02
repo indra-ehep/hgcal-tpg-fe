@@ -61,7 +61,7 @@ TestUnpackerTCProcInterface.exe: TPGStage1Emulation/TestUnpackerTCProcInterface.
 testEMP: EMPTools/test.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* $(CONDA_PREFIX)/include
 	g++  EMPTools/test.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(CONDA_PREFIX)/include -lboost_iostreams -lz -llzma -o testEMP.exe
 
-testMapping: test-mapping/test.cpp  mapping/c++/HgcConfigReader2.*
+testMapping: test-mapping/test.cpp  mapping/c++/HgcConfigReader2.* mapping/c++/GUID.hpp
 	g++ test-mapping/test.cpp mapping/c++/HgcConfigReader2.Xml.cpp -Imapping/c++/ -o testMapping.exe
 
 
