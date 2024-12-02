@@ -32,11 +32,11 @@ int main() {
   }
   // Print to screen IDs of modules (just first ten)
   unsigned iModule = 0;
-  std::cout << "Module (ID, u, v, layer) : " << std ::endl;
+  std::cout << "Module (ID, u, v, layer, nTC, highOccupancy) : " << std ::endl;
   for ( const auto& module : modules ) {
     const auto& moduleUV = get_module_uv( module->ID );
     const auto modulePlane = get_plane( module->ID );
-    std::cout << module->ID << " " << moduleUV.first << " " << moduleUV.second << " " << modulePlane << std::endl;
+    std::cout << module->ID << " " << moduleUV.first << " " << moduleUV.second << " " << modulePlane << " " << module->data.tcCount << " " << module->data.highOccupancy << std::endl;
 
     ++iModule;
     if ( iModule > 10 ) {
