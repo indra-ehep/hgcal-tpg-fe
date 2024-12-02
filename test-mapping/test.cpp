@@ -106,9 +106,10 @@ int main() {
   for ( const auto& frame : testChannel->frames ) {
     const auto& frameData = frame->data;
     // frame->ID : clock within TMUX period
-    // frameData.first : index of the TC within the phi-sorted Motherboard/Module 
-    // frameData.second : module ID
-    std::cout << "Frame info : " << frame->ID << " " << frameData.first << " " << frameData.second << std::endl;
+    // frameData.index : index of the TC within the phi-sorted Motherboard/Module 
+    // frameData.moduleid : module ID
+    // frameData.triCol : S2 processing column
+    std::cout << "Frame info : " << frame->ID << " " << frameData.index << " " << frameData.moduleid << " " << frameData.triCol << std::endl;
 
     ++iFrame;
     if ( iFrame > 10 ) {
