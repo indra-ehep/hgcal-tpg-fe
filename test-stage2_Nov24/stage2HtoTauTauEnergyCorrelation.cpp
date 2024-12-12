@@ -183,10 +183,18 @@ int main(int argc, char** argv)
   std::vector<float>  *tc_z = 0 ;
   tr->SetBranchStatus("tc_z",1);
   tr->SetBranchAddress("tc_z" , &tc_z);
-
+  
   std::vector<float>  *tc_energy = 0 ;
   tr->SetBranchStatus("tc_energy",1);
   tr->SetBranchAddress("tc_energy" , &tc_energy);
+  
+  std::vector<float>  *tc_data = 0 ;
+  tr->SetBranchStatus("tc_data",1);
+  tr->SetBranchAddress("tc_data" , &tc_data);
+  
+  std::vector<float>  *tc_uncompressedCharge = 0 ;
+  tr->SetBranchStatus("tc_uncompressedCharge",1);
+  tr->SetBranchAddress("tc_uncompressedCharge" , &tc_uncompressedCharge);
 
   TH1D *hEt = new TH1D("hEt","hEt",100,0,1000);
   TH1D *hPhi = new TH1D("hPhi","hPhi",2*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
@@ -225,24 +233,52 @@ int main(int argc, char** argv)
   TProfile *hPtCorrGenjetvsClus_3 = new TProfile("hPtCorrGenjetvsClus_3","hPtCorr Genjet-vs-Cluster",200,0.,200.,0.,200.);
   TProfile *hPtCorrGenjetvsClus_4 = new TProfile("hPtCorrGenjetvsClus_4","hPtCorr Genjet-vs-Cluster",200,0.,200.,0.,200.);
   TProfile *hPtCorrGenjetvsClus_5 = new TProfile("hPtCorrGenjetvsClus_5","hPtCorr Genjet-vs-Cluster",200,0.,200.,0.,200.);
-
-  TProfile *hPtCorrGenjetvsTC_pion = new TProfile("hPtCorrGenjetvsTC_pion","hPtCorr Genjet-vs-TC (pion)",200,0.,200.,0.,200.);
-  TProfile *hPtCorrGenjetvsClus_pion = new TProfile("hPtCorrGenjetvsClus_pion","hPtCorr Genjet-vs-Cluster (pion)",200,0.,200.,0.,200.);
   
-  TProfile *hPtCorrGenjetvsTC_electron = new TProfile("hPtCorrGenjetvsTC_electron","hPtCorr Genjet-vs-TC (electron)",200,0.,200.,0.,200.);
-  TProfile *hPtCorrGenjetvsClus_electron = new TProfile("hPtCorrGenjetvsClus_electron","hPtCorr Genjet-vs-Cluster (electron)",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsTC_pion = new TProfile("hPtCorrGenjetvsTC_pion","hPtCorr Genjet-vs-TC (pion) with #DeltaR<0.07",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsClus_pion = new TProfile("hPtCorrGenjetvsClus_pion","hPtCorr Genjet-vs-Cluster (pion) with #DeltaR<0.07",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsTC_pion_0p2 = new TProfile("hPtCorrGenjetvsTC_pion_0p2","hPtCorr Genjet-vs-TC (pion) with #DeltaR<0.2",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsClus_pion_0p2 = new TProfile("hPtCorrGenjetvsClus_pion_0p2","hPtCorr Genjet-vs-Cluster (pion) with #DeltaR<0.2",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsTC_pion_0p4 = new TProfile("hPtCorrGenjetvsTC_pion_0p4","hPtCorr Genjet-vs-TC (pion) with #DeltaR<0.4",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsClus_pion_0p4 = new TProfile("hPtCorrGenjetvsClus_pion_0p4","hPtCorr Genjet-vs-Cluster (pion) with #DeltaR<0.4",200,0.,200.,0.,200.);
   
-
+  hPtCorrGenjetvsTC_pion->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsTC_pion->GetYaxis()->SetTitle("Total TC p_{T} [GeV]");
+  hPtCorrGenjetvsClus_pion->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsClus_pion->GetYaxis()->SetTitle("Total Cluster p_{T} [GeV]");
+  
+  hPtCorrGenjetvsTC_pion_0p2->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsTC_pion_0p2->GetYaxis()->SetTitle("Total TC p_{T} [GeV]");
+  hPtCorrGenjetvsClus_pion_0p2->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsClus_pion_0p2->GetYaxis()->SetTitle("Total Cluster p_{T} [GeV]");
+  
+  hPtCorrGenjetvsTC_pion_0p4->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsTC_pion_0p4->GetYaxis()->SetTitle("Total TC p_{T} [GeV]");
+  hPtCorrGenjetvsClus_pion_0p4->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsClus_pion_0p4->GetYaxis()->SetTitle("Total Cluster p_{T} [GeV]");
+  
+  TProfile *hPtCorrGenjetvsTC_electron = new TProfile("hPtCorrGenjetvsTC_electron","hPtCorr Genjet-vs-TC (electron) with #DeltaR<0.07",200,0.,200.,0.,200.);
+  TProfile *hPtCorrGenjetvsClus_electron = new TProfile("hPtCorrGenjetvsClus_electron","hPtCorr Genjet-vs-Cluster (electron) with #DeltaR<0.07",200,0.,200.,0.,200.);
+  hPtCorrGenjetvsTC_electron->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsTC_electron->GetYaxis()->SetTitle("Total TC p_{T} [GeV]");
+  hPtCorrGenjetvsClus_electron->GetXaxis()->SetTitle("#tau-jet p_{T} (#tau_{p_{T}}-MET) [GeV]");
+  hPtCorrGenjetvsClus_electron->GetYaxis()->SetTitle("Total Cluster p_{T} [GeV]");
+  
   TH1D *hTCLayerEWt = new TH1D("hTCLayerEWt","Energy weighted layer",50,-0.5,49.5);
   TH1D *hTCLayerEWt_pion = new TH1D("hTCLayerEWt_pion","Energy weighted layer (pion)",50,-0.5,49.5);
   TH1D *hTCLayerEWt_electron = new TH1D("hTCLayerEWt_electron","Energy weighted layer (electron)",50,-0.5,49.5);
+
+  TProfile *hPtEta_TC_pion = new TProfile("hPtEta_TC_pion","hPtEta_TC_pion",200,0.,5.,0.,200.);
+  TH2D *hECorrc_pion = new TH2D("hECorrc_pion","hECorrc_pion",50,0.0,50.0,1000,0.0,5.0);
+  TH2D *hECorrc_electron = new TH2D("hECorrc_electron","hECorrc_electron",50,0.0,50.0,1000,0.0,5.0);
+
+  TH2D *hECorrc_pion_HT = new TH2D("hECorrc_pion_HT","hECorrc_pion_HT",50,0.0,50.0,1000,0.0,100.0);
   
   const auto default_precision{std::cout.precision()};
   TPGTriggerCellFloats tcf0,tcf1;
-  for (Long64_t ievent = 0 ; ievent < nofEvents ; ievent++ ) {    
+  for (Long64_t ievent = 0 ; ievent < nofEvents ; ievent++ ) {
     
     tr->GetEntry(ievent) ;
-
+    
     if(doPrint) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
     if(ievent%100==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
 
@@ -309,11 +345,16 @@ int main(int argc, char** argv)
     
     std::vector<JetPart> jetlist;
     for(int ijet=0; ijet<genjet_n; ijet++ ){
+      JetPart jet;
+      // jet.name = "";
+      // jet.index = ijet ;
+      // jetlist.push_back(jet);
+      
       float minDeltaR = 1.0; int minDeltaRindex = -1;
       for(int ipart=0; ipart<partlist.size(); ipart++){
 	int refpart = partlist.at(ipart).index;
-    	double deltaR = TMath::Sqrt((genpart_eta->at(refpart)-genjet_eta->at(ijet))*(genpart_eta->at(refpart)-genjet_eta->at(ijet)) + (genpart_phi->at(refpart)-genjet_phi->at(ijet))*(genpart_phi->at(refpart)-genjet_phi->at(ijet)));
-	if(deltaR<0.3 and deltaR<minDeltaR){
+	double deltaR = TMath::Sqrt((genpart_eta->at(refpart)-genjet_eta->at(ijet))*(genpart_eta->at(refpart)-genjet_eta->at(ijet)) + (genpart_phi->at(refpart)-genjet_phi->at(ijet))*(genpart_phi->at(refpart)-genjet_phi->at(ijet)));
+	if(deltaR<0.4 and deltaR<minDeltaR){
 	  minDeltaR = deltaR;
 	  minDeltaRindex = ipart;
 	}
@@ -431,14 +472,17 @@ int main(int argc, char** argv)
     for(int ipjet=0; ipjet < jetlist.size() ; ipjet++ ){
       int ijet = jetlist.at(ipjet).index ;
       if(fabs(genjet_eta->at(ijet))>2.82 or fabs(genjet_eta->at(ijet))<1.72) continue;
+      double tot_clus_pt_deltaR = 0;
+      double tot_clus_pt_deltaR_0p4 = 0;
+      double tot_clus_pt_deltaR_0p2 = 0;
       for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
 	for(TPGClusterFloats const& clf : vCld[isect]){
 	  hClusE->Fill(clf.getEnergyGeV());
-	  // double deltaR = TMath::Sqrt((clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))*(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))
-	  // 			      +
-	  // 			      (clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet))*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)));
-	  //if(deltaR<0.04 ){
-	  if(fabs(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))<0.05 and fabs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet))<0.05){
+	  double deltaR = TMath::Sqrt((clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))*(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))
+				      +
+				      (clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet))*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)));
+	  if(deltaR<0.07 ){
+	  //if(fabs(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))<0.05 and fabs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet))<0.05){
 	    double emfrac = clf.getCeeFractionF();	    
 	    hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	    hGenClusE_1->Fill(genjet_pt->at(ijet), (emfrac+2-2*emfrac)*clf.getEnergyGeV());
@@ -452,37 +496,75 @@ int main(int argc, char** argv)
 	    hPtCorrGenjetvsClus_3->Fill(genjet_pt->at(ijet), (emfrac+4-4*emfrac)*clf.getEnergyGeV());
 	    hPtCorrGenjetvsClus_4->Fill(genjet_pt->at(ijet), (emfrac+5-5*emfrac)*clf.getEnergyGeV());
 	    hPtCorrGenjetvsClus_5->Fill(genjet_pt->at(ijet), (emfrac+6-6*emfrac)*clf.getEnergyGeV());
-	    if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	    if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+	    tot_clus_pt_deltaR += clf.getEnergyGeV();
+	    //if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+	    //if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	  }
+	  if(deltaR<0.4) tot_clus_pt_deltaR_0p4 += clf.getEnergyGeV() ;
+	  if(deltaR<0.2) tot_clus_pt_deltaR_0p2 += clf.getEnergyGeV() ;	  
 	  if(clf.getEnergyGeV()>10.0) {
 	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
 	    deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
 	  }
 	}	
       }//isect loop
+      if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
+	hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR);
+	hPtCorrGenjetvsClus_pion_0p2->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR_0p2);
+	hPtCorrGenjetvsClus_pion_0p4->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR_0p4);
+      }
+      if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR);
+      
       double tot_tc_pt_deltaR = 0;
+      double tot_tc_pt_deltaR_0p4 = 0;
+      double tot_tc_pt_deltaR_0p2 = 0;
       for(unsigned itc=0;itc<tc_pt->size();itc++){
 	deltaGentc->Fill(tc_eta->at(itc) - genjet_eta->at(ijet), tc_phi->at(itc) - genjet_phi->at(ijet));
 	double deltaR = TMath::Sqrt((tc_eta->at(itc)-genjet_eta->at(ijet))*(tc_eta->at(itc)-genjet_eta->at(ijet))
 				    +
 				    (tc_phi->at(itc)-genjet_phi->at(ijet))*(tc_phi->at(itc)-genjet_phi->at(ijet)));
+	//double theta = 2*TMath::ATan(TMath::Exp(-1.*tc_eta->at(itc)));
+	double correction = 1000*tc_pt->at(itc)/(tc_data->at(itc)/std::cosh(tc_eta->at(itc)));
+	//std::cout <<"pt : " << tc_pt->at(itc) << ", correction : " << correction << std::endl;
 	if(deltaR<0.07 ){ //0.3 works for no pileup case
 	  tot_tc_pt_deltaR += tc_pt->at(itc) ;
 	}
+	if(deltaR<0.4) tot_tc_pt_deltaR_0p4 += tc_pt->at(itc) ;
+	if(deltaR<0.2) tot_tc_pt_deltaR_0p2 += tc_pt->at(itc) ;
 	hTCLayerEWt->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hTCLayerEWt_pion->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);	
-	if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hTCLayerEWt_electron->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+	if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
+	  hTCLayerEWt_pion->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+	  hPtEta_TC_pion->Fill(tc_eta->at(itc),tc_pt->at(itc));
+	  hECorrc_pion->Fill(tc_layer->at(itc),correction);
+	  hECorrc_pion_HT->Fill(tc_layer->at(itc),correction);
+	}
+	if(jetlist.at(ipjet).name.find("e")!=std::string::npos) {
+	  hTCLayerEWt_electron->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+	  hECorrc_electron->Fill(tc_layer->at(itc),correction);
+	}
       }//tc loop
       hPtCorrGenjetvsTC->Fill(genjet_pt->at(ijet),tot_tc_pt_deltaR);
-      if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsTC_pion->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
+      if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
+	hPtCorrGenjetvsTC_pion->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
+	hPtCorrGenjetvsTC_pion_0p2->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR_0p2);
+	hPtCorrGenjetvsTC_pion_0p4->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR_0p4);
+      }
       if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsTC_electron->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
       
-
     }//jet from decay of pions from tau
     
     hEt->Fill(tot_tc_pt);
+    
+    for(uint16_t i=0;i<6;i++) {
+      vCld[i].clear();
+      vTcw[i].clear();
+    }
+    taudlist.clear();
+    taugdlist.clear();
+    partlist.clear();
+    jetlist.clear();
 
+    
     gen_pt->clear();
     gen_eta->clear();
     gen_phi->clear();
@@ -490,16 +572,22 @@ int main(int argc, char** argv)
     gen_energy->clear();
     gen_charge->clear();
     gen_status->clear();
+    for(uint32_t i=0;i<gen_daughters->size();i++) (gen_daughters->at(i)).clear();
+    gen_daughters->clear();
     genpart_pt->clear();
     genpart_eta->clear();
     genpart_phi->clear();
     genpart_pid->clear();
     genpart_mother->clear();
+    genpart_energy->clear();
     genpart_gen->clear();
     genpart_fromBeamPipe->clear();
+    genpart_exeta->clear();
+    genpart_exphi->clear();
     genjet_pt->clear();
     genjet_eta->clear();
     genjet_phi->clear();
+    genjet_energy->clear();
     tc_pt->clear();
     tc_eta->clear();
     tc_phi->clear();
@@ -508,6 +596,8 @@ int main(int argc, char** argv)
     tc_y->clear();
     tc_z->clear();
     tc_energy->clear();
+    tc_data->clear();
+    tc_uncompressedCharge->clear();
     
   }//event loop
   
@@ -545,12 +635,20 @@ int main(int argc, char** argv)
   hPtCorrGenjetvsTC->Write();
   hPtCorrGenjetvsClus->Write();
   hPtCorrGenjetvsTC_pion->Write();
+  hPtCorrGenjetvsTC_pion_0p2->Write();
+  hPtCorrGenjetvsTC_pion_0p4->Write();
   hPtCorrGenjetvsClus_pion->Write();
+  hPtCorrGenjetvsClus_pion_0p2->Write();
+  hPtCorrGenjetvsClus_pion_0p4->Write();
   hPtCorrGenjetvsTC_electron->Write();
   hPtCorrGenjetvsClus_electron->Write();
   hTCLayerEWt->Write();
   hTCLayerEWt_pion->Write();
   hTCLayerEWt_electron->Write();
+  hPtEta_TC_pion->Write();
+  hECorrc_pion->Write();
+  hECorrc_electron->Write();
+  hECorrc_pion_HT->Write();
   fout->Close();
   delete fout;
 

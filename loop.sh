@@ -48,8 +48,8 @@
 #     echo -e "\n"
 # done < $procrun
 
-maxproc=10
-procrun=filelist.txt
+maxproc=4
+procrun=filelist_allstc4_pu0.txt
 index=1
 while read fname
 do
