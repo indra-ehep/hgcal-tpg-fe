@@ -25,3 +25,6 @@ dat*
 cfgmap/slow_control_configuration
 dat_old
 .nfs*
+EMPTools/CMSSWCode/*
+mapping/*
+data_v11_rx_MsCounter
