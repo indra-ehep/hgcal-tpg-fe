@@ -255,13 +255,13 @@ int main(int argc, char** argv)
   ///////////////////////////////// CE_E ///////////////////////////////////////////
   
   ///////////////////////////////// CE_H ///////////////////////////////////////////
-  // std::cout << "stcydim : "  << stcydim << std::endl;
-  // for(int iy = 0 ; iy < 12 ; iy++){
-  //   for(int ix = 0 ; ix < stcydim ; ix++){
-  //     std::cout << stcElist[iy][ix] << ", ";
-  //   }
-  //   std::cout << std::endl;
-  // }
+  std::cout << "stcydim : "  << stcydim << std::endl;
+  for(int ix = 0 ; ix < stcydim ; ix++){
+    for(int iy = 0 ; iy < 12 ; iy++){
+      std::cout << stcElist[iy][ix] << ", ";
+    }
+    std::cout << std::endl;
+  }
 
   // Read input energies
   auto inputArray_H = stcElist;//ts->readInputEnergies_CE_H(fileName_CE_H_energies, inputOutputH.first);
@@ -282,6 +282,13 @@ int main(int argc, char** argv)
       
   // Test: print decoded energies
   cout << "decodedInputArrayH" << endl;
+  for(int ix = 0 ; ix < stcydim ; ix++){
+    for(int iy = 0 ; iy < 12 ; iy++){
+      std::cout << decodedInputArrayH[iy][ix] << ", ";
+    }
+    std::cout << std::endl;
+  }
+
   for (const auto& row : decodedInputArrayH)
     {
       for (const auto& energy : row)
