@@ -12,6 +12,7 @@ Run the setup code to download additional dependencies and setup. This setup is 
 ```
 ./setup.sh
 ```
+
 The setup script downloads additonal dependencies and EMP submodules
 
 ## Compile and run

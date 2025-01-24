@@ -27,6 +27,8 @@ dat*
 cfgmap/slow_control_configuration
 dat_old
 .nfs*
+PU*
+AutoDict*
 EMPTools/CMSSWCode
 EMPTools/CMSSWCode/*
 EMPTools/HLS_arbitrary_Precision_Types/*
