@@ -37,14 +37,11 @@ int main()
            
          string STC_architecture = "oneSize"; // STC4, STC16 or oneSize
            
-         
          TowerSums *ts = new TowerSums();
            
          vector<vector<int>> matVariable_CE_E;
          vector<vector<vector<int>>> matVariable_CE_H;
          pair<int, int> inputOutputE, inputOutputH;
-   
-   
 
 // ******************************************
 // Read CE_E VH files and architecture matrix
@@ -282,8 +279,6 @@ int main()
                   cout << "Test" << endl;
             }
             cout << endl;
-
-
    
             // Summation
             vector<uint64_t> summedValues_H;

@@ -7,7 +7,7 @@ int main(int argc, char** argv)
     // ===============================================
     // Example for reading in data from a pattern file
     // ===============================================
-    std::string inputFileName = "EMPTools/testInput.txt.gz";
+    std::string inputFileName = "EMPTools/testInput.txt";
     l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
     auto nChannels = inputs.size();
     std::cout << "Board data name : " << inputs.name() << std::endl;
@@ -15,7 +15,7 @@ int main(int argc, char** argv)
         std::cout << "Data on channel : " << channel.first << std::endl;
         unsigned int iFrame = 0;
         for ( const auto& frame : channel.second ) {
-            std::cout << frame.startOfOrbit << frame.startOfPacket << frame.endOfPacket << frame.valid << " " << frame.data << std::endl;
+	  std::cout << frame.startOfOrbit << frame.startOfPacket << frame.endOfPacket << frame.valid << " " << std::hex << frame.data << std::dec << std::endl;
             ++iFrame;
             if (iFrame > 5 ) break;
         }
