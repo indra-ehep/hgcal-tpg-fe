@@ -351,7 +351,7 @@ private:
   
 class TestStage2Input {
 private:
-    std::array<uint64_t, 11> data;
+    std::array<uint64_t, 162> data;
 
 public:
     // Constructor
@@ -385,7 +385,11 @@ public:
         data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
     }
 
-  std::array<uint64_t, 11>& accessData() {
+    void setBit(int wordIndex, int shift) {
+      data[wordIndex] |= (0xaULL<<shift) ;
+    }
+
+  std::array<uint64_t, 162>& accessData() {
     return data;
   }
 
