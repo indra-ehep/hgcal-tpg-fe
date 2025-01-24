@@ -50,10 +50,14 @@ else
     ln -s ../EMPTools/HLS_arbitrary_Precision_Types .
 fi
 source getCMSSWCode.sh
+cd CMSSWCode
+rm -rf .git
 cd $CURRDIR
 
 cd EMPTools
 source getCMSSWCode.sh
+cd CMSSWCode
+rm -rf .git
 cd $CURRDIR
 git submodule init
 git submodule update
