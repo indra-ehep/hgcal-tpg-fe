@@ -3,26 +3,37 @@
 ## Motivation
 Emulation of the Trigger Primitive Generation (TPG) by HGCAL frontend ASICs.
 
+## Requirement
+Currently requires about 1.5 GB of diskspace at the end of setup.
+
 ## Download and Setup
 Run the setup code to download additional dependencies and setup. This setup is prepared for lxplus machines.
 
 ```
 ./setup.sh
 ```
-This setup script downloads files from https://gitlab.cern.ch/pdauncey/hgcal10glinkreceiver.git that are required for FE emulation using the test-beam data.
-In case of non-lxplus machines, you may need ROOT package in your path for compilation.
+
+The setup script downloads additonal dependencies and EMP submodules
 
 ## Compile and run
 
-### Stage 2 standalone emulation
+### Examples for EMP pattern file I/O
 
-The Stage 2 emulation uses some code from CMSSW, which obtained via a sparse checkout of CMSSW, and also the HLS arbitrary precision types, which are included via a submodule.  Run the following to set these up:
+<!---
+///This requires additional code from CMSSW and submodules:
+///```
+///cd EMPTools;
+///source getCMSSWCode.sh;
+///cd ..;
+///git submodule init;
+///git submodule update;
+//```
+--->
+
+Compile and run the examples:
 ```
-cd TPGStage2Emulation;
-source getCMSSWCode.sh;
-cd ..;
-git submodule init;
-git submodule update
+make testEMP
+./testEMP.exe
 ```
 
 ### Test-beam data of August 2024

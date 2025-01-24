@@ -77,6 +77,7 @@ int main(int argc, char **argv) {
   }
 
   totEvents = getTotalNofEvents(relayNumber, runNumber);
+  std::cout<<"total number of events  is "<<totEvents<<std::endl;
   if (nofEvents > totEvents) {
     nofEvents = totEvents;
     std::cout << "Setting number of events to process to " << nofEvents << std::endl;
@@ -223,7 +224,7 @@ int main(int argc, char **argv) {
   //===============================================================================================================================
   l1thgcfirmware::HGCalLayer1PhiOrderFwConfig theConfiguration_;
   theConfiguration_.configureSeptemberTestBeamMappingInfo();
-  theConfiguration_.configureTDAQReadoutInfo();
+  theConfiguration_.configureSeptemberTBTDAQReadoutInfo();
 
   //===============================================================================================================================
   //Process certain reference eventlist
@@ -285,13 +286,13 @@ int main(int argc, char **argv) {
               continue;  //Need to assume that order of econtdata and tcprocdata entries is the same.
             trdata = econtdata.at(ietd).second;
             tcpdata = tcprocdata.at(ietd).second;
-            std::cout << "=======================TC processor data===================" << std::endl;
-            std::cout << moduleId << std::endl;
+            //std::cout << "=======================TC processor data===================" << std::endl;
+            //std::cout << moduleId << std::endl;
             //tcpdata.print(3);
 
             triggerCellsFromTriggerData = createTCsFromTriggerData(moduleId, tcpdata);
             //std::cout << "Dataloop:: event: " << event << ", moduleId : " << econtdata.at(ietd).first << " moduleId from tcproc data "<<tcprocdata.at(ietd).first << std::endl;
-            for (int ibx = 0; ibx < 7; ibx++) {
+            for (int ibx = 1; ibx < 7; ibx++) { //Skip first BX so that we can take into account the BX shift in modules 24832 and 25344
               //for(int ibx=3;ibx<4;ibx++){
               const uint32_t *el = trdata.getElinks(ibx);
               uint32_t bx_2 = (el[0] >> 28) & 0xF;
@@ -328,8 +329,10 @@ int main(int argc, char **argv) {
 
               tcs_out_tcproc_TB.resize(0);
               bool isDataTCsAssigned = false;
-              if (triggerCellsFromTriggerData[ibx].size() > 0)
-                tcs_out_tcproc_TB = triggerCellsFromTriggerData[ibx];
+	      int theBXForTCs = ibx;
+	      if(moduleId==24832 || moduleId==25344) theBXForTCs = ibx-1;
+              if (triggerCellsFromTriggerData[theBXForTCs].size() > 0)
+                tcs_out_tcproc_TB = triggerCellsFromTriggerData[theBXForTCs];
               isDataTCsAssigned = true;
 
               if (isDataTCsAssigned) {  //Only try to do comparison if we have read out TB data since some modules are missing

@@ -31,7 +31,7 @@ namespace l1thgcfirmware {
       }
     }*/
 
-    void configureMappingInfo() {
+    void configureTestSetupMappingInfo() {
       for (unsigned iModGroup = 0; iModGroup < 58; iModGroup++) {
         for (unsigned j = 0; j < 4; j++) {  //BC low (mod 1) - 4 bins, 1TC/bin
           chn_frame_slots_per_mod_and_col_[1 + iModGroup * 5][j].push_back(std::make_pair(0, 0));
@@ -128,7 +128,7 @@ namespace l1thgcfirmware {
       }
     }
 
-    void configureTDAQReadoutInfo() {
+    void configureSeptemberTBTDAQReadoutInfo() {
       for (unsigned j = 0; j < 9; j++) {
         //Module 256: 9 bins, 2 slots for the first two. 768: 4 bins, 1 slot/bin. 1280: 4 bins, 1 slot/bin. 8448: 9 bins, 2 slots for the first two. 8960: 9 bins. 9472: 0 bins. 16640: 8 bins in TDAQ output, 2 slots for the first 2. 17152: 4 bins. 24832 : 4 bins. 25344 : 9 bins, 2 slots for the first 2
         tdaq_slots_per_bin_per_mod_[256].push_back(std::make_pair(j, 0));  //This means bin j, slot 0.
@@ -151,6 +151,31 @@ namespace l1thgcfirmware {
           tdaq_slots_per_bin_per_mod_[16640].push_back(std::make_pair(j, 0));
         }
       }
+    }
+
+    void configureTestSetupTDAQReadoutInfo() {
+      for (unsigned iModGroup = 0; iModGroup < 58; iModGroup++) {
+        for (unsigned j = 0; j < 4; j++) {  //BC low (mod 1) - 4 bins, 1TC/bin
+          tdaq_slots_per_bin_per_mod_[1 + iModGroup * 5].push_back(std::make_pair(j, 0));
+        }
+        for (unsigned j = 0; j < 7; j++) {  //BC high (mod 0) - 7 bins, 2 TC/bin bin 1-2; 1TC/bin rest
+          tdaq_slots_per_bin_per_mod_[iModGroup * 5].push_back(std::make_pair(j, 0));
+          if (j < 2) {
+            tdaq_slots_per_bin_per_mod_[iModGroup * 5].push_back(std::make_pair(j, 1));
+          }
+        }
+        for (unsigned j = 0; j < 3; j++) {  //STC16 (mod 3-4) - 3 bins, 1TC/bin
+          for (unsigned i = 3; i < 5; i++) {
+            tdaq_slots_per_bin_per_mod_[i + iModGroup * 5].push_back(std::make_pair(j, 0));
+          }
+        }
+        for (unsigned j = 0; j < 7; j++) {  //STC4 (mod 2) - 7 bins, 2TC/bin bin 1-5; 1TC/bin rest
+          tdaq_slots_per_bin_per_mod_[2 + iModGroup * 5].push_back(std::make_pair(j, 0));
+          if (j < 5) {
+            tdaq_slots_per_bin_per_mod_[2 + iModGroup * 5].push_back(std::make_pair(j, 1));
+          }
+        }
+      } 
     }
 
     unsigned phiSector() const { return sector120_; }
