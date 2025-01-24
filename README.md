@@ -18,6 +18,7 @@ The setup script downloads additonal dependencies and EMP submodules
 
 ### Examples for EMP pattern file I/O
 
+<!---
 ///This requires additional code from CMSSW and submodules:
 ///```
 ///cd EMPTools;
@@ -26,6 +27,7 @@ The setup script downloads additonal dependencies and EMP submodules
 ///git submodule init;
 ///git submodule update;
 //```
+--->
 
 Compile and run the examples:
 ```
