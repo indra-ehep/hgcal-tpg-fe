@@ -3,7 +3,7 @@
 CPPFLAGS=-I$(HOME)/Software/yaml-cpp/include -I common/inc -I inc -I TPGStage1Emulation/ -I TPGFEEmulation/ -I`root-config --incdir` 
 BOOST=/cvmfs/cms.cern.ch/el9_amd64_gcc12/external/boost/1.80.0-87b5de10acd2f2c8a325345ad058b814
 LDFLAGS=-L$(HOME)/Software/yaml-cpp/lib64 -L$(BOOST)/lib
-CPPFLAGSSTAGE2=-I inc -I TPGStage2Emulation/ -I TPGStage2Emulation/CMSSWCode -I TPGStage2Emulation/HLS_arbitrary_Precision_Types/include/ -I`root-config --incdir` 
+CPPFLAGSSTAGE2=-I inc -I TPGStage2Emulation/ -I EMPTools/ -I EMPTools/CMSSWCode -I EMPTools/HLS_arbitrary_Precision_Types/include/ -I`root-config --incdir` 
 
 all:  writeStage2EMPRx.exe readNTuple.exe  fillInputData.exe testStage2SemiClustering.exe stage2HtoTauTauEnergyCorrelation.exe ntupleMCInfo.exe vbfjet.exe EmulTowerPRRTest.exe TowerPreEmulTest.exe  TestUnpackerTCProcInterface.exe #findFixedpattern.exe findEMax.exe tpgdata_3T_tcproc.exe  tpgdata_3T_fe.exe  scanadc_Sep24.exe dump_event.exe tpgdata_2T_fe.exe emul_Sep24.exe emul_3T_Sep24.exe  #loop_emul_Sep24.exe scanconfigval_Sep24.exe emul_Sep24.exe validateFixedADC.exe # findEMax.exe GenerateEmpRxFile.exe dump_event.exe emul_test-beam_Sep23.exe 
 
@@ -99,7 +99,7 @@ vbfjet.exe: test-stage2_Nov24/vbfjet.cpp inc/*.*  TPGStage2Emulation/*.hh
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/vbfjet.cpp `root-config --libs --cflags` -o vbfjet.exe -lEG
 
 writeStage2EMPRx.exe: test-stage2_Nov24/writeStage2EMPRx.cpp inc/*.*  TPGStage2Emulation/*.hh
-	g++ $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -I EMPTools/CMSSWCode test-stage2_Nov24/writeStage2EMPRx.cpp `root-config --libs --cflags` -lboost_iostreams -lz -llzma -o writeStage2EMPRx.exe
+	g++ $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/writeStage2EMPRx.cpp `root-config --libs --cflags` -lboost_iostreams -lz -llzma -o writeStage2EMPRx.exe
 
 
 clean:
