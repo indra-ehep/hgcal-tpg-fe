@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <cstring>
 #include <cassert>
+#include <array>
 
 namespace TPGBEDataformat{
 
@@ -347,6 +348,54 @@ private:
   uint16_t _tcData[2][NumberOfTCs];
 };
 
+  
+class TestStage2Input {
+private:
+    std::array<uint64_t, 162> data;
+
+public:
+    // Constructor
+    TestStage2Input() {
+        // Initialize data array with zeros
+        data.fill(0);
+    }
+
+    // Methods to get and set TC and pTT values of each word
+    uint16_t getTC(int wordIndex, int tcIndex) const {
+        int bitOffset = tcIndex * 15;
+        return static_cast<uint16_t>((data[wordIndex] >> bitOffset) & 0x7FFF);
+    }
+
+    void setTC(int wordIndex, int tcIndex, uint16_t value) {
+        int bitOffset = tcIndex * 15;
+        uint64_t mask = 0x7FFFULL << bitOffset;
+        data[wordIndex] &= ~mask; // Clear existing bits
+        data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
+    }
+
+    uint8_t getPTT(int wordIndex, int pttIndex) const {
+        int bitOffset = 45 + pttIndex * 8;
+        return static_cast<uint8_t>((data[wordIndex] >> bitOffset) & 0xFF);
+    }
+
+    void setPTT(int wordIndex, int pttIndex, uint8_t value) {
+        int bitOffset = 45 + pttIndex * 8;
+        uint64_t mask = 0xFFULL << bitOffset;
+        data[wordIndex] &= ~mask; // Clear existing bits
+        data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
+    }
+
+    void setBit(int wordIndex, int shift) {
+      data[wordIndex] |= (0xaULL<<shift) ;
+    }
+
+  std::array<uint64_t, 162>& accessData() {
+    return data;
+  }
+
+  uint64_t getData(int wordIndex) { return data[wordIndex]; }
+
+};
 
   
 class Stage1ToStage2Data {
