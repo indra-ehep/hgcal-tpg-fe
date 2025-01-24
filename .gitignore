@@ -19,6 +19,7 @@ log_old*
 *.root
 *.log 
 .*swp*
+*.o
 output*
 output/*
 dat
@@ -26,6 +27,9 @@ dat*
 cfgmap/slow_control_configuration
 dat_old
 .nfs*
+EMPTools/CMSSWCode
 EMPTools/CMSSWCode/*
+EMPTools/HLS_arbitrary_Precision_Types/*
 mapping/*
+mapping
 data_v11_rx_MsCounter

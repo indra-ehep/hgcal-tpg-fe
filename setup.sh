@@ -41,3 +41,9 @@ fi
 if [ $ishgcbeamtestpc -eq 1 ] ;  then
     ln -s /till/HgcalBeamtest2024_TEST dat
 fi
+
+cd EMPTools
+source getCMSSWCode.sh
+cd $CURRDIR
+git submodule init
+git submodule update
