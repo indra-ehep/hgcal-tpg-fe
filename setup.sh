@@ -42,6 +42,15 @@ if [ $ishgcbeamtestpc -eq 1 ] ;  then
     ln -s /till/HgcalBeamtest2024_TEST dat
 fi
 
+cd TPGStage2Emulation
+if [ ! -L HLS_arbitrary_Precision_Types ] ; then
+    ln -s ../EMPTools/HLS_arbitrary_Precision_Types .
+else
+    rm -rf HLS_arbitrary_Precision_Types
+    ln -s ../EMPTools/HLS_arbitrary_Precision_Types .
+fi
+cd $CURRDIR
+
 cd EMPTools
 source getCMSSWCode.sh
 cd $CURRDIR
