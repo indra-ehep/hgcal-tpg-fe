@@ -32,6 +32,9 @@ AutoDict*
 EMPTools/CMSSWCode
 EMPTools/CMSSWCode/*
 EMPTools/HLS_arbitrary_Precision_Types/*
+TPGStage2Emulation/HLS_arbitrary_Precision_Types
+TPGStage2Emulation/CMSSWCode
+TPGStage2Emulation/CMSSWCode/*
 mapping/*
 mapping
 data_v11_rx_MsCounter

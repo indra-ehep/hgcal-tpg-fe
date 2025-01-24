@@ -44,6 +44,8 @@ fi
 
 cd EMPTools
 source getCMSSWCode.sh
+cd CMSSWCode
+rm -rf .git
 cd $CURRDIR
 git submodule init
 git submodule update
