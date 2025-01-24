@@ -49,6 +49,7 @@ else
     rm -rf HLS_arbitrary_Precision_Types
     ln -s ../EMPTools/HLS_arbitrary_Precision_Types .
 fi
+source getCMSSWCode.sh
 cd $CURRDIR
 
 cd EMPTools
