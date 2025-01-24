@@ -3,25 +3,30 @@
 ## Motivation
 Emulation of the Trigger Primitive Generation (TPG) by HGCAL frontend ASICs.
 
+## Requirement
+Currently requires about 1.5 GB of diskspace at the end of setup.
+
 ## Download and Setup
 Run the setup code to download additional dependencies and setup. This setup is prepared for lxplus machines.
 
 ```
 ./setup.sh
 ```
+The setup script downloads additonal dependencies and EMP submodules
 
 ## Compile and run
 
 ### Examples for EMP pattern file I/O
 
-This requires additional code from CMSSW and submodules:
-```
-cd EMPTools;
-source getCMSSWCode.sh;
-cd ..;
-git submodule init;
-git submodule update;
-```
+///This requires additional code from CMSSW and submodules:
+///```
+///cd EMPTools;
+///source getCMSSWCode.sh;
+///cd ..;
+///git submodule init;
+///git submodule update;
+//```
+
 Compile and run the examples:
 ```
 make testEMP
