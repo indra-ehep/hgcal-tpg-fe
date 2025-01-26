@@ -99,7 +99,7 @@ vbfjet.exe: test-stage2_Nov24/vbfjet.cpp inc/*.*  TPGStage2Emulation/*.hh
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/vbfjet.cpp `root-config --libs --cflags` -o vbfjet.exe -lEG
 
 writeStage2EMPRx.exe: test-stage2_Nov24/writeStage2EMPRx.cpp inc/*.*  TPGStage2Emulation/*.hh
-	g++ $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/writeStage2EMPRx.cpp `root-config --libs --cflags` -lboost_iostreams -lz -llzma -o writeStage2EMPRx.exe
+	g++ $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/writeStage2EMPRx.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -o writeStage2EMPRx.exe
 
 
 clean:
