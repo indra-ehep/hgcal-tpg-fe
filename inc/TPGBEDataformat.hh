@@ -357,9 +357,11 @@ public:
     // Constructor
     Stage1ToStage2Data() {
         // Initialize data array with zeros
-        data.fill(0);
+      reset();
     }
 
+   void reset() { data.fill(0); }
+  
     // Methods to get and set TC and pTT values of each word
     uint16_t getTC(int wordIndex, int tcIndex) const {
         int bitOffset = tcIndex * 15;
@@ -393,7 +395,9 @@ public:
     data[wordIndex] |= (0xaULL<<shift) ;
   }
   
-  uint64_t getData(int wordIndex) { return data[wordIndex]; }
+  uint64_t getData(int wordIndex) const { return data[wordIndex]; }
+  void setData(int wordIndex, uint64_t value) { data[wordIndex] = value; }
+
   
 };
 
@@ -429,6 +433,64 @@ private:
   std::vector<Stage1ToStage2Data*> _s1Vector[3][14];
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
+
+  class Stage2ToL1TData {
+  private:
+    std::array<uint64_t, 30> linkdata[4];
+
+  public:
+    // Constructor
+    Stage2ToL1TData() {
+      // Initialize data array with zeros
+      reset();
+    }
+    
+    void reset() {
+      for(int il=0;il<4;il++) linkdata[il].fill(0);
+    }
+
+    void setTowerLinkData(int ieta, int iphi, uint16_t value){
+      if(ieta>=0 and ieta<20){
+	int etaw = -1;
+	for(int ie=0;ie<=ieta;ie++) if(ie%4==0) etaw++;
+	int wordIndex = 5*(iphi%6) + etaw;
+	int ilink = -1;
+	switch(iphi){
+	case 0 ... 5:
+	  ilink = 0;
+	  break;
+	case 6 ... 11:
+	  ilink = 1;
+	  break;
+	case 12 ... 17:
+	  ilink = 2;
+	  break;
+	case 18 ... 23:
+	  ilink = 3;
+	  break;
+	default:
+	  std::cerr << "Stage2ToL1TData::setTowerLinkData: Phi range is out of bound " << std::endl;
+	  break;
+	}
+	int bitOffset = 16*(ieta%4);
+	uint64_t mask = 0xFFFFULL << bitOffset;
+	linkdata[ilink][wordIndex] &= ~mask; 
+	linkdata[ilink][wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; 
+      }else{
+	std::cerr << "Stage2ToL1TData::setTowerLinkData: Eta range is out of bound " << std::endl;
+      }
+    }
+    
+    std::array<uint64_t, 30>& accessData(int ilink) {
+      return linkdata[ilink];
+    }
+    
+    uint64_t getData(int ilink, int wordIndex) const { return linkdata[ilink][wordIndex]; }
+    void setData(int ilink, int wordIndex, uint64_t value) { linkdata[ilink][wordIndex] = value; }
+
+  
+  };
+
 
   class Trig24Data{
   public:
