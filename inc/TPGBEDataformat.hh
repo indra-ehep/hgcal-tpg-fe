@@ -349,55 +349,6 @@ private:
 };
 
   
-class TestStage2Input {
-private:
-    std::array<uint64_t, 162> data;
-
-public:
-    // Constructor
-    TestStage2Input() {
-        // Initialize data array with zeros
-        data.fill(0);
-    }
-
-    // Methods to get and set TC and pTT values of each word
-    uint16_t getTC(int wordIndex, int tcIndex) const {
-        int bitOffset = tcIndex * 15;
-        return static_cast<uint16_t>((data[wordIndex] >> bitOffset) & 0x7FFF);
-    }
-
-    void setTC(int wordIndex, int tcIndex, uint16_t value) {
-        int bitOffset = tcIndex * 15;
-        uint64_t mask = 0x7FFFULL << bitOffset;
-        data[wordIndex] &= ~mask; // Clear existing bits
-        data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
-    }
-
-    uint8_t getPTT(int wordIndex, int pttIndex) const {
-        int bitOffset = 45 + pttIndex * 8;
-        return static_cast<uint8_t>((data[wordIndex] >> bitOffset) & 0xFF);
-    }
-
-    void setPTT(int wordIndex, int pttIndex, uint8_t value) {
-        int bitOffset = 45 + pttIndex * 8;
-        uint64_t mask = 0xFFULL << bitOffset;
-        data[wordIndex] &= ~mask; // Clear existing bits
-        data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
-    }
-
-    void setBit(int wordIndex, int shift) {
-      data[wordIndex] |= (0xaULL<<shift) ;
-    }
-
-  std::array<uint64_t, 162>& accessData() {
-    return data;
-  }
-
-  uint64_t getData(int wordIndex) { return data[wordIndex]; }
-
-};
-
-  
 class Stage1ToStage2Data {
 private:
     std::array<uint64_t, 108> data;
@@ -406,9 +357,11 @@ public:
     // Constructor
     Stage1ToStage2Data() {
         // Initialize data array with zeros
-        data.fill(0);
+      reset();
     }
 
+   void reset() { data.fill(0); }
+  
     // Methods to get and set TC and pTT values of each word
     uint16_t getTC(int wordIndex, int tcIndex) const {
         int bitOffset = tcIndex * 15;
@@ -437,6 +390,15 @@ public:
   std::array<uint64_t, 108>& accessData() {
     return data;
   }
+
+  void setBit(int wordIndex, int shift) {
+    data[wordIndex] |= (0xaULL<<shift) ;
+  }
+  
+  uint64_t getData(int wordIndex) const { return data[wordIndex]; }
+  void setData(int wordIndex, uint64_t value) { data[wordIndex] = value; }
+
+  
 };
 
 class Stage1ToStage2DataArray {
@@ -471,6 +433,64 @@ private:
   std::vector<Stage1ToStage2Data*> _s1Vector[3][14];
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
+
+  class Stage2ToL1TData {
+  private:
+    std::array<uint64_t, 30> linkdata[4];
+
+  public:
+    // Constructor
+    Stage2ToL1TData() {
+      // Initialize data array with zeros
+      reset();
+    }
+    
+    void reset() {
+      for(int il=0;il<4;il++) linkdata[il].fill(0);
+    }
+
+    void setTowerLinkData(int ieta, int iphi, uint16_t value){
+      if(ieta>=0 and ieta<20){
+	int etaw = -1;
+	for(int ie=0;ie<=ieta;ie++) if(ie%4==0) etaw++;
+	int wordIndex = 5*(iphi%6) + etaw;
+	int ilink = -1;
+	switch(iphi){
+	case 0 ... 5:
+	  ilink = 0;
+	  break;
+	case 6 ... 11:
+	  ilink = 1;
+	  break;
+	case 12 ... 17:
+	  ilink = 2;
+	  break;
+	case 18 ... 23:
+	  ilink = 3;
+	  break;
+	default:
+	  std::cerr << "Stage2ToL1TData::setTowerLinkData: Phi range is out of bound " << std::endl;
+	  break;
+	}
+	int bitOffset = 16*(ieta%4);
+	uint64_t mask = 0xFFFFULL << bitOffset;
+	linkdata[ilink][wordIndex] &= ~mask; 
+	linkdata[ilink][wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; 
+      }else{
+	std::cerr << "Stage2ToL1TData::setTowerLinkData: Eta range is out of bound " << std::endl;
+      }
+    }
+    
+    std::array<uint64_t, 30>& accessData(int ilink) {
+      return linkdata[ilink];
+    }
+    
+    uint64_t getData(int ilink, int wordIndex) const { return linkdata[ilink][wordIndex]; }
+    void setData(int ilink, int wordIndex, uint64_t value) { linkdata[ilink][wordIndex] = value; }
+
+  
+  };
+
 
   class Trig24Data{
   public:
