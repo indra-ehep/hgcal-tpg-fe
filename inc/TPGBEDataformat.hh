@@ -437,7 +437,9 @@ private:
   class Stage2ToL1TData {
   private:
     std::array<uint64_t, 162> linkdata[4];
-
+    uint16_t bxCounter;
+    uint8_t linkid;
+    
   public:
     // Constructor
     Stage2ToL1TData() {
@@ -453,7 +455,7 @@ private:
       if(ieta>=0 and ieta<20){
 	int etaw = -1;
 	for(int ie=0;ie<=ieta;ie++) if(ie%4==0) etaw++;
-	int wordIndex = 5*(iphi%6) + etaw;
+	int wordIndex = 5*(iphi%6) + etaw + 1; //1 offset for the header
 	int ilink = -1;
 	switch(iphi){
 	case 0 ... 5:
@@ -488,6 +490,17 @@ private:
     uint64_t getData(int ilink, int wordIndex) const { return linkdata[ilink][wordIndex]; }
     void setData(int ilink, int wordIndex, uint64_t value) { linkdata[ilink][wordIndex] = value; }
 
+    void setBit(int ilink, int wordIndex, int shift) {
+      linkdata[ilink][wordIndex] = 0;
+      linkdata[ilink][wordIndex] |= (0xabcULL<<shift) ;
+    }
+    void setBxId(int bxid) { bxCounter = bxid; }
+    void setLinkId(int lpid) { linkid = lpid; }
+    uint64_t getHeader(int ilink) {
+      linkdata[ilink][0] |= static_cast<uint64_t>(bxCounter);
+      linkdata[ilink][0] |= static_cast<uint64_t>(linkid) << 16;
+      return linkdata[ilink][0];
+    }
   
   };
 

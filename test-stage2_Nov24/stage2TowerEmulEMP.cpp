@@ -77,11 +77,15 @@ int main(int argc, char** argv)
       l1t::demo::BoardData::Channel channelData;
       int ilink = channel%4;
       for (size_t ibx = 0; ibx < nofBx; ++ibx) {
+	s2OutputBx[ibx].setBxId(ibx);
+	s2OutputBx[ibx].setLinkId(channel);
+	s2OutputBx[ibx].setBit(ilink,0,52);
 	for (size_t i = 0; i < l1tnumWordsBx; ++i) {
 	  // Create a Frame object and populate it
 	  l1t::demo::Frame frame;
-	  frame.data = (i==0)?emptydata:s2OutputBx[ibx].getData(ilink,i-1);
-	  frame.valid = ((i == (l1tnumWordsBx-1)) or  i <= 30);
+	  //frame.data = (i==0)?emptydata:s2OutputBx[ibx].getData(ilink,i-1);
+	  frame.data = (i==0)?s2OutputBx[ibx].getHeader(ilink):s2OutputBx[ibx].getData(ilink,i);
+	  frame.valid = (i <= 30);
 	  frame.startOfOrbit = false;
 	  frame.startOfPacket = (i == 0);
 	  frame.endOfPacket = (i == (l1tnumWordsBx-1));
