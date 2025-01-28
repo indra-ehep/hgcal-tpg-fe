@@ -13,9 +13,8 @@
 int main(int argc, char** argv)
 {
     // ===============================================
-    // Example for reading in data from a pattern file
-    // ===============================================
-    std::string inputFileName = "EMPStage2Input.txt";
+    //std::string inputFileName = "EMPStage2Input.txt";
+    std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_A.txt";
     l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
     auto nChannels = inputs.size();
     const size_t numWordsBx = 162;
@@ -56,15 +55,17 @@ int main(int argc, char** argv)
     for(int ibx=0;ibx<nofBx;ibx++){
       stage2TowerEmul.run(vS12[ibx]);
       for(unsigned eta(0);eta<20;eta++) 
-	for(unsigned phi(0);phi<24;phi++) 
-	  s2OutputBx[ibx].setTowerLinkData(eta, phi, stage2TowerEmul.getTowerOutput(eta,phi));             
+	for(unsigned phi(0);phi<24;phi++) {
+	  //std::cout << "eta: " << eta << ", phi : " << phi << ", towerdata0:" << stage2TowerEmul.getTowerData(0,eta,phi) << ", towerdata1:" << stage2TowerEmul.getTowerData(1,eta,phi) <<", value: " << std::hex << stage2TowerEmul.getTowerOutput(eta,phi) << std::dec << std::endl;
+	  s2OutputBx[ibx].setTowerLinkData(eta, phi, stage2TowerEmul.getTowerOutput(eta,phi));
+	}
     }//bx loop
 
     //Write EMP output
     l1t::demo::BoardData boardData("L1TBoard");
   
     // Number of frames
-    const size_t l1tnumWordsBx = 30;
+    const size_t l1tnumWordsBx = numWordsBx;
   
     // Channels to define
     std::vector<size_t> channels;
@@ -76,11 +77,15 @@ int main(int argc, char** argv)
       l1t::demo::BoardData::Channel channelData;
       int ilink = channel%4;
       for (size_t ibx = 0; ibx < nofBx; ++ibx) {
+	s2OutputBx[ibx].setBxId(ibx);
+	s2OutputBx[ibx].setLinkId(channel);
+	s2OutputBx[ibx].setBit(ilink,0,52);
 	for (size_t i = 0; i < l1tnumWordsBx; ++i) {
 	  // Create a Frame object and populate it
 	  l1t::demo::Frame frame;
-	  frame.data = s2OutputBx[ibx].getData(ilink,i);
-	  frame.valid = true;
+	  //frame.data = (i==0)?emptydata:s2OutputBx[ibx].getData(ilink,i-1);
+	  frame.data = (i==0)?s2OutputBx[ibx].getHeader(ilink):s2OutputBx[ibx].getData(ilink,i);
+	  frame.valid = (i <= 30);
 	  frame.startOfOrbit = false;
 	  frame.startOfPacket = (i == 0);
 	  frame.endOfPacket = (i == (l1tnumWordsBx-1));
