@@ -568,42 +568,42 @@ namespace TPGStage2Emulation
       // run(_vClusterData,s2L1t);
     }
 
-    void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data *> &vS12)
-    {
-      std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint16_t));
+    // void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data *> &vS12)
+    // {
+    //   std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
 
-      for (unsigned l(0); l < vS12.size(); l++)
-      {
-        unsigned offset(5 * (l % 6));
-        if ((l % 6) >= 4)
-          offset -= 6;
+    //   for (unsigned l(0); l < vS12.size(); l++)
+    //   {
+    //     unsigned offset(5 * (l % 6));
+    //     if ((l % 6) >= 4)
+    //       offset -= 6;
 
-        for (unsigned w(0); w < 100; w++)
-        {
-          for (unsigned eh(0); eh < 2; eh++)
-          {
-            uint8_t e(vS12[l]->getPTT(w, eh));
-            uint32_t eunpacked(unpack4E4MToUnsigned(e));
-            _towerData[eh][w / 5][offset + w % 5] += eunpacked;
-          }
-        }
-      }
+    //     for (unsigned w(0); w < 100; w++)
+    //     {
+    //       for (unsigned eh(0); eh < 2; eh++)
+    //       {
+    //         uint8_t e(vS12[l]->getPTT(w, eh));
+    //         uint32_t eunpacked(unpack4E4MToUnsigned(e));
+    //         _towerData[eh][w / 5][offset + w % 5] += eunpacked;
+    //       }
+    //     }
+    //   }
 
-      for(unsigned eta(0);eta<20;eta++) {
-	for(unsigned phi(0);phi<24;phi++) {
-	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
-	  if(total>0xffff) total=0xffff;
+    //   for(unsigned eta(0);eta<20;eta++) {
+    // 	for(unsigned phi(0);phi<24;phi++) {
+    // 	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
+    // 	  if(total>0xffff) total=0xffff;
 
-	  unsigned fraction(7);
-	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
-	  if(fraction>7) fraction=7;
-	  _towerOutput[eta][phi]=total>>6|fraction<<10;
-	}
-      }
-    }
+    // 	  unsigned fraction(7);
+    // 	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
+    // 	  if(fraction>7) fraction=7;
+    // 	  _towerOutput[eta][phi]=total>>6|fraction<<10;
+    // 	}
+    //   }
+    // }
     
     void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data> &vS12){
-      std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint16_t));
+      std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
       
       for (unsigned l(0); l < vS12.size(); l++){
         unsigned offset(5 * (l % 6));
@@ -614,6 +614,7 @@ namespace TPGStage2Emulation
           for (unsigned eh(0); eh < 2; eh++){
             uint8_t e(vS12[l].getPTT(w, eh));
             uint32_t eunpacked(unpack4E4MToUnsigned(e));
+	    //std::cout << "l: " << l << ", offset: " << offset << ", w: " << w << ", (w / 5): " << (w / 5) << ", (offset + w % 5): " << (offset + w % 5) <<", eh: " << eh << ", e: " << uint16_t(e) << ", eunpacked: " << eunpacked << std::endl;
             _towerData[eh][w / 5][offset + w % 5] += eunpacked;
           }
         }
@@ -632,7 +633,7 @@ namespace TPGStage2Emulation
       }
     }
     
-    uint32_t getTowerData(int iz, int ieta, int iphi) const { return _towerData[iz][ieta][iphi];}
+    uint32_t getTowerData(int idet, int ieta, int iphi) const { return _towerData[idet][ieta][iphi];}
     uint16_t getTowerOutput(int ieta, int iphi) const { return _towerOutput[ieta][iphi];}
     
   private:

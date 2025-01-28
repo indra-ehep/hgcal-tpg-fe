@@ -436,7 +436,7 @@ private:
 
   class Stage2ToL1TData {
   private:
-    std::array<uint64_t, 30> linkdata[4];
+    std::array<uint64_t, 162> linkdata[4];
 
   public:
     // Constructor
@@ -481,7 +481,7 @@ private:
       }
     }
     
-    std::array<uint64_t, 30>& accessData(int ilink) {
+    std::array<uint64_t, 162>& accessData(int ilink) {
       return linkdata[ilink];
     }
     
