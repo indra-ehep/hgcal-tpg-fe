@@ -405,12 +405,12 @@ class Stage1ToStage2DataArray {
 public:
   Stage1ToStage2DataArray() {
     for(unsigned sector(0);sector<3;sector++) {
-      for(unsigned s1Board(0);s1Board<14;s1Board++) {	
+      for(unsigned s1Board(0);s1Board<16;s1Board++) {	
 	for(unsigned link(0);link<6;link++) {	
 	  _s1Vector[sector][s1Board].push_back(&(_dataArray[sector][s1Board][link]));
 
-	  if(link<4) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link]));
-	  else _s2Vector[sector].push_back(&(_dataArray[(sector+1)%3][s1Board][link]));
+	  if(link>=2) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link-2]));
+	  else _s2Vector[sector].push_back(&(_dataArray[(sector+2)%3][s1Board][link]));
 	}	
       }
     }
@@ -418,7 +418,7 @@ public:
 
   std::vector<Stage1ToStage2Data*>& s1Vector(unsigned s, unsigned b) {
     assert(s<3);
-    assert(b<14);
+    assert(b<16);
     return _s1Vector[s][b];
   }
   
@@ -429,8 +429,8 @@ public:
 
   
 private:
-  Stage1ToStage2Data _dataArray[3][14][6];
-  std::vector<Stage1ToStage2Data*> _s1Vector[3][14];
+  Stage1ToStage2Data _dataArray[3][16][6];
+  std::vector<Stage1ToStage2Data*> _s1Vector[3][16];
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
 
