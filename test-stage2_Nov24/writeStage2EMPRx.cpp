@@ -31,11 +31,15 @@ int main(int argc, char** argv)
     for (size_t ibx = 0; ibx < nofBx; ++ibx) {
       TPGBEDataformat::Stage1ToStage2Data s2InputBx;
       int s2i = 0;
+      int s2i2 = 0;
       for (size_t i = 0; i < numWordsBx; ++i) {
 	if(i<=(numWordsBx-2) and (i+1)%3!=0){
 	  s2InputBx.setBit(s2i,60);
 	  for(int itc=0;itc<3;itc++) s2InputBx.setTC(s2i, itc, (3*i+itc)%48);
-	  for(int iptt=0;iptt<2;iptt++) s2InputBx.setPTT(s2i, iptt, 0);
+	  //for(int iptt=0;iptt<2;iptt++) s2InputBx.setPTT(s2i, iptt, 0);
+	  s2InputBx.setPTT(s2i, 0, s2i2%256); //CEH
+	  s2InputBx.setPTT(s2i, 1, s2i); //CEE
+	  
 	}
 	// Create a Frame object and populate it
 	l1t::demo::Frame frame;
@@ -50,6 +54,8 @@ int main(int argc, char** argv)
 	channelData.push_back(frame);
 	
 	if(i%3<=1)s2i++;
+	if(i%3<=1)
+	  s2i2 += 2;
       }
       
     }//ibx
