@@ -278,7 +278,8 @@ namespace TPGStage2Emulation
       else if (e == 1)
         return 16 + m;
       else
-        return (32 + 2 * m + 1) << (e - 2);
+        //return (32 + 2 * m + 1) << (e - 2);
+	return (32 + 2 * m ) << (e - 2);
     }
 
     enum
@@ -635,16 +636,20 @@ namespace TPGStage2Emulation
 	  //uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
 	  //if(total>0xffff) total=0xffff;
 	  uint32_t total(((_towerData[0][eta][phi]+_towerData[1][eta][phi])*s2bconf->getScaleFactor())>>17) ;
-	  if(total>0x3ff) total=0x3ff;
+	  unsigned flag = 0;
+	  if(total>0x3ff) {
+	    total=0x3ff;
+	    flag = 1;
+	  }
 	  unsigned fraction(7);
 	  // if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
 	  // if(fraction>7) fraction=7;
-	  // _towerOutput[eta][phi]=total>>6|fraction<<10;
+	  //_towerOutput[eta][phi]=total>>6|fraction<<10;
 	  for(uint32_t ifrac = 0 ; ifrac < 7 ; ifrac++){
 	    if( _towerData[0][eta][phi]< ((s2bconf->getThresh(ifrac)*_towerData[1][eta][phi])>>17) )
 	      fraction = ifrac;	    
 	  }
-	  
+	  _towerOutput[eta][phi] = total|fraction<<10|flag<<13;
 	}
       }
     }

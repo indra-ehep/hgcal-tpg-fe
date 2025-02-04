@@ -1,0 +1,19 @@
+LinkMuxNode:
+  TmIndex: 0
+  BoardId: 0
+  Phase0: 0
+  Phase1: 0
+  Phase2: 0
+  Phase3: 0
+FormatTowersNode:
+  Threshold0: 65535
+  Threshold1: 61439
+  Threshold2: 57343
+  Threshold3: 53247
+  Threshold4: 49151
+  Threshold5: 45055
+  Threshold6: 40959
+  ScaleFactor: 4096
+BufferTowersNode:
+  ReadPageOffset: 1
+  CounterOffset: 0
