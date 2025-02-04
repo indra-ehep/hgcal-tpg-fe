@@ -25,7 +25,7 @@ using namespace std;
 int main(int argc, char** argv)
 {
 
-  std::string inputFileName = "./input/stage1-PRR/EMPSample/rx_summary.txt";
+  std::string inputFileName = "./input/stage1-PRR/EMPSample/rx_summary_60.txt";
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
   std::cout << "Board name : " << inputs.name() << std::endl;
@@ -111,7 +111,10 @@ int main(int argc, char** argv)
     TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC4A, econTConf[2].getNofSTCs(), &Elinks[6], vTCel[2]);
     TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTConf[3].getNofSTCs(), &Elinks[10], vTCel[3]);
     TPGStage1Emulation::Stage1IO::convertElinksToTcRawData(TPGFEDataformat::STC16, econTConf[3].getNofSTCs(), &Elinks[12], vTCel[4]);
-    for(int iecon=0;iecon<5;iecon++) vTCel[iecon].print();
+    for(int iecon=0;iecon<5;iecon++) {
+      vTCel[iecon].setModuleSum(0,0);
+      vTCel[iecon].print();
+    }
     
     for(int iecon=0;iecon<5;iecon++) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(vTCel[iecon].bx(), vTCel[iecon], up1[iecon]);
     for(int iecon=0;iecon<5;iecon++) up1[iecon].print();

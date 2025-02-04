@@ -10,11 +10,19 @@
 #include "TPGBEDataformat.hh"
 #include "Stage2.hh"
 
+#include "TPGStage2Configuration.hh"
+
 int main(int argc, char** argv)
 {
     // ===============================================
     //std::string inputFileName = "EMPStage2Input.txt";
-    std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_A.txt";
+  //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_A.txt";
+  std::string config = "input/stage2/configuration/Stage2Configuration.yaml" ;
+  TPGStage2Configuration::Stage2Board sb;
+  sb.readConfigYaml(config.c_str());
+  sb.print();
+
+  std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_OneEvent.txt";
     l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
     auto nChannels = inputs.size();
     const size_t numWordsBx = 162;
@@ -51,6 +59,7 @@ int main(int argc, char** argv)
     std::cout << "Nof links for Bx2 : " << vS12[1].size() << std::endl;
     
     TPGStage2Emulation::Stage2 stage2TowerEmul;
+    stage2TowerEmul.setConfiguration(&sb);
     TPGBEDataformat::Stage2ToL1TData s2OutputBx[nofBx] ; 
     for(int ibx=0;ibx<nofBx;ibx++){
       stage2TowerEmul.run(vS12[ibx]);

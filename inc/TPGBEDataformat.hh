@@ -409,7 +409,7 @@ public:
 	for(unsigned link(0);link<6;link++) {	
 	  _s1Vector[sector][s1Board].push_back(&(_dataArray[sector][s1Board][link]));
 
-	  if(link>=2) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link-2]));
+	  if(link>=2) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link]));
 	  else _s2Vector[sector].push_back(&(_dataArray[(sector+2)%3][s1Board][link]));
 	}	
       }
