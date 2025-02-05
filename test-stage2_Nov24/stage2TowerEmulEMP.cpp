@@ -67,7 +67,7 @@ int main(int argc, char** argv)
       stage2TowerEmul.run(vS12[ibx]);
       for(unsigned phi(0);phi<24;phi++) {
 	for(unsigned eta(0);eta<20;eta++) {
-	  //std::cout << "eta: " << eta << ", phi : " << phi << ", towerdata0:" << stage2TowerEmul.getTowerData(0,eta,phi) << ", towerdata1:" << stage2TowerEmul.getTowerData(1,eta,phi) <<", value: " << std::hex << stage2TowerEmul.getTowerOutput(eta,phi) << std::dec << std::endl;
+	  //std::cout << "stage2TowerEmulEMP.exe:  eta: " << eta << ", phi : " << phi << ", towerdata0:" << stage2TowerEmul.getTowerData(0,eta,phi) << ", towerdata1:" << stage2TowerEmul.getTowerData(1,eta,phi) <<", value: 0x" << std::hex << stage2TowerEmul.getTowerOutput(eta,phi) << std::dec << std::endl;
 	  s2OutputBx[ibx].setTowerLinkData(eta, phi, stage2TowerEmul.getTowerOutput(eta,phi));
 	}
       }
