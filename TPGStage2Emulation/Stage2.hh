@@ -625,8 +625,9 @@ namespace TPGStage2Emulation
           for (unsigned eh(0); eh < 2; eh++){
             uint8_t e(vS12[l].getPTT(w, eh));
             uint32_t eunpacked(unpack4E4MToUnsigned(e));
-	    //std::cout << "l: " << l << ", link: "<< link <<", offset: " << offset << ", w: " << w << ", (w / 5): " << (w / 5) << ", (offset + w % 5): " << (offset + w % 5) <<", eh: " << eh << ", e: " << uint16_t(e) << ", eunpacked: " << eunpacked << std::endl;
-            _towerData[eh][w / 5][offset + w % 5] += eunpacked;
+	    //std::cout << "Stage2::run l: " << l << ", link: "<< link <<", offset: " << offset << ", w: " << w << ", iphi:(w / 20): " << (w / 20) << ", ietaL(offset + w % 5): " << (offset + w % 5) <<", eh: " << eh << ", e: " << uint16_t(e) << ", eunpacked: " << eunpacked << std::endl;
+            //_towerData[eh][w / 5][offset + w % 5] += eunpacked; //earlier
+	    _towerData[eh][ w % 20][offset + (w / 20)] += eunpacked; //indra+paul
           }
         }
       }

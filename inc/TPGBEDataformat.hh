@@ -477,7 +477,8 @@ private:
 	int bitOffset = 16*(ieta%4);
 	uint64_t mask = 0xFFFFULL << bitOffset;
 	linkdata[ilink][wordIndex] &= ~mask; 
-	linkdata[ilink][wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; 
+	linkdata[ilink][wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask;
+	//std::cout << std::setw(6) <<"Stage2ToL1TData::setTowerLinkData Inputs: (eta,phi,value) (" << ieta << ", " << iphi << ", " << value << "),  etaw: " << etaw << ", ilink: " << ilink << ", wordIndex:" << wordIndex << ", bitOffset: " << bitOffset << ", mask: 0x" << std::hex << std::setw(32) << mask << ", linkdata: 0x" << linkdata[ilink][wordIndex] << std::dec << std::endl; 
       }else{
 	std::cerr << "Stage2ToL1TData::setTowerLinkData: Eta range is out of bound " << std::endl;
       }
