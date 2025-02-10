@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
   for ( const auto& channel : inputs ) {
       channel_ids.push_back(channel.first);
   }
-  uint32_t elinks[128][290][4]; //128 events, 290 modules, maximum of 4 elinks
+  uint32_t elinks[128][300][4]; //128 events, 300 modules, maximum of 4 elinks
   for(unsigned int nChn = 0; nChn<(channel_ids.size()/2); nChn+=1){
       unsigned thechnnr = channel_ids.at(2*nChn);
       for (unsigned int iEvt=0; iEvt < 128 ; iEvt++){ //original
@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
       if(doPrint)
       std::cout<<"==========EVENT "<<iEvt<<"==========="<<std::endl;
       evt_ = iEvt;
-      for(unsigned int iMod=0; iMod<290; iMod++){
+      for(unsigned int iMod=0; iMod<300; iMod++){
         TPGFEDataformat::TcRawDataPacket vTc;
         TPGBEDataformat::UnpackerOutputStreamPair theOSP;
         if(iMod%5==0){
