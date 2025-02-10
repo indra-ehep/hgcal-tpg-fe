@@ -63,7 +63,7 @@ int main() {
   evtstree.Branch("Column", &col_,"col_/I");
   evtstree.Branch("Energy", &energy_,"energy_/L");
 
-  std::vector< std::pair<unsigned,std::vector<TPGFEDataformat::OrderedElinkPacket> > > empRx(58);
+  std::vector< std::pair<unsigned,std::vector<TPGFEDataformat::OrderedElinkPacket> > > empRx(60);
   unsigned linkN[128];
 
   unsigned ln(0);
@@ -74,7 +74,7 @@ int main() {
     }
 
     if(connected) {
-      assert(ln<58);
+      assert(ln<60);
       linkN[lp]=ln;
       empRx[ln].first=lp;
       ln++;
