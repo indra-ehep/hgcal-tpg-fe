@@ -68,6 +68,9 @@ TowerPreEmulTest.exe: TPGStage1Emulation/TowerSums.h TPGStage1Emulation/Utilitie
 TestUnpackerTCProcInterface.exe: stage1-PRR/TestUnpackerTCProcInterface.cpp TPGFEEmulation/*.hh  TPGStage1Emulation/*.hh common/inc/*.h inc/*.*
 	g++ -I TPGStage1Emulation/ -I. TPGStage1Emulation/HGCalLayer1PhiOrderFwImpl.cc -I. -I common/inc -I inc -I TPGFEEmulation/ stage1-PRR/TestUnpackerTCProcInterface.cpp -L /opt/local/lib  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(BOOST)/include -lboost_iostreams -lz -llzma $(LDFLAGS) $(CPPFLAGS) `root-config --libs --cflags` -o TestUnpackerTCProcInterface.exe
 
+UnpackerTCProcInterfaceEMPAndDirect.exe: stage1-PRR/UnpackerTCProcInterfaceEMPAndDirect.cpp TPGFEEmulation/*.hh TPGStage1Emulation/*.hh common/inc/*.h inc/*.*
+	g++ -I TPGStage1Emulation/ -I. TPGStage1Emulation/HGCalLayer1PhiOrderFwImpl.cc -I. -I common/inc -I inc -I TPGFEEmulation/ stage1-PRR/UnpackerTCProcInterfaceEMPAndDirect.cpp -L /opt/local/lib  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(BOOST)/include -lboost_iostreams -lz -llzma $(LDFLAGS) $(CPPFLAGS) `root-config --libs --cflags` -o UnpackerTCProcInterfaceEMPAndDirect.exe
+
 # TestEMP: EMPTools/test.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* $(BOOST)/include
 # 	g++  EMPTools/test.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(BOOST)/include -lboost_iostreams -lz -llzma -o TestEMP.exe
 

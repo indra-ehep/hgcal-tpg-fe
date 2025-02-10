@@ -65,7 +65,8 @@ int main(int argc, char** argv) {
   evtstree.Branch("Column", &col_,"col_/I");
   evtstree.Branch("Energy", &energy_,"energy_/L");
 
-  std::string inputFileName = "data_v11_rx_MsCounter/rx_summary.txt";
+  //std::string inputFileName = "data_v11_rx_MsCounter/rx_summary.txt";
+  std::string inputFileName = "stage1-PRR/RandomlyGenerated.txt";
 
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
 
@@ -74,11 +75,12 @@ int main(int argc, char** argv) {
   for ( const auto& channel : inputs ) {
       channel_ids.push_back(channel.first);
   }
-  uint32_t elinks[128][290][4]; //128 events, 290 modules, maximum of 4 elinks
+  uint32_t elinks[128][300][4]; //128 events, 300 modules, maximum of 4 elinks
   for(unsigned int nChn = 0; nChn<(channel_ids.size()/2); nChn+=1){
       unsigned thechnnr = channel_ids.at(2*nChn);
-      for (unsigned int iEvt=0; iEvt < 128 ; iEvt++){
-        assert(inputs.at(thechnnr).at(iEvt*8).startOfPacket);
+      for (unsigned int iEvt=0; iEvt < 128 ; iEvt++){ //original
+      //for (unsigned int iEvt=0; iEvt < 1 ; iEvt++){
+        //assert(inputs.at(thechnnr).at(iEvt*8).startOfPacket);
         elinks[iEvt][nChn*5+0][0] = inputs.at(thechnnr).at(iEvt*8+0).data;
         elinks[iEvt][nChn*5+2][1] = inputs.at(thechnnr+1).at(iEvt*8+0).data;
         elinks[iEvt][nChn*5+0][1] = inputs.at(thechnnr).at(iEvt*8+1).data;
@@ -96,12 +98,13 @@ int main(int argc, char** argv) {
       }
   }
 
+    //for(unsigned int iEvt = 0; iEvt <1 ;iEvt++){
     for(unsigned int iEvt = 0; iEvt <128 ;iEvt++){
       std::vector<TPGBEDataformat::UnpackerOutputStreamPair> theOutputStreams;
       if(doPrint)
       std::cout<<"==========EVENT "<<iEvt<<"==========="<<std::endl;
       evt_ = iEvt;
-      for(unsigned int iMod=0; iMod<290; iMod++){
+      for(unsigned int iMod=0; iMod<300; iMod++){
         TPGFEDataformat::TcRawDataPacket vTc;
         TPGBEDataformat::UnpackerOutputStreamPair theOSP;
         if(iMod%5==0){
