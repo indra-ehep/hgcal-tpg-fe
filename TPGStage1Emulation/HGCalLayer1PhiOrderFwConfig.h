@@ -32,7 +32,7 @@ namespace l1thgcfirmware {
     }*/
 
     void configureTestSetupMappingInfo() {
-      for (unsigned iModGroup = 0; iModGroup < 58; iModGroup++) {
+      for (unsigned iModGroup = 0; iModGroup < 60; iModGroup++) {
         for (unsigned j = 0; j < 4; j++) {  //BC low (mod 1) - 4 bins, 1TC/bin
           chn_frame_slots_per_mod_and_col_[1 + iModGroup * 5][j].push_back(std::make_pair(0, 0));
           max_tcs_per_module_and_column_[1 + iModGroup * 5].push_back(std::make_pair(j, chn_frame_slots_per_mod_and_col_[1][j].size()));
@@ -154,7 +154,7 @@ namespace l1thgcfirmware {
     }
 
     void configureTestSetupTDAQReadoutInfo() {
-      for (unsigned iModGroup = 0; iModGroup < 58; iModGroup++) {
+      for (unsigned iModGroup = 0; iModGroup < 60; iModGroup++) {
         for (unsigned j = 0; j < 4; j++) {  //BC low (mod 1) - 4 bins, 1TC/bin
           tdaq_slots_per_bin_per_mod_[1 + iModGroup * 5].push_back(std::make_pair(j, 0));
         }
