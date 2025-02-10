@@ -405,12 +405,12 @@ class Stage1ToStage2DataArray {
 public:
   Stage1ToStage2DataArray() {
     for(unsigned sector(0);sector<3;sector++) {
-      for(unsigned s1Board(0);s1Board<14;s1Board++) {	
+      for(unsigned s1Board(0);s1Board<16;s1Board++) {	
 	for(unsigned link(0);link<6;link++) {	
 	  _s1Vector[sector][s1Board].push_back(&(_dataArray[sector][s1Board][link]));
 
-	  if(link<4) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link]));
-	  else _s2Vector[sector].push_back(&(_dataArray[(sector+1)%3][s1Board][link]));
+	  if(link>=2) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link]));
+	  else _s2Vector[sector].push_back(&(_dataArray[(sector+2)%3][s1Board][link]));
 	}	
       }
     }
@@ -418,7 +418,7 @@ public:
 
   std::vector<Stage1ToStage2Data*>& s1Vector(unsigned s, unsigned b) {
     assert(s<3);
-    assert(b<14);
+    assert(b<16);
     return _s1Vector[s][b];
   }
   
@@ -429,15 +429,17 @@ public:
 
   
 private:
-  Stage1ToStage2Data _dataArray[3][14][6];
-  std::vector<Stage1ToStage2Data*> _s1Vector[3][14];
+  Stage1ToStage2Data _dataArray[3][16][6];
+  std::vector<Stage1ToStage2Data*> _s1Vector[3][16];
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
 
   class Stage2ToL1TData {
   private:
-    std::array<uint64_t, 30> linkdata[4];
-
+    std::array<uint64_t, 162> linkdata[4];
+    uint16_t bxCounter;
+    uint8_t linkid;
+    
   public:
     // Constructor
     Stage2ToL1TData() {
@@ -453,7 +455,7 @@ private:
       if(ieta>=0 and ieta<20){
 	int etaw = -1;
 	for(int ie=0;ie<=ieta;ie++) if(ie%4==0) etaw++;
-	int wordIndex = 5*(iphi%6) + etaw;
+	int wordIndex = 5*(iphi%6) + etaw + 1; //1 offset for the header
 	int ilink = -1;
 	switch(iphi){
 	case 0 ... 5:
@@ -475,19 +477,31 @@ private:
 	int bitOffset = 16*(ieta%4);
 	uint64_t mask = 0xFFFFULL << bitOffset;
 	linkdata[ilink][wordIndex] &= ~mask; 
-	linkdata[ilink][wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; 
+	linkdata[ilink][wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask;
+	//std::cout << std::setw(6) <<"Stage2ToL1TData::setTowerLinkData Inputs: (eta,phi,value) (" << ieta << ", " << iphi << ", " << value << "),  etaw: " << etaw << ", ilink: " << ilink << ", wordIndex:" << wordIndex << ", bitOffset: " << bitOffset << ", mask: 0x" << std::hex << std::setw(32) << mask << ", linkdata: 0x" << linkdata[ilink][wordIndex] << std::dec << std::endl; 
       }else{
 	std::cerr << "Stage2ToL1TData::setTowerLinkData: Eta range is out of bound " << std::endl;
       }
     }
     
-    std::array<uint64_t, 30>& accessData(int ilink) {
+    std::array<uint64_t, 162>& accessData(int ilink) {
       return linkdata[ilink];
     }
     
     uint64_t getData(int ilink, int wordIndex) const { return linkdata[ilink][wordIndex]; }
     void setData(int ilink, int wordIndex, uint64_t value) { linkdata[ilink][wordIndex] = value; }
 
+    void setBit(int ilink, int wordIndex, int shift) {
+      linkdata[ilink][wordIndex] = 0;
+      linkdata[ilink][wordIndex] |= (0xabcULL<<shift) ;
+    }
+    void setBxId(int bxid) { bxCounter = bxid; }
+    void setLinkId(int lpid) { linkid = lpid; }
+    uint64_t getHeader(int ilink) {
+      linkdata[ilink][0] |= static_cast<uint64_t>(bxCounter);
+      linkdata[ilink][0] |= static_cast<uint64_t>(linkid) << 16;
+      return linkdata[ilink][0];
+    }
   
   };
 

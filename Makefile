@@ -5,7 +5,7 @@ BOOST=/cvmfs/cms.cern.ch/el9_amd64_gcc12/external/boost/1.80.0-87b5de10acd2f2c8a
 LDFLAGS=-L$(HOME)/Software/yaml-cpp/lib64 -L$(BOOST)/lib
 CPPFLAGSSTAGE2=-I inc -I TPGStage2Emulation/ -I EMPTools/ -I EMPTools/CMSSWCode -I EMPTools/HLS_arbitrary_Precision_Types/include/ -I`root-config --incdir` 
 
-all:  stage2TowerEmulEMP.exe writeStage2EMPRx.exe readNTuple.exe  fillInputData.exe testStage2SemiClustering.exe stage2HtoTauTauEnergyCorrelation.exe ntupleMCInfo.exe vbfjet.exe EmulTowerPRRTest.exe TowerPreEmulTest.exe  TestUnpackerTCProcInterface.exe #findFixedpattern.exe findEMax.exe tpgdata_3T_tcproc.exe  tpgdata_3T_fe.exe  scanadc_Sep24.exe dump_event.exe tpgdata_2T_fe.exe emul_Sep24.exe emul_3T_Sep24.exe  #loop_emul_Sep24.exe scanconfigval_Sep24.exe emul_Sep24.exe validateFixedADC.exe # findEMax.exe GenerateEmpRxFile.exe dump_event.exe emul_test-beam_Sep23.exe 
+all:  compareStage2TowerFWvsEmul.exe stage2TowerEmulEMP.exe #readlpGBTpairEvents.exe  checkStage2Config.exe testStage1Stage2Emulation.exe  writeStage2EMPRx.exe EmulTowerPRRTest.exe #readNTuple.exe  fillInputData.exe testStage2SemiClustering.exe stage2HtoTauTauEnergyCorrelation.exe ntupleMCInfo.exe vbfjet.exe  TowerPreEmulTest.exe  TestUnpackerTCProcInterface.exe #findFixedpattern.exe findEMax.exe tpgdata_3T_tcproc.exe  tpgdata_3T_fe.exe  scanadc_Sep24.exe dump_event.exe tpgdata_2T_fe.exe emul_Sep24.exe emul_3T_Sep24.exe  #loop_emul_Sep24.exe scanconfigval_Sep24.exe emul_Sep24.exe validateFixedADC.exe # findEMax.exe GenerateEmpRxFile.exe dump_event.exe emul_test-beam_Sep23.exe 
 
 
 emul_test-beam_Sep23.exe:  test-beam_Sep23_macros/emul_test-beam_Sep23.cpp inc/*.*  TPGFEEmulation/*.hh TPGStage1Emulation/*.hh common/inc/*.h
@@ -68,6 +68,9 @@ TowerPreEmulTest.exe: TPGStage1Emulation/TowerSums.h TPGStage1Emulation/Utilitie
 TestUnpackerTCProcInterface.exe: stage1-PRR/TestUnpackerTCProcInterface.cpp TPGFEEmulation/*.hh  TPGStage1Emulation/*.hh common/inc/*.h inc/*.*
 	g++ -I TPGStage1Emulation/ -I. TPGStage1Emulation/HGCalLayer1PhiOrderFwImpl.cc -I. -I common/inc -I inc -I TPGFEEmulation/ stage1-PRR/TestUnpackerTCProcInterface.cpp -L /opt/local/lib  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(BOOST)/include -lboost_iostreams -lz -llzma $(LDFLAGS) $(CPPFLAGS) `root-config --libs --cflags` -o TestUnpackerTCProcInterface.exe
 
+UnpackerTCProcInterfaceEMPAndDirect.exe: stage1-PRR/UnpackerTCProcInterfaceEMPAndDirect.cpp TPGFEEmulation/*.hh TPGStage1Emulation/*.hh common/inc/*.h inc/*.*
+	g++ -I TPGStage1Emulation/ -I. TPGStage1Emulation/HGCalLayer1PhiOrderFwImpl.cc -I. -I common/inc -I inc -I TPGFEEmulation/ stage1-PRR/UnpackerTCProcInterfaceEMPAndDirect.cpp -L /opt/local/lib  -l yaml-cpp `root-config --libs --cflags` -I`root-config --incdir` EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(BOOST)/include -lboost_iostreams -lz -llzma $(LDFLAGS) $(CPPFLAGS) `root-config --libs --cflags` -o UnpackerTCProcInterfaceEMPAndDirect.exe
+
 # TestEMP: EMPTools/test.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* $(BOOST)/include
 # 	g++  EMPTools/test.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ -I$(BOOST)/include -lboost_iostreams -lz -llzma -o TestEMP.exe
 
@@ -102,7 +105,19 @@ writeStage2EMPRx.exe: test-stage2_Nov24/writeStage2EMPRx.cpp inc/*.*  TPGStage2E
 	g++ $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/writeStage2EMPRx.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -o writeStage2EMPRx.exe
 
 stage2TowerEmulEMP.exe: test-stage2_Nov24/stage2TowerEmulEMP.cpp inc/*.*  TPGStage2Emulation/*.hh
-	g++ $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/stage2TowerEmulEMP.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -o stage2TowerEmulEMP.exe
+	g++ $(CPPFLAGSSTAGE2) $(LDFLAGS) $(CPPFLAGS) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/stage2TowerEmulEMP.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -l yaml-cpp -o stage2TowerEmulEMP.exe
+
+testStage1Stage2Emulation.exe: combined-emulation/testStage1Stage2Emulation.cpp inc/*.*  TPGFEEmulation/*.hh TPGStage1Emulation/*.hh TPGStage2Emulation/*.hh TPGEmulation/*.hh
+	g++ $(CPPFLAGSSTAGE2) $(CPPFLAGS) $(LDFLAGS) -I TPGEmulation/ -I TPGFEEmulation/  EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* combined-emulation/testStage1Stage2Emulation.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -l yaml-cpp -o testStage1Stage2Emulation.exe
+
+checkStage2Config.exe: test-stage2_Nov24/checkStage2Config.cpp inc/*.* TPGFEEmulation/*.hh TPGStage1Emulation/*.hh TPGStage2Emulation/*.hh TPGEmulation/*.hh
+	g++ $(CPPFLAGSSTAGE2) $(CPPFLAGS) $(LDFLAGS) -I TPGEmulation/ -I TPGFEEmulation/  EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/checkStage2Config.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -l yaml-cpp -o checkStage2Config.exe
+
+readlpGBTpairEvents.exe: stage1-PRR/readlpGBTpairEvents.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/*
+	g++ $(LDFLAGS) $(CPPFLAGS) stage1-PRR/readlpGBTpairEvents.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -I$(BOOST)/include -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ `root-config --libs --cflags` -lboost_iostreams -lz -llzma -l yaml-cpp -lm -o readlpGBTpairEvents.exe
+
+compareStage2TowerFWvsEmul.exe: test-stage2_Nov24/compareStage2TowerFWvsEmul.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/*
+	g++  $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/compareStage2TowerFWvsEmul.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -o compareStage2TowerFWvsEmul.exe
 
 clean:
 	rm *.exe

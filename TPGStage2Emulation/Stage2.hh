@@ -14,6 +14,7 @@
 #include "TPGBEDataformat.hh"
 #include "TPGTriggerCellFloats.hh"
 #include "TPGClusterFloats.hh"
+#include "TPGStage2Configuration.hh"
 
 #include "CMSSWCode/DataFormats/L1THGCal/interface/HGCalCluster_HW.h"
 
@@ -277,7 +278,8 @@ namespace TPGStage2Emulation
       else if (e == 1)
         return 16 + m;
       else
-        return (32 + 2 * m + 1) << (e - 2);
+        //return (32 + 2 * m + 1) << (e - 2);
+	return (32 + 2 * m ) << (e - 2);
     }
 
     enum
@@ -568,73 +570,94 @@ namespace TPGStage2Emulation
       // run(_vClusterData,s2L1t);
     }
 
-    void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data *> &vS12)
-    {
-      std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint16_t));
+    // void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data *> &vS12)
+    // {
+    //   std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
 
-      for (unsigned l(0); l < vS12.size(); l++)
-      {
-        unsigned offset(5 * (l % 6));
-        if ((l % 6) >= 4)
-          offset -= 6;
+    //   for (unsigned l(0); l < vS12.size(); l++)
+    //   {
+    //     unsigned offset(5 * (l % 6));
+    //     if ((l % 6) >= 4)
+    //       offset -= 6;
 
-        for (unsigned w(0); w < 100; w++)
-        {
-          for (unsigned eh(0); eh < 2; eh++)
-          {
-            uint8_t e(vS12[l]->getPTT(w, eh));
-            uint32_t eunpacked(unpack4E4MToUnsigned(e));
-            _towerData[eh][w / 5][offset + w % 5] += eunpacked;
-          }
-        }
-      }
+    //     for (unsigned w(0); w < 100; w++)
+    //     {
+    //       for (unsigned eh(0); eh < 2; eh++)
+    //       {
+    //         uint8_t e(vS12[l]->getPTT(w, eh));
+    //         uint32_t eunpacked(unpack4E4MToUnsigned(e));
+    //         _towerData[eh][w / 5][offset + w % 5] += eunpacked;
+    //       }
+    //     }
+    //   }
 
-      for(unsigned eta(0);eta<20;eta++) {
-	for(unsigned phi(0);phi<24;phi++) {
-	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
-	  if(total>0xffff) total=0xffff;
+    //   for(unsigned eta(0);eta<20;eta++) {
+    // 	for(unsigned phi(0);phi<24;phi++) {
+    // 	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
+    // 	  if(total>0xffff) total=0xffff;
 
-	  unsigned fraction(7);
-	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
-	  if(fraction>7) fraction=7;
-	  _towerOutput[eta][phi]=total>>6|fraction<<10;
-	}
-      }
-    }
+    // 	  unsigned fraction(7);
+    // 	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
+    // 	  if(fraction>7) fraction=7;
+    // 	  _towerOutput[eta][phi]=total>>6|fraction<<10;
+    // 	}
+    //   }
+    // }
     
     void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data> &vS12){
-      std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint16_t));
+      std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
       
       for (unsigned l(0); l < vS12.size(); l++){
-        unsigned offset(5 * (l % 6));
-        if ((l % 6) >= 4)
-          offset -= 6;
+	uint32_t link = l / 16;
+	uint32_t wmax = (link==1)?80:100;
 
-        for (unsigned w(0); w < 100; w++){
+        unsigned offset(0);
+        // if ((l % 6) >= 4)
+        //   offset -= 6;
+	if(link==0) offset = 15;
+	else if(link==1) offset = 20;
+	else if(link==2) offset = 0;
+	else if(link==3) offset = 5;
+	else if(link==4) offset = 10;
+	else offset = 15;
+	
+        for (unsigned w(0); w < wmax; w++){
           for (unsigned eh(0); eh < 2; eh++){
             uint8_t e(vS12[l].getPTT(w, eh));
             uint32_t eunpacked(unpack4E4MToUnsigned(e));
-            _towerData[eh][w / 5][offset + w % 5] += eunpacked;
+	    //std::cout << "Stage2::run l: " << l << ", link: "<< link <<", offset: " << offset << ", w: " << w << ", iphi:(w / 20): " << (w / 20) << ", ietaL(offset + w % 5): " << (offset + w % 5) <<", eh: " << eh << ", e: " << uint16_t(e) << ", eunpacked: " << eunpacked << std::endl;
+            //_towerData[eh][w / 5][offset + w % 5] += eunpacked; //earlier
+	    _towerData[eh][ w % 20][offset + (w / 20)] += eunpacked; //indra+paul
           }
         }
       }
       
       for(unsigned eta(0);eta<20;eta++) {
 	for(unsigned phi(0);phi<24;phi++) {
-	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
-	  if(total>0xffff) total=0xffff;
-
+	  //uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
+	  //if(total>0xffff) total=0xffff;
+	  uint32_t total(((_towerData[0][eta][phi]+_towerData[1][eta][phi])*s2bconf->getScaleFactor())>>17) ;
+	  unsigned flag = 0;
+	  if(total>0x3ff) {
+	    total=0x3ff;
+	    flag = 1;
+	  }
 	  unsigned fraction(7);
-	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
-	  if(fraction>7) fraction=7;
-	  _towerOutput[eta][phi]=total>>6|fraction<<10;
+	  // if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
+	  // if(fraction>7) fraction=7;
+	  //_towerOutput[eta][phi]=total>>6|fraction<<10;
+	  for(uint32_t ifrac = 0 ; ifrac < 7 ; ifrac++){
+	    if( _towerData[0][eta][phi]< ((s2bconf->getThresh(ifrac)*_towerData[1][eta][phi])>>17) )
+	      fraction = ifrac;	    
+	  }
+	  _towerOutput[eta][phi] = total|fraction<<10|flag<<13;
 	}
       }
     }
     
-    uint32_t getTowerData(int iz, int ieta, int iphi) const { return _towerData[iz][ieta][iphi];}
+    uint32_t getTowerData(int idet, int ieta, int iphi) const { return _towerData[idet][ieta][iphi];}
     uint16_t getTowerOutput(int ieta, int iphi) const { return _towerOutput[ieta][iphi];}
-    
+    void setConfiguration(const TPGStage2Configuration::Stage2Board *scf) { s2bconf = scf;}
   private:
     // static const unsigned _nBins;
     static const double _rOverZ;
@@ -648,6 +671,8 @@ namespace TPGStage2Emulation
 
     CentreArray<_nBins> *_ca;
     TcAccumulatorArray<_nBins> *_tcaa;
+
+    const TPGStage2Configuration::Stage2Board *s2bconf;
   };
 
   // const double Stage2::_rOverZ(0.032);
