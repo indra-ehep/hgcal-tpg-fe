@@ -78,6 +78,7 @@ namespace TPGStage2Emulation
       double w(e);
 
       sumW_ += w;
+      sumW2_ += w * w;
 
       numX += w;
       sumX += w * x;
@@ -89,7 +90,11 @@ namespace TPGStage2Emulation
 
       unsigned int hw_z = (z-302) / 0.05;
       sumZ_ += w * hw_z;
-      ssqZ_ += w * hw_z * hw_z;
+      sumWZ2_ += w * hw_z * hw_z;
+
+      double phi = atan2(y, x) + 720/2;
+      sumWPhi_ += w * phi;
+      sumWPhi2_ += w * phi * phi;
     }
 
     void setSeed(bool b)
@@ -163,6 +168,7 @@ namespace TPGStage2Emulation
       sumCehEarly = 0;
       layerBits_ = 0;
       sumW_ = 0.0;
+      sumW2_ = 0.0;
       numX = 0.0;
       sumX = 0.0;
       ssqX = 0.0;
@@ -171,6 +177,9 @@ namespace TPGStage2Emulation
       ssqY = 0.0;
       sumZ_ = 0.0;
       ssqZ_ = 0.0;
+      sumWZ2_ = 0.0;
+      sumWPhi_ = 0.0;
+      sumWPhi2_ = 0.0;
       _seed = false;
     }
 
@@ -212,12 +221,24 @@ namespace TPGStage2Emulation
                 << std::endl;
     }
 
+    double sumW2() const { return sumW2_; }
+    void setSumW2(double sumW2) { sumW2_ = sumW2; }
+
+    double sumWZ2() const { return sumWZ2_; }
+    void setSumWZ2(double sumWZ2) { sumWZ2_ = sumWZ2; }
+
+    double sumWPhi() const { return sumWPhi_; }
+    void setSumWPhi(double sumWPhi) { sumWPhi_ = sumWPhi; }
+
+    double sumWPhi2() const { return sumWPhi2_; }
+    void setSumWPhi2(double sumWPhi2) { sumWPhi2_ = sumWPhi2; }
+
   private:
     uint64_t numE, sumE, ssqE;
     uint64_t numCee, sumCee, ssqCee;
     uint64_t sumCeeCore, sumCehEarly;
     uint64_t layerBits_;
-    double sumW_, numX, sumX, ssqX, numY, sumY, ssqY, sumZ_, ssqZ_;
+    double sumW_, sumW2_, numX, sumX, ssqX, numY, sumY, ssqY, sumZ_, ssqZ_, sumWZ2_, sumWPhi_, sumWPhi2_;
     bool _seed;
 
     std::vector<const TcAccumulator *> vNN;
@@ -465,35 +486,35 @@ namespace TPGStage2Emulation
       clusterProperties.calcProperties(vClusterSumsCMSSW);
       // Copy output clusters to output vector
       // Input HGCalCluster is actually cluster sum
-      // Contains hwCluster object, which contains cluster properties and represents cluster object sent to L1T w
-      for ( const auto& cluster : vClusterSumsCMSSW ) {
+      // Contains hwCluster object, which contains cluster properties and represents cluster object sent to L1T
+      for ( auto& cluster : vClusterSumsCMSSW ) {
         vCldCMSSW.emplace_back(cluster->hwCluster());
       }
 
-      if (!vCldCMSSW.empty()) {
-        const auto& firstCluster = vCldCMSSW.front();
-        std::cout << "First cluster info:" << std::endl;
-        std::cout << "Energy: " << firstCluster.e << std::endl;
-        std::cout << "EM Energy: " << firstCluster.e_em << std::endl;
-        std::cout << "GCT bits: " << firstCluster.gctBits << std::endl;
-        std::cout << "Fraction in CE-E: " << firstCluster.fractionInCE_E << std::endl;
-        std::cout << "Fraction in Core CE-E: " << firstCluster.fractionInCoreCE_E << std::endl;
-        std::cout << "Fraction in Early CE-H: " << firstCluster.fractionInEarlyCE_E << std::endl;
-        std::cout << "First layer: " << firstCluster.firstLayer << std::endl;
-        std::cout << "Last layer: " << firstCluster.lastLayer << std::endl;
-        std::cout << "Eta (w): " << firstCluster.w_eta << std::endl;
-        std::cout << "Phi (w): " << firstCluster.w_phi << std::endl;
-        std::cout << "Z (w): " << firstCluster.w_z << std::endl;
-        std::cout << "Number of TCs: " << firstCluster.nTC << std::endl;
-        std::cout << "Sigma E: " << firstCluster.sigma_E << std::endl;
-        std::cout << "Last layer: " << firstCluster.lastLayer << std::endl;
-        std::cout << "Shower length: " << firstCluster.showerLength << std::endl;
-        std::cout << "Sigma Z: " << firstCluster.sigma_z << std::endl;
-        std::cout << "Sigma Phi: " << firstCluster.sigma_phi << std::endl;
-        std::cout << "Core shower length: " << firstCluster.coreShowerLength << std::endl;
-        std::cout << "Sigma Eta: " << firstCluster.sigma_eta << std::endl;
-        std::cout << "Sigma RoZ: " << firstCluster.sigma_roz << std::endl;
-      }
+      // if (!vCldCMSSW.empty()) {
+      //   const auto& firstCluster = vCldCMSSW.front();
+      //   std::cout << "First cluster info:" << std::endl;
+      //   std::cout << "Energy: " << firstCluster.e << std::endl;
+      //   std::cout << "EM Energy: " << firstCluster.e_em << std::endl;
+      //   std::cout << "GCT bits: " << firstCluster.gctBits << std::endl;
+      //   std::cout << "Fraction in CE-E: " << firstCluster.fractionInCE_E << std::endl;
+      //   std::cout << "Fraction in Core CE-E: " << firstCluster.fractionInCoreCE_E << std::endl;
+      //   std::cout << "Fraction in Early CE-H: " << firstCluster.fractionInEarlyCE_E << std::endl;
+      //   std::cout << "First layer: " << firstCluster.firstLayer << std::endl;
+      //   std::cout << "Last layer: " << firstCluster.lastLayer << std::endl;
+      //   std::cout << "Eta (w): " << firstCluster.w_eta << std::endl;
+      //   std::cout << "Phi (w): " << firstCluster.w_phi << std::endl;
+      //   std::cout << "Z (w): " << firstCluster.w_z << std::endl;
+      //   std::cout << "Number of TCs: " << firstCluster.nTC << std::endl;
+      //   std::cout << "Sigma E: " << firstCluster.sigma_E << std::endl;
+      //   std::cout << "Last layer: " << firstCluster.lastLayer << std::endl;
+      //   std::cout << "Shower length: " << firstCluster.showerLength << std::endl;
+      //   std::cout << "Sigma Z: " << firstCluster.sigma_z << std::endl;
+      //   std::cout << "Sigma Phi: " << firstCluster.sigma_phi << std::endl;
+      //   std::cout << "Core shower length: " << firstCluster.coreShowerLength << std::endl;
+      //   std::cout << "Sigma Eta: " << firstCluster.sigma_eta << std::endl;
+      //   std::cout << "Sigma RoZ: " << firstCluster.sigma_roz << std::endl;
+      // }
 
 
       /* DISABLE FOR NOW
@@ -664,15 +685,28 @@ namespace TPGStage2Emulation
     {
       l1thgcfirmware::HGCalCluster clusterSA(0, 0, true, true);
       clusterSA.set_n_tc(tcAcc.numberOfTcs());
+      clusterSA.set_n_tc_w(tcAcc.numberOfTcs());
       clusterSA.set_e(tcAcc.totE());
       clusterSA.set_e_em(tcAcc.ceeE());
       clusterSA.set_e_em_core(tcAcc.ceeECore());
       clusterSA.set_e_h_early(tcAcc.ceHEarly());
       clusterSA.set_layerbits(tcAcc.layerBits());
       clusterSA.set_w(tcAcc.sumW());
+      clusterSA.set_w2(tcAcc.sumW2());
       clusterSA.set_wz(tcAcc.sumZ());
-      clusterSA.set_weta(tcAcc.calcEta());
-      clusterSA.set_wphi(tcAcc.calcPhi());
+      clusterSA.set_wz2(tcAcc.sumWZ2());
+      clusterSA.set_wphi(tcAcc.sumWPhi());
+      clusterSA.set_wphi2(tcAcc.sumWPhi2());
+
+      // // Set roz, hack for now until upstream inputs are set (do we get r/z looked up, or x and y?)
+      // // clusterSA.set_weta(tcAcc.calcEta());  // Don't set eta, as will be calculated from roz in cluster properties
+      float clusterEta = l1thgcfirmware::Scales::floatEta(tcAcc.calcEta() + 256);
+      float roz = 1/sinh(clusterEta);
+      double wRozLSB = 0.0004172720581;
+      unsigned int rozHW = roz / wRozLSB / 0.233510936 + 1026.9376220703125;
+      unsigned int wRozHW = rozHW * tcAcc.sumW();
+      clusterSA.set_wroz(wRozHW);
+
       return clusterSA;
     }
   };
