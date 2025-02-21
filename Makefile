@@ -90,7 +90,7 @@ fillInputData.exe: test-stage2_Nov24/fillInputData.cpp inc/*.*  TPGStage2Emulati
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/fillInputData.cpp `root-config --libs --cflags` -o fillInputData.exe
 
 testStage2SemiClustering.exe: test-stage2_Nov24/testStage2SemiClustering.cpp inc/*.*  TPGStage2Emulation/*.hh
-	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/testStage2SemiClustering.cpp `root-config --libs --cflags` -o testStage2SemiClustering.exe
+	g++ $(LDFLAGS) $(CPPFLAGSSTAGE2) test-stage2_Nov24/testStage2SemiClustering.cpp EMPTools/CMSSWCode/L1Trigger/L1THGCal/src/backend_emulator/*cc `root-config --libs --cflags` -l yaml-cpp -o testStage2SemiClustering.exe
 
 ntupleMCInfo.exe: test-stage2_Nov24/ntupleMCInfo.cpp inc/*.*  TPGStage2Emulation/*.hh
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/ntupleMCInfo.cpp `root-config --libs --cflags` -o ntupleMCInfo.exe -lEG
@@ -116,8 +116,8 @@ checkStage2Config.exe: test-stage2_Nov24/checkStage2Config.cpp inc/*.* TPGFEEmul
 readlpGBTpairEvents.exe: stage1-PRR/readlpGBTpairEvents.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/*
 	g++ $(LDFLAGS) $(CPPFLAGS) stage1-PRR/readlpGBTpairEvents.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* -I$(BOOST)/include -IEMPTools/CMSSWCode/ -IEMPTools/HLS_arbitrary_Precision_Types/include/ `root-config --libs --cflags` -lboost_iostreams -lz -llzma -l yaml-cpp -lm -o readlpGBTpairEvents.exe
 
-compareStage2TowerFWvsEmul.exe: test-stage2_Nov24/compareStage2TowerFWvsEmul.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/*
-	g++  $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/* test-stage2_Nov24/compareStage2TowerFWvsEmul.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -o compareStage2TowerFWvsEmul.exe
+compareStage2TowerFWvsEmul.exe: test-stage2_Nov24/compareStage2TowerFWvsEmul.cpp EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/
+	g++  $(CPPFLAGSSTAGE2) EMPTools/CMSSWCode/L1Trigger/DemonstratorTools/src/ test-stage2_Nov24/compareStage2TowerFWvsEmul.cpp `root-config --libs --cflags` -L$(BOOST)/lib  -lboost_iostreams -lz -llzma -o compareStage2TowerFWvsEmul.exe
 
 clean:
 	rm *.exe
