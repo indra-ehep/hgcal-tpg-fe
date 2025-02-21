@@ -17,6 +17,9 @@
 #include "TPGStage2Configuration.hh"
 
 #include "CMSSWCode/DataFormats/L1THGCal/interface/HGCalCluster_HW.h"
+#include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalCluster_SA.h"
+#include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalHistoClusterProperties_SA.h"
+#include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalHistoClusteringConfig_SA.h"
 
 // Code from Paul, dated 10/11/2024
 
@@ -414,6 +417,8 @@ namespace TPGStage2Emulation
 
       vCld.resize(0);
 
+      l1thgcfirmware::HGCalClusterSAPtrCollection vClusterSumsCMSSW;
+
       for (unsigned c(0); c < 3; c++)
       {
         for (unsigned i(0); i < _nBins; i++)
@@ -440,15 +445,56 @@ namespace TPGStage2Emulation
 
               vCld.push_back(tcd);
 
-              // Also calculate properties based on CMSSW/emulator code
-              l1thgcfirmware::HGCalCluster_HW hwCluster;
-              clusterProperties( _tcaa->vTca[c][i][j], hwCluster);
-              // std::cout << "Got a hwCluster : " << hwCluster.e << " " << hwCluster.pack()[0] << std::endl;
-              vCldCMSSW.emplace_back(hwCluster);
+              // Convert accumulated clusters to format expected by cluster properties emulation
+              l1thgcfirmware::HGCalCluster clusterSA = convertToCMSSWHGCalCluster(_tcaa->vTca[c][i][j]);
+              vClusterSumsCMSSW.push_back(std::make_unique<l1thgcfirmware::HGCalCluster>(clusterSA));
             }
           }
         }
       }
+
+      // Run cluster properties
+      // Fills data for hwCluster_ object associated to each cluster/cluster sum
+      // Define config.  Should be done once per board/run, not once per call to run
+      l1thgcfirmware::ClusterAlgoConfig config;
+      config.setNTriggerLayers(34);
+      config.initializeLUTs();
+      // Create cluster properties object.  Again, should only be done once
+      l1thgcfirmware::HGCalHistoClusterProperties clusterProperties(config);
+      // Run the actual algorithm implmentation
+      clusterProperties.calcProperties(vClusterSumsCMSSW);
+      // Copy output clusters to output vector
+      // Input HGCalCluster is actually cluster sum
+      // Contains hwCluster object, which contains cluster properties and represents cluster object sent to L1T w
+      for ( const auto& cluster : vClusterSumsCMSSW ) {
+        vCldCMSSW.emplace_back(cluster->hwCluster());
+      }
+
+      if (!vCldCMSSW.empty()) {
+        const auto& firstCluster = vCldCMSSW.front();
+        std::cout << "First cluster info:" << std::endl;
+        std::cout << "Energy: " << firstCluster.e << std::endl;
+        std::cout << "EM Energy: " << firstCluster.e_em << std::endl;
+        std::cout << "GCT bits: " << firstCluster.gctBits << std::endl;
+        std::cout << "Fraction in CE-E: " << firstCluster.fractionInCE_E << std::endl;
+        std::cout << "Fraction in Core CE-E: " << firstCluster.fractionInCoreCE_E << std::endl;
+        std::cout << "Fraction in Early CE-H: " << firstCluster.fractionInEarlyCE_E << std::endl;
+        std::cout << "First layer: " << firstCluster.firstLayer << std::endl;
+        std::cout << "Last layer: " << firstCluster.lastLayer << std::endl;
+        std::cout << "Eta (w): " << firstCluster.w_eta << std::endl;
+        std::cout << "Phi (w): " << firstCluster.w_phi << std::endl;
+        std::cout << "Z (w): " << firstCluster.w_z << std::endl;
+        std::cout << "Number of TCs: " << firstCluster.nTC << std::endl;
+        std::cout << "Sigma E: " << firstCluster.sigma_E << std::endl;
+        std::cout << "Last layer: " << firstCluster.lastLayer << std::endl;
+        std::cout << "Shower length: " << firstCluster.showerLength << std::endl;
+        std::cout << "Sigma Z: " << firstCluster.sigma_z << std::endl;
+        std::cout << "Sigma Phi: " << firstCluster.sigma_phi << std::endl;
+        std::cout << "Core shower length: " << firstCluster.coreShowerLength << std::endl;
+        std::cout << "Sigma Eta: " << firstCluster.sigma_eta << std::endl;
+        std::cout << "Sigma RoZ: " << firstCluster.sigma_roz << std::endl;
+      }
+
 
       /* DISABLE FOR NOW
       // TEMP: use TCs to fill towers
@@ -486,66 +532,6 @@ namespace TPGStage2Emulation
 	}
       }
       */
-    }
-
-    void clusterProperties(const TcAccumulator& accumulatedCluster, l1thgcfirmware::HGCalCluster_HW& hwCluster) const 
-    {
-      using namespace l1thgcfirmware;
-
-      hwCluster.e = Scales::HGCaltoL1_et(accumulatedCluster.totE());
-      hwCluster.e_em = Scales::HGCaltoL1_et(accumulatedCluster.ceeE());
-      hwCluster.fractionInCE_E = Scales::makeL1EFraction(accumulatedCluster.ceeE(), accumulatedCluster.totE());
-      hwCluster.fractionInCoreCE_E = Scales::makeL1EFraction(accumulatedCluster.ceeECore(), accumulatedCluster.ceeE());
-      hwCluster.fractionInEarlyCE_E = Scales::makeL1EFraction(accumulatedCluster.ceHEarly(), accumulatedCluster.totE());
-      hwCluster.setGCTBits(); // Derived from energy and energy fractions that have just been set
-
-      std::vector<int> layeroutput = showerLengthProperties(accumulatedCluster.layerBits());
-      hwCluster.firstLayer = layeroutput[0];
-      hwCluster.lastLayer = layeroutput[1];
-      hwCluster.showerLength = layeroutput[2];
-      hwCluster.coreShowerLength = layeroutput[3];
-      hwCluster.nTC = accumulatedCluster.numberOfTcs();
-
-      hwCluster.w_eta = accumulatedCluster.calcEta() + 256; // Previously, eta was calculated in the firmware in global coordinates (0->3), but now it's more local.  Add the offset here, as it's what is expected in the final packet
-      hwCluster.w_phi = accumulatedCluster.calcPhi();
-      bool saturatedPhi = false;  // Need to base this on calculated phi
-      bool nominalPhi = false;  // Need to base this on calculated phi
-      hwCluster.w_z = Scales::HGCaltoL1_z( float(accumulatedCluster.sumZ()) / accumulatedCluster.sumW() );
-
-      // Quality flags are placeholders at the moment
-      hwCluster.setQualityFlags(Scales::HGCaltoL1_et(accumulatedCluster.ceeECore()), Scales::HGCaltoL1_et(accumulatedCluster.ceHEarly()), 0, 0, /*c->sat_tc(), c->shapeq(),*/ saturatedPhi, nominalPhi);
-
-    }
-
-    std::vector<int> showerLengthProperties(unsigned long int layerBits) const {
-      int counter = 0;
-      int firstLayer = 0;
-      bool firstLayerFound = false;
-      int lastLayer = 0;
-      std::vector<int> layerBits_array;
-
-      std::bitset<34> layerBitsBitset(layerBits);
-      for (size_t i = 0; i < layerBitsBitset.size(); ++i) {
-          bool bit = layerBitsBitset[34-1-i];
-          if ( bit ) {
-            if ( !firstLayerFound ) {
-              firstLayer = i + 1;
-              firstLayerFound = true;
-            }
-            lastLayer = i+1;
-            counter += 1;
-          } else {
-            layerBits_array.push_back(counter);
-            counter = 0;
-          }
-      }
-
-      int showerLen = lastLayer - firstLayer + 1;
-      int coreShowerLen = 34;
-      if (!layerBits_array.empty()) {
-        coreShowerLen = *std::max_element(layerBits_array.begin(), layerBits_array.end());
-      }
-      return {firstLayer, lastLayer, showerLen, coreShowerLen};
     }
 
     const CentreArray<_nBins> &centreArray() const
@@ -673,6 +659,22 @@ namespace TPGStage2Emulation
     TcAccumulatorArray<_nBins> *_tcaa;
 
     const TPGStage2Configuration::Stage2Board *s2bconf;
+
+    l1thgcfirmware::HGCalCluster convertToCMSSWHGCalCluster(const TcAccumulator &tcAcc) const
+    {
+      l1thgcfirmware::HGCalCluster clusterSA(0, 0, true, true);
+      clusterSA.set_n_tc(tcAcc.numberOfTcs());
+      clusterSA.set_e(tcAcc.totE());
+      clusterSA.set_e_em(tcAcc.ceeE());
+      clusterSA.set_e_em_core(tcAcc.ceeECore());
+      clusterSA.set_e_h_early(tcAcc.ceHEarly());
+      clusterSA.set_layerbits(tcAcc.layerBits());
+      clusterSA.set_w(tcAcc.sumW());
+      clusterSA.set_wz(tcAcc.sumZ());
+      clusterSA.set_weta(tcAcc.calcEta());
+      clusterSA.set_wphi(tcAcc.calcPhi());
+      return clusterSA;
+    }
   };
 
   // const double Stage2::_rOverZ(0.032);
