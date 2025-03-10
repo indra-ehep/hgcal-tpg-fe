@@ -152,9 +152,11 @@ int main(int argc, char** argv)
     for(int i=0;i<70;i++) std::cout << "=" ;
     std::cout << std::endl;
     
-    // for(int iecon=0;iecon<5;iecon++) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(vTCel[iecon].bx(), vTCel[iecon], up1[iecon]);
-    // for(int iecon=0;iecon<5;iecon++) up1[iecon].print();
+    for(int iecon=0;iecon<5;iecon++) TPGStage1Emulation::Stage1IO::convertTcRawDataToUnpackerOutputStreamPair(vTCel[iecon].bx(), vTCel[iecon], up1[iecon]);
+    for(int iecon=0;iecon<5;iecon++) up1[iecon].print();
 
+    for(int i=0;i<70;i++) std::cout << "=" ;
+    std::cout << std::endl;
 
     // for(int iecon=0;iecon<2;iecon++) bcElist.push_back(up1[iecon].moduleSum(0));
     // for(int iecon=2;iecon<5;iecon++){

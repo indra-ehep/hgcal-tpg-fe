@@ -7,6 +7,8 @@
 #include <cstring>
 #include <cassert>
 #include <array>
+#include "TPGTriggerCellFloats.hh"
+#include "HLS_arbitrary_Precision_Types/include/ap_int.h"
 
 namespace TPGBEDataformat{
 
@@ -433,6 +435,260 @@ private:
   std::vector<Stage1ToStage2Data*> _s1Vector[3][16];
   std::vector<Stage1ToStage2Data*> _s2Vector[3];
 };
+
+  class TcAccumulatorFW
+  {
+  public:
+    TcAccumulatorFW(){ zero(); }
+    
+    void accumulate(const TPGTriggerCellFloats &t)
+    {
+      accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getZCm(), t.getLayer());
+    }
+    
+    unsigned int getTriggerLayer(const unsigned layer) const {
+      bool cee(layer<=26);
+      unsigned triggerLayer = 0;
+      if (cee) triggerLayer = layer/2+1;
+      else triggerLayer = layer-13+1;
+      
+      return triggerLayer;
+    }
+    
+    void accumulate(uint32_t e, double x, double y, double z, int16_t l) {
+      bool cee(l<=26);
+      
+      unsigned triggerLayer = getTriggerLayer(l);
+      const unsigned nTriggerLayers = 34;  // Should get from config/elsewhere in CMSSW
+      layerBits_ |= (((unsigned long int)1) << (nTriggerLayers - triggerLayer));
+      
+      numE++;
+      sumE += e;
+      //ssqE += e * e;
+      
+      if (cee)
+      {
+        //numCee++;
+        sumCee += e;
+        //ssqCee += e * e;
+	
+        if ( l>6 ) sumCeeCore += e;
+      }
+      else if (l<=30) sumCehEarly += e;
+      
+      
+      ap_uint<19> w(e);
+      
+      sumW_ += w;
+      sumW2_ += w * w;
+      
+      // numX += w;
+      // sumX += w * x;
+      // ssqX += w * w * x * x;
+      
+      // numY += w;
+      // sumY += w * y;
+      // ssqY += w * w * y * y;
+      
+      uint32_t hw_z = (z-302) / 0.05;
+      //sumZ_ += w * hw_z;
+      sumWZ2_ += w * hw_z * hw_z;
+      
+      uint32_t phi = atan2(y, x) + 720/2;
+      sumWPhi_ += w * phi;
+      sumWPhi2_ += w * phi * phi;
+    }
+    
+    // void setSeed(bool b){ _seed = b; }
+    // bool seed() const { return _seed; }
+
+    // double avgX() const { return (numX == 0.0 ? 0.0 : sumX / numX);}
+    // double avgY() const { return (numY == 0.0 ? 0.0 : sumY / numY);}
+
+    //unsigned sumZ() const { return sumZ_; }
+        
+    //int calcPhi() const { return atan2( avgY(), avgX()) * 720 / acos(-1.0); }
+    // unsigned int calcEta() const
+    // {
+    //   return asinh(1.0 / sqrt(avgY() * avgY() + avgX() * avgX())) * 720 / acos(-1.0) - 256;     
+    // }
+
+    void zero()
+    {
+      numE = 0;
+      sumE = 0;
+      numEW = 0;
+      //ssqE = 0;
+      //numCee = 0;
+      sumCee = 0;
+      //ssqCee = 0;
+      sumCeeCore = 0;
+      sumCehEarly = 0;
+      layerBits_ = 0;
+      sumW_ = 0.0;
+      sumW2_ = 0.0;
+      // numX = 0.0;
+      // sumX = 0.0;
+      // ssqX = 0.0;
+      // numY = 0.0;
+      // sumY = 0.0;
+      // ssqY = 0.0;
+      // sumZ_ = 0.0;
+      // ssqZ_ = 0.0;
+      sumWZ_ = 0.0;
+      sumWZ2_ = 0.0;
+      sumWRoZ_ = 0.0;
+      sumWRoZ2_ = 0.0;
+      sumWPhi_ = 0.0;
+      sumWPhi2_ = 0.0;
+      // _seed = false;
+      isSatTC_ = false;
+      shapeQ_ = false;
+      clusterId_ = 0;
+    }
+
+    bool isZero() const { return numE == 0; }
+
+    // void addNN(const TcAccumulatorFW *tca)
+    // {
+    //   assert(vNN.size() < 6);
+    //   vNN.push_back(tca);
+    // }
+
+    // bool isLocalMaximum() const
+    // {
+    //   assert(vNN.size() > 0);
+
+    //   const uint64_t e(totE());
+    //   if (e == 0)
+    //     return false;
+
+    //   for (unsigned i(0); i < vNN.size(); i++)
+    //   {
+    //     if (vNN[i]->totE() >= e)
+    //       return false;
+    //   }
+    //   return true;
+    // }
+
+    void print() const
+    {
+      std::cout << "TcAccumulator"
+                << " E = " << totE()
+                << " CE-E E = " << ceeE()
+                // << " x = " << avgX()
+                // << " y = " << avgY()
+                // << " seed = " << (_seed ? "True" : "False")
+                << std::endl;
+    }
+    
+    void printdetail() const
+    {
+      std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
+      std::cout << std::hex
+		<< " SumET = 0x" << totE()
+                << ", SumCEE_ET = 0x" << ceeE()
+		<< ", SumCEE_ET_core = 0x" << ceeECore()
+		<< ", SumCEH_ET_early = 0x" << ceHEarly()
+		<< ", sumW = 0x" << sumW()
+		<< ", sumW2 = 0x" << sumW2()
+		<< ", sumWPhi = 0x" << sumWPhi()
+		<< ", sumWRoZ = 0x" << sumWRoZ()
+		<< ", sumWZ = 0x" << sumWZ()
+		<< ", sumWPhi2 = 0x" << sumWPhi2()
+		<< ", sumWRoZ2 = 0x" << sumWRoZ2()
+		<< ", sumWZ2 = 0x" << sumWZ2()
+		<< std::endl
+		<< ", LayerBits = 0x" << layerBits()
+		<< ", issatTC = 0x" << issatTC()
+		<< ", numberOfTcs = 0x" << numberOfTcs()
+		<< ", numberOfTcsW = 0x" << numberOfTcsW()
+		<< ", shapeQ = 0x" << shapeQ()
+		<< ", clusterId = 0x" << clusterId()
+		<< std::dec
+		<< std::endl
+                // << ", x = " << avgX()
+                // << ", y = " << avgY()
+	        //<< ", seed = " << (_seed ? "True" : "False")
+                << std::endl;
+    }
+    
+    void setTotE(uint32_t e) { sumE = e; }
+    uint32_t totE() const { return sumE; }
+    
+    void setCeeE(uint32_t scee) { sumCee = scee; }
+    uint32_t ceeE() const { return sumCee; }
+    
+    void setCeeECore(uint32_t sceec) { sumCeeCore = sceec; }
+    uint32_t ceeECore() const { return sumCeeCore; }
+    
+    void setCeHEarly(uint32_t scehe) { sumCehEarly = scehe; }
+    uint32_t ceHEarly() const { return sumCehEarly; }
+
+    void setSumW(uint32_t sumW) { sumW_ = sumW; }
+    uint32_t sumW() const { return sumW_; }
+
+    void setSumW2(uint64_t sumW2) { sumW2_ = sumW2; }
+    uint64_t sumW2() const { return sumW2_; }
+
+    void setSumWPhi(uint32_t sumWPhi) { sumWPhi_ = sumWPhi; }
+    uint32_t sumWPhi() const { return sumWPhi_; }
+
+    void setSumWZ(uint32_t sumWZ) { sumWZ_ = sumWZ; }
+    uint32_t sumWZ() const { return sumWZ_; }
+
+    void setSumWRoZ(uint32_t sumWRoZ) { sumWRoZ_ = sumWRoZ; }
+    uint32_t sumWRoZ() const { return sumWRoZ_; }
+
+    void setSumWPhi2(uint64_t sumWPhi2) { sumWPhi2_ = sumWPhi2; }
+    uint64_t sumWPhi2() const { return sumWPhi2_; }
+
+    void setSumWZ2(uint64_t sumWZ2) { sumWZ2_ = sumWZ2; }
+    uint64_t sumWZ2() const { return sumWZ2_; }
+
+    void setSumWRoZ2(uint64_t sumWRoZ2) { sumWRoZ2_ = sumWRoZ2; }
+    uint64_t sumWRoZ2() const { return sumWRoZ2_; }
+    
+    void setLayerBits(uint64_t layerBits) { layerBits_ = layerBits; }
+    uint64_t layerBits() const { return layerBits_; }
+
+    void setsatTC(bool satTC) { isSatTC_ = satTC; }
+    bool issatTC() const { return isSatTC_; }
+
+    void setNumberOfTcs(uint16_t nTC) { numE = nTC; }    
+    uint16_t numberOfTcs() const { return numE; }
+
+    void setNumberOfTcsW(uint16_t nTCW) { numEW = nTCW; }
+    uint16_t numberOfTcsW() const { return numEW; }
+
+    void setshapeQ(bool shapeQ) { shapeQ_ = shapeQ; }
+    bool shapeQ() const { return shapeQ_; }
+
+    void setclusterId(uint16_t clusterId) { clusterId_ = clusterId; }
+    uint16_t clusterId() const { return clusterId_;}
+    
+  private:
+    
+    ap_uint<22>  sumE, sumCee, sumCeeCore, sumCehEarly; //all 22 bits
+    ap_uint<19>  sumW_;            //19-bits
+    ap_uint<38>  sumW2_;           //38-bits
+    ap_uint<31>  sumWPhi_,sumWZ_;  //31-bits
+    uint32_t     sumWRoZ_;         //32-bits
+    ap_uint<43>  sumWPhi2_,sumWZ2_;//43-bits
+    ap_uint<45>  sumWRoZ2_;        //32-bits
+    ap_uint<34>  layerBits_;       //34-bits
+    bool         isSatTC_;         //1-bit
+    ap_uint<10>  numE, numEW;      //nofTCs 10-bits
+    bool         shapeQ_;          //1-bit
+    ap_uint<8>   clusterId_;       //8-bit
+    
+    // uint64_t ssqE;
+    // uint64_t numCee, ssqCee;
+    // uint64_t numX, sumX, ssqX, numY, sumY, ssqY, sumZ_, ssqZ_;
+    // bool _seed;
+
+    //std::vector<const TcAccumulatorFW *> vNN;
+  };
 
   class Stage2ToL1TData {
   private:
