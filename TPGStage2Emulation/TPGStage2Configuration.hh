@@ -9,6 +9,7 @@
 
 #include "yaml-cpp/yaml.h"
 #include <cassert>
+#include <fstream>
 
 namespace TPGStage2Configuration{
   class Stage2Board{
@@ -70,5 +71,48 @@ namespace TPGStage2Configuration{
     }
     
   }
+
+  class ClusPropLUT{
+  public:
+    ClusPropLUT() {}
+    void readMuEtaLUT(const char* inputfile);
+    void readSigmaEtaLUT(const char* inputfile);
+    uint32_t muEtaSize() const { return roz2eta.size();}
+    uint32_t getMuEta(uint32_t roz) const { return roz2eta.at(roz);}
+    uint32_t sigmaEtaSize() const { return sigmaroz2eta.size();}
+    uint32_t getSigmaEtaEta(uint32_t rozaddr) const { return sigmaroz2eta.at(rozaddr);}
+  private:
+    std::map<uint32_t,uint32_t> roz2eta;
+    std::map<uint32_t,uint32_t> sigmaroz2eta;
+  };
+  void ClusPropLUT::readMuEtaLUT(const char* inputfile){
+    std::ifstream fin(inputfile);
+    std::string s;
+    roz2eta.clear();
+    while (std::getline(fin, s)){
+      if(s.find("mean")!=std::string::npos) continue;
+      std::istringstream ss(s);
+      std::string substr;
+      std::vector<std::string> vsubstr;
+      while (std::getline(ss, substr, ',')) vsubstr.push_back(substr);
+      roz2eta[std::stoi(vsubstr[0])] = std::stoi(vsubstr[1]);
+    }
+    fin.close();
+  }
+  void ClusPropLUT::readSigmaEtaLUT(const char* inputfile){
+    std::ifstream fin(inputfile);
+    std::string s;
+    sigmaroz2eta.clear();
+    while (std::getline(fin, s)){
+      if(s.find("mean")!=std::string::npos) continue;
+      std::istringstream ss(s);
+      std::string substr;
+      std::vector<std::string> vsubstr;
+      while (std::getline(ss, substr, ',')) vsubstr.push_back(substr);
+      sigmaroz2eta[std::stoi(vsubstr[2])] = std::stoi(vsubstr[3]);
+    }
+    fin.close();
+  }
+  
 }
 #endif
