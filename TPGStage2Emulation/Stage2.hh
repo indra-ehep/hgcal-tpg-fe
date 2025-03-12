@@ -817,7 +817,7 @@ namespace TPGStage2Emulation
     //   }
     // }
     
-    void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data> &vS12){
+    void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data> &vS12, const std::vector<TPGBEDataformat::Stage2DataLong> &vS12L){
       std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
       
       for (unsigned l(0); l < vS12.size(); l++){
@@ -844,7 +844,9 @@ namespace TPGStage2Emulation
           }
         }
       }
-      
+
+      /// Fill Tower output
+      //========================================
       for(unsigned eta(0);eta<20;eta++) {
 	for(unsigned phi(0);phi<24;phi++) {
 	  //uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
@@ -866,12 +868,50 @@ namespace TPGStage2Emulation
 	  _towerOutput[eta][phi] = total|fraction<<10|flag<<13;
 	}
       }
-    }
+      //========================================
+
+      for (unsigned w(0); w < 132; w++){
+	for(int il=0;il<1;il++){
+	  L1TOutputEmul.clear();
+	  accmulInput->zero();
+	  //std::cout << "word0: 0x" << std::hex << vS12L[0].getData(w) << std::dec << std::endl;
+	  accmulInput->setNumberOfTcs(vS12L[17*il+0].getData(w));
+	  accmulInput->setTotE(vS12L[17*il+1].getData(w));
+	  accmulInput->setCeeE(vS12L[17*il+2].getData(w));
+	  accmulInput->setCeeECore(vS12L[17*il+3].getData(w));
+	  accmulInput->setCeHEarly(vS12L[17*il+4].getData(w));
+	  accmulInput->setSumW(vS12L[17*il+5].getData(w));
+	  accmulInput->setNumberOfTcsW(vS12L[17*il+6].getData(w));
+	  accmulInput->setSumW2(vS12L[17*il+7].getData(w));
+	  accmulInput->setSumWZ(vS12L[17*il+8].getData(w));
+	  accmulInput->setSumWRoZ(vS12L[17*il+9].getData(w));
+	  accmulInput->setSumWPhi(vS12L[17*il+10].getData(w));
+	  accmulInput->setSumWZ2(vS12L[17*il+11].getData(w));
+	  accmulInput->setSumWRoZ2(vS12L[17*il+12].getData(w));
+	  accmulInput->setSumWPhi2(vS12L[17*il+13].getData(w));
+	  accmulInput->setLayerBits(vS12L[17*il+14].getData(w));
+	  accmulInput->setsatTC(vS12L[17*il+15].getData(w));
+	  accmulInput->setshapeQ(vS12L[17*il+16].getData(w));
+	  //accmulInput->printdetail();
+	  ClusterProperties(*accmulInput, L1TOutputEmul);
+	  //L1TOutputEmul.print();
+	  _clusterOutput[il][w][0] = L1TOutputEmul.pack_firstWord();
+	  _clusterOutput[il][w][1] = L1TOutputEmul.pack_secondWord();
+	  _clusterOutput[il][w][2] = L1TOutputEmul.pack_thirdWord();
+	  _clusterOutput[il][w][3] = 0x0;
+	}
+      }
+
+
+    }//end of run method
     
     uint32_t getTowerData(int idet, int ieta, int iphi) const { return _towerData[idet][ieta][iphi];}
     uint16_t getTowerOutput(int ieta, int iphi) const { return _towerOutput[ieta][iphi];}
+    uint64_t getClusterOutput(int il, int iw, int ix) const { return _clusterOutput[il][iw][ix];}
     void setConfiguration(const TPGStage2Configuration::Stage2Board *scf) { s2bconf = scf;}
     void setClusPropLUT(const TPGStage2Configuration::ClusPropLUT *cplut) { clusPropLUT = cplut;}
+    void setAccuOutput(TPGBEDataformat::TcAccumulatorFW *accmulinput) { accmulInput = accmulinput;}
+    
   private:
     // static const unsigned _nBins;
     static const double _rOverZ;
@@ -880,6 +920,7 @@ namespace TPGStage2Emulation
 
     uint32_t _towerData[2][20][24];
     uint16_t _towerOutput[20][24];
+    uint64_t _clusterOutput[3][132][4];
     
     std::vector<TPGClusterData> _vClusterData;
 
@@ -888,6 +929,8 @@ namespace TPGStage2Emulation
 
     const TPGStage2Configuration::Stage2Board *s2bconf;
     const TPGStage2Configuration::ClusPropLUT *clusPropLUT;
+    TPGBEDataformat::TcAccumulatorFW *accmulInput;
+    l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
     
     l1thgcfirmware::HGCalCluster convertToCMSSWHGCalCluster(const TcAccumulator &tcAcc) const
     {
