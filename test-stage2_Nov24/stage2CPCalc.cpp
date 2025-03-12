@@ -16,7 +16,7 @@
 
 int main(int argc, char** argv)
 {
-  TPGBEDataformat::TcAccumulatorFW accmulInput;
+  TPGBEDataformat::TcAccumulatorFW accmulInput(3);
   l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
   l1thgcfirmware::HGCalCluster_HW L1TOutputFW;
   TPGStage2Emulation::Stage2 s2Clustering;
@@ -55,6 +55,7 @@ int main(int argc, char** argv)
   accmulInput.setshapeQ(1);
   
   accmulInput.printdetail();
+  accmulInput.printmaxval();
   
   //Set LUTs
   TPGStage2Configuration::ClusPropLUT cplut;
