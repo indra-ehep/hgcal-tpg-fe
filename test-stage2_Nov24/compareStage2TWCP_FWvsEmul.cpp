@@ -12,24 +12,30 @@
 
 int main()
 {
-  void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>&);
+  void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>&, int offset);
   std::string inputEmulFileName = "EMPStage2Output.txt";
-  std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250214_1137/tx_summary.txt";
+  //std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250214_1137/tx_summary.txt";
+  std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/tx_summary.txt";
   std::map<uint32_t,std::vector<uint64_t>> emuldata, fwdata;
-  ReadEMPData(inputEmulFileName,emuldata);
-  ReadEMPData(inputFWFileName,fwdata);
+  int emulframeoffset = 0, fwframeoffset = 199;
+  ReadEMPData(inputEmulFileName,emuldata,emulframeoffset);
+  ReadEMPData(inputFWFileName,fwdata,fwframeoffset);
   std::cout << "emuldata.size : " << emuldata.size() << std::endl;
   std::cout << "fwdata.size : " << fwdata.size() << std::endl;
   for(const auto& emd: emuldata){
     int iw = 0;
+    std::cout  << "second size : " << emd.second.size() << std::endl;
     for(const auto& ed: emd.second){
-      uint64_t XOR = ed xor fwdata[emd.first].at(iw) ;
-      std::cout << "link: " << std::setfill('0') << std::setw(2) << emd.first
-  		<< ", iw: " << std::setfill('0') << std::setw(2) << iw
-  		<< ", emuldata : 0x"  << std::setw(16) << std::hex << ed
-  		<< ", fwdata: 0x" << fwdata[emd.first].at(iw)
-  		<< ", (emuldata XOR fwdata): 0x" << XOR
-  		<< std::dec << std::endl;
+      if(iw<(118-20)){
+	uint64_t XOR = ed xor fwdata[emd.first].at(iw+20) ;
+	std::cout << "link: " << std::setfill('0') << std::setw(2) << emd.first
+		  << ", iw: " << std::setfill('0') << std::setw(2) << iw
+		  << ", emuldata : 0x"  << std::setw(16) << std::hex << ed
+		  << ", fwdata: 0x" << fwdata[emd.first].at(iw+20) 
+		  << ", diff(emuldata - fwdata): 0x" << (ed-fwdata[emd.first].at(iw+20))
+		  << ", (emuldata XOR fwdata): 0x" << XOR
+		  << std::dec << std::endl;
+      }
       iw++;
     }
     std::cout << std::endl;
@@ -37,7 +43,7 @@ int main()
   return true;
 }
 
-void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>& linkwords)
+void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>& linkwords, int offset)
 {
   l1t::demo::BoardData inputs = l1t::demo::read( fname, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
@@ -60,7 +66,7 @@ void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>& li
 	if(startStore and frame.valid) words.push_back(frame.data);
 	if(startStore and frame.endOfPacket) {
 	  isFirstValidEvent = true;
-	  linkwords[channel.first] = words;
+	  linkwords[channel.first] = words;	 
 	}//endofpacket
 	//std::cout << channel.first << ", frame : " << iFrame << "...hello there.." << std::endl;
 	iFrame++;      

@@ -14,19 +14,21 @@
 
 int main(int argc, char** argv)
 {
+  //CaptureStage2_250214_1137 + EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_CP.txt
+  //CaptureStage2_250314_1218 + EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt
   // ===============================================
-  std::string board_config = "input/stage2/firmware-data/CaptureStage2_250214_1137/Stage2Configuration.yaml" ;
+  std::string board_config = "input/stage2/firmware-data/CaptureStage2_250314_1218/Stage2Configuration.yaml" ;
   TPGStage2Configuration::Stage2Board sb;
   sb.readConfigYaml(board_config.c_str());
   sb.print();
-
+  
   TPGBEDataformat::TcAccumulatorFW accmulInput(3); //3 stands for k=3
-
+  
   TPGStage2Configuration::ClusPropLUT cplut;
   cplut.readMuEtaLUT("input/stage2/configuration/mean_eta_LUT.csv");
   cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
 
-  std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250214_1137/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_CP.txt";
+  std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt";
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
   const size_t numWordsBx = 162;
