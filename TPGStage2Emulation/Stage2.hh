@@ -518,8 +518,8 @@ namespace TPGStage2Emulation
       float muroz_sat = (muroz<mu_roz_lower_single)?mu_roz_lower_single:muroz;
       muroz_sat = (muroz_sat>mu_roz_upper_single)?mu_roz_upper_single:muroz_sat;
       float mu_roz_local_single = muroz_sat - mu_roz_lower_single;      
-      ap_ufixed<32,20> mu_roz_local_scaled = mu_roz_local_single * c_roz_scaler_0;
-      muroz = mu_roz_local_scaled;      
+      ap_ufixed<32,20, AP_RND> mu_roz_local_scaled = mu_roz_local_single * c_roz_scaler_0;
+      muroz = mu_roz_local_scaled.to_float();      
       uint32_t roz = uint32_t(std::round(muroz));
       if ( roz > 1023 ) roz = 1023;
       uint32_t eta = clusPropLUT->getMuEta(uint32_t(roz));
@@ -542,8 +542,8 @@ namespace TPGStage2Emulation
       //=================================================================
       
       float muphi = (w==0)?0:float(wphi)/float(w);
-      ap_ufixed<32,20> mu_phi_scaled = muphi * c_phi_scaler;
-      muphi = mu_phi_scaled;
+      ap_ufixed<32,20, AP_RND> mu_phi_scaled = muphi * c_phi_scaler;
+      muphi = mu_phi_scaled.to_float();
       int mu_phi_int = std::round(muphi);
       int wphi_et_tmp = mu_phi_int - c_Phi_Offset ;
       saturatedPhi = ((wphi_et_tmp < -256) or (wphi_et_tmp > 255))?true:false ;
@@ -589,8 +589,8 @@ namespace TPGStage2Emulation
       mu_roz_ds_sat = (mu_roz_ds_sat<mu_roz_ds_lower_single)?mu_roz_ds_lower_single:mu_roz_ds_sat;
       double mu_roz_ds_local_single = mu_roz_ds_sat - mu_roz_ds_lower_single;
       double mu_roz_ds_local_scaled = mu_roz_ds_local_single * c_roz_scaler_1;
-      ap_ufixed<32,20> mu_roz_ds_local_fxp = mu_roz_ds_local_scaled;
-      float mu_roz_ds_float = mu_roz_ds_local_fxp ;
+      ap_ufixed<32,20, AP_RND> mu_roz_ds_local_fxp = mu_roz_ds_local_scaled;
+      float mu_roz_ds_float = mu_roz_ds_local_fxp.to_float() ;
       int mu_roz_ds_int = std::round(mu_roz_ds_float);
       int mu_roz_addr = (mu_roz_ds_int>63)?63:mu_roz_ds_int;
 
@@ -617,7 +617,7 @@ namespace TPGStage2Emulation
 
       return ret;
 
-
+      
       // const double min_roz = 809.9324340820312;
       // const double max_roz = 4996.79833984375;
       
@@ -656,8 +656,12 @@ namespace TPGStage2Emulation
       if (wt_obs<0.) return 0;
       float wt_obs_sqr = sqrt( wt_obs );
       float wt_obs_scaled = wt_obs_sqr * scale;
-      ap_ufixed<32,12> wt_obs_scaled_fxp = wt_obs_scaled;
-      float wt_obs_fp1 = wt_obs_scaled_fxp ;
+      ap_ufixed<32,20, AP_RND> wt_obs_scaled_fxp = wt_obs_scaled;
+      // std::stringstream ss;
+      // ss << std::setw(32) << std::setprecision(12) << wt_obs_scaled;
+      // float wt_obs_scaled_fxp;
+      // ss >> wt_obs_scaled_fxp;
+      float wt_obs_fp1 = wt_obs_scaled_fxp.to_float() ;
       uint32_t sigma = std::round( wt_obs_fp1 );
       // std::cout << "stage2::sigma_coordinate  w: " << w << ", wc2: " << wc2 << ", wc: " << wc << ", scale: " << scale << std::endl;
       // std::cout << "stage2::sigma_coordinate wt_obs: " << wt_obs << ", wt_obs_sqr : " << wt_obs_sqr << ", wt_obs_scaled: " << wt_obs_scaled << ", wt_obs_fp1: " << wt_obs_fp1 << ", sigma : " << sigma  << std::endl;
@@ -692,7 +696,9 @@ namespace TPGStage2Emulation
       l1TOutput.w_eta = convertRozToEta( accuInput.sumWRoZ(), accuInput.sumW() );
       bool saturatedPhi = false, nominalPhi = false;      
       l1TOutput.w_phi = calc_phi(accuInput.sumWPhi(), accuInput.sumW(), saturatedPhi, nominalPhi);
-      l1TOutput.w_z = l1thgcfirmware::Scales::HGCaltoL1_z( float(accuInput.sumWZ()) / accuInput.sumW() );      
+      float zratio = float(accuInput.sumWZ()) / float(accuInput.sumW()) ;
+      ap_ufixed<32,20, AP_RND> wt_muz_fxp = zratio;
+      l1TOutput.w_z = std::round(wt_muz_fxp.to_float());      
       l1TOutput.setQualityFlags(l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeECore()), l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceHEarly()), accuInput.issatTC(), accuInput.shapeQ(), saturatedPhi, nominalPhi);
       //// ================== Second Word ===========================
       if(isPrint) std::cout<<"Completed second word" << std::endl;

@@ -28,7 +28,8 @@ int main(int argc, char** argv)
   cplut.readMuEtaLUT("input/stage2/configuration/mean_eta_LUT.csv");
   cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
 
-  std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt";
+  //std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt";
+  std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_FixedPointCheck_2025-03-21.txt";
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
   const size_t numWordsBx = 162;
