@@ -1,0 +1,33 @@
+LinkMux:
+  TmIndex: 4
+  BoardId: 13
+FormatTowers:
+  Threshold0: 65535
+  Threshold1: 61439
+  Threshold2: 57343
+  Threshold3: 53247
+  Threshold4: 49151
+  Threshold5: 45055
+  Threshold6: 40959
+  ScaleFactor: 4096
+BufferTowers:
+  ReadPageOffset: 1
+  CounterOffset: 23
+ClusterProperties:
+  SigmaZScaler: 1034449825
+  SigmaEtaScaler: 0
+  SigmaPhiScaler: 1063800752
+  SigmaRozScaler: 1052447171
+  SigmaEScaler: 1007889715
+  RozMinL1t: 1152531828
+  RozMaxL1t: 1173018402
+  RozScaler0: 1043084676
+  RozMinDs: 1145732013
+  RozMaxDs: 1167861347
+  RozScalerDs: 1010065153
+  SigmaRoz4SigmaEta: 1042453483
+  PhiScaler: 1045779797
+  GctTh0: 128
+  GctTh1: 128
+  GctTh2: 128
+  GctTh3: 64

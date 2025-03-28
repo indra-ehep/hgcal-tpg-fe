@@ -16,7 +16,8 @@ int main(int argc, char** argv)
 {
   
   void ReadPhysDataCSV(std::string, std::vector<std::array<uint64_t, 17>>&);
-  std::string infile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3.csv";
+  //std::string infile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3.csv";
+  std::string infile = "input/stage2/EMPinputs/test_2025-03-12/input_fp.csv";
   std::vector<std::array<uint64_t, 17>> physdata;  
   ReadPhysDataCSV(infile, physdata);
   std::cout << "physdata.size() : " << physdata.size() << std::endl;

@@ -47,31 +47,77 @@ int main(int argc, char** argv)
   l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
   uint64_t nof1stMM = 0, nof2ndMM = 0, nof3rdMM = 0;
   uint64_t nofEvents = 0;
+  uint64_t checkevents[10] = {1806, 3402, 3562, 3899, 4111, 5152, 5401, 8199, 8346, 10556};
+  std::vector<uint64_t> eventlist;
+  for(int iev=0;iev<10;iev++) eventlist.push_back(checkevents[iev]);
+  std::cout << "Check for total nevents : " << eventlist.size() << std::endl ;
+  
   for(uint64_t ievent=0;ievent<physdata.size();ievent++){
     //std::cout << "Processing Event : " << ievent << std::endl;
-    
+
+    if ( std::find(eventlist.begin(), eventlist.end(), ievent) == eventlist.end() ) continue;
+    std::cout << std::dec << "========= Processing Event : "<< ievent << " ============" << std::endl;
     L1TOutputEmul.clear();
-    //    s2Clustering.ClusterProperties(physdata.at(ievent), L1TOutputEmul,true);
+    // C++ CP Emulation ===============================================
+    //s2Clustering.ClusterProperties(physdata.at(ievent), L1TOutputEmul,true);
+    // std::cout <<"float size : " << sizeof(float) << std::endl;
+    // std::cout <<"double size : " << sizeof(double) << std::endl;
     s2Clustering.ClusterProperties(physdata.at(ievent), L1TOutputEmul);
+    //==================================================================
+    
     if(L1TOutputEmul.pack_firstWord()!=pyemulout.at(ievent).pack_firstWord()){
       //std::cout << "Mismatch in first word for event : " << ievent << std::endl;
       nof1stMM++;
     }
     if(L1TOutputEmul.pack_secondWord()!=pyemulout.at(ievent).pack_secondWord()){
-      std::cout << "Mismatch in second word for event : " << ievent << std::endl;
-      // std::cout << "Python emulation" << std::endl;
-      // pyemulout.at(ievent).print();
-      // std::cout << std::endl << "C++ emulation" << std::endl;
-      // L1TOutputEmul.print();      
+      uint64_t XOR = L1TOutputEmul.pack_secondWord() xor pyemulout.at(ievent).pack_secondWord() ;
+      std::cout << std::dec
+      		<< "Mismatch in second word for event : " << ievent
+      		<< std::hex
+      		<< ", C++: " << L1TOutputEmul.pack_secondWord()
+      		<< ", Python: " << pyemulout.at(ievent).pack_secondWord()
+      		<< ", XOR: 0x"
+      		<< std::setw(16) << std::setfill('0')
+      		<< XOR
+      		<< std::setw(4) << std::setfill(' ')
+      		<< std::endl;
+      
+      std::cout << "========= Python Result ============" << std::endl;
+      pyemulout.at(ievent).print();
+      std::cout << "===================================" << std::endl;
+      std::cout << "========= C++ Result ============" << std::endl;
+      L1TOutputEmul.print();
+      std::cout << "===================================" << std::endl;
+
       nof2ndMM++;
     }
     if(L1TOutputEmul.pack_thirdWord()!=pyemulout.at(ievent).pack_thirdWord()){
-      std::cout << "Mismatch in third word for event : " << ievent << std::endl;
+      
+      uint64_t XOR = L1TOutputEmul.pack_thirdWord() xor pyemulout.at(ievent).pack_thirdWord() ;
+      std::bitset<64> XOR_bitset = XOR;
+      std::cout << std::dec
+      		<< "Mismatch in third word for event : " << ievent
+      		<< std::hex
+      		<< ", C++: " << L1TOutputEmul.pack_thirdWord()
+      		<< ", Python: " << pyemulout.at(ievent).pack_thirdWord()
+      		<< ", XOR: 0x"
+      		<< std::setw(16) << std::setfill('0')
+      		<< XOR
+      		<< std::setw(4) << std::setfill(' ')
+      		<< std::endl;
+      
+      std::cout << "========= Python Result ============" << std::endl;
+      pyemulout.at(ievent).print();
+      std::cout << "===================================" << std::endl;
+      std::cout << "========= C++ Result ============" << std::endl;
+      L1TOutputEmul.print();
+      std::cout << "===================================" << std::endl;
+      
       nof3rdMM++;
     }
     nofEvents++;
   }//event loop
-  std::cout << "Total number of events processed: " << nofEvents << std::endl;
+  std::cout << "Total number of events processed: " << std::dec << nofEvents << std::endl;
   std::cout << "Total number of mismatches in the first word : " << nof1stMM
 	    <<", second word: " << nof2ndMM 
             << ", third word: " << nof3rdMM

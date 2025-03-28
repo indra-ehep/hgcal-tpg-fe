@@ -23,7 +23,8 @@ int main(int argc, char** argv)
   //============================================
   //Read Emulation results by Python
   void ReadPyEmulOut(std::string, std::vector<l1thgcfirmware::HGCalCluster_HW>&);
-  std::string infile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3_out.csv";
+  //std::string infile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3_out.csv";
+  std::string infile = "input/stage2/EMPinputs/test_2025-03-12/input_fp_out.csv";
   std::vector<l1thgcfirmware::HGCalCluster_HW> emulout;  
   ReadPyEmulOut(infile, emulout);
   std::cout << "emulout.size() : " << emulout.size() << std::endl;
@@ -32,38 +33,65 @@ int main(int argc, char** argv)
   //===========================================
   //Read EMP file from FW
   void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>&);
-  std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/tx_summary.txt";
+  //std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/tx_summary.txt";
+  std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250321_1305/tx_summary.txt";
   std::map<uint32_t,std::vector<uint64_t>> fwdata;
   ReadEMPData(inputFWFileName,fwdata);
   std::cout << "fwdata.size : " << fwdata.size() << std::endl;
   //===========================================
-  
+
+  int offset = 97;
   int ievent = 0;
   for(const l1thgcfirmware::HGCalCluster_HW& l1tdata :  emulout){
     if(ievent>66) continue;
-    uint64_t xor_firstword = l1tdata.pack_firstWord() xor fwdata[4][ievent+51];
+    uint64_t xor_firstword = l1tdata.pack_firstWord() xor fwdata[4][ievent+offset];
+    uint64_t firstword = l1tdata.pack_firstWord();
+    uint64_t secondword = l1tdata.pack_secondWord();
+    uint64_t thirdword = l1tdata.pack_thirdWord();
     std::cout << "ievent: " << ievent
 	      << std::hex
-	      << ", 1st word: " << l1tdata.pack_firstWord()
-              << ", link word1 0x" << fwdata[4][ievent+51]
-	      << ", XOR : " << xor_firstword
+	      << ", 1st word: 0x"
+      	      << std::setw(16) << std::setfill('0')
+	      << firstword
+              << ", link word1 0x"
+	      << std::setw(16) << std::setfill('0')
+	      << fwdata[4][ievent+offset]
+	      << ", XOR : 0x"
+      	      << std::setw(16) << std::setfill('0')
+	      << xor_firstword
+	      << std::setw(4) << std::setfill(' ')
 	      << std::dec
 	      << std::endl;
-    uint64_t xor_secondword = l1tdata.pack_secondWord() xor fwdata[5][ievent+51];
+    uint64_t xor_secondword = l1tdata.pack_secondWord() xor fwdata[5][ievent+offset];
     std::cout << "ievent: " << ievent
 	      << std::hex
-	      << ", 2nd word: " << l1tdata.pack_secondWord()
-              << ", link word1 0x" << fwdata[5][ievent+51]
-	      << ", XOR : " << xor_secondword
+	      << ", 2nd word: 0x"
+      	      << std::setw(16) << std::setfill('0')
+	      << secondword
+              << ", link word1 0x"
+	      << std::setw(16) << std::setfill('0')
+	      << fwdata[5][ievent+offset]
+	      << ", XOR : 0x"
+      	      << std::setw(16) << std::setfill('0')
+	      << xor_secondword
+	      << std::setw(4) << std::setfill(' ')
 	      << std::dec
 	      << std::endl;
-    uint64_t xor_thirdword = l1tdata.pack_thirdWord() xor fwdata[6][ievent+51];
+    uint64_t xor_thirdword = l1tdata.pack_thirdWord() xor fwdata[6][ievent+offset];
     std::cout << "ievent: " << ievent
 	      << std::hex
-	      << ", 3nd word: " << l1tdata.pack_thirdWord()
-              << ", link word1 0x" << fwdata[6][ievent+51]
-	      << ", XOR : " << xor_thirdword
+	      << ", 3nd word: 0x"
+	      << std::setw(16) << std::setfill('0')
+	      << thirdword
+              << ", link word1 0x"
+	      << std::setw(16) << std::setfill('0')
+	      << fwdata[6][ievent+offset]
+	      << ", XOR : 0x"
+	      << std::setw(16) << std::setfill('0')
+	      << xor_thirdword
+      	      << std::setw(4) << std::setfill(' ')
 	      << std::dec
+	      << std::endl
 	      << std::endl;
     ievent++;
   }
