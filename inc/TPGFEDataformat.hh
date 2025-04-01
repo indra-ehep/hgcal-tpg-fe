@@ -353,8 +353,7 @@ namespace TPGFEDataformat{
       return decomp;
     }
 
-    void print(TPGFEDataformat::Type t) const {
-
+    uint64_t decodedE(TPGFEDataformat::Type t) const {
       uint64_t decompressed = 0;
       switch(t){
       case TPGFEDataformat::BestC:
@@ -378,6 +377,10 @@ namespace TPGFEDataformat{
       default: //to allow unknown type
 	;
       }
+      return decompressed;
+    }
+    
+    void print(TPGFEDataformat::Type t) const {
 
       std::cout << "TPGFEDataformat::TcRawData(" << this << ")::print(): Data = 0x"
 		<< std::hex << ::std::setfill('0')
@@ -386,7 +389,7 @@ namespace TPGFEDataformat{
 		<< ", address = " << std::setw(2) << unsigned(address())
 		<< ", raw = " << std::setw(10) << rawE()
 		<< ", energy = " << std::setw(3) << energy()
-		<< ", unpacked = " << std::setw(10) << decompressed
+		<< ", unpacked = " << std::setw(10) << decodedE(t)
 		<< ", istctp1 = " << std::setw(2) << isTcTp1()
 		<< ", istctp2 = " << std::setw(2) << isTcTp2()
 		<< ", istctp3 = " << std::setw(2) << isTcTp3()
