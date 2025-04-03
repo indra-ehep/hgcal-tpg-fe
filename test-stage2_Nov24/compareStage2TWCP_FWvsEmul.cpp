@@ -26,28 +26,27 @@ int main()
   int offsetindex = 66;
   for(const auto& emd: emuldata){
     int iw = 0;
-    std::cout  << "second size : " << emd.second.size() << std::endl;
     for(const auto& ed: emd.second){
       if(iw<(118-offsetindex)){
-	uint64_t XOR = ed xor fwdata[emd.first].at(iw+offsetindex) ;
-	std::cout << std::dec
-		  << "link: " << emd.first
-		  << ", iw: " << iw
-		  << std::hex
-		  << ", emuldata : 0x"  
-		  << std::setw(16) << std::setfill('0')
-		  << ed
-		  << ", fwdata: 0x"
-		  << std::setw(16) << std::setfill('0')
-		  << fwdata[emd.first].at(iw+offsetindex) 
-		  << ", diff(emuldata - fwdata): 0x"
-		  << std::setw(16) << std::setfill('0')
-		  << (ed-fwdata[emd.first].at(iw+offsetindex))
-		  << ", (emuldata XOR fwdata): 0x"
-		  << std::setw(16) << std::setfill('0')
-		  << XOR
-		  << std::setw(4) << std::setfill(' ')
-		  << std::endl;
+  	uint64_t XOR = ed xor fwdata[emd.first].at(iw+offsetindex) ;
+  	std::cout << std::dec
+  		  << "link: " << emd.first
+  		  << ", iw: " << iw
+  		  << std::hex
+  		  << ", emuldata : 0x"  
+  		  << std::setw(16) << std::setfill('0')
+  		  << ed
+  		  << ", fwdata: 0x"
+  		  << std::setw(16) << std::setfill('0')
+  		  << fwdata[emd.first].at(iw+offsetindex) 
+  		  // << ", diff(emuldata - fwdata): 0x"
+  		  // << std::setw(16) << std::setfill('0')
+  		  // << (ed-fwdata[emd.first].at(iw+offsetindex))
+  		  << ", (emuldata XOR fwdata): 0x"
+  		  << std::setw(16) << std::setfill('0')
+  		  << XOR
+  		  << std::setw(4) << std::setfill(' ')
+  		  << std::endl;
       }
       iw++;
     }
@@ -55,6 +54,8 @@ int main()
   }
   return true;
 }
+
+
 
 void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<uint64_t>>& linkwords, int offset)
 {

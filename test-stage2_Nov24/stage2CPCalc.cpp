@@ -75,15 +75,23 @@ int main(int argc, char** argv)
   //00000000017911f5,0000000146632bbc, 00000002b3487988,0000001409642eab,00000003fff7f7c0
   //0000000000000000,0000000000000001
   
+  //k==3, only 28 bit space is available for 
+  //muZ saturation W=0x64 (100), Wz=0x63FFF9C (104857500) , muZ = 1048575 (saturation)
+  //muZ saturation W=0x64 (100), Wz=0x6400000 (104857600) , muZ = 1048576 (saturation+1)
+  //muZ saturation W=0x64 (100), Wz=0x63FFFCD (104857549) , muZ = 1048575.49 (saturation+rounding)
+  //muZ saturation W=0x64 (100), Wz=0x6400031 (104857649) , muZ = 1048576 (saturation+1+rounding)
+  
   accmulInput.setNumberOfTcs(0x00000000000000d3);
   accmulInput.setTotE(0x000000000000e025);
   accmulInput.setCeeE(0x000000000000a2c6);
   accmulInput.setCeeECore(0x00000000000065f4);
   accmulInput.setCeHEarly(0x00000000000025c9);
-  accmulInput.setSumW(0x0000000000001bbe);
+  //accmulInput.setSumW(0x0000000000001bbe);
+  accmulInput.setSumW(0x0000000000000064);
   accmulInput.setNumberOfTcsW(0x00000000000000d3);
   accmulInput.setSumW2(0x00000000000b293c);
-  accmulInput.setSumWZ(0x000000000049aca0);
+  //accmulInput.setSumWZ(0x000000000049aca0);
+  accmulInput.setSumWZ(0x00000000063FFF9C);
   accmulInput.setSumWRoZ(0x00000000017911f5);
   accmulInput.setSumWPhi(0x00000000008a6c48);
   accmulInput.setSumWZ2(0x0000000146632bbc);
@@ -124,10 +132,57 @@ int main(int argc, char** argv)
   // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0000400000022980;
 
   //012ba0bab028c0e0  000178d3154689e5 4a53912e00038e00 00000003fff7f7c0
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x012ba0bab028c0e0;
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178d3154689e5 ;
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x4a53912e00038e00;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x012ba0bab028c0e0;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178d3154689e5 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x4a53912e00038e00;
 
+  //================================= Saturation test ======================================
+  //Input Frame825, Output Frame 52
+  //01392aa39019c0a2 0000f8a70003fd40 0003800000041001
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x01392aa39019c0a2;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f8a70003fd40 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0003800000041001;
+  
+  //011911ba1005801e 000178310006b940  0001800000036d80
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x011911ba1005801e;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178310006b940 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0001800000036d80;
+  
+  //016e66911008803d  0001784b0000b140  0003800000028a00
+  //01199cd330034010  000178210002d140  000300000002cb00
+  //0125af9530058025  0001 0000f8350003fd40  0001 0001c0000003cf00
+  //01227cd11010004f  0001 0000f88400040140  0001 000380000002aa80
+  //010484f3b01d807c  0001 0000f8bb00040140  0001 0003800000032c80
+  //01047fef9016c061  0001 0000f87a0003fd40  0001 0003400000032c80
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x01047fef9016c061;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f87a0003fd40 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0003400000032c80;
+
+  //01156fc890164072 000178bb00101140  0003807f00036d80
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x01156fc890164072 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178bb00101140 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0003807f00036d80 ;
+
+  //01227cd11010004f  0000f88400040140  000380000002aa80
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x01227cd11010004f ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f88400040140 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x000380000002aa80 ;
+
+  //01511e50000d40a9  0001 0001789800012140  0001 000380550003ae81
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x01511e50000d40a9 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0001789800012140 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x000380550003ae81 ;
+  
+  //012a7db1901a809a  0001 0000f8d97ffc0140  0001 0003807f00032c80
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x012a7db1901a809a ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f8d97ffc0140 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0003807f00032c80 ;
+  
+  //0139b6c730070024  0000f8357ff40140  0002403600020800
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x0139b6c730070024 ;
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f8357ff40140 ;
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0002403600020800 ;
+  
   l1thgcfirmware::HGCalCluster_HW::unpack_firstWord(firstw,L1TOutputFW);
   l1thgcfirmware::HGCalCluster_HW::unpack_secondWord(secondw,L1TOutputFW);
   l1thgcfirmware::HGCalCluster_HW::unpack_thirdWord(thirdw,L1TOutputFW);

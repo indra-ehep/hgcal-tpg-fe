@@ -17,7 +17,9 @@ int main(int argc, char** argv)
   //CaptureStage2_250214_1137 + EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_CP.txt
   //CaptureStage2_250314_1218 + EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt
   // ===============================================
-  std::string board_config = "input/stage2/firmware-data/CaptureStage2_250314_1218/Stage2Configuration.yaml" ;
+  //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250314_1218/Stage2Configuration.yaml" ;
+  //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250328_1136/Stage2Configuration.yaml" ;
+  std::string board_config = "input/stage2/firmware-data/CaptureStage2_250321_1305/Stage2Configuration.yaml" ;
   TPGStage2Configuration::Stage2Board sb;
   sb.readConfigYaml(board_config.c_str());
   sb.print();
@@ -29,7 +31,10 @@ int main(int argc, char** argv)
   cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
 
   //std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt";
-  std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_FixedPointCheck_2025-03-21.txt";
+  //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_FixedPointCheck_2025-03-21.txt";
+  //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_SaturationCheck_2025-03-28.txt";
+  std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250321_1305/rx_summary.txt";
+  
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
   const size_t numWordsBx = 162;
@@ -72,10 +77,10 @@ int main(int argc, char** argv)
   
   std::cout << "Nof links for Bx1 : " << vS12[0].size() << std::endl;
   std::cout << "Nof links for Bx2 : " << vS12[1].size() << std::endl;
-
+  
   std::cout << "Nof links for Bx1 in Stage2L: " << vS12L[0].size() << std::endl;
   std::cout << "Nof links for Bx2 in Stage2L: " << vS12L[1].size() << std::endl;
-
+  
   TPGStage2Emulation::Stage2 stage2TowerEmul;
   stage2TowerEmul.setConfiguration(&sb);
   stage2TowerEmul.setAccuOutput(&accmulInput);
@@ -91,8 +96,11 @@ int main(int argc, char** argv)
       }
     }
     for(unsigned il(0);il<4;il++) {
-      for(unsigned iw(0);iw<131;iw++) {
+      for(unsigned iw(0);iw<108;iw++) {
 	s2OutputBx[ibx].setData(il, iw+31, stage2TowerEmul.getClusterOutput(0, iw, il));
+      }
+      for(unsigned iw(0);iw<23;iw++) {
+	s2OutputBx[ibx].setData(il, iw+31+108, 0x0);
       }
     }
     
@@ -122,7 +130,7 @@ int main(int argc, char** argv)
 	l1t::demo::Frame frame;
 	//frame.data = (i==0)?emptydata:s2OutputBx[ibx].getData(ilink,i-1);
 	frame.data = (i==0)?s2OutputBx[ibx].getHeader(ilink):s2OutputBx[ibx].getData(ilink,i);
-	frame.valid = ((i <= 30) or ((i-1)%3<=1));//(i <= 30);
+	frame.valid = (i <= 138) ;//((i <= 30) or ((i-1)%3<=1));//(i <= 30);
 	frame.startOfOrbit = false;
 	frame.startOfPacket = (i == 0);
 	frame.endOfPacket = (i == (l1tnumWordsBx-1));

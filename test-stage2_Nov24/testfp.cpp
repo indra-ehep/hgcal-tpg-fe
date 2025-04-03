@@ -330,14 +330,14 @@ int main(int argc, const char* argv[]) {
  
   //Check saturation cases
   //===================================
-  x += ((1<<20) - 1) ; //tested with 0.49994753607190034 
+  x = ((1<<20) - 1) ; //tested with 0.49994753607190034 
   y =  x;
   
   ap_ufixed<32,20>			s_default(x);
-  ap_ufixed<32,20,AP_RND, AP_SAT>	s_sat(x);
-  ap_ufixed<32,20,AP_RND, AP_SAT_ZERO>	s_sat_zero(x);
-  ap_ufixed<32,20,AP_RND, AP_SAT_SYM>	s_sat_sym(x);
-  ap_ufixed<32,20,AP_RND, AP_WRAP>	s_wrap(x);
+  ap_ufixed<32,20,AP_TRN, AP_SAT>	s_sat(x);
+  ap_ufixed<32,20,AP_TRN, AP_SAT_ZERO>	s_sat_zero(x);
+  ap_ufixed<32,20,AP_TRN, AP_SAT_SYM>	s_sat_sym(x);
+  ap_ufixed<32,20,AP_TRN, AP_WRAP>	s_wrap(x);
 
   std::cout << "==========================="<< std::endl;
   std::cout << "Saturation (double):  " << x  << std::endl;
