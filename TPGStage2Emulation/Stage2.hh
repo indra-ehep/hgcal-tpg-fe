@@ -691,14 +691,15 @@ namespace TPGStage2Emulation
       l1TOutput.nTC = accuInput.numberOfTcs();
       //// ================== First Word ===========================
       if(isPrint) std::cout<<"Completed first word" << std::endl;
-	
+      
       //// ================== Second Word ===========================
       l1TOutput.w_eta = convertRozToEta( accuInput.sumWRoZ(), accuInput.sumW() );
       bool saturatedPhi = false, nominalPhi = false;      
       l1TOutput.w_phi = calc_phi(accuInput.sumWPhi(), accuInput.sumW(), saturatedPhi, nominalPhi);
       float zratio = float(accuInput.sumWZ()) / float(accuInput.sumW()) ;
       ap_ufixed<32,20, AP_RND> wt_muz_fxp = zratio;
-      l1TOutput.w_z = std::round(wt_muz_fxp.to_float());      
+      uint32_t muz = std::round(wt_muz_fxp.to_float());
+      l1TOutput.w_z = (muz>0xfff)?0:muz;      
       l1TOutput.setQualityFlags(l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeECore()), l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceHEarly()), accuInput.issatTC(), accuInput.shapeQ(), saturatedPhi, nominalPhi);
       //// ================== Second Word ===========================
       if(isPrint) std::cout<<"Completed second word" << std::endl;
@@ -1027,42 +1028,78 @@ namespace TPGStage2Emulation
       }
       //========================================
 
-      for (unsigned w(0); w < 132; w++){
+      //for (unsigned w = 0; w < 132; w++){
+      for (unsigned w = 0; w < 108; w++){
 	for(int il=0;il<1;il++){
 	  L1TOutputEmul.clear();
 	  accmulInput->zero();
-	  //std::cout << "word0: 0x" << std::hex << vS12L[0].getData(w) << std::dec << std::endl;
-	  accmulInput->setNumberOfTcs(vS12L[17*il+0].getData(w));
-	  accmulInput->setTotE(vS12L[17*il+1].getData(w));
-	  accmulInput->setCeeE(vS12L[17*il+2].getData(w));
-	  accmulInput->setCeeECore(vS12L[17*il+3].getData(w));
-	  accmulInput->setCeHEarly(vS12L[17*il+4].getData(w));
-	  accmulInput->setSumW(vS12L[17*il+5].getData(w));
-	  accmulInput->setNumberOfTcsW(vS12L[17*il+6].getData(w));
+	  // ////==================================================================================
+	  // //// Cluster Input
+	  // ////==================================================================================
+	  // //std::cout << "word0: 0x" << std::hex << vS12L[0].getData(w) << std::dec << std::endl;
+	  // accmulInput->setNumberOfTcs(vS12L[17*il+0].getData(w));
+	  // accmulInput->setTotE(vS12L[17*il+1].getData(w));
+	  // accmulInput->setCeeE(vS12L[17*il+2].getData(w));
+	  // accmulInput->setCeeECore(vS12L[17*il+3].getData(w));
+	  // accmulInput->setCeHEarly(vS12L[17*il+4].getData(w));
+	  // accmulInput->setSumW(vS12L[17*il+5].getData(w));
+	  // accmulInput->setNumberOfTcsW(vS12L[17*il+6].getData(w));
+	  // /////////////////////////////////////////////////
+	  // //The following settings are for k==3 fix them for generic case
+	  // accmulInput->setSumW2(vS12L[17*il+7].getData(w) & 0xFFFFFFFF);
+	  // accmulInput->setSumWZ(vS12L[17*il+8].getData(w) & 0xFFFFFFF);
+	  // accmulInput->setSumWRoZ(vS12L[17*il+10].getData(w) & 0x1FFFFFFF);
+	  // accmulInput->setSumWPhi(vS12L[17*il+9].getData(w) & 0xFFFFFFF);
+	  // accmulInput->setSumWZ2(vS12L[17*il+11].getData(w) & 0xFFFFFFFFFF);
+	  // accmulInput->setSumWRoZ2(vS12L[17*il+13].getData(w) & 0x3FFFFFFFFFF);
+	  // accmulInput->setSumWPhi2(vS12L[17*il+12].getData(w) & 0xFFFFFFFFFF);
+	  // //////////////////////////////////////////////
+	  // accmulInput->setLayerBits(vS12L[17*il+14].getData(w));
+	  // accmulInput->setsatTC(vS12L[17*il+15].getData(w) & 0x1);
+	  // accmulInput->setshapeQ(vS12L[17*il+16].getData(w) & 0x1);
+	  // accmulInput->printdetail(false);
+	  // ////==================================================================================
+	  ////==================================================================================
+	  //// Cluster Input
+	  ////==================================================================================
+	  //std::cout << "word0: 0x" << std::hex << vS12[0].getData(w) << std::dec << std::endl;
+	  accmulInput->setNumberOfTcs(vS12[17*il+0].getData(w));
+	  accmulInput->setTotE(vS12[17*il+1].getData(w));
+	  accmulInput->setCeeE(vS12[17*il+2].getData(w));
+	  accmulInput->setCeeECore(vS12[17*il+3].getData(w));
+	  accmulInput->setCeHEarly(vS12[17*il+4].getData(w));
+	  accmulInput->setSumW(vS12[17*il+5].getData(w));
+	  accmulInput->setNumberOfTcsW(vS12[17*il+6].getData(w));
 	  /////////////////////////////////////////////////
 	  //The following settings are for k==3 fix them for generic case
-	  accmulInput->setSumW2(vS12L[17*il+7].getData(w) & 0xFFFFFFFF);
-	  accmulInput->setSumWZ(vS12L[17*il+8].getData(w) & 0xFFFFFFF);
-	  accmulInput->setSumWRoZ(vS12L[17*il+10].getData(w) & 0x1FFFFFFF);
-	  accmulInput->setSumWPhi(vS12L[17*il+9].getData(w) & 0xFFFFFFF);
-	  accmulInput->setSumWZ2(vS12L[17*il+11].getData(w) & 0xFFFFFFFFFF);
-	  accmulInput->setSumWRoZ2(vS12L[17*il+13].getData(w) & 0x3FFFFFFFFFF);
-	  accmulInput->setSumWPhi2(vS12L[17*il+12].getData(w) & 0xFFFFFFFFFF);
+	  accmulInput->setSumW2(vS12[17*il+7].getData(w) & 0xFFFFFFFF);
+	  accmulInput->setSumWZ(vS12[17*il+8].getData(w) & 0xFFFFFFF);
+	  accmulInput->setSumWRoZ(vS12[17*il+10].getData(w) & 0x1FFFFFFF);
+	  accmulInput->setSumWPhi(vS12[17*il+9].getData(w) & 0xFFFFFFF);
+	  accmulInput->setSumWZ2(vS12[17*il+11].getData(w) & 0xFFFFFFFFFF);
+	  accmulInput->setSumWRoZ2(vS12[17*il+13].getData(w) & 0x3FFFFFFFFFF);
+	  accmulInput->setSumWPhi2(vS12[17*il+12].getData(w) & 0xFFFFFFFFFF);
 	  //////////////////////////////////////////////
-	  accmulInput->setLayerBits(vS12L[17*il+14].getData(w));
-	  accmulInput->setsatTC(vS12L[17*il+15].getData(w) & 0x1);
-	  accmulInput->setshapeQ(vS12L[17*il+16].getData(w) & 0x1);
+	  accmulInput->setLayerBits(vS12[17*il+14].getData(w));
+	  accmulInput->setsatTC(vS12[17*il+15].getData(w) & 0x1);
+	  accmulInput->setshapeQ(vS12[17*il+16].getData(w) & 0x1);
 	  accmulInput->printdetail(false);
+	  ////==================================================================================
+	  //// Cluster property
+	  ////==================================================================================
 	  ClusterProperties(*accmulInput, L1TOutputEmul);
-	  L1TOutputEmul.print();
+	  ////==================================================================================
+	  //// Cluster Output
+	  ////==================================================================================
+	  //L1TOutputEmul.print();
 	  _clusterOutput[il][w][0] = L1TOutputEmul.pack_firstWord();
 	  _clusterOutput[il][w][1] = L1TOutputEmul.pack_secondWord();
 	  _clusterOutput[il][w][2] = L1TOutputEmul.pack_thirdWord();
 	  _clusterOutput[il][w][3] = 0x0;
+	  ////==================================================================================
 	}
       }
-
-
+      
     }//end of run method
     
     uint32_t getTowerData(int idet, int ieta, int iphi) const { return _towerData[idet][ieta][iphi];}
@@ -1078,9 +1115,10 @@ namespace TPGStage2Emulation
     
     std::vector<TPGTriggerCellWord> _vTriggerCellWord;
 
+    //current format is total 162 words [= 1 header + 30 towers + 108 clusters + 23 empty]
     uint32_t _towerData[2][20][24];
     uint16_t _towerOutput[20][24];
-    uint64_t _clusterOutput[3][132][4];
+    uint64_t _clusterOutput[3][108][4]; //108 valid
     
     std::vector<TPGClusterData> _vClusterData;
 
