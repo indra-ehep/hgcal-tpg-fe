@@ -1,37 +1,46 @@
 /**********************************************************************
  Created on : 12/03/2025
- Purpose    : Compare FW and emulation results
+ Purpose    : Compare FW and emulation results (tested with FW:stage2_hgcdaqrx2_250313_1752)
  Author     : Indranil Das, Research Associate, Imperial
  Email      : indranil.das@cern.ch | indra.ehep@gmail.com
 **********************************************************************/
-
 
 #include <iostream>
 #include <algorithm>
 #include "L1Trigger/DemonstratorTools/interface/utilities.h"
 
-
-int main()
+int main(int argc, char** argv)
 {
+  std::istringstream issIndex(argv[1]);
+  int index = -1;
+  issIndex >> index ;
+  
   void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<l1t::demo::Frame>>&, int offset);
-  std::string inputEmulFileName = "EMPStage2Output.txt";
+  //std::string inputEmulFileName = "EMPStage2Output.txt";
+  std::string inputEmulFileName = argv[2];
+  
   //std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250214_1137/tx_summary.txt";
   //std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/tx_summary.txt";
-  std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250321_1305/tx_summary.txt";
+  //std::string inputFWFileName = "input/stage2/firmware-data/CaptureStage2_250321_1305/tx_summary.txt";
+  std::string inputFWFileName = argv[3];
+  
   std::map<uint32_t,std::vector<l1t::demo::Frame>> emuldataset, fwdataset;
   int emulframeoffset = 0, fwframeoffset = 199;
   ReadEMPData(inputEmulFileName,emuldataset,emulframeoffset);
   ReadEMPData(inputFWFileName,fwdataset,fwframeoffset);
-  std::cout << "emuldata.size : " << emuldataset.size() << std::endl;
-  std::cout << "fwdata.size : " << fwdataset.size() << std::endl;
+  // std::cout << "emuldata.size : " << emuldataset.size() << std::endl;
+  // std::cout << "fwdata.size : " << fwdataset.size() << std::endl;
   int offsetindex = 66;
+  int nofMisMatch[12] ;
+  int nofClusters[12] ;
+  int ilink = 0 ;
   for(const auto& emullinkframe: emuldataset){
     int iw = 0;
-    std::cout  << "Stage2 output link : " << emullinkframe.first 
-	       << ", emul frame size: " << emullinkframe.second.size()
-      	       << ", firmware frame size: " << fwdataset[emullinkframe.first].size();
+    ;// std::cout  << "Stage2 output link : " << emullinkframe.first 
+    // 	       << ", emul frame size: " << emullinkframe.second.size()
+    //   	       << ", firmware frame size: " << fwdataset[emullinkframe.first].size();
     //<< std::endl;
-
+    
     ////===========================================================
     //// Reorder the firmware data
     ////===========================================================
@@ -71,23 +80,23 @@ int main()
       iframe++;
     }
     if(hasFoundFirstWord and hasFoundNextNonZero and (nextNonZero-firstframeid)<30){
-      ;//std::cout << "First word at index : " << firstframeid << std::hex << " and word 0x" << firstword << std::dec << std::endl;
+      ;//std::cout << "\nFirst word at index : " << firstframeid << std::hex << " and word 0x" << firstword << std::dec << std::endl;
     }else{
-      std::cout << "First word has not been spotted " << std::endl;
+      std::cerr << "First word has not been spotted " << std::endl;
       continue;
     }
     if(!hasFoundClusAfterHeaderword){
-      std::cout << "First cluster word after the header has not been spotted " << std::endl;
+      std::cerr << "First cluster word after the header has not been spotted " << std::endl;
       continue;
     }else{
-      ;//std::cout << std::hex << "First cluster word after the header 0x" << firstClusAfterHeaderword << std::dec << std::endl;
+      ;//std::cout << std::hex << "\nFirst cluster word after the header 0x" << firstClusAfterHeaderword << std::dec << std::endl;
     }
     //---------------------------------------------------------------------------
     // Step2: Check that the first word is repeated after a certain framegap
     //---------------------------------------------------------------------------
     int indexRepeat = firstframeid+int(emullinkframe.second.size());
     if(fwdataset[emullinkframe.first].at(indexRepeat).data != firstword) {
-      std::cout << "Repeat word has not been found " << std::endl;
+      std::cerr << "Repeat word has not been found " << std::endl;
       continue;
     }
     //-------------------------------------------------------------------------------
@@ -100,20 +109,21 @@ int main()
 	fwdata.push_back(frame.data);
       iframe++;
     }    
-    std::cout  << ", fw cluster datasize " << fwdata.size() ;//<< std::endl;
+    ;//std::cout  << "\n indexRepeat : " << indexRepeat << ", fw cluster datasize " << fwdata.size() ;//<< std::endl;
+    int nofWordsperBx = fwdata.size()/6;
     //-------------------------------------------------------------------------------
     // Step4: Rotate to bring the first cluster word after the header to the front
     //-------------------------------------------------------------------------------
-    int foundMatchindex = -1;
+    unsigned foundMatchindex = -1;
     uint64_t fwword = firstClusAfterHeaderword;
     for(unsigned iw=0;iw<fwdata.size();iw++) if(fwdata.at(iw)==fwword) foundMatchindex = iw;
     if(foundMatchindex == -1){
-      std::cout << "\n Match not found for the first cluster word after the header in the fwdata array" << std::endl;
+      std::cerr << "\n Match not found for the first cluster word after the header in the fwdata array" << std::endl;
       continue;
     }
     for(unsigned iw=0;iw<foundMatchindex;iw++) std::rotate(fwdata.begin(),fwdata.begin()+1,fwdata.end());    
     ////=====================================================================
-
+    
     
     ////======================================================================
     //// Reorder the emulated data
@@ -129,7 +139,7 @@ int main()
 	preemuldata.push_back(frame.data);
       iframe++;
     }
-    std::cout  << ", preemuldata size " << preemuldata.size() ;//<< std::endl;
+    ;//std::cout  << ", preemuldata size " << preemuldata.size() ;//<< std::endl;
 
     //-----------------------------------------------------------------------------------------
     // Step2: Rotate the preemul data to find the first cluster word after header in the fwdata
@@ -138,7 +148,7 @@ int main()
     fwword = firstClusAfterHeaderword;
     for(unsigned iw=0;iw<preemuldata.size();iw++) if(preemuldata.at(iw)==fwword) foundMatchindex = iw;
     if(foundMatchindex == -1){
-      std::cout << "\n Match not found for the first cluster word after the header in the fwdata array in emuldata " << std::endl;
+      std::cerr << "\n Match not found for the first cluster word after the header in the fwdata array in emuldata " << std::endl;
       continue;
     }
     for(unsigned iw=0;iw<foundMatchindex;iw++) std::rotate(preemuldata.begin(),preemuldata.begin()+1,preemuldata.end());
@@ -148,13 +158,13 @@ int main()
     //-----------------------------------------------------------------------------------------
     std::vector<uint64_t> emuldata;
     for(int ibx=0;ibx<6;ibx++){
-      for(unsigned iw=0;iw<88;iw++){
+      for(unsigned iw=0;iw<nofWordsperBx;iw++){
 	int coliw = 108*ibx + iw;
 	emuldata.push_back(preemuldata.at(coliw));
       }
     }
     preemuldata.clear();
-    std::cout  << ", emul cluster datasize " << emuldata.size() << std::endl;
+    ;//std::cout  << ", emul cluster datasize " << emuldata.size() << std::endl;
     ////======================================================================
 
     ////======================================================================
@@ -163,10 +173,10 @@ int main()
     // Step1: The dimention of both arrays should be same
     //------------------------------------------------------------------------
     if(fwdata.size()!=emuldata.size()){
-      std::cout<<" Skipping link " << emullinkframe.first << " due to mismatch and fwdata and emuldata dimension " << std::endl;
+      std::cerr <<" Skipping link " << emullinkframe.first << " due to mismatch and fwdata and emuldata dimension " << std::endl;
       continue;
     }
-
+    
     //------------------------------------------------------------------------
     // Step2: Now compare word-by-word and print the mismatched words 
     //------------------------------------------------------------------------
@@ -182,14 +192,21 @@ int main()
     //------------------------------------------------------------------------
     // Step3: Print the number of mismatches or full match
     //------------------------------------------------------------------------
-    if(nofmissed==0)
-      std::cout << "The emulation and FW data are in complete agreement for Stage2 ouput link " << emullinkframe.first << std::endl;
-    else
-      std::cout << "The emulation and FW data are not matching for " << nofmissed << " cases." << std::endl;
+    // if(nofmissed==0)
+    //   std::cout << "The emulation and FW data are in complete agreement for Stage2 ouput link " << emullinkframe.first << std::endl;
+    // else
+    //   std::cout << "The emulation and FW data are not matching for " << nofmissed << " cases." << std::endl;
+    nofClusters[ilink] = int(emuldata.size());
+    nofMisMatch[ilink++] = nofmissed;
     ////======================================================================
     fwdata.clear(); emuldata.clear();
     
   }//loop over Stage2 links
+  
+  std::cout << index << "\t" << ilink ;
+  for(int il=0;il<ilink;il++) std::cout << "\t" << nofClusters[il] << "\t" << nofMisMatch[il] ;
+  std::cout << std::endl;
+  
   return true;
 }
 
@@ -197,7 +214,7 @@ void ReadEMPData(std::string fname, std::map<uint32_t,std::vector<l1t::demo::Fra
 {
   l1t::demo::BoardData inputs = l1t::demo::read( fname, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
-  std::cout << "compareStage2TowerFWvsEmul::Filename : "<< fname <<", Board data name : " << inputs.name() << ", and number of channels are: " << nChannels  << std::endl;
+  //std::cout << "compareStage2TowerFWvsEmul::Filename : "<< fname <<", Board data name : " << inputs.name() << ", and number of channels are: " << nChannels  << std::endl;
   
   for ( const auto& channel : inputs ) {
     //std::cout << "Data on channel : " << channel.first << std::endl;

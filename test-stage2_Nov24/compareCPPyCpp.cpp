@@ -21,7 +21,8 @@ int main(int argc, char** argv)
   //============================================
   //Read Emulation input to the Python
   void ReadPhysDataCSV(std::string, std::vector<TPGBEDataformat::TcAccumulatorFW>&);
-  std::string pyemulinfile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3.csv";
+  //std::string pyemulinfile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3.csv";
+  std::string pyemulinfile = argv[1] ; //"input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3.csv";
   std::vector<TPGBEDataformat::TcAccumulatorFW> physdata;  
   ReadPhysDataCSV(pyemulinfile, physdata);
   std::cout << "physdata.size() : " << physdata.size() << std::endl;
@@ -30,7 +31,8 @@ int main(int argc, char** argv)
   //============================================
   //Read Emulation results by Python
   void ReadPyEmulOut(std::string, std::vector<l1thgcfirmware::HGCalCluster_HW>&);
-  std::string pyemuloutfile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3_out.csv";
+  //std::string pyemuloutfile = "input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3_out.csv";
+  std::string pyemuloutfile = argv[2] ;//"input/stage2/EMPinputs/test_2025-03-12/tb_stimuli_for_PC_s180_0_vbf_jet_k_3_out.csv";
   std::vector<l1thgcfirmware::HGCalCluster_HW> pyemulout;  
   ReadPyEmulOut(pyemuloutfile, pyemulout);
   std::cout << "emulout.size() : " << pyemulout.size() << std::endl;
@@ -47,16 +49,16 @@ int main(int argc, char** argv)
   l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
   uint64_t nof1stMM = 0, nof2ndMM = 0, nof3rdMM = 0;
   uint64_t nofEvents = 0;
-  uint64_t checkevents[10] = {1806, 3402, 3562, 3899, 4111, 5152, 5401, 8199, 8346, 10556};
-  std::vector<uint64_t> eventlist;
-  for(int iev=0;iev<10;iev++) eventlist.push_back(checkevents[iev]);
-  std::cout << "Check for total nevents : " << eventlist.size() << std::endl ;
+  // uint64_t checkevents[10] = {1806, 3402, 3562, 3899, 4111, 5152, 5401, 8199, 8346, 10556};
+  // std::vector<uint64_t> eventlist;
+  // for(int iev=0;iev<10;iev++) eventlist.push_back(checkevents[iev]);
+  // std::cout << "Check for total nevents : " << eventlist.size() << std::endl ;
   
   for(uint64_t ievent=0;ievent<physdata.size();ievent++){
     //std::cout << "Processing Event : " << ievent << std::endl;
 
-    if ( std::find(eventlist.begin(), eventlist.end(), ievent) == eventlist.end() ) continue;
-    std::cout << std::dec << "========= Processing Event : "<< ievent << " ============" << std::endl;
+    // if ( std::find(eventlist.begin(), eventlist.end(), ievent) == eventlist.end() ) continue;
+    // std::cout << std::dec << "========= Processing Event : "<< ievent << " ============" << std::endl;
     L1TOutputEmul.clear();
     // C++ CP Emulation ===============================================
     //s2Clustering.ClusterProperties(physdata.at(ievent), L1TOutputEmul,true);
