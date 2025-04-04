@@ -633,51 +633,51 @@ namespace TPGBEDataformat{
     }
     void printdetail(bool ishex = true) const
     {
-      std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
-      if(ishex)
-	std::cout << std::hex
-		  << " SumET = 0x" << totE()
-		  << ", SumCEE_ET = 0x" << ceeE()
-		  << ", SumCEE_ET_core = 0x" << ceeECore()
-		  << ", SumCEH_ET_early = 0x" << ceHEarly()
-		  << ", sumW = 0x" << sumW()
-		  << ", sumW2 = 0x" << sumW2()
-		  << ", sumWPhi = 0x" << sumWPhi()
-		  << ", sumWRoZ = 0x" << sumWRoZ()
-		  << ", sumWZ = 0x" << sumWZ()
-		  << ", sumWPhi2 = 0x" << sumWPhi2()
-		  << ", sumWRoZ2 = 0x" << sumWRoZ2()
-		  << ", sumWZ2 = 0x" << sumWZ2()
-		  << std::endl
-		  << ", LayerBits = 0x" << layerBits()
-		  << ", issatTC = 0x" << issatTC()
-		  << ", numberOfTcs = 0x" << numberOfTcs()
-		  << ", numberOfTcsW = 0x" << numberOfTcsW()
-		  << ", shapeQ = 0x" << shapeQ()
-		  << std::dec
-		  << std::endl;
-      else
-	std::cout << std::dec
-		  << " SumET = " << totE()
-		  << ", SumCEE_ET = " << ceeE()
-		  << ", SumCEE_ET_core = " << ceeECore()
-		  << ", SumCEH_ET_early = " << ceHEarly()
-		  << ", sumW = " << sumW()
-		  << ", sumW2 = " << sumW2()
-		  << ", sumWPhi = " << sumWPhi()
-		  << ", sumWRoZ = " << sumWRoZ()
-		  << ", sumWZ = " << sumWZ()
-		  << ", sumWPhi2 = " << sumWPhi2()
-		  << ", sumWRoZ2 = " << sumWRoZ2()
-		  << ", sumWZ2 = " << sumWZ2()
-		  << std::endl
-		  << ", LayerBits = " << layerBits()
-		  << ", issatTC = " << issatTC()
-		  << ", numberOfTcs = " << numberOfTcs()
-		  << ", numberOfTcsW = " << numberOfTcsW()
-		  << ", shapeQ = " << shapeQ()
-		  << std::dec
-		  << std::endl;
+      // std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
+      // if(ishex)
+      // 	std::cout << std::hex
+      // 		  << " SumET = 0x" << totE()
+      // 		  << ", SumCEE_ET = 0x" << ceeE()
+      // 		  << ", SumCEE_ET_core = 0x" << ceeECore()
+      // 		  << ", SumCEH_ET_early = 0x" << ceHEarly()
+      // 		  << ", sumW = 0x" << sumW()
+      // 		  << ", sumW2 = 0x" << sumW2()
+      // 		  << ", sumWPhi = 0x" << sumWPhi()
+      // 		  << ", sumWRoZ = 0x" << sumWRoZ()
+      // 		  << ", sumWZ = 0x" << sumWZ()
+      // 		  << ", sumWPhi2 = 0x" << sumWPhi2()
+      // 		  << ", sumWRoZ2 = 0x" << sumWRoZ2()
+      // 		  << ", sumWZ2 = 0x" << sumWZ2()
+      // 		  << std::endl
+      // 		  << ", LayerBits = 0x" << layerBits()
+      // 		  << ", issatTC = 0x" << issatTC()
+      // 		  << ", numberOfTcs = 0x" << numberOfTcs()
+      // 		  << ", numberOfTcsW = 0x" << numberOfTcsW()
+      // 		  << ", shapeQ = 0x" << shapeQ()
+      // 		  << std::dec
+      // 		  << std::endl;
+      // else
+      // 	std::cout << std::dec
+      // 		  << " SumET = " << totE()
+      // 		  << ", SumCEE_ET = " << ceeE()
+      // 		  << ", SumCEE_ET_core = " << ceeECore()
+      // 		  << ", SumCEH_ET_early = " << ceHEarly()
+      // 		  << ", sumW = " << sumW()
+      // 		  << ", sumW2 = " << sumW2()
+      // 		  << ", sumWPhi = " << sumWPhi()
+      // 		  << ", sumWRoZ = " << sumWRoZ()
+      // 		  << ", sumWZ = " << sumWZ()
+      // 		  << ", sumWPhi2 = " << sumWPhi2()
+      // 		  << ", sumWRoZ2 = " << sumWRoZ2()
+      // 		  << ", sumWZ2 = " << sumWZ2()
+      // 		  << std::endl
+      // 		  << ", LayerBits = " << layerBits()
+      // 		  << ", issatTC = " << issatTC()
+      // 		  << ", numberOfTcs = " << numberOfTcs()
+      // 		  << ", numberOfTcsW = " << numberOfTcsW()
+      // 		  << ", shapeQ = " << shapeQ()
+      // 		  << std::dec
+      // 		  << std::endl;
 	
     }
     

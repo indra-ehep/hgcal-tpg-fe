@@ -19,7 +19,9 @@ int main(int argc, char** argv)
   // ===============================================
   //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250314_1218/Stage2Configuration.yaml" ;
   //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250328_1136/Stage2Configuration.yaml" ;
-  std::string board_config = "input/stage2/firmware-data/CaptureStage2_250321_1305/Stage2Configuration.yaml" ;
+  //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250321_1305/Stage2Configuration.yaml" ;
+  std::string board_config = "../hgcal-tpg-fe-data/local-input/stage2/firmware-data/vbf_Captures/CaptureStage2_250404_1118/Stage2Configuration.yaml" ;
+
   TPGStage2Configuration::Stage2Board sb;
   sb.readConfigYaml(board_config.c_str());
   sb.print();
@@ -33,7 +35,8 @@ int main(int argc, char** argv)
   //std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250314_1218/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt";
   //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_FixedPointCheck_2025-03-21.txt";
   //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_SaturationCheck_2025-03-28.txt";
-  std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250321_1305/rx_summary.txt";
+  //std::string inputFileName = "input/stage2/firmware-data/CaptureStage2_250321_1305/rx_summary.txt";
+  std::string inputFileName = argv[1] ;
   
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
   auto nChannels = inputs.size();
