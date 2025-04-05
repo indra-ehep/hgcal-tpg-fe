@@ -27,7 +27,6 @@ int main(int argc, char** argv)
     // Create a Channel object (vector of Frames)
     l1t::demo::BoardData::Channel channelData;
 
-
     for (size_t ibx = 0; ibx < nofBx; ++ibx) {
       TPGBEDataformat::Stage1ToStage2Data s2InputBx;
       int s2i = 0;

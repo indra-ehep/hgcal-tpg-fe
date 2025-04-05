@@ -7,432 +7,768 @@
 #include <cstring>
 #include <cassert>
 #include <array>
+#include "TPGTriggerCellFloats.hh"
+#include "HLS_arbitrary_Precision_Types/include/ap_int.h"
 
 namespace TPGBEDataformat{
 
-class UnpackerOutputStreamPair {
-public:
-  enum {
-    NumberOfTCs=7
-  };
+  class UnpackerOutputStreamPair {
+  public:
+    enum {
+	  NumberOfTCs=7
+    };
   
-  UnpackerOutputStreamPair() : _moduleId(0xdeadbeef) {
-    setZero();
-  }
-
-  static uint32_t unpack5E3MToUnsigned(uint16_t flt) {
-    assert(flt<0x100);
-    
-    uint32_t e((flt>>3)&0x1f);
-    uint32_t m((flt   )&0x07);
-
-    //return (e==0?m:(8+m)<<(e-1));
-    if(e==0) return m;
-    else if(e==1) return 8+m;
-    else return (16+2*m+1)<<(e-2);
-  }
- 
-  static uint32_t unpack4E3MToUnsigned(uint16_t flt) {
-    assert(flt<0x80);
-    
-    uint32_t e((flt>>3)&0x0f);
-    uint32_t m((flt   )&0x07);
-
-    if(e==0) return m;
-    else if(e==1) return 8+m;
-    //else return (16+2*m+1)<<(e-2);
-    else return (16+2*m  )<<(e-2);
-  }
- 
-  static uint32_t unpack5E4MToUnsigned(uint16_t flt) {
-    assert(flt<0x200);
-    
-    uint32_t e((flt>>4)&0x1f);
-    uint32_t m((flt   )&0x0f);
-
-    //return (e==0?m:(16+m)<<(e-1));
-    if(e==0) return m;
-    else if(e==1) return 16+m;
-    //else return (32+2*m+1)<<(e-2);
-    else return (32+2*m  )<<(e-2);
-  }
- 
-  static uint16_t pack5E4MFromUnsigned(uint32_t erg) {
-    if(erg<16) return erg;
-    
-    unsigned e(1);
-    while(erg>=32) {
-      e++;
-      erg>>=1;
+    UnpackerOutputStreamPair() : _moduleId(0xdeadbeef) {
+      setZero();
     }
-    return 16*(e-1)+erg;
- }
+
+    static uint32_t unpack5E3MToUnsigned(uint16_t flt) {
+      assert(flt<0x100);
+    
+      uint32_t e((flt>>3)&0x1f);
+      uint32_t m((flt   )&0x07);
+
+      //return (e==0?m:(8+m)<<(e-1));
+      if(e==0) return m;
+      else if(e==1) return 8+m;
+      else return (16+2*m+1)<<(e-2);
+    }
+ 
+    static uint32_t unpack4E3MToUnsigned(uint16_t flt) {
+      assert(flt<0x80);
+    
+      uint32_t e((flt>>3)&0x0f);
+      uint32_t m((flt   )&0x07);
+
+      if(e==0) return m;
+      else if(e==1) return 8+m;
+      //else return (16+2*m+1)<<(e-2);
+      else return (16+2*m  )<<(e-2);
+    }
+ 
+    static uint32_t unpack5E4MToUnsigned(uint16_t flt) {
+      assert(flt<0x200);
+    
+      uint32_t e((flt>>4)&0x1f);
+      uint32_t m((flt   )&0x0f);
+
+      //return (e==0?m:(16+m)<<(e-1));
+      if(e==0) return m;
+      else if(e==1) return 16+m;
+      //else return (32+2*m+1)<<(e-2);
+      else return (32+2*m  )<<(e-2);
+    }
+ 
+    static uint16_t pack5E4MFromUnsigned(uint32_t erg) {
+      if(erg<16) return erg;
+    
+      unsigned e(1);
+      while(erg>=32) {
+	e++;
+	erg>>=1;
+      }
+      return 16*(e-1)+erg;
+    }
   
-  static uint16_t pack5E4MFrom4E3M(uint8_t flt) {
-    /*
-    assert(flt<0x80);
-    uint32_t e((flt>>3)&0xf);
-    uint32_t m((flt   )&0x7);
+    static uint16_t pack5E4MFrom4E3M(uint8_t flt) {
+      /*
+	assert(flt<0x80);
+	uint32_t e((flt>>3)&0xf);
+	uint32_t m((flt   )&0x7);
 
-    uint32_t u;
-    if(e==0) u=m;
-    else if(e==1) u=8+m;
-    //else u=(16+2*m+1)<<(e-2);
-    else u=(16+2*m  )<<(e-2);
+	uint32_t u;
+	if(e==0) u=m;
+	else if(e==1) u=8+m;
+	//else u=(16+2*m+1)<<(e-2);
+	else u=(16+2*m  )<<(e-2);
 
-    return pack5E4MFromUnsigned(u);
-    */
-    return pack5E4MFromUnsigned(unpack4E3MToUnsigned(flt));
+	return pack5E4MFromUnsigned(u);
+      */
+      return pack5E4MFromUnsigned(unpack4E3MToUnsigned(flt));
 
-    // if(flt<16) return flt;
-    // uint16_t e54((flt>>3)-1);
-    // uint16_t m54(2*(flt&0x7));
-    // return e54<<4|m54;
-  }
+      // if(flt<16) return flt;
+      // uint16_t e54((flt>>3)-1);
+      // uint16_t m54(2*(flt&0x7));
+      // return e54<<4|m54;
+    }
   
-  void setZero() {
-    _msData[0]=0;
-    _msData[1]=0;
-    std::memset(_tcData[0],0,sizeof(uint16_t)*2*NumberOfTCs);
-  }
+    void setZero() {
+      _msData[0]=0;
+      _msData[1]=0;
+      std::memset(_tcData[0],0,sizeof(uint16_t)*2*NumberOfTCs);
+    }
 
-  bool isDoubleStream() const {
-    return isValidModuleSum(1);
-  }
+    bool isDoubleStream() const {
+      return isValidModuleSum(1);
+    }
 
-  bool checkFormat() const {
+    bool checkFormat() const {
 
     
-    for(unsigned s(0);s<2;s++) {
-      // Check unused bits
-      if(isValidModuleSum(s)) {
-	if((_msData[s]&0x4030)!=0x0030) return false;
-      } else {
-	if((_msData[s]&0x4030)!=0x0000) return false;
-      }
+      for(unsigned s(0);s<2;s++) {
+	// Check unused bits
+	if(isValidModuleSum(s)) {
+	  if((_msData[s]&0x4030)!=0x0030) return false;
+	} else {
+	  if((_msData[s]&0x4030)!=0x0000) return false;
+	}
       
-      // Check channel number is in the right range
-      for(unsigned i(0);i<NumberOfTCs;i++) {
-	if(isValidChannel(s,i)) {
-	  if(channelNumber(s,i)>=48) return false;
+	// Check channel number is in the right range
+	for(unsigned i(0);i<NumberOfTCs;i++) {
+	  if(isValidChannel(s,i)) {
+	    if(channelNumber(s,i)>=48) return false;
+	  }
 	}
       }
-    }
     
-    uint16_t cOld;
-    bool validCh(true);
+      uint16_t cOld;
+      bool validCh(true);
 
-    unsigned sHi(isDoubleStream()?2:1);
+      unsigned sHi(isDoubleStream()?2:1);
     
-    for(unsigned i(0);i<NumberOfTCs;i++) {
-      for(unsigned s(0);s<sHi;s++) {
+      for(unsigned i(0);i<NumberOfTCs;i++) {
+	for(unsigned s(0);s<sHi;s++) {
 
-	//Discuss with Paul how to deal for CTC and STC
-	if(isValidChannel(s,i)) {
+	  //Discuss with Paul how to deal for CTC and STC
+	  if(isValidChannel(s,i)) {
 	
-	  // Check channel number is in the right order
-	  //std::cout <<"cOld: "<<cOld << ", channelNumber(s,i): " << channelNumber(s,i) << std::endl;
-	  if(i==0 && s==0) cOld=channelNumber(s,i);
-	  else if(cOld>=channelNumber(s,i)) return false;
-	  cOld=channelNumber(s,i);
+	    // Check channel number is in the right order
+	    //std::cout <<"cOld: "<<cOld << ", channelNumber(s,i): " << channelNumber(s,i) << std::endl;
+	    if(i==0 && s==0) cOld=channelNumber(s,i);
+	    else if(cOld>=channelNumber(s,i)) return false;
+	    cOld=channelNumber(s,i);
+	  }
+	  // Check all valid channels are before all invalid channels
+	  if(validCh && !isValidChannel(s,i)) validCh=false;
+	  if(!validCh && isValidChannel(s,i)) return false;
 	}
-	// Check all valid channels are before all invalid channels
-	if(validCh && !isValidChannel(s,i)) validCh=false;
-	if(!validCh && isValidChannel(s,i)) return false;
       }
-    }
     
-    return true;
-  }
-  
-  uint32_t getModuleId() const {
-    return _moduleId;
-  }
-  
-  void setModuleId(uint32_t m) {
-    _moduleId=m;
-  }
-  
-  uint16_t getMsData(unsigned s) const {
-    assert(s<2);
-    return _msData[s];
-  }
-
-  uint16_t getTcData(unsigned s, unsigned n) const {
-    assert(s<2);
-    return (n<NumberOfTCs?_tcData[s][n]:0x7fff);
-  }
-  
-  const uint16_t* getTcData(unsigned s) const {
-    assert(s<2);
-    return _tcData[s];
-  }
-  
-  const uint16_t* getData(unsigned s) const {
-    assert(s<2);
-    return &_msData[s];
-  }
-  
-  void setTcData(unsigned s, unsigned n, uint16_t d) {
-    assert(s<2);
-    if(n<NumberOfTCs) _tcData[s][n]=d;
-  }
-  
-  uint16_t* setTcData(unsigned s) {
-    assert(s<2);
-    return _tcData[s];
-  }
-
-  uint16_t* setMsData(unsigned s) {
-    assert(s<2);
-    return &_msData[s];
-  }
-
-  void setMsData(unsigned s,uint16_t d) {
-    assert(s<2);
-   _msData[s] = d;
-  }
-  
-  // For use with STCs when module sum is invalid
-  void setBx(uint8_t bx) {
-    assert(bx<0x10);
-    _msData[0]=0x8030|bx;
-    _msData[1]=0x8030|bx;
-  }  
-  
-  void setBx(unsigned s, uint8_t bx) {
-    assert(s<2);
-    assert(bx<0x10);
-    _msData[s]=0x8030|bx;
-  }
-  
-  void setModuleSum(uint8_t bx, uint8_t ms) {
-    assert(bx<0x10);
-    _msData[0]=(0x8030|ms<<6|bx);
-    _msData[1]=(0x8030|ms<<6|bx);
-  }
-
-  void setModuleSum(unsigned s, uint8_t bx, uint8_t ms) {
-    assert(s<2);
-    assert(bx<0x10);
-    _msData[s]=(0x8030|ms<<6|bx);
-  }
-
-  void setTriggerCell(unsigned s, unsigned n, uint8_t c, uint16_t e) {
-    assert(s<2);
-    assert(c<48);
-    assert(e<0x200);
-    _tcData[s][n]=(0x8000|e<<6|c);
-  }
-  
-  bool isValidModuleSum(unsigned s) const {
-    assert(s<2);
-    return (_msData[s]&0x8000)>0;
-  }
-
-  uint16_t moduleSum(unsigned s) const {
-    assert(s<2);
-    return (_msData[s]&0x3fc0)>>6;
-  }
-
-  uint32_t unpackedModuleSum(unsigned s) const {
-    assert(s<2);
-    return unpack5E3MToUnsigned(moduleSum(s));
-  }
-  
-  uint8_t bx(unsigned s) const {
-    assert(s<2);
-    return _msData[s]&0x000f;
-  }
-  
-  bool isValidChannel(unsigned s, unsigned n) const {
-    assert(s<2);
-    return (n<NumberOfTCs?(_tcData[s][n]&0x8000)>0:false);
-  }
-
-  uint16_t channelEnergy(unsigned s, unsigned n) const {
-    assert(s<2);
-    return (n<NumberOfTCs?(_tcData[s][n]&0x7fc0)>>6:0);
-  }
-  
-  uint32_t unpackedChannelEnergy(unsigned s, unsigned n) const {
-    assert(s<2);
-    return unpack5E4MToUnsigned(channelEnergy(s,n));
-  }
-  
-  uint16_t channelNumber(unsigned s, unsigned n) const {
-    assert(s<2);
-    return (n<NumberOfTCs?_tcData[s][n]&0x003f:63);
-  }
-
-  unsigned numberOfValidChannels() const {
-    unsigned n(0);
-    for(unsigned i(0);i<NumberOfTCs;i++) {
-      if(isValidChannel(0,i)) n++;
-      if(isValidChannel(1,i)) n++;
+      return true;
     }
-    return n;
-  }
   
-  bool operator==(const UnpackerOutputStreamPair &that) const {
-    if(_msData[0]!=that._msData[0]) return false;
-    if(_msData[1]!=that._msData[1]) return false;
-
-    for(unsigned i(0);i<=NumberOfTCs;i++) {
-      if(_tcData[0][i]!=that._tcData[0][i]) return false;
-      if(_tcData[1][i]!=that._tcData[1][i]) return false;
+    uint32_t getModuleId() const {
+      return _moduleId;
     }
-    return true;
-  }
-
-  bool isEqualSTC(const UnpackerOutputStreamPair &that) const {
-
-    if(bx(0)!=that.bx(0) and isValidModuleSum(0) and that.isValidModuleSum(0)) return false;
-    if(bx(1)!=that.bx(1) and isValidModuleSum(1) and that.isValidModuleSum(1)) return false;
-    for(unsigned i(0);i<=NumberOfTCs;i++) {
-      if(_tcData[0][i]!=that._tcData[0][i] and isValidChannel(0,i) and that.isValidChannel(0,i)) return false;
-      if(_tcData[1][i]!=that._tcData[1][i] and isValidChannel(1,i) and that.isValidChannel(1,i)) return false;
+  
+    void setModuleId(uint32_t m) {
+      _moduleId=m;
     }
-    return true;
-  }
-
-  bool isEqualBC(const UnpackerOutputStreamPair &that) const {
-
-    if(_msData[0]!=that._msData[0] and isValidModuleSum(0) and that.isValidModuleSum(0)) return false;
-    if(_msData[1]!=that._msData[1] and isValidModuleSum(1) and that.isValidModuleSum(1)) return false;
-    for(unsigned i(0);i<=NumberOfTCs;i++) {
-      if(_tcData[0][i]!=that._tcData[0][i] and isValidChannel(0,i) and that.isValidChannel(0,i)) return false;
-      if(_tcData[1][i]!=that._tcData[1][i] and isValidChannel(1,i) and that.isValidChannel(1,i)) return false;
+  
+    uint16_t getMsData(unsigned s) const {
+      assert(s<2);
+      return _msData[s];
     }
-    return true;
-  }
 
-  void print() {
-    std::cout << "UnpackerOutputStreamPair(" << this << ")::print(), format = "
-	      << (checkFormat()?"  valid":"invalid")
-        << ", module ID = "
-        << getModuleId()
-	      << ", number of valid channels = "
-	      << numberOfValidChannels() << std::endl;
+    uint16_t getTcData(unsigned s, unsigned n) const {
+      assert(s<2);
+      return (n<NumberOfTCs?_tcData[s][n]:0x7fff);
+    }
+  
+    const uint16_t* getTcData(unsigned s) const {
+      assert(s<2);
+      return _tcData[s];
+    }
+  
+    const uint16_t* getData(unsigned s) const {
+      assert(s<2);
+      return &_msData[s];
+    }
+  
+    void setTcData(unsigned s, unsigned n, uint16_t d) {
+      assert(s<2);
+      if(n<NumberOfTCs) _tcData[s][n]=d;
+    }
+  
+    uint16_t* setTcData(unsigned s) {
+      assert(s<2);
+      return _tcData[s];
+    }
 
-    for(unsigned s(0);s<2;s++) {
-      std::cout << " Stream " << s << std::endl
-		<< "  MS  " << " = 0x"
-		<< std::hex << ::std::setfill('0')
-		<< std::setw(4) << _msData[s]
-		<< std::dec << ::std::setfill(' ')
-		<< ", " << (isValidModuleSum(s)?"  valid":"invalid")
-		<< "  module,    sum packed = " << std::setw(5) << moduleSum(s)
-		<< ", unpacked = " << std::setw(10) << unpackedModuleSum(s)
-		<< ",     BX = " << std::setw(2) << unsigned(bx(s))
-		<< std::endl;
-    
+    uint16_t* setMsData(unsigned s) {
+      assert(s<2);
+      return &_msData[s];
+    }
+
+    void setMsData(unsigned s,uint16_t d) {
+      assert(s<2);
+      _msData[s] = d;
+    }
+  
+    // For use with STCs when module sum is invalid
+    void setBx(uint8_t bx) {
+      assert(bx<0x10);
+      _msData[0]=0x8030|bx;
+      _msData[1]=0x8030|bx;
+    }  
+  
+    void setBx(unsigned s, uint8_t bx) {
+      assert(s<2);
+      assert(bx<0x10);
+      _msData[s]=0x8030|bx;
+    }
+  
+    void setModuleSum(uint8_t bx, uint8_t ms) {
+      assert(bx<0x10);
+      _msData[0]=(0x8030|ms<<6|bx);
+      _msData[1]=(0x8030|ms<<6|bx);
+    }
+
+    void setModuleSum(unsigned s, uint8_t bx, uint8_t ms) {
+      assert(s<2);
+      assert(bx<0x10);
+      _msData[s]=(0x8030|ms<<6|bx);
+    }
+
+    void setTriggerCell(unsigned s, unsigned n, uint8_t c, uint16_t e) {
+      assert(s<2);
+      assert(c<48);
+      assert(e<0x200);
+      _tcData[s][n]=(0x8000|e<<6|c);
+    }
+  
+    bool isValidModuleSum(unsigned s) const {
+      assert(s<2);
+      return (_msData[s]&0x8000)>0;
+    }
+
+    uint16_t moduleSum(unsigned s) const {
+      assert(s<2);
+      return (_msData[s]&0x3fc0)>>6;
+    }
+
+    uint32_t unpackedModuleSum(unsigned s) const {
+      assert(s<2);
+      return unpack5E3MToUnsigned(moduleSum(s));
+    }
+  
+    uint8_t bx(unsigned s) const {
+      assert(s<2);
+      return _msData[s]&0x000f;
+    }
+  
+    bool isValidChannel(unsigned s, unsigned n) const {
+      assert(s<2);
+      return (n<NumberOfTCs?(_tcData[s][n]&0x8000)>0:false);
+    }
+
+    uint16_t channelEnergy(unsigned s, unsigned n) const {
+      assert(s<2);
+      return (n<NumberOfTCs?(_tcData[s][n]&0x7fc0)>>6:0);
+    }
+  
+    uint32_t unpackedChannelEnergy(unsigned s, unsigned n) const {
+      assert(s<2);
+      return unpack5E4MToUnsigned(channelEnergy(s,n));
+    }
+  
+    uint16_t channelNumber(unsigned s, unsigned n) const {
+      assert(s<2);
+      return (n<NumberOfTCs?_tcData[s][n]&0x003f:63);
+    }
+
+    unsigned numberOfValidChannels() const {
+      unsigned n(0);
       for(unsigned i(0);i<NumberOfTCs;i++) {
-	std::cout << "  TC " << i << " = 0x"
+	if(isValidChannel(0,i)) n++;
+	if(isValidChannel(1,i)) n++;
+      }
+      return n;
+    }
+  
+    bool operator==(const UnpackerOutputStreamPair &that) const {
+      if(_msData[0]!=that._msData[0]) return false;
+      if(_msData[1]!=that._msData[1]) return false;
+
+      for(unsigned i(0);i<=NumberOfTCs;i++) {
+	if(_tcData[0][i]!=that._tcData[0][i]) return false;
+	if(_tcData[1][i]!=that._tcData[1][i]) return false;
+      }
+      return true;
+    }
+
+    bool isEqualSTC(const UnpackerOutputStreamPair &that) const {
+
+      if(bx(0)!=that.bx(0) and isValidModuleSum(0) and that.isValidModuleSum(0)) return false;
+      if(bx(1)!=that.bx(1) and isValidModuleSum(1) and that.isValidModuleSum(1)) return false;
+      for(unsigned i(0);i<=NumberOfTCs;i++) {
+	if(_tcData[0][i]!=that._tcData[0][i] and isValidChannel(0,i) and that.isValidChannel(0,i)) return false;
+	if(_tcData[1][i]!=that._tcData[1][i] and isValidChannel(1,i) and that.isValidChannel(1,i)) return false;
+      }
+      return true;
+    }
+
+    bool isEqualBC(const UnpackerOutputStreamPair &that) const {
+
+      if(_msData[0]!=that._msData[0] and isValidModuleSum(0) and that.isValidModuleSum(0)) return false;
+      if(_msData[1]!=that._msData[1] and isValidModuleSum(1) and that.isValidModuleSum(1)) return false;
+      for(unsigned i(0);i<=NumberOfTCs;i++) {
+	if(_tcData[0][i]!=that._tcData[0][i] and isValidChannel(0,i) and that.isValidChannel(0,i)) return false;
+	if(_tcData[1][i]!=that._tcData[1][i] and isValidChannel(1,i) and that.isValidChannel(1,i)) return false;
+      }
+      return true;
+    }
+
+    void print() {
+      std::cout << "UnpackerOutputStreamPair(" << this << ")::print(), format = "
+		<< (checkFormat()?"  valid":"invalid")
+		<< ", module ID = "
+		<< getModuleId()
+		<< ", number of valid channels = "
+		<< numberOfValidChannels() << std::endl;
+
+      for(unsigned s(0);s<2;s++) {
+	std::cout << " Stream " << s << std::endl
+		  << "  MS  " << " = 0x"
 		  << std::hex << ::std::setfill('0')
-		  << std::setw(4) << _tcData[s][i]
+		  << std::setw(4) << _msData[s]
 		  << std::dec << ::std::setfill(' ')
-		  << ", " << (isValidChannel(s,i)?"  valid":"invalid")
-		  << " channel, energy packed = "
-		  << std::setw(5) << channelEnergy(s,i)
-		  << ", unpacked = " << std::setw(10) << unpackedChannelEnergy(s,i)
-		  << ", number = " << std::setw(2) << channelNumber(s,i)
+		  << ", " << (isValidModuleSum(s)?"  valid":"invalid")
+		  << "  module,    sum packed = " << std::setw(5) << moduleSum(s)
+		  << ", unpacked = " << std::setw(10) << unpackedModuleSum(s)
+		  << ",     BX = " << std::setw(2) << unsigned(bx(s))
 		  << std::endl;
+    
+	for(unsigned i(0);i<NumberOfTCs;i++) {
+	  std::cout << "  TC " << i << " = 0x"
+		    << std::hex << ::std::setfill('0')
+		    << std::setw(4) << _tcData[s][i]
+		    << std::dec << ::std::setfill(' ')
+		    << ", " << (isValidChannel(s,i)?"  valid":"invalid")
+		    << " channel, energy packed = "
+		    << std::setw(5) << channelEnergy(s,i)
+		    << ", unpacked = " << std::setw(10) << unpackedChannelEnergy(s,i)
+		    << ", number = " << std::setw(2) << channelNumber(s,i)
+		    << std::endl;
+	}
       }
     }
-  }
 
-private:
-  uint32_t _moduleId;
-  uint16_t _msData[2];
-  uint16_t _tcData[2][NumberOfTCs];
-};
+  private:
+    uint32_t _moduleId;
+    uint16_t _msData[2];
+    uint16_t _tcData[2][NumberOfTCs];
+  };
 
   
-class Stage1ToStage2Data {
-private:
+  class Stage1ToStage2Data {
+  private:
     std::array<uint64_t, 108> data;
 
-public:
+  public:
     // Constructor
     Stage1ToStage2Data() {
-        // Initialize data array with zeros
+      // Initialize data array with zeros
       reset();
     }
 
-   void reset() { data.fill(0); }
+    void reset() { data.fill(0); }
   
     // Methods to get and set TC and pTT values of each word
     uint16_t getTC(int wordIndex, int tcIndex) const {
-        int bitOffset = tcIndex * 15;
-        return static_cast<uint16_t>((data[wordIndex] >> bitOffset) & 0x7FFF);
+      int bitOffset = tcIndex * 15;
+      return static_cast<uint16_t>((data[wordIndex] >> bitOffset) & 0x7FFF);
     }
 
     void setTC(int wordIndex, int tcIndex, uint16_t value) {
-        int bitOffset = tcIndex * 15;
-        uint64_t mask = 0x7FFFULL << bitOffset;
-        data[wordIndex] &= ~mask; // Clear existing bits
-        data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
+      int bitOffset = tcIndex * 15;
+      uint64_t mask = 0x7FFFULL << bitOffset;
+      data[wordIndex] &= ~mask; // Clear existing bits
+      data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
+    }
+
+    void replaceTCs(int wordIndex, uint64_t value) {
+      //This funcion is used to make EMP input for Stage2 ClusProp tests
+      uint64_t mask = 0x1FFFFFFFFFFFULL ;
+      data[wordIndex] &= ~mask; // Clear existing bits
+      data[wordIndex] |= value ; // Set new value
     }
 
     uint8_t getPTT(int wordIndex, int pttIndex) const {
-        int bitOffset = 45 + pttIndex * 8;
-        return static_cast<uint8_t>((data[wordIndex] >> bitOffset) & 0xFF);
+      int bitOffset = 45 + pttIndex * 8;
+      return static_cast<uint8_t>((data[wordIndex] >> bitOffset) & 0xFF);
     }
 
     void setPTT(int wordIndex, int pttIndex, uint8_t value) {
-        int bitOffset = 45 + pttIndex * 8;
-        uint64_t mask = 0xFFULL << bitOffset;
-        data[wordIndex] &= ~mask; // Clear existing bits
-        data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
+      int bitOffset = 45 + pttIndex * 8;
+      uint64_t mask = 0xFFULL << bitOffset;
+      data[wordIndex] &= ~mask; // Clear existing bits
+      data[wordIndex] |= (static_cast<uint64_t>(value) << bitOffset) & mask; // Set new value
     }
 
-  std::array<uint64_t, 108>& accessData() {
-    return data;
-  }
+    std::array<uint64_t, 108>& accessData() {
+      return data;
+    }
 
-  void setBit(int wordIndex, int shift) {
-    data[wordIndex] |= (0xaULL<<shift) ;
-  }
+    void setBit(int wordIndex, int shift) {
+      data[wordIndex] |= (0xaULL<<shift) ;
+    }
   
-  uint64_t getData(int wordIndex) const { return data[wordIndex]; }
-  void setData(int wordIndex, uint64_t value) { data[wordIndex] = value; }
+    uint64_t getData(int wordIndex) const { return data[wordIndex]; }
+    void setData(int wordIndex, uint64_t value) { data[wordIndex] = value; }
 
   
-};
+  };
 
-class Stage1ToStage2DataArray {
-public:
-  Stage1ToStage2DataArray() {
-    for(unsigned sector(0);sector<3;sector++) {
-      for(unsigned s1Board(0);s1Board<16;s1Board++) {	
-	for(unsigned link(0);link<6;link++) {	
-	  _s1Vector[sector][s1Board].push_back(&(_dataArray[sector][s1Board][link]));
+  class Stage1ToStage2DataArray {
+  public:
+    Stage1ToStage2DataArray() {
+      for(unsigned sector(0);sector<3;sector++) {
+	for(unsigned s1Board(0);s1Board<16;s1Board++) {	
+	  for(unsigned link(0);link<6;link++) {	
+	    _s1Vector[sector][s1Board].push_back(&(_dataArray[sector][s1Board][link]));
 
-	  if(link>=2) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link]));
-	  else _s2Vector[sector].push_back(&(_dataArray[(sector+2)%3][s1Board][link]));
-	}	
+	    if(link>=2) _s2Vector[sector].push_back(&(_dataArray[sector][s1Board][link]));
+	    else _s2Vector[sector].push_back(&(_dataArray[(sector+2)%3][s1Board][link]));
+	  }	
+	}
       }
     }
-  }
-
-  std::vector<Stage1ToStage2Data*>& s1Vector(unsigned s, unsigned b) {
-    assert(s<3);
-    assert(b<16);
-    return _s1Vector[s][b];
-  }
+    
+    std::vector<Stage1ToStage2Data*>& s1Vector(unsigned s, unsigned b) {
+      assert(s<3);
+      assert(b<16);
+      return _s1Vector[s][b];
+    }
   
-  std::vector<Stage1ToStage2Data*>& s2Vector(unsigned s) {
-    assert(s<3);
-    return _s2Vector[s];
-  }  
+    std::vector<Stage1ToStage2Data*>& s2Vector(unsigned s) {
+      assert(s<3);
+      return _s2Vector[s];
+    }  
 
   
-private:
-  Stage1ToStage2Data _dataArray[3][16][6];
-  std::vector<Stage1ToStage2Data*> _s1Vector[3][16];
-  std::vector<Stage1ToStage2Data*> _s2Vector[3];
-};
+  private:
+    Stage1ToStage2Data _dataArray[3][16][6];
+    std::vector<Stage1ToStage2Data*> _s1Vector[3][16];
+    std::vector<Stage1ToStage2Data*> _s2Vector[3];
+  };
+
+  
+  class Stage2DataLong {
+  private:
+    std::array<uint64_t, 162> data;    
+  public:
+    // Constructor
+    Stage2DataLong() { reset(); }
+    void reset() { data.fill(0); }
+    std::array<uint64_t, 162>& accessData() { return data;}  
+    uint64_t getData(int wordIndex) const { return data[wordIndex]; }
+    void setData(int wordIndex, uint64_t value) { data[wordIndex] = value; }
+  };
+
+  class TcAccumulatorFW
+  {
+  public:
+    TcAccumulatorFW(uint16_t kval = 0) : kpower(kval) { zero(); calcmax();}
+    
+    void accumulate(const TPGTriggerCellFloats &t)
+    {
+      accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getZCm(), t.getLayer());
+    }
+    
+    unsigned int getTriggerLayer(const unsigned layer) const {
+      bool cee(layer<=26);
+      unsigned triggerLayer = 0;
+      if (cee) triggerLayer = layer/2+1;
+      else triggerLayer = layer-13+1;
+      
+      return triggerLayer;
+    }
+    
+    void accumulate(uint32_t e, double x, double y, double z, int16_t l) {
+      bool cee(l<=26);
+      
+      unsigned triggerLayer = getTriggerLayer(l);
+      const unsigned nTriggerLayers = 34;  // Should get from config/elsewhere in CMSSW
+      layerBits_ |= (((unsigned long int)1) << (nTriggerLayers - triggerLayer));
+      
+      numE++;
+      sumE += e;
+      //ssqE += e * e;
+      
+      if (cee)
+	{
+	  //numCee++;
+	  sumCee += e;
+	  //ssqCee += e * e;
+	
+	  if ( l>6 ) sumCeeCore += e;
+	}
+      else if (l<=30) sumCehEarly += e;
+      
+      
+      ap_uint<19> w(e);
+      
+      sumW_ += w;
+      sumW2_ += w * w;
+      
+      // numX += w;
+      // sumX += w * x;
+      // ssqX += w * w * x * x;
+      
+      // numY += w;
+      // sumY += w * y;
+      // ssqY += w * w * y * y;
+      
+      uint32_t hw_z = (z-302) / 0.05;
+      //sumZ_ += w * hw_z;
+      sumWZ2_ += w * hw_z * hw_z;
+      
+      uint32_t phi = atan2(y, x) + 720/2;
+      sumWPhi_ += w * phi;
+      sumWPhi2_ += w * phi * phi;
+    }
+    
+    // void setSeed(bool b){ _seed = b; }
+    // bool seed() const { return _seed; }
+
+    // double avgX() const { return (numX == 0.0 ? 0.0 : sumX / numX);}
+    // double avgY() const { return (numY == 0.0 ? 0.0 : sumY / numY);}
+
+    //unsigned sumZ() const { return sumZ_; }
+        
+    //int calcPhi() const { return atan2( avgY(), avgX()) * 720 / acos(-1.0); }
+    // unsigned int calcEta() const
+    // {
+    //   return asinh(1.0 / sqrt(avgY() * avgY() + avgX() * avgX())) * 720 / acos(-1.0) - 256;     
+    // }
+
+    void zero()
+    {
+      numE = 0;
+      sumE = 0;
+      numEW = 0;
+      //ssqE = 0;
+      //numCee = 0;
+      sumCee = 0;
+      //ssqCee = 0;
+      sumCeeCore = 0;
+      sumCehEarly = 0;
+      layerBits_ = 0;
+      sumW_ = 0.0;
+      sumW2_ = 0.0;
+      // numX = 0.0;
+      // sumX = 0.0;
+      // ssqX = 0.0;
+      // numY = 0.0;
+      // sumY = 0.0;
+      // ssqY = 0.0;
+      // sumZ_ = 0.0;
+      // ssqZ_ = 0.0;
+      sumWZ_ = 0.0;
+      sumWZ2_ = 0.0;
+      sumWRoZ_ = 0.0;
+      sumWRoZ2_ = 0.0;
+      sumWPhi_ = 0.0;
+      sumWPhi2_ = 0.0;
+      // _seed = false;
+      isSatTC_ = false;
+      shapeQ_ = false;
+      //clusterId_ = 0;
+    }
+    
+    void calcmax()
+    {
+      // //Max values of W for given k
+      // uint8_t kpower;
+      // ap_uint<19>  maxW;            //19-bits
+      // ap_uint<38>  maxW2;           //38-bits
+      // ap_uint<31>  maxWPhiZ;        //31-bits
+      // ap_uint<32>  maxWRoZ;         //32-bits
+      // ap_uint<43>  maxWPhiZ2;       //43-bits
+      // ap_uint<45>  maxWRoZ2;       //32-bits
+      maxW = 0; for(int i=0;i<(((19-kpower)>1)?(19-kpower):1);i++) maxW[i] = 1;
+      maxW2 = 0; for(int i=0;i<(((38-2*kpower)>1)?(38-2*kpower):1);i++) maxW2[i] = 1;
+      maxWPhiZ = 0; for(int i=0;i<(((31-kpower)>1)?(31-kpower):1);i++) maxWPhiZ[i] = 1;
+      maxWRoZ = 0; for(int i=0;i<(((32-kpower)>1)?(32-kpower):1);i++) maxWRoZ[i] = 1;
+      maxWPhiZ2 = 0; for(int i=0;i<(((43-kpower)>1)?(43-kpower):1);i++) maxWPhiZ2[i] = 1;
+      maxWRoZ2 = 0; for(int i=0;i<(((45-kpower)>1)?(45-kpower):1);i++) maxWRoZ2[i] = 1;
+    }
+
+    bool isZero() const { return numE == 0; }
+
+    // void addNN(const TcAccumulatorFW *tca)
+    // {
+    //   assert(vNN.size() < 6);
+    //   vNN.push_back(tca);
+    // }
+
+    // bool isLocalMaximum() const
+    // {
+    //   assert(vNN.size() > 0);
+
+    //   const uint64_t e(totE());
+    //   if (e == 0)
+    //     return false;
+
+    //   for (unsigned i(0); i < vNN.size(); i++)
+    //   {
+    //     if (vNN[i]->totE() >= e)
+    //       return false;
+    //   }
+    //   return true;
+    // }
+
+    void print() const
+    {
+      std::cout << "TcAccumulator"
+                << " E = " << totE()
+                << " CE-E E = " << ceeE()
+	// << " x = " << avgX()
+	// << " y = " << avgY()
+	// << " seed = " << (_seed ? "True" : "False")
+                << std::endl;
+    }
+
+    void printmaxval() const {
+      std::cout << "kpower: " << uint16_t(kpower) << std::endl;
+      std::cout << std::hex
+      		<< "maxW: " << maxW
+      		<< ", maxW2: " << maxW2
+      		<< ", maxWPhiZ: " << maxWPhiZ
+      		<< ", maxWRoZ: " << maxWRoZ
+      		<< ", maxWPhiZ2: " << maxWPhiZ2
+      		<< ", maxWRoZ2: " << maxWRoZ2
+      		<< std::dec << std::endl;
+    }
+    void printdetail(bool ishex = true) const
+    {
+      // std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
+      // if(ishex)
+      // 	std::cout << std::hex
+      // 		  << " SumET = 0x" << totE()
+      // 		  << ", SumCEE_ET = 0x" << ceeE()
+      // 		  << ", SumCEE_ET_core = 0x" << ceeECore()
+      // 		  << ", SumCEH_ET_early = 0x" << ceHEarly()
+      // 		  << ", sumW = 0x" << sumW()
+      // 		  << ", sumW2 = 0x" << sumW2()
+      // 		  << ", sumWPhi = 0x" << sumWPhi()
+      // 		  << ", sumWRoZ = 0x" << sumWRoZ()
+      // 		  << ", sumWZ = 0x" << sumWZ()
+      // 		  << ", sumWPhi2 = 0x" << sumWPhi2()
+      // 		  << ", sumWRoZ2 = 0x" << sumWRoZ2()
+      // 		  << ", sumWZ2 = 0x" << sumWZ2()
+      // 		  << std::endl
+      // 		  << ", LayerBits = 0x" << layerBits()
+      // 		  << ", issatTC = 0x" << issatTC()
+      // 		  << ", numberOfTcs = 0x" << numberOfTcs()
+      // 		  << ", numberOfTcsW = 0x" << numberOfTcsW()
+      // 		  << ", shapeQ = 0x" << shapeQ()
+      // 		  << std::dec
+      // 		  << std::endl;
+      // else
+      // 	std::cout << std::dec
+      // 		  << " SumET = " << totE()
+      // 		  << ", SumCEE_ET = " << ceeE()
+      // 		  << ", SumCEE_ET_core = " << ceeECore()
+      // 		  << ", SumCEH_ET_early = " << ceHEarly()
+      // 		  << ", sumW = " << sumW()
+      // 		  << ", sumW2 = " << sumW2()
+      // 		  << ", sumWPhi = " << sumWPhi()
+      // 		  << ", sumWRoZ = " << sumWRoZ()
+      // 		  << ", sumWZ = " << sumWZ()
+      // 		  << ", sumWPhi2 = " << sumWPhi2()
+      // 		  << ", sumWRoZ2 = " << sumWRoZ2()
+      // 		  << ", sumWZ2 = " << sumWZ2()
+      // 		  << std::endl
+      // 		  << ", LayerBits = " << layerBits()
+      // 		  << ", issatTC = " << issatTC()
+      // 		  << ", numberOfTcs = " << numberOfTcs()
+      // 		  << ", numberOfTcsW = " << numberOfTcsW()
+      // 		  << ", shapeQ = " << shapeQ()
+      // 		  << std::dec
+      // 		  << std::endl;
+	
+    }
+    
+    void setkpower(uint16_t kval) { kpower = kval; calcmax(); }
+    uint16_t getkpower() const { return kpower; }
+
+    void setTotE(uint32_t e) { sumE = e; }
+    uint32_t totE() const { return sumE; }
+    
+    void setCeeE(uint32_t scee) { sumCee = scee; }
+    uint32_t ceeE() const { return sumCee; }
+    
+    void setCeeECore(uint32_t sceec) { sumCeeCore = sceec; }
+    uint32_t ceeECore() const { return sumCeeCore; }
+    
+    void setCeHEarly(uint32_t scehe) { sumCehEarly = scehe; }
+    uint32_t ceHEarly() const { return sumCehEarly; }
+
+    void setSumW(uint32_t sumW) { sumW_ = (sumW<=uint32_t(maxW))?sumW:uint32_t(maxW); }
+    uint32_t sumW() const { return sumW_; }
+
+    void setSumW2(uint64_t sumW2) { sumW2_ = (sumW2<=uint64_t(maxW2))?sumW2:uint64_t(maxW2); }
+    uint64_t sumW2() const { return sumW2_; }
+
+    void setSumWPhi(uint32_t sumWPhi) { sumWPhi_ = (sumWPhi<=uint32_t(maxWPhiZ))?sumWPhi:uint32_t(maxWPhiZ); }
+    uint32_t sumWPhi() const { return sumWPhi_; }
+
+    void setSumWZ(uint32_t sumWZ) { sumWZ_ = (sumWZ<=uint32_t(maxWPhiZ))?sumWZ:uint32_t(maxWPhiZ); }
+    uint32_t sumWZ() const { return sumWZ_; }
+
+    void setSumWRoZ(uint32_t sumWRoZ) { sumWRoZ_ = (sumWRoZ<=uint32_t(maxWRoZ))?sumWRoZ:uint32_t(maxWRoZ); }
+    uint32_t sumWRoZ() const { return sumWRoZ_; }
+
+    void setSumWPhi2(uint64_t sumWPhi2) { sumWPhi2_ = (sumWPhi2<=uint64_t(maxWPhiZ2))?sumWPhi2:uint64_t(maxWPhiZ2); }
+    uint64_t sumWPhi2() const { return sumWPhi2_; }
+    
+    void setSumWZ2(uint64_t sumWZ2) { sumWZ2_ = (sumWZ2<=uint64_t(maxWPhiZ2))?sumWZ2:uint64_t(maxWPhiZ2); }
+    uint64_t sumWZ2() const { return sumWZ2_; }
+
+    void setSumWRoZ2(uint64_t sumWRoZ2) { sumWRoZ2_ = (sumWRoZ2<=uint64_t(maxWRoZ2))?sumWRoZ2:uint64_t(maxWRoZ2); }
+    uint64_t sumWRoZ2() const { return sumWRoZ2_; }
+    
+    void setLayerBits(uint64_t layerBits) { layerBits_ = layerBits; }
+    uint64_t layerBits() const { return layerBits_; }
+
+    void setsatTC(bool satTC) { isSatTC_ = satTC; }
+    bool issatTC() const { return isSatTC_; }
+
+    void setNumberOfTcs(uint16_t nTC) { numE = nTC; }    
+    uint16_t numberOfTcs() const { return numE; }
+
+    void setNumberOfTcsW(uint16_t nTCW) { numEW = nTCW; }
+    uint16_t numberOfTcsW() const { return numEW; }
+
+    void setshapeQ(bool shapeQ) { shapeQ_ = shapeQ; }
+    bool shapeQ() const { return shapeQ_; }
+    
+    // void setclusterId(uint16_t clusterId) { clusterId_ = clusterId; }
+    // uint16_t clusterId() const { return clusterId_;}
+    
+  private:
+    
+    ap_uint<22>  sumE, sumCee, sumCeeCore, sumCehEarly; //all 22 bits
+    ap_uint<19>  sumW_;            //19-bits
+    ap_uint<38>  sumW2_;           //38-bits
+    ap_uint<31>  sumWPhi_,sumWZ_;  //31-bits
+    uint32_t     sumWRoZ_;         //32-bits
+    ap_uint<43>  sumWPhi2_,sumWZ2_;//43-bits
+    ap_uint<45>  sumWRoZ2_;        //32-bits
+    ap_uint<34>  layerBits_;       //34-bits
+    bool         isSatTC_;         //1-bit
+    ap_uint<10>  numE, numEW;      //nofTCs 10-bits
+    bool         shapeQ_;          //1-bit
+    // ap_uint<8>   clusterId_;       //8-bit
+    
+    //Max values of W for given k
+    uint16_t kpower;
+    ap_uint<19>  maxW;            //19-bits
+    ap_uint<38>  maxW2;           //38-bits
+    ap_uint<31>  maxWPhiZ;        //31-bits
+    ap_uint<32>     maxWRoZ;         //32-bits
+    ap_uint<43>  maxWPhiZ2;       //43-bits
+    ap_uint<45>  maxWRoZ2;       //32-bits
+    
+    // uint64_t ssqE;
+    // uint64_t numCee, ssqCee;
+    // uint64_t numX, sumX, ssqX, numY, sumY, ssqY, sumZ_, ssqZ_;
+    // bool _seed;
+
+    //std::vector<const TcAccumulatorFW *> vNN;
+  };
 
   class Stage2ToL1TData {
   private:
@@ -450,7 +786,7 @@ private:
     void reset() {
       for(int il=0;il<4;il++) linkdata[il].fill(0);
     }
-
+    
     void setTowerLinkData(int ieta, int iphi, uint16_t value){
       if(ieta>=0 and ieta<20){
 	int etaw = -1;
@@ -495,6 +831,7 @@ private:
       linkdata[ilink][wordIndex] = 0;
       linkdata[ilink][wordIndex] |= (0xabcULL<<shift) ;
     }
+    
     void setBxId(int bxid) { bxCounter = bxid; }
     void setLinkId(int lpid) { linkid = lpid; }
     uint64_t getHeader(int ilink) {
@@ -504,8 +841,7 @@ private:
     }
   
   };
-
-
+  
   class Trig24Data{
   public:
     Trig24Data() : nofElinks(0){nofUnpkdWords[0] = 0; nofUnpkdWords[1] = 0;}
@@ -527,26 +863,26 @@ private:
     const uint32_t *getElinks(uint32_t ib) const { return elinks[ib];}
     const uint32_t *getUnpkWords(uint32_t ib, uint32_t istrm = 0) const { return unpackedWords[ib][istrm];}
     void getUnpkStream(uint32_t ib, TPGBEDataformat::UnpackerOutputStreamPair& up){
-	uint16_t* tc = up.setTcData(0);
-	for(unsigned iw(0);iw<getNofUnpkWords();iw++){
+      uint16_t* tc = up.setTcData(0);
+      for(unsigned iw(0);iw<getNofUnpkWords();iw++){
+	if(iw==0){
+	  uint16_t* ms = up.setMsData(0);
+	  *ms = getUnpkWord(ib, iw);
+	}else{
+	  *(tc+iw-1) = getUnpkWord(ib, iw);
+	}
+      }//iw loop
+      if(getNofUnpkWords(1)>0){
+	tc = up.setTcData(1);
+	for(unsigned iw(0);iw<getNofUnpkWords(1);iw++){
 	  if(iw==0){
-	    uint16_t* ms = up.setMsData(0);
-	    *ms = getUnpkWord(ib, iw);
+	    uint16_t* ms = up.setMsData(1);
+	    *ms = getUnpkWord(ib, iw, 1);
 	  }else{
-	    *(tc+iw-1) = getUnpkWord(ib, iw);
+	    *(tc+iw-1) = getUnpkWord(ib, iw, 1);
 	  }
 	}//iw loop
-	if(getNofUnpkWords(1)>0){
-	  tc = up.setTcData(1);
-	  for(unsigned iw(0);iw<getNofUnpkWords(1);iw++){
-	    if(iw==0){
-	      uint16_t* ms = up.setMsData(1);
-	      *ms = getUnpkWord(ib, iw, 1);
-	    }else{
-	      *(tc+iw-1) = getUnpkWord(ib, iw, 1);
-	    }
-	  }//iw loop
-	}//if second stream exists
+      }//if second stream exists
     }
     void print(uint32_t bxindex = 0){
       
@@ -712,16 +1048,16 @@ private:
     void print(uint32_t bxindex = 0){
       
       for(unsigned ib(0);ib<7;ib++){
-	      if(ib!=bxindex) continue;
+	if(ib!=bxindex) continue;
         for(unsigned ibin=0;ibin<9;ibin++){
           for (unsigned iinst=0;iinst<2;iinst++){
             if(unpkWordIsValid(ib,ibin,iinst))
-            std::cout<<" ib "<< ib <<", bin number "<<ibin<<", entry in bin"<<iinst
-                <<", unpackedWord = 0x"
-                << std::hex << ::std::setfill('0') << std::setw(4)
-                << getUnpkWord(ib, ibin, iinst)
-                << std::dec
-                << std::endl;
+	      std::cout<<" ib "<< ib <<", bin number "<<ibin<<", entry in bin"<<iinst
+		       <<", unpackedWord = 0x"
+		       << std::hex << ::std::setfill('0') << std::setw(4)
+		       << getUnpkWord(ib, ibin, iinst)
+		       << std::dec
+		       << std::endl;
           }
         }
       }

@@ -1,0 +1,18 @@
+LinkMux:
+  TmIndex: 4
+  BoardId: 13
+TowerTop:
+  FormatTowers:
+    Threshold0: 65535
+    Threshold1: 61439
+    Threshold2: 57343
+    Threshold3: 53247
+    Threshold4: 49151
+    Threshold5: 45055
+    Threshold6: 40959
+    ScaleFactor: 4096
+  BufferTowers:
+    ReadPageOffset: 1
+    CounterOffset: 0
+ClusterTop:
+  HasNodeProperties: false
