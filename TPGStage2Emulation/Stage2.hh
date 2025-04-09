@@ -19,9 +19,9 @@
 #include "TPGStage2Configuration.hh"
 
 #include "CMSSWCode/DataFormats/L1THGCal/interface/HGCalCluster_HW.h"
-#include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalCluster_SA.h"
-#include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalHistoClusterProperties_SA.h"
-#include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalHistoClusteringConfig_SA.h"
+// #include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalCluster_SA.h"
+// #include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalHistoClusterProperties_SA.h"
+// #include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalHistoClusteringConfig_SA.h"
 
 // Code from Paul, dated 10/11/2024
 
@@ -802,7 +802,7 @@ namespace TPGStage2Emulation
 
       vCld.resize(0);
 
-      l1thgcfirmware::HGCalClusterSAPtrCollection vClusterSumsCMSSW;
+      // l1thgcfirmware::HGCalClusterSAPtrCollection vClusterSumsCMSSW;
 
       for (unsigned c(0); c < 3; c++)
       {
@@ -831,8 +831,8 @@ namespace TPGStage2Emulation
               vCld.push_back(tcd);
 
               // Convert accumulated clusters to format expected by cluster properties emulation
-              l1thgcfirmware::HGCalCluster clusterSA = convertToCMSSWHGCalCluster(_tcaa->vTca[c][i][j]);
-              vClusterSumsCMSSW.push_back(std::make_unique<l1thgcfirmware::HGCalCluster>(clusterSA));
+              // l1thgcfirmware::HGCalCluster clusterSA = convertToCMSSWHGCalCluster(_tcaa->vTca[c][i][j]);
+              // vClusterSumsCMSSW.push_back(std::make_unique<l1thgcfirmware::HGCalCluster>(clusterSA));
             }
           }
         }
@@ -841,19 +841,19 @@ namespace TPGStage2Emulation
       // Run cluster properties
       // Fills data for hwCluster_ object associated to each cluster/cluster sum
       // Define config.  Should be done once per board/run, not once per call to run
-      l1thgcfirmware::ClusterAlgoConfig config;
-      config.setNTriggerLayers(34);
-      config.initializeLUTs();
+      // l1thgcfirmware::ClusterAlgoConfig config;
+      // config.setNTriggerLayers(34);
+      // config.initializeLUTs();
       // Create cluster properties object.  Again, should only be done once
-      l1thgcfirmware::HGCalHistoClusterProperties clusterProperties(config);
+      // l1thgcfirmware::HGCalHistoClusterProperties clusterProperties(config);
       // Run the actual algorithm implmentation
-      clusterProperties.calcProperties(vClusterSumsCMSSW);
+      // clusterProperties.calcProperties(vClusterSumsCMSSW);
       // Copy output clusters to output vector
       // Input HGCalCluster is actually cluster sum
       // Contains hwCluster object, which contains cluster properties and represents cluster object sent to L1T
-      for ( auto& cluster : vClusterSumsCMSSW ) {
-        vCldCMSSW.emplace_back(cluster->hwCluster());
-      }
+      // for ( auto& cluster : vClusterSumsCMSSW ) {
+      //   vCldCMSSW.emplace_back(cluster->hwCluster());
+      // }
 
       // if (!vCldCMSSW.empty()) {
       //   const auto& firstCluster = vCldCMSSW.front();
@@ -1130,34 +1130,34 @@ namespace TPGStage2Emulation
     TPGBEDataformat::TcAccumulatorFW *accmulInput;
     l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
     
-    l1thgcfirmware::HGCalCluster convertToCMSSWHGCalCluster(const TcAccumulator &tcAcc) const
-    {
-      l1thgcfirmware::HGCalCluster clusterSA(0, 0, true, true);
-      clusterSA.set_n_tc(tcAcc.numberOfTcs());
-      clusterSA.set_n_tc_w(tcAcc.numberOfTcs());
-      clusterSA.set_e(tcAcc.totE());
-      clusterSA.set_e_em(tcAcc.ceeE());
-      clusterSA.set_e_em_core(tcAcc.ceeECore());
-      clusterSA.set_e_h_early(tcAcc.ceHEarly());
-      clusterSA.set_layerbits(tcAcc.layerBits());
-      clusterSA.set_w(tcAcc.sumW());
-      clusterSA.set_w2(tcAcc.sumW2());
-      clusterSA.set_wz(tcAcc.sumZ());
-      clusterSA.set_wz2(tcAcc.sumWZ2());
-      clusterSA.set_wphi(tcAcc.sumWPhi());
-      clusterSA.set_wphi2(tcAcc.sumWPhi2());
+    // l1thgcfirmware::HGCalCluster convertToCMSSWHGCalCluster(const TcAccumulator &tcAcc) const
+    // {
+    //   l1thgcfirmware::HGCalCluster clusterSA(0, 0, true, true);
+    //   clusterSA.set_n_tc(tcAcc.numberOfTcs());
+    //   clusterSA.set_n_tc_w(tcAcc.numberOfTcs());
+    //   clusterSA.set_e(tcAcc.totE());
+    //   clusterSA.set_e_em(tcAcc.ceeE());
+    //   clusterSA.set_e_em_core(tcAcc.ceeECore());
+    //   clusterSA.set_e_h_early(tcAcc.ceHEarly());
+    //   clusterSA.set_layerbits(tcAcc.layerBits());
+    //   clusterSA.set_w(tcAcc.sumW());
+    //   clusterSA.set_w2(tcAcc.sumW2());
+    //   clusterSA.set_wz(tcAcc.sumZ());
+    //   clusterSA.set_wz2(tcAcc.sumWZ2());
+    //   clusterSA.set_wphi(tcAcc.sumWPhi());
+    //   clusterSA.set_wphi2(tcAcc.sumWPhi2());
 
-      // // Set roz, hack for now until upstream inputs are set (do we get r/z looked up, or x and y?)
-      // // clusterSA.set_weta(tcAcc.calcEta());  // Don't set eta, as will be calculated from roz in cluster properties
-      float clusterEta = l1thgcfirmware::Scales::floatEta(tcAcc.calcEta() + 256);
-      float roz = 1/sinh(clusterEta);
-      double wRozLSB = 0.0004172720581;
-      unsigned int rozHW = roz / wRozLSB / 0.233510936 + 1026.9376220703125;
-      unsigned int wRozHW = rozHW * tcAcc.sumW();
-      clusterSA.set_wroz(wRozHW);
+    //   // // Set roz, hack for now until upstream inputs are set (do we get r/z looked up, or x and y?)
+    //   // // clusterSA.set_weta(tcAcc.calcEta());  // Don't set eta, as will be calculated from roz in cluster properties
+    //   float clusterEta = l1thgcfirmware::Scales::floatEta(tcAcc.calcEta() + 256);
+    //   float roz = 1/sinh(clusterEta);
+    //   double wRozLSB = 0.0004172720581;
+    //   unsigned int rozHW = roz / wRozLSB / 0.233510936 + 1026.9376220703125;
+    //   unsigned int wRozHW = rozHW * tcAcc.sumW();
+    //   clusterSA.set_wroz(wRozHW);
 
-      return clusterSA;
-    }
+    //   return clusterSA;
+    // }
   };
 
   // const double Stage2::_rOverZ(0.032);

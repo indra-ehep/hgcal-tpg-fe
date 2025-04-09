@@ -95,7 +95,7 @@ ntupleMCInfo.exe: test-stage2_Nov24/ntupleMCInfo.cpp inc/*.*  TPGStage2Emulation
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/ntupleMCInfo.cpp `root-config --libs --cflags` -o ntupleMCInfo.exe -lEG
 
 stage2HtoTauTauEnergyCorrelation.exe: test-stage2_Nov24/stage2HtoTauTauEnergyCorrelation.cpp inc/*.*  TPGStage2Emulation/*.hh
-	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/stage2HtoTauTauEnergyCorrelation.cpp `root-config --libs --cflags` -o stage2HtoTauTauEnergyCorrelation.exe -lEG
+	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/stage2HtoTauTauEnergyCorrelation.cpp `root-config --libs --cflags` -o stage2HtoTauTauEnergyCorrelation.exe -lEG $(LDFLAGS) $(CPPFLAGS) -l yaml-cpp
 
 vbfjet.exe: test-stage2_Nov24/vbfjet.cpp inc/*.*  TPGStage2Emulation/*.hh
 	g++ $(CPPFLAGSSTAGE2) test-stage2_Nov24/vbfjet.cpp `root-config --libs --cflags` -o vbfjet.exe -lEG
