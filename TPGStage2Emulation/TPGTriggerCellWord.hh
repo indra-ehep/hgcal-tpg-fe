@@ -54,7 +54,7 @@ public:
     uint16_t u((_data>>18)&0xfff);
     return u<0x800?u:int16_t(u)-0x1000;
   }
-
+  
   int16_t getYOverZ() const {
     uint16_t u((_data>>30)&0xfff);
     return u<0x800?u:int16_t(u)-0x1000;
@@ -67,16 +67,16 @@ public:
   uint16_t getLayer() const {
     return (_data>>42)&0x3f;
   }
-
+  
   int16_t getU() const {
     uint16_t u((_data>>48)&0x7f);
     return u<0x40?u:int16_t(u)-0x80;
   }
-
+  
   uint16_t getUbar() const {
     return (_data>>55)&0x7f;
   }
-
+  
   void setEnergy(uint32_t e) {
     if(e>0x3ffff) e=0x3ffff;
     _data&=0xfffffffffffc0000;
