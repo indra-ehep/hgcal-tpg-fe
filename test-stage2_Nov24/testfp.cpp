@@ -44,10 +44,218 @@ int main(int argc, const char* argv[]) {
   std::cout << "Convergent rounding (AP_RND_CONV):           " << m_round_conv.to_float() << " " << m_round_conv.to_string() << std::endl;
   std::cout << "Truncation to minus infinity (AP_TRN):       " << m_trunc_minusinf.to_float() << " " << m_trunc_minusinf.to_string() << std::endl;
   std::cout << "Truncation to zero (AP_TRN_ZERO):            " << m_trunc_zero.to_float() << " " << m_trunc_zero.to_string() << std::endl;
+
+  std::cout << std::endl;
   
+  ap_fixed<32,20,AP_RND,AP_SAT>		m_round_plusinf_fixed_p(x);
+  ap_fixed<32,20,AP_RND_ZERO,AP_SAT>	m_round_zero_fixed_p(x);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_SAT>	m_round_minusinf_fixed_p(x);
+  ap_fixed<32,20,AP_RND_INF,AP_SAT>	m_round_inf_fixed_p(x);
+  ap_fixed<32,20,AP_RND_CONV,AP_SAT>	m_round_conv_fixed_p(x);
+  ap_fixed<32,20,AP_TRN,AP_SAT>		m_trunc_minusinf_fixed_p(x);	//Default
+  ap_fixed<32,20,AP_TRN_ZERO,AP_SAT>	m_trunc_zero_fixed_p(x);
+
+  double mx = -x;
+  ap_fixed<32,20,AP_RND,AP_SAT>		m_round_plusinf_fixed_m(mx);
+  ap_fixed<32,20,AP_RND_ZERO,AP_SAT>	m_round_zero_fixed_m(mx);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_SAT>	m_round_minusinf_fixed_m(mx);
+  ap_fixed<32,20,AP_RND_INF,AP_SAT>	m_round_inf_fixed_m(mx);
+  ap_fixed<32,20,AP_RND_CONV,AP_SAT>	m_round_conv_fixed_m(mx);
+  ap_fixed<32,20,AP_TRN,AP_SAT>		m_trunc_minusinf_fixed_m(mx);	//Default
+  ap_fixed<32,20,AP_TRN_ZERO,AP_SAT>	m_trunc_zero_fixed_m(mx);
+
+
+  std::cout << "You have entered:                            " << x  << std::endl;
+  std::cout << "Fixed Rounded to plus infinity (AP_RND):           " << m_round_plusinf_fixed_p << " " << m_round_plusinf_fixed_p.to_string() << std::endl;
+  std::cout << "Fixed Rounded to zero (AP_RND_ZERO):               " << m_round_zero_fixed_p << " " << m_round_zero_fixed_p.to_string() << std::endl;
+  std::cout << "Fixed Rounded to minus infinity (AP_RND_MIN_INF):  " << m_round_minusinf_fixed_p << " " << m_round_minusinf_fixed_p.to_string() << std::endl;
+  std::cout << "Fixed Rounded to infinity (AP_RND_INF):            " << m_round_inf_fixed_p << " " << m_round_inf_fixed_p.to_string() << std::endl;
+  std::cout << "Fixed Convergent rounding (AP_RND_CONV):           " << m_round_conv_fixed_p << " " << m_round_conv_fixed_p.to_string() << std::endl;
+  std::cout << "Fixed Truncation to minus infinity (AP_TRN):       " << m_trunc_minusinf_fixed_p << " " << m_trunc_minusinf_fixed_p.to_string() << std::endl;
+  std::cout << "Fixed Truncation to zero (AP_TRN_ZERO):            " << m_trunc_zero_fixed_p << " " << m_trunc_zero_fixed_p.to_string() << std::endl;
+
+  std::cout << std::endl;
+
+  std::cout << "You have entered:                            " << mx  << std::endl;
+  std::cout << "Fixed Rounded to plus infinity (AP_RND):           " << m_round_plusinf_fixed_m << " " << m_round_plusinf_fixed_m.to_string() << std::endl;
+  std::cout << "Fixed Rounded to zero (AP_RND_ZERO):               " << m_round_zero_fixed_m << " " << m_round_zero_fixed_m.to_string() << std::endl;
+  std::cout << "Fixed Rounded to minus infinity (AP_RND_MIN_INF):  " << m_round_minusinf_fixed_m << " " << m_round_minusinf_fixed_m.to_string() << std::endl;
+  std::cout << "Fixed Rounded to infinity (AP_RND_INF):            " << m_round_inf_fixed_m << " " << m_round_inf_fixed_m.to_string() << std::endl;
+  std::cout << "Fixed Convergent rounding (AP_RND_CONV):           " << m_round_conv_fixed_m << " " << m_round_conv_fixed_m.to_string() << std::endl;
+  std::cout << "Fixed Truncation to minus infinity (AP_TRN):       " << m_trunc_minusinf_fixed_m << " " << m_trunc_minusinf_fixed_m.to_string() << std::endl;
+  std::cout << "Fixed Truncation to zero (AP_TRN_ZERO):            " << m_trunc_zero_fixed_m << " " << m_trunc_zero_fixed_m.to_string() << std::endl;
+
+  std::cout << std::endl;
+
   // std::cout << "\n p1 : ";
   // for(int i=8-1;i>=0;i--) std::cout << p1[i] ;
   // std::cout << std::endl;
+
+  double extreme_input = -3.4e38 ; //-3.40e38;
+  float neg_inf = -1.0*x/0.0;
+
+  ap_fixed<32,20,AP_RND,AP_SAT>		m_posinf_round_plusinf_sat(extreme_input);
+  ap_fixed<32,20,AP_RND_ZERO,AP_SAT>	m_posinf_round_zero_sat(extreme_input);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_SAT>	m_posinf_round_minusinf_sat(extreme_input);
+  ap_fixed<32,20,AP_RND_INF,AP_SAT>	m_posinf_round_inf_sat(extreme_input);
+  ap_fixed<32,20,AP_RND_CONV,AP_SAT>	m_posinf_round_conv_sat(extreme_input);
+  ap_fixed<32,20,AP_TRN,AP_SAT>		m_posinf_trunc_minusinf_sat(extreme_input); 
+  ap_fixed<32,20,AP_TRN_ZERO,AP_SAT>	m_posinf_trunc_zero_sat(extreme_input);
+
+  ap_fixed<32,20,AP_RND,AP_SAT_ZERO>		m_posinf_round_plusinf_sat_zero(extreme_input);
+  ap_fixed<32,20,AP_RND_ZERO,AP_SAT_ZERO>	m_posinf_round_zero_sat_zero(extreme_input);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_SAT_ZERO>	m_posinf_round_minusinf_sat_zero(extreme_input);
+  ap_fixed<32,20,AP_RND_INF,AP_SAT_ZERO>	m_posinf_round_inf_sat_zero(extreme_input);
+  ap_fixed<32,20,AP_RND_CONV,AP_SAT_ZERO>	m_posinf_round_conv_sat_zero(extreme_input);
+  ap_fixed<32,20,AP_TRN,AP_SAT_ZERO>		m_posinf_trunc_minusinf_sat_zero(extreme_input); 
+  ap_fixed<32,20,AP_TRN_ZERO,AP_SAT_ZERO>	m_posinf_trunc_zero_sat_zero(extreme_input);
+
+  ap_fixed<32,20,AP_RND,AP_SAT_SYM>		m_posinf_round_plusinf_sat_sym(extreme_input);
+  ap_fixed<32,20,AP_RND_ZERO,AP_SAT_SYM>	m_posinf_round_zero_sat_sym(extreme_input);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_SAT_SYM>	m_posinf_round_minusinf_sat_sym(extreme_input);
+  ap_fixed<32,20,AP_RND_INF,AP_SAT_SYM>		m_posinf_round_inf_sat_sym(extreme_input);
+  ap_fixed<32,20,AP_RND_CONV,AP_SAT_SYM>	m_posinf_round_conv_sat_sym(extreme_input);
+  ap_fixed<32,20,AP_TRN,AP_SAT_SYM>		m_posinf_trunc_minusinf_sat_sym(extreme_input); 
+  ap_fixed<32,20,AP_TRN_ZERO,AP_SAT_SYM>	m_posinf_trunc_zero_sat_sym(extreme_input);
+
+  ap_fixed<32,20,AP_RND,AP_WRAP>		m_posinf_round_plusinf_wrap(extreme_input);
+  ap_fixed<32,20,AP_RND_ZERO,AP_WRAP>		m_posinf_round_zero_wrap(extreme_input);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_WRAP>	m_posinf_round_minusinf_wrap(extreme_input);
+  ap_fixed<32,20,AP_RND_INF,AP_WRAP>		m_posinf_round_inf_wrap(extreme_input);
+  ap_fixed<32,20,AP_RND_CONV,AP_WRAP>		m_posinf_round_conv_wrap(extreme_input);
+  ap_fixed<32,20,AP_TRN,AP_WRAP>		m_posinf_trunc_minusinf_wrap(extreme_input); 
+  ap_fixed<32,20,AP_TRN_ZERO,AP_WRAP>		m_posinf_trunc_zero_wrap(extreme_input);
+
+  ap_fixed<32,20,AP_RND,AP_WRAP_SM>		m_posinf_round_plusinf_wrap_sm(extreme_input);
+  ap_fixed<32,20,AP_RND_ZERO,AP_WRAP_SM>	m_posinf_round_zero_wrap_sm(extreme_input);
+  ap_fixed<32,20,AP_RND_MIN_INF,AP_WRAP_SM>	m_posinf_round_minusinf_wrap_sm(extreme_input);
+  ap_fixed<32,20,AP_RND_INF,AP_WRAP_SM>		m_posinf_round_inf_wrap_sm(extreme_input);
+  ap_fixed<32,20,AP_RND_CONV,AP_WRAP_SM>	m_posinf_round_conv_wrap_sm(extreme_input);
+  ap_fixed<32,20,AP_TRN,AP_WRAP_SM>		m_posinf_trunc_minusinf_wrap_sm(extreme_input); 
+  ap_fixed<32,20,AP_TRN_ZERO,AP_WRAP_SM>	m_posinf_trunc_zero_wrap_sm(extreme_input);
+
+  // std::cout << "==========================================================================================" << std::endl;
+  // std::cout << "Extreme Input: " <<  extreme_input << std::endl;
+  // std::cout << std::endl;
+  // std::cout << "Rounded to plus infinity (AP_RND,AP_SAT):           " << m_posinf_round_plusinf_sat.to_float() << " " << m_posinf_round_plusinf_sat.to_string() << std::endl;
+  // std::cout << "Rounded to zero (AP_RND_ZERO,AP_SAT):               " << m_posinf_round_zero_sat.to_float() << " " << m_posinf_round_zero_sat.to_string() << std::endl;
+  // std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_SAT):  " << m_posinf_round_minusinf_sat.to_float() << " " << m_posinf_round_minusinf_sat.to_string() << std::endl;
+  // std::cout << "Rounded to infinity (AP_RND_INF,AP_SAT):            " << m_posinf_round_inf_sat.to_float() << " " << m_posinf_round_inf_sat.to_string() << std::endl;
+  // std::cout << "Convergent rounding (AP_RND_CONV,AP_SAT):           " << m_posinf_round_conv_sat.to_float() << " " << m_posinf_round_conv_sat.to_string() << std::endl;
+  // std::cout << "Truncation to minus infinity (AP_TRN,AP_SAT):       " << m_posinf_trunc_minusinf_sat.to_float() << " " << m_posinf_trunc_minusinf_sat.to_string() << std::endl;
+  // std::cout << "Truncation to zero (AP_TRN_ZERO,AP_SAT):            " << m_posinf_trunc_zero_sat.to_float() << " " << m_posinf_trunc_zero_sat.to_string() << std::endl;
+  
+  // std::cout << std::endl;
+  
+  // std::cout << "Rounded to plus infinity (AP_RND,AP_SAT_ZERO):           " << m_posinf_round_plusinf_sat_zero.to_float() << " " << m_posinf_round_plusinf_sat_zero.to_string() << std::endl;
+  // std::cout << "Rounded to zero (AP_RND_ZERO,AP_SAT_ZERO):               " << m_posinf_round_zero_sat_zero.to_float() << " " << m_posinf_round_zero_sat_zero.to_string() << std::endl;
+  // std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_SAT_ZERO):  " << m_posinf_round_minusinf_sat_zero.to_float() << " " << m_posinf_round_minusinf_sat_zero.to_string() << std::endl;
+  // std::cout << "Rounded to infinity (AP_RND_INF,AP_SAT_ZERO):            " << m_posinf_round_inf_sat_zero.to_float() << " " << m_posinf_round_inf_sat_zero.to_string() << std::endl;
+  // std::cout << "Convergent rounding (AP_RND_CONV,AP_SAT_ZERO):           " << m_posinf_round_conv_sat_zero.to_float() << " " << m_posinf_round_conv_sat_zero.to_string() << std::endl;
+  // std::cout << "Truncation to minus infinity (AP_TRN,AP_SAT_ZERO):       " << m_posinf_trunc_minusinf_sat_zero.to_float() << " " << m_posinf_trunc_minusinf_sat_zero.to_string() << std::endl;
+  // std::cout << "Truncation to zero (AP_TRN_ZERO,AP_SAT_ZERO):            " << m_posinf_trunc_zero_sat_zero.to_float() << " " << m_posinf_trunc_zero_sat_zero.to_string() << std::endl;
+
+  // std::cout << std::endl;
+  
+  // std::cout << "Rounded to plus infinity (AP_RND,AP_SAT_SYM):           " << m_posinf_round_plusinf_sat_sym.to_float() << " " << m_posinf_round_plusinf_sat_sym.to_string() << std::endl;
+  // std::cout << "Rounded to zero (AP_RND_ZERO,AP_SAT_SYM):               " << m_posinf_round_zero_sat_sym.to_float() << " " << m_posinf_round_zero_sat_sym.to_string() << std::endl;
+  // std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_SAT_SYM):  " << m_posinf_round_minusinf_sat_sym.to_float() << " " << m_posinf_round_minusinf_sat_sym.to_string() << std::endl;
+  // std::cout << "Rounded to infinity (AP_RND_INF,AP_SAT_SYM):            " << m_posinf_round_inf_sat_sym.to_float() << " " << m_posinf_round_inf_sat_sym.to_string() << std::endl;
+  // std::cout << "Convergent rounding (AP_RND_CONV,AP_SAT_SYM):           " << m_posinf_round_conv_sat_sym.to_float() << " " << m_posinf_round_conv_sat_sym.to_string() << std::endl;
+  // std::cout << "Truncation to minus infinity (AP_TRN,AP_SAT_SYM):       " << m_posinf_trunc_minusinf_sat_sym.to_float() << " " << m_posinf_trunc_minusinf_sat_sym.to_string() << std::endl;
+  // std::cout << "Truncation to zero (AP_TRN_ZERO,AP_SAT_SYM):            " << m_posinf_trunc_zero_sat_sym.to_float() << " " << m_posinf_trunc_zero_sat_sym.to_string() << std::endl;
+
+  // std::cout << std::endl;
+  
+  // std::cout << "Rounded to plus infinity (AP_RND,AP_WRAP):           " << m_posinf_round_plusinf_wrap.to_float() << " " << m_posinf_round_plusinf_wrap.to_string() << std::endl;
+  // std::cout << "Rounded to zero (AP_RND_ZERO,AP_WRAP):               " << m_posinf_round_zero_wrap.to_float() << " " << m_posinf_round_zero_wrap.to_string() << std::endl;
+  // std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_WRAP):  " << m_posinf_round_minusinf_wrap.to_float() << " " << m_posinf_round_minusinf_wrap.to_string() << std::endl;
+  // std::cout << "Rounded to infinity (AP_RND_INF,AP_WRAP):            " << m_posinf_round_inf_wrap.to_float() << " " << m_posinf_round_inf_wrap.to_string() << std::endl;
+  // std::cout << "Convergent rounding (AP_RND_CONV,AP_WRAP):           " << m_posinf_round_conv_wrap.to_float() << " " << m_posinf_round_conv_wrap.to_string() << std::endl;
+  // std::cout << "Truncation to minus infinity (AP_TRN,AP_WRAP):       " << m_posinf_trunc_minusinf_wrap.to_float() << " " << m_posinf_trunc_minusinf_wrap.to_string() << std::endl;
+  // std::cout << "Truncation to zero (AP_TRN_ZERO,AP_WRAP):            " << m_posinf_trunc_zero_wrap.to_float() << " " << m_posinf_trunc_zero_wrap.to_string() << std::endl;
+
+  // std::cout << std::endl;
+  
+  // std::cout << "Rounded to plus infinity (AP_RND,AP_WRAP_SM):           " << m_posinf_round_plusinf_wrap_sm.to_float() << " " << m_posinf_round_plusinf_wrap_sm.to_string() << std::endl;
+  // std::cout << "Rounded to zero (AP_RND_ZERO,AP_WRAP_SM):               " << m_posinf_round_zero_wrap_sm.to_float() << " " << m_posinf_round_zero_wrap_sm.to_string() << std::endl;
+  // std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_WRAP_SM):  " << m_posinf_round_minusinf_wrap_sm.to_float() << " " << m_posinf_round_minusinf_wrap_sm.to_string() << std::endl;
+  // std::cout << "Rounded to infinity (AP_RND_INF,AP_WRAP_SM):            " << m_posinf_round_inf_wrap_sm.to_float() << " " << m_posinf_round_inf_wrap_sm.to_string() << std::endl;
+  // std::cout << "Convergent rounding (AP_RND_CONV,AP_WRAP_SM):           " << m_posinf_round_conv_wrap_sm.to_float() << " " << m_posinf_round_conv_wrap_sm.to_string() << std::endl;
+  // std::cout << "Truncation to minus infinity (AP_TRN,AP_WRAP_SM):       " << m_posinf_trunc_minusinf_wrap_sm.to_float() << " " << m_posinf_trunc_minusinf_wrap_sm.to_string() << std::endl;
+  // std::cout << "Truncation to zero (AP_TRN_ZERO,AP_WRAP_SM):            " << m_posinf_trunc_zero_wrap_sm.to_float() << " " << m_posinf_trunc_zero_wrap_sm.to_string() << std::endl;
+
+  // std::cout << "==========================================================================================" << std::endl;
+
+  std::cout << "==========================================================================================" << std::endl;
+  std::cout << std::setw(5) << std::setprecision(1) << std::scientific;
+  std::cout << "Extreme Input: " <<  extreme_input << std::endl;
+  std::cout << std::setw(20) << std::setprecision(19) << std::fixed;
+  std::cout << std::endl;
+  std::cout << "Rounded to plus infinity (AP_RND,AP_SAT):           " << m_posinf_round_plusinf_sat << " " << m_posinf_round_plusinf_sat.to_string() << std::endl;
+  std::cout << "Rounded to zero (AP_RND_ZERO,AP_SAT):               " << m_posinf_round_zero_sat << " " << m_posinf_round_zero_sat.to_string() << std::endl;
+  std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_SAT):  " << m_posinf_round_minusinf_sat << " " << m_posinf_round_minusinf_sat.to_string() << std::endl;
+  std::cout << "Rounded to infinity (AP_RND_INF,AP_SAT):            " << m_posinf_round_inf_sat << " " << m_posinf_round_inf_sat.to_string() << std::endl;
+  std::cout << "Convergent rounding (AP_RND_CONV,AP_SAT):           " << m_posinf_round_conv_sat << " " << m_posinf_round_conv_sat.to_string() << std::endl;
+  std::cout << "Truncation to minus infinity (AP_TRN,AP_SAT):       " << m_posinf_trunc_minusinf_sat << " " << m_posinf_trunc_minusinf_sat.to_string() << std::endl;
+  std::cout << "Truncation to zero (AP_TRN_ZERO,AP_SAT):            " << m_posinf_trunc_zero_sat << " " << m_posinf_trunc_zero_sat.to_string() << std::endl;
+  
+  std::cout << std::endl;
+  
+  std::cout << "Rounded to plus infinity (AP_RND,AP_SAT_ZERO):           " << m_posinf_round_plusinf_sat_zero << " " << m_posinf_round_plusinf_sat_zero.to_string() << std::endl;
+  std::cout << "Rounded to zero (AP_RND_ZERO,AP_SAT_ZERO):               " << m_posinf_round_zero_sat_zero << " " << m_posinf_round_zero_sat_zero.to_string() << std::endl;
+  std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_SAT_ZERO):  " << m_posinf_round_minusinf_sat_zero << " " << m_posinf_round_minusinf_sat_zero.to_string() << std::endl;
+  std::cout << "Rounded to infinity (AP_RND_INF,AP_SAT_ZERO):            " << m_posinf_round_inf_sat_zero << " " << m_posinf_round_inf_sat_zero.to_string() << std::endl;
+  std::cout << "Convergent rounding (AP_RND_CONV,AP_SAT_ZERO):           " << m_posinf_round_conv_sat_zero << " " << m_posinf_round_conv_sat_zero.to_string() << std::endl;
+  std::cout << "Truncation to minus infinity (AP_TRN,AP_SAT_ZERO):       " << m_posinf_trunc_minusinf_sat_zero << " " << m_posinf_trunc_minusinf_sat_zero.to_string() << std::endl;
+  std::cout << "Truncation to zero (AP_TRN_ZERO,AP_SAT_ZERO):            " << m_posinf_trunc_zero_sat_zero << " " << m_posinf_trunc_zero_sat_zero.to_string() << std::endl;
+
+  std::cout << std::endl;
+  
+  std::cout << "Rounded to plus infinity (AP_RND,AP_SAT_SYM):           " << m_posinf_round_plusinf_sat_sym << " " << m_posinf_round_plusinf_sat_sym.to_string() << std::endl;
+  std::cout << "Rounded to zero (AP_RND_ZERO,AP_SAT_SYM):               " << m_posinf_round_zero_sat_sym << " " << m_posinf_round_zero_sat_sym.to_string() << std::endl;
+  std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_SAT_SYM):  " << m_posinf_round_minusinf_sat_sym << " " << m_posinf_round_minusinf_sat_sym.to_string() << std::endl;
+  std::cout << "Rounded to infinity (AP_RND_INF,AP_SAT_SYM):            " << m_posinf_round_inf_sat_sym << " " << m_posinf_round_inf_sat_sym.to_string() << std::endl;
+  std::cout << "Convergent rounding (AP_RND_CONV,AP_SAT_SYM):           " << m_posinf_round_conv_sat_sym << " " << m_posinf_round_conv_sat_sym.to_string() << std::endl;
+  std::cout << "Truncation to minus infinity (AP_TRN,AP_SAT_SYM):       " << m_posinf_trunc_minusinf_sat_sym << " " << m_posinf_trunc_minusinf_sat_sym.to_string() << std::endl;
+  std::cout << "Truncation to zero (AP_TRN_ZERO,AP_SAT_SYM):            " << m_posinf_trunc_zero_sat_sym << " " << m_posinf_trunc_zero_sat_sym.to_string() << std::endl;
+
+  std::cout << std::endl;
+  
+  std::cout << "Rounded to plus infinity (AP_RND,AP_WRAP):           " << m_posinf_round_plusinf_wrap << " " << m_posinf_round_plusinf_wrap.to_string() << std::endl;
+  std::cout << "Rounded to zero (AP_RND_ZERO,AP_WRAP):               " << m_posinf_round_zero_wrap << " " << m_posinf_round_zero_wrap.to_string() << std::endl;
+  std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_WRAP):  " << m_posinf_round_minusinf_wrap << " " << m_posinf_round_minusinf_wrap.to_string() << std::endl;
+  std::cout << "Rounded to infinity (AP_RND_INF,AP_WRAP):            " << m_posinf_round_inf_wrap << " " << m_posinf_round_inf_wrap.to_string() << std::endl;
+  std::cout << "Convergent rounding (AP_RND_CONV,AP_WRAP):           " << m_posinf_round_conv_wrap << " " << m_posinf_round_conv_wrap.to_string() << std::endl;
+  std::cout << "Truncation to minus infinity (AP_TRN,AP_WRAP):       " << m_posinf_trunc_minusinf_wrap << " " << m_posinf_trunc_minusinf_wrap.to_string() << std::endl;
+  std::cout << "Truncation to zero (AP_TRN_ZERO,AP_WRAP):            " << m_posinf_trunc_zero_wrap << " " << m_posinf_trunc_zero_wrap.to_string() << std::endl;
+
+  std::cout << std::endl;
+  
+  std::cout << "Rounded to plus infinity (AP_RND,AP_WRAP_SM):           " << m_posinf_round_plusinf_wrap_sm << " " << m_posinf_round_plusinf_wrap_sm.to_string() << std::endl;
+  std::cout << "Rounded to zero (AP_RND_ZERO,AP_WRAP_SM):               " << m_posinf_round_zero_wrap_sm << " " << m_posinf_round_zero_wrap_sm.to_string() << std::endl;
+  std::cout << "Rounded to minus infinity (AP_RND_MIN_INF,AP_WRAP_SM):  " << m_posinf_round_minusinf_wrap_sm << " " << m_posinf_round_minusinf_wrap_sm.to_string() << std::endl;
+  std::cout << "Rounded to infinity (AP_RND_INF,AP_WRAP_SM):            " << m_posinf_round_inf_wrap_sm << " " << m_posinf_round_inf_wrap_sm.to_string() << std::endl;
+  std::cout << "Convergent rounding (AP_RND_CONV,AP_WRAP_SM):           " << m_posinf_round_conv_wrap_sm << " " << m_posinf_round_conv_wrap_sm.to_string() << std::endl;
+  std::cout << "Truncation to minus infinity (AP_TRN,AP_WRAP_SM):       " << m_posinf_trunc_minusinf_wrap_sm << " " << m_posinf_trunc_minusinf_wrap_sm.to_string() << std::endl;
+  std::cout << "Truncation to zero (AP_TRN_ZERO,AP_WRAP_SM):            " << m_posinf_trunc_zero_wrap_sm << " " << m_posinf_trunc_zero_wrap_sm.to_string() << std::endl;
+
+  std::cout << "==========================================================================================" << std::endl;
+
+  ap_ufixed<1, -1> y1 = 0.25;
+  ap_ufixed<8, 1> y2 = 0.25;
+  std::cout << "y1: " <<  y1 << " " << y1.to_string() << std::endl;
+  std::cout << "y2: " <<  y2 << " " << y2.to_string() << std::endl;
+  
+  ap_fixed<4, -7> z = 1.0/256;
+  std::cout << "z: " <<  z << " " << z.to_string() << std::endl;
+
+  ap_fixed<32, 8> val32 = 2.0;
+  ap_fixed<64, 11> val64 = 2.0;
+  std::cout << "val32: " <<  val32 << " " << val32.to_string() << std::endl;
+  std::cout << "val64: " <<  val64 << " " << val64.to_string() << std::hex << val64 << std::endl;
+  
+  return true;
   
   float value1 = 1.25;
   //Check rounding cases

@@ -1,6 +1,6 @@
 /**********************************************************************
- Created on : 13/11/2024
- Purpose    : Energy correlation plot for H-->tautau in HGCAL using stage2 semi-emulator
+ Created on : 11/04/2025
+ Purpose    : Stage2 semi-emulator test
  Author     : Indranil Das, Research Associate, Imperial
  Email      : indranil.das@cern.ch | indra.ehep@gmail.com
 **********************************************************************/
@@ -20,8 +20,11 @@
 #include "TParticlePDG.h"
 #include "TDatabasePDG.h"
 
-#include "TPGTriggerCellFloats.hh"
+//#include "TPGTriggerCellFloats.hh"
 #include "Stage2.hh"
+
+//#include "TPGTCBits.hh"
+#include "TPGTCFloats.hh"
 
 int main(int argc, char** argv)
 {
@@ -50,10 +53,11 @@ int main(int argc, char** argv)
     std::istringstream issnEvents(argv[3]);
     issnEvents >> nofEvents;
   }
-  
-  TFile *fin = TFile::Open(Form(inputfile.c_str()));
+  std::unique_ptr<TFile> fin( TFile::Open(Form(inputfile.c_str())) );
+  //TFile *fin = TFile::Open(Form(inputfile.c_str()));
   std::cout<<"Input filename : " << fin->GetName() << std::endl;
-  TTree *tr  = (TTree*)fin->Get("l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple");  
+  //TTree *tr  = (TTree*)fin->Get("l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple");
+  std::unique_ptr<TTree> tr((TTree*)fin->Get("l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"));  
   tr->SetBranchStatus("*",0);
   Int_t event ;
   tr->SetBranchStatus("event",1);
@@ -196,6 +200,19 @@ int main(int argc, char** argv)
   tr->SetBranchStatus("tc_uncompressedCharge",1);
   tr->SetBranchAddress("tc_uncompressedCharge" , &tc_uncompressedCharge);
 
+  std::cout << "Total number of Events: " << tr->GetEntries() << std::endl;
+  // std::cout << "Sizeof: " << sizeof(TPGTCBits) << std::endl;
+  // std::cout << "Sizeof: " << sizeof(uint32_t) << std::endl;
+
+  // TPGTCBits tcbit;
+  // tcbit.setEnergy(262142);
+  // tcbit.setROverZ(4094);
+  // tcbit.setPhi(4094);
+  // tcbit.setLayer(62);
+  // tcbit.setU(32);
+  // tcbit.setUbar(62);
+  // tcbit.print();
+  
   TH1D *hEt = new TH1D("hEt","hEt",100,0,1000);
   TH1D *hPhi = new TH1D("hPhi","hPhi",2*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
   TH1D *hPhiDeg = new TH1D("hPhiDeg","hPhiDeg",2*TMath::RadToDeg()*TMath::TwoPi(),-1.0*TMath::RadToDeg()*TMath::TwoPi(),TMath::RadToDeg()*TMath::TwoPi());
@@ -274,7 +291,8 @@ int main(int argc, char** argv)
   TH2D *hECorrc_pion_HT = new TH2D("hECorrc_pion_HT","hECorrc_pion_HT",50,0.0,50.0,1000,0.0,100.0);
   
   const auto default_precision{std::cout.precision()};
-  TPGTriggerCellFloats tcf0,tcf1;
+  //TPGTriggerCellFloats tcf0,tcf1;
+  TPGTCFloats tcf0,tcf1;
   for (Long64_t ievent = 0 ; ievent < nofEvents ; ievent++ ) {
     
     tr->GetEntry(ievent) ;
@@ -289,31 +307,31 @@ int main(int argc, char** argv)
       std::string gennom = (!partPDG)?"unknown":partPDG->GetName() ;
       std::string daughterlist = "(";
       for(int const& idx: gen_daughters->at(igen)) {
-	daughterlist += std::to_string(idx);
-	daughterlist += ",";
-	if(gennom.find("tau")!=std::string::npos) taudlist.push_back(idx);
-	if(taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),igen)!=taudlist.end()) taugdlist.push_back(idx);
+  	daughterlist += std::to_string(idx);
+  	daughterlist += ",";
+  	if(gennom.find("tau")!=std::string::npos) taudlist.push_back(idx);
+  	if(taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),igen)!=taudlist.end()) taugdlist.push_back(idx);
       }
       daughterlist += ")";
       
       if(doPrint and
-	 (gennom.find("h0")!=std::string::npos
-	 or
-	 gennom.find("tau")!=std::string::npos
-	 or
-	 (taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),igen)!=taudlist.end())
-	 or
-	 (taugdlist.size()>0 and std::find(taugdlist.begin(),taugdlist.end(),igen)!=taugdlist.end()))
-	 ){
-	std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", igen: " << std::setw(4) << igen
-		  <<", pid: " << std::setw(5) << gen_pdgid->at(igen) << ", status: " << std::setw(5) << gen_status->at(igen)
-		  <<", Name: " << std::setw(10) << ((!partPDG)?"unknown":partPDG->GetName())
-		  <<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(10) << gen_pt->at(igen)
-		  << ", " << std::setw(10) << gen_eta->at(igen) << ", " << std::setw(10) << (TMath::RadToDeg()*gen_phi->at(igen)) << ", " << std::setw(10) << gen_energy->at(igen) << ") "
-		  <<" daughters: " << (gen_daughters->at(igen)).size()
-		  << ", " << daughterlist 
-		  << std::defaultfloat
-		  << std::endl;
+  	 (gennom.find("h0")!=std::string::npos
+  	 or
+  	 gennom.find("tau")!=std::string::npos
+  	 or
+  	 (taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),igen)!=taudlist.end())
+  	 or
+  	 (taugdlist.size()>0 and std::find(taugdlist.begin(),taugdlist.end(),igen)!=taugdlist.end()))
+  	 ){
+  	std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", igen: " << std::setw(4) << igen
+  		  <<", pid: " << std::setw(5) << gen_pdgid->at(igen) << ", status: " << std::setw(5) << gen_status->at(igen)
+  		  <<", Name: " << std::setw(10) << ((!partPDG)?"unknown":partPDG->GetName())
+  		  <<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(10) << gen_pt->at(igen)
+  		  << ", " << std::setw(10) << gen_eta->at(igen) << ", " << std::setw(10) << (TMath::RadToDeg()*gen_phi->at(igen)) << ", " << std::setw(10) << gen_energy->at(igen) << ") "
+  		  <<" daughters: " << (gen_daughters->at(igen)).size()
+  		  << ", " << daughterlist 
+  		  << std::defaultfloat
+  		  << std::endl;
       }//print condition
     }//gen loop
     
@@ -321,25 +339,25 @@ int main(int argc, char** argv)
     for(int ipart=0; ipart<genpart_pt->size(); ipart++ ){
       TParticlePDG *partPDG = TDatabasePDG::Instance()->GetParticle(genpart_pid->at(ipart));
       if(
-	 (taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),(genpart_gen->at(ipart)-1))!=taudlist.end())
-	 or
-	 (taugdlist.size()>0 and std::find(taugdlist.begin(),taugdlist.end(),(genpart_gen->at(ipart)-1))!=taugdlist.end())
-	 ){
-	JetPart p;
-	p.name = (!partPDG)?"unknown":partPDG->GetName();
-	p.index = ipart;
-	partlist.push_back(p);
-	if(doPrint)
-	  std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ipart: " << std::setw(4) << ipart
-		    <<", pid: " << std::setw(5) << genpart_pid->at(ipart) << ", mother: " << std::setw(4) << genpart_mother->at(ipart)
-		    <<", gen: " << std::setw(4) << (genpart_gen->at(ipart)-1) //<< ", fromBeamPipe: " << std::setw(4) << genpart_fromBeamPipe->at(ipart)
-		    <<", Name: " << std::setw(10) << ((!partPDG)?"unknown":partPDG->GetName())
-		    <<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(8) << genpart_pt->at(ipart)
-		    << ", " << std::setw(8) << genpart_eta->at(ipart) << ", " //<< std::setw(5) << genpart_exeta->at(ipart)
-		    << ", " << std::setw(8) << (TMath::RadToDeg()*genpart_phi->at(ipart)) //<< ", " << std::setw(5) << (TMath::RadToDeg()*genpart_exphi->at(ipart))
-		    << ", " << std::setw(8) << genpart_energy->at(ipart) << ") "
-		    << std::defaultfloat
-		    << std::endl;
+  	 (taudlist.size()>0 and std::find(taudlist.begin(),taudlist.end(),(genpart_gen->at(ipart)-1))!=taudlist.end())
+  	 or
+  	 (taugdlist.size()>0 and std::find(taugdlist.begin(),taugdlist.end(),(genpart_gen->at(ipart)-1))!=taugdlist.end())
+  	 ){
+  	JetPart p;
+  	p.name = (!partPDG)?"unknown":partPDG->GetName();
+  	p.index = ipart;
+  	partlist.push_back(p);
+  	if(doPrint)
+  	  std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ipart: " << std::setw(4) << ipart
+  		    <<", pid: " << std::setw(5) << genpart_pid->at(ipart) << ", mother: " << std::setw(4) << genpart_mother->at(ipart)
+  		    <<", gen: " << std::setw(4) << (genpart_gen->at(ipart)-1) //<< ", fromBeamPipe: " << std::setw(4) << genpart_fromBeamPipe->at(ipart)
+  		    <<", Name: " << std::setw(10) << ((!partPDG)?"unknown":partPDG->GetName())
+  		    <<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(8) << genpart_pt->at(ipart)
+  		    << ", " << std::setw(8) << genpart_eta->at(ipart) << ", " //<< std::setw(5) << genpart_exeta->at(ipart)
+  		    << ", " << std::setw(8) << (TMath::RadToDeg()*genpart_phi->at(ipart)) //<< ", " << std::setw(5) << (TMath::RadToDeg()*genpart_exphi->at(ipart))
+  		    << ", " << std::setw(8) << genpart_energy->at(ipart) << ") "
+  		    << std::defaultfloat
+  		    << std::endl;
       }
     }//genpart loop
     
@@ -352,38 +370,37 @@ int main(int argc, char** argv)
       
       float minDeltaR = 1.0; int minDeltaRindex = -1;
       for(int ipart=0; ipart<partlist.size(); ipart++){
-	int refpart = partlist.at(ipart).index;
-	double deltaR = TMath::Sqrt((genpart_eta->at(refpart)-genjet_eta->at(ijet))*(genpart_eta->at(refpart)-genjet_eta->at(ijet)) + (genpart_phi->at(refpart)-genjet_phi->at(ijet))*(genpart_phi->at(refpart)-genjet_phi->at(ijet)));
-	if(deltaR<0.4 and deltaR<minDeltaR){
-	  minDeltaR = deltaR;
-	  minDeltaRindex = ipart;
-	}
+  	int refpart = partlist.at(ipart).index;
+  	double deltaR = TMath::Sqrt((genpart_eta->at(refpart)-genjet_eta->at(ijet))*(genpart_eta->at(refpart)-genjet_eta->at(ijet)) + (genpart_phi->at(refpart)-genjet_phi->at(ijet))*(genpart_phi->at(refpart)-genjet_phi->at(ijet)));
+  	if(deltaR<0.4 and deltaR<minDeltaR){
+  	  minDeltaR = deltaR;
+  	  minDeltaRindex = ipart;
+  	}
       }
       for(int ipart=0; ipart<partlist.size(); ipart++){
-	JetPart p = partlist.at(ipart);
-	if(ipart==minDeltaRindex){
-	  JetPart jet;
-	  jet.name = p.name;
-	  jet.index = ijet ;
-	  jetlist.push_back(jet);
-	  if(doPrint)
-	    std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ijet: " << std::setw(4) << ijet
-		      <<", Name: " << std::setw(10) << p.name << ", deltaR : " << std::setprecision(3) << std::setw(8) << minDeltaR
-		      <<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(8) << genjet_pt->at(ijet)
-		      << ", " << std::setw(8) << genjet_eta->at(ijet) << ", " //<< std::setw(5) << genjet_exeta->at(ijet)
-		      << ", " << std::setw(8) << (TMath::RadToDeg()*genjet_phi->at(ijet)) //<< ", " << std::setw(5) << (TMath::RadToDeg()*genjet_exphi->at(ijet))
-		      << ", " << std::setw(8) << genjet_energy->at(ijet) << ") "
-		      << std::defaultfloat
-		      << std::endl;
-	}
+  	JetPart p = partlist.at(ipart);
+  	if(ipart==minDeltaRindex){
+  	  JetPart jet;
+  	  jet.name = p.name;
+  	  jet.index = ijet ;
+  	  jetlist.push_back(jet);
+  	  if(doPrint)
+  	    std::cout << "ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ijet: " << std::setw(4) << ijet
+  		      <<", Name: " << std::setw(10) << p.name << ", deltaR : " << std::setprecision(3) << std::setw(8) << minDeltaR
+  		      <<" (pt,eta,phi,energy) : (" << std::fixed << std::setprecision(2) << std::setw(8) << genjet_pt->at(ijet)
+  		      << ", " << std::setw(8) << genjet_eta->at(ijet) << ", " //<< std::setw(5) << genjet_exeta->at(ijet)
+  		      << ", " << std::setw(8) << (TMath::RadToDeg()*genjet_phi->at(ijet)) //<< ", " << std::setw(5) << (TMath::RadToDeg()*genjet_exphi->at(ijet))
+  		      << ", " << std::setw(8) << genjet_energy->at(ijet) << ") "
+  		      << std::defaultfloat
+  		      << std::endl;
+  	}
       }//part condition
     }//jet loop
     /////////////////////////////////////////////////////////////////////////////////////////
     
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
-    int nofmissedtcs = 0;
-    std::vector<TPGTriggerCellWord> vTcw[6];
-    //std::vector<TPGTriggerCellFloats> vTcw[6];    
+    //std::vector<TPGTriggerCellWord> vTcw[6];
+      std::vector<TPGTCBits> vTcw[6];
     for(unsigned itc=0;itc<tc_pt->size();itc++){
       
       double z(fabs(tc_z->at(itc)));
@@ -400,56 +417,53 @@ int main(int argc, char** argv)
       else {sec0 = sec1 = 2;}
       
       if(tc_z->at(itc)<0.){
-	switch(sec0){
-	case 0:
-	  sec0 += 3;
-	  break;
-	case 1:
-	  sec0 += 4;
-	  break;
-	case 2:
-	  sec0 += 2;
-	  break;
-	default:
-	  ;
-	}
-	switch(sec1){
-	case 0:
-	  sec1 += 3;
-	  break;
-	case 1:
-	  sec1 += 4;
-	  break;
-	case 2:
-	  sec1 += 2;
-	  break;
-	default:
-	  ;
-	}	
+  	switch(sec0){
+  	case 0:
+  	  sec0 += 3;
+  	  break;
+  	case 1:
+  	  sec0 += 4;
+  	  break;
+  	case 2:
+  	  sec0 += 2;
+  	  break;
+  	default:
+  	  ;
+  	}
+  	switch(sec1){
+  	case 0:
+  	  sec1 += 3;
+  	  break;
+  	case 1:
+  	  sec1 += 4;
+  	  break;
+  	case 2:
+  	  sec1 += 2;
+  	  break;
+  	default:
+  	  ;
+  	}	
       }
       
       if(doPrint) std::cout << "ievent: " << ievent << ", eventId: " << event << ", itc: " << itc <<", z: " << tc_z->at(itc)
-			    <<", zabs: " << z << ", x: " << tc_x->at(itc) << ", y: " << tc_y->at(itc)
-			    << ", phi_deg: " << phi_deg << ", sec0: " <<  sec0 << ", sec1: " <<  sec1 << std::endl;
+  			    <<", zabs: " << z << ", x: " << tc_x->at(itc) << ", y: " << tc_y->at(itc)
+  			    << ", phi_deg: " << phi_deg << ", sec0: " <<  sec0 << ", sec1: " <<  sec1 << std::endl;
       
       tcxyAll->Fill(tc_x->at(itc),tc_y->at(itc));
       tcxy[sec0]->Fill(tc_x->at(itc),tc_y->at(itc));      
       if(sec0!=sec1) tcxy[sec1]->Fill(tc_x->at(itc),tc_y->at(itc));	
       
       for (uint32_t isect = 0 ; isect < 3 ; isect++ ){
-	uint32_t addisect = 0;
-	if(tc_z->at(itc)>0.0) addisect = 3;
-	tcf0.setZero();
-	tcf0.setXYOverZF(tc_x->at(itc)/z,tc_y->at(itc)/z,isect+addisect);
-	if(tcf0.getXOverZF()>=0.0){
-	  tcf0.setEnergyGeV(tc_pt->at(itc));
-	  tcf0.setLayer(tc_layer->at(itc));
-	  //if(doPrint) tcf0.print();
-	  vTcw[isect+addisect].push_back(tcf0);
-	}else{
-	  //std::cout<<"event: " << ievent << ", sector: " << isect+addisect << ", (x,y) : " << tc_x->at(itc) << ", " << tc_y->at(itc) << ") " << std::endl;
-	  nofmissedtcs++;
-	}
+  	uint32_t addisect = 0;
+  	if(tc_z->at(itc)>0.0) addisect = 3;
+  	tcf0.setZero();
+  	tcf0.setROverZPhiF(tc_x->at(itc)/z,tc_y->at(itc)/z,isect+addisect);
+  	if(tcf0.getXOverZF()>=0.0){
+  	  tcf0.setEnergyGeV(tc_pt->at(itc));
+  	  tcf0.setLayer(tc_layer->at(itc));
+  	  //if(doPrint) tcf0.print();
+  	  vTcw[isect+addisect].push_back(tcf0);
+  	}
       }
       
       tot_tc_pt += tc_pt->at(itc);
@@ -459,11 +473,10 @@ int main(int argc, char** argv)
     }//end of TC loop    
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
-    std::cout<<"noftcs : "<< tc_pt->size() << ", mofmissed: " << nofmissedtcs << std::endl;
-    
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
       //std::cout << "ievent : " << ievent << ", isect: " << isect << ", size : " << vTcw[isect].size() << std::endl;
-      for(TPGTriggerCellFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
+      for(TPGTCFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
+        //for(TPGTriggerCellFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
     }
     std::vector<TPGClusterData> vCld[6];    
     TPGStage2Emulation::Stage2 s2Clustering;
@@ -473,8 +486,8 @@ int main(int argc, char** argv)
     }
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
       for(TPGClusterFloats const& clf : vCld[isect]){
-	clusxyOverZ[isect]->Fill(clf.getLocalXOverZF(),clf.getLocalYOverZF());
-	clusxy[isect]->Fill(clf.getGlobalXOverZF(isect),clf.getGlobalYOverZF(isect));
+  	clusxyOverZ[isect]->Fill(clf.getLocalXOverZF(),clf.getLocalYOverZF());
+  	clusxy[isect]->Fill(clf.getGlobalXOverZF(isect),clf.getGlobalYOverZF(isect));
       }
     }
     for(int ipjet=0; ipjet < jetlist.size() ; ipjet++ ){
@@ -484,42 +497,42 @@ int main(int argc, char** argv)
       double tot_clus_pt_deltaR_0p4 = 0;
       double tot_clus_pt_deltaR_0p2 = 0;
       for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
-	for(TPGClusterFloats const& clf : vCld[isect]){
-	  hClusE->Fill(clf.getEnergyGeV());
-	  double deltaR = TMath::Sqrt((clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))*(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))
-				      +
-				      (clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet))*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)));
-	  if(deltaR<0.07 ){
-	  //if(fabs(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))<0.05 and fabs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet))<0.05){
-	    double emfrac = clf.getCeeFractionF();	    
-	    hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	    hGenClusE_1->Fill(genjet_pt->at(ijet), (emfrac+2-2*emfrac)*clf.getEnergyGeV());
-	    hGenClusE_2->Fill(genjet_pt->at(ijet), (emfrac+3-3*emfrac)*clf.getEnergyGeV());
-	    hGenClusE_3->Fill(genjet_pt->at(ijet), (emfrac+4-4*emfrac)*clf.getEnergyGeV());
-	    hGenClusE_4->Fill(genjet_pt->at(ijet), (emfrac+5-5*emfrac)*clf.getEnergyGeV());
-	    hGenClusE_5->Fill(genjet_pt->at(ijet), (emfrac+6-6*emfrac)*clf.getEnergyGeV());
-	    hPtCorrGenjetvsClus->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	    hPtCorrGenjetvsClus_1->Fill(genjet_pt->at(ijet), (emfrac+2-2*emfrac)*clf.getEnergyGeV());
-	    hPtCorrGenjetvsClus_2->Fill(genjet_pt->at(ijet), (emfrac+3-3*emfrac)*clf.getEnergyGeV());
-	    hPtCorrGenjetvsClus_3->Fill(genjet_pt->at(ijet), (emfrac+4-4*emfrac)*clf.getEnergyGeV());
-	    hPtCorrGenjetvsClus_4->Fill(genjet_pt->at(ijet), (emfrac+5-5*emfrac)*clf.getEnergyGeV());
-	    hPtCorrGenjetvsClus_5->Fill(genjet_pt->at(ijet), (emfrac+6-6*emfrac)*clf.getEnergyGeV());
-	    tot_clus_pt_deltaR += clf.getEnergyGeV();
-	    //if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	    //if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
-	  }
-	  if(deltaR<0.4) tot_clus_pt_deltaR_0p4 += clf.getEnergyGeV() ;
-	  if(deltaR<0.2) tot_clus_pt_deltaR_0p2 += clf.getEnergyGeV() ;	  
-	  if(clf.getEnergyGeV()>10.0) {
-	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
-	    deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
-	  }
-	}	
+  	for(TPGClusterFloats const& clf : vCld[isect]){
+  	  hClusE->Fill(clf.getEnergyGeV());
+  	  double deltaR = TMath::Sqrt((clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))*(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))
+  				      +
+  				      (clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet))*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)));
+  	  if(deltaR<0.07 ){
+  	  //if(fabs(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))<0.05 and fabs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet))<0.05){
+  	    double emfrac = clf.getCeeFractionF();	    
+  	    hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+  	    hGenClusE_1->Fill(genjet_pt->at(ijet), (emfrac+2-2*emfrac)*clf.getEnergyGeV());
+  	    hGenClusE_2->Fill(genjet_pt->at(ijet), (emfrac+3-3*emfrac)*clf.getEnergyGeV());
+  	    hGenClusE_3->Fill(genjet_pt->at(ijet), (emfrac+4-4*emfrac)*clf.getEnergyGeV());
+  	    hGenClusE_4->Fill(genjet_pt->at(ijet), (emfrac+5-5*emfrac)*clf.getEnergyGeV());
+  	    hGenClusE_5->Fill(genjet_pt->at(ijet), (emfrac+6-6*emfrac)*clf.getEnergyGeV());
+  	    hPtCorrGenjetvsClus->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+  	    hPtCorrGenjetvsClus_1->Fill(genjet_pt->at(ijet), (emfrac+2-2*emfrac)*clf.getEnergyGeV());
+  	    hPtCorrGenjetvsClus_2->Fill(genjet_pt->at(ijet), (emfrac+3-3*emfrac)*clf.getEnergyGeV());
+  	    hPtCorrGenjetvsClus_3->Fill(genjet_pt->at(ijet), (emfrac+4-4*emfrac)*clf.getEnergyGeV());
+  	    hPtCorrGenjetvsClus_4->Fill(genjet_pt->at(ijet), (emfrac+5-5*emfrac)*clf.getEnergyGeV());
+  	    hPtCorrGenjetvsClus_5->Fill(genjet_pt->at(ijet), (emfrac+6-6*emfrac)*clf.getEnergyGeV());
+  	    tot_clus_pt_deltaR += clf.getEnergyGeV();
+  	    //if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+  	    //if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
+  	  }
+  	  if(deltaR<0.4) tot_clus_pt_deltaR_0p4 += clf.getEnergyGeV() ;
+  	  if(deltaR<0.2) tot_clus_pt_deltaR_0p2 += clf.getEnergyGeV() ;	  
+  	  if(clf.getEnergyGeV()>10.0) {
+  	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
+  	    deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
+  	  }
+  	}	
       }//isect loop
       if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
-	hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR);
-	hPtCorrGenjetvsClus_pion_0p2->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR_0p2);
-	hPtCorrGenjetvsClus_pion_0p4->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR_0p4);
+  	hPtCorrGenjetvsClus_pion->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR);
+  	hPtCorrGenjetvsClus_pion_0p2->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR_0p2);
+  	hPtCorrGenjetvsClus_pion_0p4->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR_0p4);
       }
       if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsClus_electron->Fill(genjet_pt->at(ijet), tot_clus_pt_deltaR);
       
@@ -527,35 +540,35 @@ int main(int argc, char** argv)
       double tot_tc_pt_deltaR_0p4 = 0;
       double tot_tc_pt_deltaR_0p2 = 0;
       for(unsigned itc=0;itc<tc_pt->size();itc++){
-	deltaGentc->Fill(tc_eta->at(itc) - genjet_eta->at(ijet), tc_phi->at(itc) - genjet_phi->at(ijet));
-	double deltaR = TMath::Sqrt((tc_eta->at(itc)-genjet_eta->at(ijet))*(tc_eta->at(itc)-genjet_eta->at(ijet))
-				    +
-				    (tc_phi->at(itc)-genjet_phi->at(ijet))*(tc_phi->at(itc)-genjet_phi->at(ijet)));
-	//double theta = 2*TMath::ATan(TMath::Exp(-1.*tc_eta->at(itc)));
-	double correction = 1000*tc_pt->at(itc)/(tc_data->at(itc)/std::cosh(tc_eta->at(itc)));
-	//std::cout <<"pt : " << tc_pt->at(itc) << ", correction : " << correction << std::endl;
-	if(deltaR<0.07 ){ //0.3 works for no pileup case
-	  tot_tc_pt_deltaR += tc_pt->at(itc) ;
-	}
-	if(deltaR<0.4) tot_tc_pt_deltaR_0p4 += tc_pt->at(itc) ;
-	if(deltaR<0.2) tot_tc_pt_deltaR_0p2 += tc_pt->at(itc) ;
-	hTCLayerEWt->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
-	  hTCLayerEWt_pion->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	  hPtEta_TC_pion->Fill(tc_eta->at(itc),tc_pt->at(itc));
-	  hECorrc_pion->Fill(tc_layer->at(itc),correction);
-	  hECorrc_pion_HT->Fill(tc_layer->at(itc),correction);
-	}
-	if(jetlist.at(ipjet).name.find("e")!=std::string::npos) {
-	  hTCLayerEWt_electron->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
-	  hECorrc_electron->Fill(tc_layer->at(itc),correction);
-	}
+  	deltaGentc->Fill(tc_eta->at(itc) - genjet_eta->at(ijet), tc_phi->at(itc) - genjet_phi->at(ijet));
+  	double deltaR = TMath::Sqrt((tc_eta->at(itc)-genjet_eta->at(ijet))*(tc_eta->at(itc)-genjet_eta->at(ijet))
+  				    +
+  				    (tc_phi->at(itc)-genjet_phi->at(ijet))*(tc_phi->at(itc)-genjet_phi->at(ijet)));
+  	//double theta = 2*TMath::ATan(TMath::Exp(-1.*tc_eta->at(itc)));
+  	double correction = 1000*tc_pt->at(itc)/(tc_data->at(itc)/std::cosh(tc_eta->at(itc)));
+  	//std::cout <<"pt : " << tc_pt->at(itc) << ", correction : " << correction << std::endl;
+  	if(deltaR<0.07 ){ //0.3 works for no pileup case
+  	  tot_tc_pt_deltaR += tc_pt->at(itc) ;
+  	}
+  	if(deltaR<0.4) tot_tc_pt_deltaR_0p4 += tc_pt->at(itc) ;
+  	if(deltaR<0.2) tot_tc_pt_deltaR_0p2 += tc_pt->at(itc) ;
+  	hTCLayerEWt->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+  	if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
+  	  hTCLayerEWt_pion->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+  	  hPtEta_TC_pion->Fill(tc_eta->at(itc),tc_pt->at(itc));
+  	  hECorrc_pion->Fill(tc_layer->at(itc),correction);
+  	  hECorrc_pion_HT->Fill(tc_layer->at(itc),correction);
+  	}
+  	if(jetlist.at(ipjet).name.find("e")!=std::string::npos) {
+  	  hTCLayerEWt_electron->Fill(tc_layer->at(itc),tc_pt->at(itc)/tot_tc_pt);
+  	  hECorrc_electron->Fill(tc_layer->at(itc),correction);
+  	}
       }//tc loop
       hPtCorrGenjetvsTC->Fill(genjet_pt->at(ijet),tot_tc_pt_deltaR);
       if(jetlist.at(ipjet).name.find("pi")!=std::string::npos) {
-	hPtCorrGenjetvsTC_pion->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
-	hPtCorrGenjetvsTC_pion_0p2->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR_0p2);
-	hPtCorrGenjetvsTC_pion_0p4->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR_0p4);
+  	hPtCorrGenjetvsTC_pion->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
+  	hPtCorrGenjetvsTC_pion_0p2->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR_0p2);
+  	hPtCorrGenjetvsTC_pion_0p4->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR_0p4);
       }
       if(jetlist.at(ipjet).name.find("e")!=std::string::npos) hPtCorrGenjetvsTC_electron->Fill(genjet_pt->at(ijet), tot_tc_pt_deltaR);
       
@@ -609,7 +622,7 @@ int main(int argc, char** argv)
     
   }//event loop
   
-  std::string outname = "stage2Ecorrhistos_" + index;
+  std::string outname = "stage2EcorrhistosTCBitsAccumulatorFW_" + index;
   // hEt->SetTitle(outname.c_str());
   // hEt->GetXaxis()->SetTitle("total p_{T} trigger cells (in GeV)");
   // TCanvas *c1 = new TCanvas("c1",outname.c_str());
@@ -660,8 +673,8 @@ int main(int argc, char** argv)
   fout->Close();
   delete fout;
 
-  fin->Close();
-  delete fin;
+  // fin->Close();
+  // delete fin;
 
   return true;
 }

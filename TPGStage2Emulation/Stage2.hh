@@ -15,6 +15,7 @@
 
 #include "TPGBEDataformat.hh"
 #include "TPGTriggerCellFloats.hh"
+#include "TPGTCFloats.hh"
 #include "TPGClusterFloats.hh"
 #include "TPGStage2Configuration.hh"
 
@@ -42,6 +43,11 @@ namespace TPGStage2Emulation
     }
     
     void accumulate(const TPGTriggerCellFloats &t)
+    {
+      accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getZCm(), t.getLayer());
+    }
+    
+    void accumulate(const TPGTCFloats &t)
     {
       accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getZCm(), t.getLayer());
     }
@@ -919,11 +925,102 @@ namespace TPGStage2Emulation
       */
     }
 
+    //To validate the transition from internal bits of (x/z,y/z) --> (r/z,phi)
+    void run(const std::vector<TPGTCBits> &vTcw, std::vector<TPGClusterData> &vCld ){
+      
+      // Accumulate
+      _tcaa->zero();
+
+      double dr2Limit(_rOverZ * _rOverZ / 3.0);
+      
+      for (unsigned itc(0); itc < vTcw.size(); itc++)
+      {
+        TPGTCFloats vTcf(vTcw[itc]);
+        float tcfX(vTcf.getXOverZF());
+        float tcfY(vTcf.getYOverZF());
+
+        for (unsigned c(0); c < 3; c++)
+        {
+          double dr2Min(1.0e10);
+          unsigned iMin, jMin;
+
+          for (unsigned i(0); i < _nBins; i++)
+          {
+            for (unsigned j(0); j < _nBins; j++)
+            {
+              double dx(tcfX - _ca->centre[c][i][j][0]);
+              double dy(tcfY - _ca->centre[c][i][j][1]);
+              double dr2(dx * dx + dy * dy);
+
+              if (dr2Min > dr2)
+              {
+                dr2Min = dr2;
+                iMin = i;
+                jMin = j;
+              }
+            }
+          }
+
+          if (dr2Min > dr2Limit)
+          {
+            std::cout << "Accumulation: at i,j = " << iMin << ", " << jMin
+                      << ", dr2Min = " << dr2Min << " > " << dr2Limit
+                      << std::endl;
+            assert(false);
+          }
+	  
+          _tcaa->vTca[c][iMin][jMin].accumulate(vTcf);
+        }
+      }
+
+      // Find local maxima
+
+      vCld.resize(0);
+
+      // l1thgcfirmware::HGCalClusterSAPtrCollection vClusterSumsCMSSW;
+
+      for (unsigned c(0); c < 3; c++)
+      {
+        for (unsigned i(0); i < _nBins; i++)
+        {
+          for (unsigned j(0); j < _nBins; j++)
+          {
+            double phiNorm(6.0 * atan2(_ca->centre[c][i][j][1], _ca->centre[c][i][j][0]) / acos(-1));
+
+            if (phiNorm >= -2.0 && phiNorm < 2.0 && _tcaa->vTca[c][i][j].isLocalMaximum())
+            {
+              TPGClusterData tcd;
+              tcd.setEnergy(_tcaa->vTca[c][i][j].totE() / 64);
+              if (_tcaa->vTca[c][i][j].ceeE() >= _tcaa->vTca[c][i][j].totE())
+              {
+                tcd.setCeeFraction(255);
+              }
+              else
+              {
+                tcd.setCeeFraction((256 * _tcaa->vTca[c][i][j].ceeE()) / _tcaa->vTca[c][i][j].totE());
+              }
+              tcd.setPhi(_tcaa->vTca[c][i][j].calcPhi());
+              tcd.setEta(_tcaa->vTca[c][i][j].calcEta());
+      	      tcd.setNumberOfTcs(_tcaa->vTca[c][i][j].numberOfTcs());
+
+              vCld.push_back(tcd);
+
+              // Convert accumulated clusters to format expected by cluster properties emulation
+              // l1thgcfirmware::HGCalCluster clusterSA = convertToCMSSWHGCalCluster(_tcaa->vTca[c][i][j]);
+              // vClusterSumsCMSSW.push_back(std::make_unique<l1thgcfirmware::HGCalCluster>(clusterSA));
+            }
+          }
+        }
+      }
+
+    }
+
     const CentreArray<_nBins> &centreArray() const
     {
       return *_ca;
     }
 
+    //Ideal format, keot as later guideline
     void run(const TPGBEDataformat::Stage1ToStage2DataArray &_s12,
              TPGBEDataformat::Stage2ToL1tDataArray &s2L1t)
     {
@@ -941,40 +1038,7 @@ namespace TPGStage2Emulation
       // run(_vClusterData,s2L1t);
     }
 
-    // void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data *> &vS12)
-    // {
-    //   std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
-
-    //   for (unsigned l(0); l < vS12.size(); l++)
-    //   {
-    //     unsigned offset(5 * (l % 6));
-    //     if ((l % 6) >= 4)
-    //       offset -= 6;
-
-    //     for (unsigned w(0); w < 100; w++)
-    //     {
-    //       for (unsigned eh(0); eh < 2; eh++)
-    //       {
-    //         uint8_t e(vS12[l]->getPTT(w, eh));
-    //         uint32_t eunpacked(unpack4E4MToUnsigned(e));
-    //         _towerData[eh][w / 5][offset + w % 5] += eunpacked;
-    //       }
-    //     }
-    //   }
-
-    //   for(unsigned eta(0);eta<20;eta++) {
-    // 	for(unsigned phi(0);phi<24;phi++) {
-    // 	  uint32_t total(_towerData[0][eta][phi]+_towerData[1][eta][phi]);
-    // 	  if(total>0xffff) total=0xffff;
-
-    // 	  unsigned fraction(7);
-    // 	  if(_towerData[0][eta][phi]>0) fraction=(8*_towerData[1][eta][phi])/_towerData[0][eta][phi];
-    // 	  if(fraction>7) fraction=7;
-    // 	  _towerOutput[eta][phi]=total>>6|fraction<<10;
-    // 	}
-    //   }
-    // }
-    
+    //Used for validation with the firmware
     void run(const std::vector<TPGBEDataformat::Stage1ToStage2Data> &vS12, const std::vector<TPGBEDataformat::Stage2DataLong> &vS12L){
       std::memset(_towerData, 0, 2 * 20 * 24 * sizeof(uint32_t));
       
@@ -1130,37 +1194,8 @@ namespace TPGStage2Emulation
     TPGBEDataformat::TcAccumulatorFW *accmulInput;
     l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
     
-    // l1thgcfirmware::HGCalCluster convertToCMSSWHGCalCluster(const TcAccumulator &tcAcc) const
-    // {
-    //   l1thgcfirmware::HGCalCluster clusterSA(0, 0, true, true);
-    //   clusterSA.set_n_tc(tcAcc.numberOfTcs());
-    //   clusterSA.set_n_tc_w(tcAcc.numberOfTcs());
-    //   clusterSA.set_e(tcAcc.totE());
-    //   clusterSA.set_e_em(tcAcc.ceeE());
-    //   clusterSA.set_e_em_core(tcAcc.ceeECore());
-    //   clusterSA.set_e_h_early(tcAcc.ceHEarly());
-    //   clusterSA.set_layerbits(tcAcc.layerBits());
-    //   clusterSA.set_w(tcAcc.sumW());
-    //   clusterSA.set_w2(tcAcc.sumW2());
-    //   clusterSA.set_wz(tcAcc.sumZ());
-    //   clusterSA.set_wz2(tcAcc.sumWZ2());
-    //   clusterSA.set_wphi(tcAcc.sumWPhi());
-    //   clusterSA.set_wphi2(tcAcc.sumWPhi2());
-
-    //   // // Set roz, hack for now until upstream inputs are set (do we get r/z looked up, or x and y?)
-    //   // // clusterSA.set_weta(tcAcc.calcEta());  // Don't set eta, as will be calculated from roz in cluster properties
-    //   float clusterEta = l1thgcfirmware::Scales::floatEta(tcAcc.calcEta() + 256);
-    //   float roz = 1/sinh(clusterEta);
-    //   double wRozLSB = 0.0004172720581;
-    //   unsigned int rozHW = roz / wRozLSB / 0.233510936 + 1026.9376220703125;
-    //   unsigned int wRozHW = rozHW * tcAcc.sumW();
-    //   clusterSA.set_wroz(wRozHW);
-
-    //   return clusterSA;
-    // }
   };
-
-  // const double Stage2::_rOverZ(0.032);
+  
   const double Stage2::_rOverZ(0.016 * sqrt(3.0));
 }
 #endif
