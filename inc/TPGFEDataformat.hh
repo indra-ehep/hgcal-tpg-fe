@@ -617,7 +617,25 @@ namespace TPGFEDataformat{
     const HgcrocTcData& getTC(uint32_t i) const {
       return _data[i];
     }
-  
+    
+    bool isTcTp1() const {
+      for(uint16_t i(0);i<NumberOfTCs;i++)
+	if(_data[i].isTcTp1()) return true;
+      return false;
+    }
+    
+    bool isTcTp2() const {
+      for(uint16_t i(0);i<NumberOfTCs;i++)
+	if(_data[i].isTcTp2()) return true;
+      return false;
+    }
+
+    bool isTcTp3() const {
+      for(uint16_t i(0);i<NumberOfTCs;i++)
+	if(_data[i].isTot()) return true;
+      return false;
+    }
+
     void setNofTCs(const unsigned nofTCs) {NumberOfTCs = nofTCs;}
     void setTCs(const HgcrocTcData* data) {
       for(uint16_t i(0);i<NumberOfTCs;i++)
@@ -625,7 +643,7 @@ namespace TPGFEDataformat{
     }
   
     void print() const {
-      std::cout << "ModuleTriggerCellData(" << this << ")::print() : NumberOfTCs :" << NumberOfTCs << std::endl;
+      std::cout << "ModuleTriggerCellData(" << this << ")::print() : NumberOfTCs :" << NumberOfTCs << ", isTcTp1 : " << isTcTp1() << ", isTcTp2 : " << isTcTp2() << ", isTcTp3 : " << isTcTp3() << std::endl;
       
       for(uint16_t i(0);i<NumberOfTCs;i++) {
 	std::cout << " TC " << std::setw(2) << i << ": compressed = "
