@@ -1,6 +1,6 @@
 /**********************************************************************
  Created on : 11/03/2025
- Purpose    : Emulation of tower and CP together
+ Purpose    : Emulation of tower and CP together for multiple bxs
  Author     : Indranil Das, Research Associate, Imperial
  Email      : indranil.das@cern.ch | indra.ehep@gmail.com
 **********************************************************************/

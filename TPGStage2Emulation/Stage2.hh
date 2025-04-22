@@ -17,7 +17,9 @@
 #include "TPGTriggerCellFloats.hh"
 #include "TPGTCFloats.hh"
 #include "TPGClusterFloats.hh"
+#include "TPGCluster.hh"
 #include "TPGStage2Configuration.hh"
+#include "TPGClusterProperties.hh"
 
 #include "CMSSWCode/DataFormats/L1THGCal/interface/HGCalCluster_HW.h"
 // #include "CMSSWCode/L1Trigger/L1THGCal/interface/backend_emulator/HGCalCluster_SA.h"
@@ -109,7 +111,7 @@ namespace TPGStage2Emulation
     {
       _seed = b;
     }
-
+    
     bool seed() const
     {
       return _seed;
@@ -211,6 +213,11 @@ namespace TPGStage2Emulation
     {
       assert(vNN.size() < 6);
       vNN.push_back(tca);
+    }
+
+    void clear()
+    {      
+      vNN.clear();
     }
 
     bool isLocalMaximum() const
@@ -358,6 +365,50 @@ namespace TPGStage2Emulation
         }
       }
     }
+
+    void clear()
+    {
+      for (unsigned c(0); c < 3; c++)
+      {
+        for (unsigned i(0); i < nBins; i++)
+        {
+          for (unsigned j(0); j < nBins; j++)
+          {
+            vTca[c][i][j].clear();
+          }
+        }
+      }
+    }
+
+  };
+
+  template <unsigned nBins>
+  class TcAccumulatorArrayFW
+  {
+  public:
+    TPGBEDataformat::TcAccumulatorFW vTca[3][nBins][nBins];
+
+    void zero(){
+      for (unsigned c(0); c < 3; c++)
+        for (unsigned i(0); i < nBins; i++)
+          for (unsigned j(0); j < nBins; j++)
+            vTca[c][i][j].zero();
+    }
+
+    void setkpower(int kpower){
+      for (unsigned c(0); c < 3; c++)
+        for (unsigned i(0); i < nBins; i++)
+          for (unsigned j(0); j < nBins; j++)
+            vTca[c][i][j].setkpower(kpower);
+    }
+
+    void clear(){
+      for (unsigned c(0); c < 3; c++)
+        for (unsigned i(0); i < nBins; i++)
+          for (unsigned j(0); j < nBins; j++)
+            vTca[c][i][j].clear();
+    }
+
   };
 
   class Stage2
@@ -382,6 +433,16 @@ namespace TPGStage2Emulation
       _nBins = 49
     };
 
+    ~Stage2(){
+      delete _ca;
+
+      _tcaa->clear();
+      delete _tcaa;
+
+      _tcaafw->clear();
+      delete _tcaafw;
+    }
+    
     Stage2()
     {
 
@@ -445,306 +506,46 @@ namespace TPGStage2Emulation
           }
         }
       }
-    }
+      
+      _tcaafw = new TcAccumulatorArrayFW<_nBins>;
 
-    std::vector<int> showerLengthProperties(unsigned long int layerBits) const {
-      //Collected from HGCalHistoClusterProperties::showerLengthProperties of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc
-      
-      int counter = 0;
-      int firstLayer = 0;
-      bool firstLayerFound = false;
-      int lastLayer = 0;
-      std::vector<int> layerBits_array;
-      
-      std::bitset<34> layerBitsBitset(layerBits);
-      for (size_t i = 0; i < layerBitsBitset.size(); ++i) {
-	bool bit = layerBitsBitset[34-1-i];
-	if ( bit ) {
-	  if ( !firstLayerFound ) {
-          firstLayer = i + 1;
-          firstLayerFound = true;
-	  }
-	  lastLayer = i+1;
-	  counter += 1;
-	} else {
-	  layerBits_array.push_back(counter);
-	  counter = 0;
-	}
+      // Set up NN associations
+      for (unsigned i(0); i < _nBins; i++)
+      {
+        for (unsigned j(0); j < _nBins; j++)
+        {
+          for (unsigned c(0); c < 3; c++)
+          {
+
+            for (int i2(int(i) - 2); i2 <= int(i) + 2; i2++)
+            {
+              if (i2 >= 0 && i2 < _nBins)
+              {
+                for (int j2(int(j) - 2); j2 <= int(j) + 2; j2++)
+                {
+                  if (j2 >= 0 && j2 < _nBins)
+                  {
+                    if (distanceXX(_ca->centre[c][i][j], _ca->centre[(c + 1) % 3][i2][j2]) < 0.6 * _rOverZ)
+                    {
+                      // std::cout << "Match i,j,c,i2,j2,c2 = " << i << ", " << j << ", " << c
+                      //	      << ", " << i2 << ", " << j2 << ", " << (c+1)%3 << std::endl;
+                      _tcaafw->vTca[c][i][j].addNN(&(_tcaafw->vTca[(c + 1) % 3][i2][j2]));
+                    }
+                    if (distanceXX(_ca->centre[c][i][j], _ca->centre[(c + 2) % 3][i2][j2]) < 0.6 * _rOverZ)
+                    {
+                      // std::cout << "Match i,j,c,i2,j2,c2 = " << i << ", " << j << ", " << c
+                      //	      << ", " << i2 << ", " << j2 << ", " << (c+2)%3 << std::endl;
+                      _tcaafw->vTca[c][i][j].addNN(&(_tcaafw->vTca[(c + 2) % 3][i2][j2]));
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
-      layerBits_array.push_back(counter);
       
-      int showerLen = lastLayer - firstLayer + 1;
-      //int coreShowerLen = config_.nTriggerLayers();
-      int coreShowerLen = 0;
-      if (!layerBits_array.empty()) {
-	coreShowerLen = *std::max_element(layerBits_array.begin(), layerBits_array.end());
-      }
-      return {firstLayer, lastLayer, showerLen, coreShowerLen};
-    }
-
-    // uint32_t convertRozToEta(uint32_t wroz, uint32_t w) {
-    //   //Collected from HGCalHistoClusterProperties::convertRozToEta of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc
-    //   double roz;
-    //   if ( w == 0 )
-    // 	roz = 0;
-    //   else
-    // 	roz = wroz / w;
-    //   if ( roz < 1026.9376220703125 ) roz = 1026.9376220703125;
-    //   else if ( roz > 5412.17138671875 ) roz = 5412.17138671875;
-    //   roz -= 1026.9376220703125;
-    //   roz *= 0.233510936;
-    //   roz = uint32_t(round(roz));
-    //   if ( roz > 1023 ) roz = 1023;
-    //   uint32_t eta = clusPropLUT->getMuEta(uint32_t(roz));
-    //   return eta;
-    //   //return roz;
-    // }
-    uint32_t convertRozToEta(uint32_t wroz, uint32_t w) {
-      //Collected from HGCalHistoClusterProperties::convertRozToEta of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc
-      //               and PropertyCalculator.py of Milos
-
-      if(w==0) return 0;
-      //========================== Constants =======================
-      double roz_global_max      = 2624.6/4565.6 ;//# coming from sensitive layer ranges    
-      double LSB_roz = roz_global_max/double(1<<13) ;
-      double eta_min_L1T = 320 * TMath::Pi()/720 ;// ~1.4
-      double eta_max_L1T = 687 * TMath::Pi()/720 ;// ~3.0
-      
-      //Derive r/z constraints 
-      double roz_min_L1T = 1.0/TMath::SinH(eta_max_L1T) ;// coming from L1T eta_max
-      double roz_max_L1T = 1.0/TMath::SinH(eta_min_L1T) ;//# coming from L1T eta_min
-      double LSB_roz_LUT = (roz_max_L1T-roz_min_L1T)/double(1<<10) ;//# 2**10 coming from L1T eta_LSB
-      double c_roz_scaler_0  = LSB_roz / LSB_roz_LUT ;//# For mu(eta) LUT
-      
-      float mu_roz_lower_single = roz_min_L1T / LSB_roz;
-      float mu_roz_upper_single = roz_max_L1T / LSB_roz;
-      //=================================================================
-      
-      float muroz = (w==0)?0:float(wroz)/float(w);
-      float muroz_sat = (muroz<mu_roz_lower_single)?mu_roz_lower_single:muroz;
-      muroz_sat = (muroz_sat>mu_roz_upper_single)?mu_roz_upper_single:muroz_sat;
-      float mu_roz_local_single = muroz_sat - mu_roz_lower_single;      
-      ap_ufixed<32,20, AP_RND> mu_roz_local_scaled = mu_roz_local_single * c_roz_scaler_0;
-      muroz = mu_roz_local_scaled.to_float();      
-      uint32_t roz = uint32_t(std::round(muroz));
-      if ( roz > 1023 ) roz = 1023;
-      uint32_t eta = clusPropLUT->getMuEta(uint32_t(roz));
-      //std::cout << "Stage2::convertRozToEta roz: " << roz << ", eta: " << eta << std::endl;
-      return eta;      
-      //return roz;
-    }
-
-    ap_int<9> calc_phi(uint32_t wphi, uint32_t w, bool& saturatedPhi, bool& nominalPhi){
-
-      if(w==0) return 0;
-      //========================== Constants =======================
-      float HistoColNo  = 108;
-      double HistoPhiBin = TMath::Pi()/HistoColNo ; //# rad
-      double LSB_phi_TC  = HistoPhiBin/double(1<<5) ;  //# rad ( tune power of two to play with phi LSB ) # was 2**5 originally
-
-      double LSB_phi     = TMath::Pi()/720 ;    //# rad
-      double c_phi_scaler = LSB_phi_TC / LSB_phi ;//# For L1T LSB Rounding;
-      double c_Phi_Offset = 360.;
-      //=================================================================
-      
-      float muphi = (w==0)?0:float(wphi)/float(w);
-      ap_ufixed<32,20, AP_RND> mu_phi_scaled = muphi * c_phi_scaler;
-      muphi = mu_phi_scaled.to_float();
-      int mu_phi_int = std::round(muphi);
-      int wphi_et_tmp = mu_phi_int - c_Phi_Offset ;
-      saturatedPhi = ((wphi_et_tmp < -256) or (wphi_et_tmp > 255))?true:false ;
-      wphi_et_tmp = (wphi_et_tmp < -256)?-256:wphi_et_tmp ;
-      wphi_et_tmp = (wphi_et_tmp > 255)?255:wphi_et_tmp ;
-      nominalPhi = ((wphi_et_tmp > -241) and (wphi_et_tmp < 240))?true:false ;
-      ap_int<9> wphi_et = wphi_et_tmp ;
-      
-      // std::cout << "Stage2::calc_phi muphi: " << muphi
-      // 		<< ", c_phi_scaler: " << c_phi_scaler
-      // 		<< ", c_Phi_Offset: " << c_Phi_Offset
-      // 		<< ", mu_phi_scaled: " << mu_phi_scaled 
-      // 		<< ", mu_phi_int: " << mu_phi_int
-      // 		<< ", wphi_et: " << wphi_et
-      // 		<< std::endl;
-      return wphi_et;
-    }
-    ap_uint<5> convertSigmaRozRozToSigmaEtaEta( uint64_t wroz2, uint32_t wroz, uint32_t w) {
-      //Collected from HGCalHistoClusterProperties::convertSigmaRozRozToSigmaEtaEta of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc
-      // TODO : named constants for magic numbers
-      // Sigma eta eta calculation
-
-      if(w==0) return 0;
-      
-      double LSB_mean_roz_LUT = 0.006374238205464194 ;// # what was used during LUT formation, 6b mean addr
-      double LSB_sigma_roz_LUT = 0.000441991619167075; //# what was used during LUT formation, 6b sigma addr
-      
-      float mu_roz_ds_lower = 809.9324324324323924884083680808544158935546875;
-      float mu_roz_ds_upper = 4996.798250844762151245959103107452392578125 ;
-      
-      double LSB_sigma_roz = 0.024584 /double(1<<7);
-      double roz_global_max      = 2624.6/4565.6 ;
-      double LSB_roz_TC = roz_global_max/double(1<<13) ;
-      double c_roz_scaler_1 = LSB_roz_TC/LSB_mean_roz_LUT ;//  # For sigma(eta) LUT
-      double c_sigma_roz_scaler_0 = LSB_roz_TC/LSB_sigma_roz_LUT ;    //# For sigma(eta) LUT
-      double c_sigma_roz_scaler_1 = LSB_roz_TC/LSB_sigma_roz ;
-	
-      double mu_roz_ds_lower_single = mu_roz_ds_lower ;
-      double mu_roz_ds_upper_single = mu_roz_ds_upper ;
-      double muroz = ( w == 0 ) ? 0 : float(wroz)/float(w);
-      
-      double mu_roz_ds_sat = (muroz>mu_roz_ds_upper_single)?mu_roz_ds_upper_single:muroz;
-      mu_roz_ds_sat = (mu_roz_ds_sat<mu_roz_ds_lower_single)?mu_roz_ds_lower_single:mu_roz_ds_sat;
-      double mu_roz_ds_local_single = mu_roz_ds_sat - mu_roz_ds_lower_single;
-      double mu_roz_ds_local_scaled = mu_roz_ds_local_single * c_roz_scaler_1;
-      ap_ufixed<32,20, AP_RND> mu_roz_ds_local_fxp = mu_roz_ds_local_scaled;
-      float mu_roz_ds_float = mu_roz_ds_local_fxp.to_float() ;
-      int mu_roz_ds_int = std::round(mu_roz_ds_float);
-      int mu_roz_addr = (mu_roz_ds_int>63)?63:mu_roz_ds_int;
-
-
-      // # sigma_rozroz_single already calculated previously
-      uint32_t sigma_rozroz_ds_int = sigma_coordinate(w, wroz2, wroz, c_sigma_roz_scaler_0);     
-      uint32_t sig_roz_addr = (sigma_rozroz_ds_int>63)?63:sigma_rozroz_ds_int;
-      uint32_t sigma_eta_LUT_addr = mu_roz_addr * 64 + sig_roz_addr ; //# 64 because sig_roz is 6 bits wide
-      uint32_t sigma_etaeta = clusPropLUT->getSigmaEtaEta(sigma_eta_LUT_addr);
-      ap_uint<5> ret = sigma_etaeta;
-      
-      // std::cout << "Stage2::convertSigmaRozRozToSigmaEtaEta : muroz: " << muroz
-      // 		<<", mu_roz_ds_sat: " << mu_roz_ds_sat
-      // 		<<", mu_roz_ds_local_scaled: " << mu_roz_ds_local_scaled
-      // 		<<", mu_roz_ds_local_fxp: " << mu_roz_ds_local_fxp
-      // 		<<", mu_roz_addr: " << mu_roz_addr
-      // 		<<std::endl;
-      // std::cout << "Stage2::convertSigmaRozRozToSigmaEtaEta sigma_rozroz_ds_int: " << sigma_rozroz_ds_int
-      // 		<<", sig_roz_addr: " << sig_roz_addr
-      // 		<<", sigma_eta_LUT_addr: " << sigma_eta_LUT_addr
-      // 		<<", sigma_etaeta: " << sigma_etaeta
-      // 		<<", ret: " << ret
-      // 		<<std::endl;
-
-      return ret;
-
-      
-      // const double min_roz = 809.9324340820312;
-      // const double max_roz = 4996.79833984375;
-      
-      // double roz;
-      // if ( w == 0 )
-      // 	roz = 0;
-      // else
-      // 	roz = wroz / w;
-
-      // if ( roz < min_roz ) roz = min_roz;
-      // else if ( roz > max_roz ) roz = max_roz;
-      // roz -= min_roz;
-      // const double scale = 0.015286154113709927;
-      // roz *= scale;
-      // roz = int(round(roz));
-      // if ( roz > 63 ) roz = 63;
-      
-      // const double sigma_roz_scale = 0.220451220870018;
-      // double sigmaRoz = sigma_coordinate(w, wroz2, wroz, sigma_roz_scale);
-      
-      // sigmaRoz = int(round(sigmaRoz));
-      // if ( sigmaRoz > 63 ) sigmaRoz = 63;
-      // unsigned int lutAddress = roz * 64 + sigmaRoz;
-      // if ( lutAddress >= 4096 ) lutAddress = 4095;
-      // uint32_t sigma_etaeta = clusPropLUT->getSigmaEtaEta(lutAddress);
-      // return sigma_etaeta;
-
-      //return config_.sigmaRozToSigmaEtaLUT(lutAddress);
-    }
-
-
-    uint32_t sigma_coordinate(uint32_t w, uint64_t wc2, uint32_t wc, double scale ) const {
-      //Collected from HGCalHistoClusterProperties::sigma_coordinate of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc      
-      if ( w == 0 ) return 0;
-      float wt_obs = (float(w)*float(wc2) - float(wc) * float(wc))/(float(w) * float(w)) ;
-      if (wt_obs<0.) return 0;
-      float wt_obs_sqr = sqrt( wt_obs );
-      float wt_obs_scaled = wt_obs_sqr * scale;
-      ap_ufixed<32,20, AP_RND> wt_obs_scaled_fxp = wt_obs_scaled;
-      // std::stringstream ss;
-      // ss << std::setw(32) << std::setprecision(12) << wt_obs_scaled;
-      // float wt_obs_scaled_fxp;
-      // ss >> wt_obs_scaled_fxp;
-      float wt_obs_fp1 = wt_obs_scaled_fxp.to_float() ;
-      uint32_t sigma = std::round( wt_obs_fp1 );
-      // std::cout << "stage2::sigma_coordinate  w: " << w << ", wc2: " << wc2 << ", wc: " << wc << ", scale: " << scale << std::endl;
-      // std::cout << "stage2::sigma_coordinate wt_obs: " << wt_obs << ", wt_obs_sqr : " << wt_obs_sqr << ", wt_obs_scaled: " << wt_obs_scaled << ", wt_obs_fp1: " << wt_obs_fp1 << ", sigma : " << sigma  << std::endl;
-      return sigma;
-    }
-
-    void ClusterProperties(TPGBEDataformat::TcAccumulatorFW accuInput, l1thgcfirmware::HGCalCluster_HW& l1TOutput, bool isPrint = false){
-      //Collected from HGCalHistoClusterProperties::calcProperties of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc
-
-      if(isPrint) std::cout<<"Calculating cluster properties" << std::endl;
-      //// ================== First Word ===========================
-      l1TOutput.e = l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.totE());
-      l1TOutput.e_em = l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeE());
-      if(isPrint) std::cout<<"Set Energies" << std::endl;
-      l1TOutput.fractionInCE_E = l1thgcfirmware::Scales::makeL1EFraction(accuInput.ceeE(), accuInput.totE());
-      l1TOutput.fractionInCoreCE_E = l1thgcfirmware::Scales::makeL1EFraction(accuInput.ceeECore(), accuInput.ceeE());
-      l1TOutput.fractionInEarlyCE_E = l1thgcfirmware::Scales::makeL1EFraction(accuInput.ceHEarly(), accuInput.totE());
-      if(isPrint) std::cout<<"Set Fractions" << std::endl;
-      l1TOutput.setGCTBits();
-      if(isPrint) std::cout<<"Set GCT bits" << std::endl;
-      std::vector<int> layeroutput = showerLengthProperties(accuInput.layerBits());
-      if(isPrint) std::cout<<"Set Layer outputs" << std::endl;
-      l1TOutput.firstLayer = layeroutput[0];
-      l1TOutput.lastLayer = layeroutput[1];
-      l1TOutput.showerLength = layeroutput[2];
-      l1TOutput.coreShowerLength = layeroutput[3];
-      l1TOutput.nTC = accuInput.numberOfTcs();
-      //// ================== First Word ===========================
-      if(isPrint) std::cout<<"Completed first word" << std::endl;
-      
-      //// ================== Second Word ===========================
-      l1TOutput.w_eta = convertRozToEta( accuInput.sumWRoZ(), accuInput.sumW() );
-      bool saturatedPhi = false, nominalPhi = false;      
-      l1TOutput.w_phi = calc_phi(accuInput.sumWPhi(), accuInput.sumW(), saturatedPhi, nominalPhi);
-      float zratio = float(accuInput.sumWZ()) / float(accuInput.sumW()) ;
-      ap_ufixed<32,20, AP_RND> wt_muz_fxp = zratio;
-      uint32_t muz = std::round(wt_muz_fxp.to_float());
-      l1TOutput.w_z = (muz>0xfff)?0:muz;      
-      l1TOutput.setQualityFlags(l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeECore()), l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceHEarly()), accuInput.issatTC(), accuInput.shapeQ(), saturatedPhi, nominalPhi);
-      //// ================== Second Word ===========================
-      if(isPrint) std::cout<<"Completed second word" << std::endl;
-      
-      double LSB_sigma_E = 13.91526/double(1<<7) ;
-      double LSB_E_TC    = 1/double(1<<10) ;
-      double c_sigma_E_scaler = LSB_E_TC/LSB_sigma_E ;
-      uint32_t sigmaE = sigma_coordinate( accuInput.numberOfTcsW(), accuInput.sumW2(), accuInput.sumW(), c_sigma_E_scaler);
-      l1TOutput.sigma_E = (sigmaE>0x7f)?0x7f:sigmaE;
-      if(isPrint) std::cout<<"Completed sigma_E" << std::endl;
-      
-      double LSB_sigma_z = 778.098493/double(1<<7) ;
-      double LSB_z_TC    = 0.5 ;
-      double c_sigma_z_scaler = LSB_z_TC / LSB_sigma_z  ;
-      uint32_t sigmaz = sigma_coordinate(accuInput.sumW(), accuInput.sumWZ2(), accuInput.sumWZ(), c_sigma_z_scaler);
-      l1TOutput.sigma_z = (sigmaz>0x7f)?0x7f:sigmaz;
-      if(isPrint) std::cout<<"Completed sigma_Z" << std::endl;
-
-      double LSB_sigma_phi = 0.12822/double(1<<7) ;
-      float HistoColNo  = 108;
-      double HistoPhiBin = TMath::Pi()/HistoColNo ; //# rad
-      double LSB_phi_TC  = HistoPhiBin/double(1<<5) ;  //# rad ( tune power of two to play with phi LSB ) # was 2**5 originally      
-      double c_sigma_phi_scaler = LSB_phi_TC / LSB_sigma_phi ;
-      uint32_t sigmaPhi = sigma_coordinate(accuInput.sumW(), accuInput.sumWPhi2(), accuInput.sumWPhi(), c_sigma_phi_scaler);
-      l1TOutput.sigma_phi = (sigmaPhi>0x7f)?0x7f:sigmaPhi;
-      if(isPrint) std::cout<<"Completed sigma_phi" << std::endl;
-      
-      double LSB_sigma_roz = 0.024584 /double(1<<7);
-      double roz_global_max      = 2624.6/4565.6 ;
-      double LSB_roz_TC = roz_global_max/double(1<<13) ; 
-      double c_sigma_roz_scaler_1 = LSB_roz_TC / LSB_sigma_roz ;
-      unsigned int sigma_roz = sigma_coordinate(accuInput.sumW(), accuInput.sumWRoZ2(),  accuInput.sumWRoZ(), c_sigma_roz_scaler_1);
-      l1TOutput.sigma_roz = (sigma_roz<127)?sigma_roz:127;
-      if(isPrint) std::cout<<"Completed sigma_roz" << std::endl;
-
-      uint32_t sigmaEta = convertSigmaRozRozToSigmaEtaEta( accuInput.sumWRoZ2(), accuInput.sumWRoZ(), accuInput.sumW());
-      l1TOutput.sigma_eta = (sigmaEta>0x1f)?0x1f:sigmaEta;
-      if(isPrint) std::cout<<"Completed sigma_eta and third word" << std::endl;
-    }
+    }//end Stage2 constructor
     
     void run(const std::vector<TPGTriggerCellWord> &vTcw,
              std::vector<TPGClusterData> &vCld)
@@ -1015,6 +816,82 @@ namespace TPGStage2Emulation
 
     }
 
+    //To validate the transition from internal bits of (x/z,y/z) --> (r/z,phi) and TcAccumulatorFW
+    void run(const std::vector<TPGTCBits> &vTcw, std::vector<TPGCluster> &vCld ){
+      
+      // Accumulate
+      _tcaafw->zero();
+      _tcaafw->setkpower(3);
+      clusprop.setLSBScales(&lsbScales);
+      clusprop.setClusPropLUT(clusPropLUT);
+      
+      double dr2Limit(_rOverZ * _rOverZ / 3.0);
+      
+      for (unsigned itc(0); itc < vTcw.size(); itc++)
+      {
+        TPGTCFloats vTcf(vTcw[itc]);
+        float tcfX(vTcf.getXOverZF());
+        float tcfY(vTcf.getYOverZF());
+
+        for (unsigned c(0); c < 3; c++)
+        {
+          double dr2Min(1.0e10);
+          unsigned iMin, jMin;
+
+          for (unsigned i(0); i < _nBins; i++)
+          {
+            for (unsigned j(0); j < _nBins; j++)
+            {
+              double dx(tcfX - _ca->centre[c][i][j][0]);
+              double dy(tcfY - _ca->centre[c][i][j][1]);
+              double dr2(dx * dx + dy * dy);
+
+              if (dr2Min > dr2)
+              {
+                dr2Min = dr2;
+                iMin = i;
+                jMin = j;
+              }
+            }
+          }
+
+          if (dr2Min > dr2Limit)
+          {
+            std::cout << "Accumulation: at i,j = " << iMin << ", " << jMin
+                      << ", dr2Min = " << dr2Min << " > " << dr2Limit
+                      << std::endl;
+            assert(false);
+          }
+	  
+          _tcaafw->vTca[c][iMin][jMin].accumulate(vTcf);
+        }
+      }
+
+      // Find local maxima
+      vCld.resize(0);
+
+      for (unsigned c(0); c < 3; c++)
+      {
+        for (unsigned i(0); i < _nBins; i++)
+        {
+          for (unsigned j(0); j < _nBins; j++)
+          {
+            double phiNorm(6.0 * atan2(_ca->centre[c][i][j][1], _ca->centre[c][i][j][0]) / acos(-1));
+
+            if (phiNorm >= -2.0 && phiNorm < 2.0 && _tcaafw->vTca[c][i][j].isLocalMaximum())
+            {
+
+	      clusprop.ClusterProperties(_tcaafw->vTca[c][i][j], L1TOutputEmul);
+	      TPGCluster tcd(&L1TOutputEmul);
+              vCld.push_back(tcd);
+	      
+            }
+          }
+        }
+      }
+
+    }
+
     const CentreArray<_nBins> &centreArray() const
     {
       return *_ca;
@@ -1092,11 +969,17 @@ namespace TPGStage2Emulation
       }
       //========================================
 
+      
+      lsbScales.setMaxTCETbits(19);
+      lsbScales.setMaxTCRoZbits(13);
+      clusprop.setLSBScales(&lsbScales);
+      clusprop.setClusPropLUT(clusPropLUT);
       //for (unsigned w = 0; w < 132; w++){
       for (unsigned w = 0; w < 108; w++){
 	for(int il=0;il<1;il++){
 	  L1TOutputEmul.clear();
 	  accmulInput->zero();
+	  accmulInput->setkpower(3);
 	  // ////==================================================================================
 	  // //// Cluster Input
 	  // ////==================================================================================
@@ -1136,22 +1019,22 @@ namespace TPGStage2Emulation
 	  accmulInput->setNumberOfTcsW(vS12[17*il+6].getData(w));
 	  /////////////////////////////////////////////////
 	  //The following settings are for k==3 fix them for generic case
-	  accmulInput->setSumW2(vS12[17*il+7].getData(w) & 0xFFFFFFFF);
-	  accmulInput->setSumWZ(vS12[17*il+8].getData(w) & 0xFFFFFFF);
-	  accmulInput->setSumWRoZ(vS12[17*il+10].getData(w) & 0x1FFFFFFF);
-	  accmulInput->setSumWPhi(vS12[17*il+9].getData(w) & 0xFFFFFFF);
-	  accmulInput->setSumWZ2(vS12[17*il+11].getData(w) & 0xFFFFFFFFFF);
-	  accmulInput->setSumWRoZ2(vS12[17*il+13].getData(w) & 0x3FFFFFFFFFF);
-	  accmulInput->setSumWPhi2(vS12[17*il+12].getData(w) & 0xFFFFFFFFFF);
+	  accmulInput->setSumW2(vS12[17*il+7].getData(w));
+	  accmulInput->setSumWZ(vS12[17*il+8].getData(w));
+	  accmulInput->setSumWRoZ(vS12[17*il+10].getData(w));
+	  accmulInput->setSumWPhi(vS12[17*il+9].getData(w));
+	  accmulInput->setSumWZ2(vS12[17*il+11].getData(w));
+	  accmulInput->setSumWRoZ2(vS12[17*il+13].getData(w));
+	  accmulInput->setSumWPhi2(vS12[17*il+12].getData(w)); 
 	  //////////////////////////////////////////////
 	  accmulInput->setLayerBits(vS12[17*il+14].getData(w));
 	  accmulInput->setsatTC(vS12[17*il+15].getData(w) & 0x1);
 	  accmulInput->setshapeQ(vS12[17*il+16].getData(w) & 0x1);
-	  accmulInput->printdetail(false);
+	  //accmulInput->printdetail(false);
 	  ////==================================================================================
 	  //// Cluster property
 	  ////==================================================================================
-	  ClusterProperties(*accmulInput, L1TOutputEmul);
+	  clusprop.ClusterProperties(*accmulInput, L1TOutputEmul);
 	  ////==================================================================================
 	  //// Cluster Output
 	  ////==================================================================================
@@ -1188,12 +1071,14 @@ namespace TPGStage2Emulation
 
     CentreArray<_nBins> *_ca;
     TcAccumulatorArray<_nBins> *_tcaa;
-
+    TcAccumulatorArrayFW<_nBins> *_tcaafw;
+    
     const TPGStage2Configuration::Stage2Board *s2bconf;
     const TPGStage2Configuration::ClusPropLUT *clusPropLUT;
     TPGBEDataformat::TcAccumulatorFW *accmulInput;
     l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
-    
+    TPGClusterProperties clusprop;
+    TPGLSBScales::TPGStage2ClusterLSB lsbScales;
   };
   
   const double Stage2::_rOverZ(0.016 * sqrt(3.0));

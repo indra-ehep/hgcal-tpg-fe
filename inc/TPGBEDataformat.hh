@@ -7,7 +7,7 @@
 #include <cstring>
 #include <cassert>
 #include <array>
-#include "TPGTriggerCellFloats.hh"
+#include "TPGTCFloats.hh"
 #include "HLS_arbitrary_Precision_Types/include/ap_int.h"
 
 namespace TPGBEDataformat{
@@ -455,171 +455,123 @@ namespace TPGBEDataformat{
     uint64_t getData(int wordIndex) const { return data[wordIndex]; }
     void setData(int wordIndex, uint64_t value) { data[wordIndex] = value; }
   };
-
-  class TcAccumulatorFW
-  {
+  
+  class TcAccumulatorFW{
   public:
     TcAccumulatorFW(uint16_t kval = 0) : kpower(kval) { zero(); calcmax();}
-    
-    void accumulate(const TPGTriggerCellFloats &t)
-    {
-      accumulate(t.getEnergy(), t.getXOverZF(), t.getYOverZF(), t.getZCm(), t.getLayer());
-    }
-    
-    unsigned int getTriggerLayer(const unsigned layer) const {
-      bool cee(layer<=26);
-      unsigned triggerLayer = 0;
-      if (cee) triggerLayer = layer/2+1;
-      else triggerLayer = layer-13+1;
+    void accumulate(const TPGTCFloats &t){
+      accumulate(t.getEnergy(), t.getROverZ(), t.getPhi(), t.getZ(), t.getLayer());
+    }    
+    uint16_t  getTriggerLayer(const uint16_t  layer) const { //assuming 1<=layer<=47
+      bool iscee = (layer<=26)?true:false;
+      uint16_t  triggerLayer = 0;
+      if (iscee) triggerLayer = (layer-1)/2+1;
+      else triggerLayer = (layer-26)+13;
       
       return triggerLayer;
     }
     
-    void accumulate(uint32_t e, double x, double y, double z, int16_t l) {
+    void accumulate(uint32_t e, uint16_t roz, uint16_t phi, uint16_t z, uint16_t l) {
       bool cee(l<=26);
       
-      unsigned triggerLayer = getTriggerLayer(l);
-      const unsigned nTriggerLayers = 34;  // Should get from config/elsewhere in CMSSW
-      layerBits_ |= (((unsigned long int)1) << (nTriggerLayers - triggerLayer));
+      uint16_t  triggerLayer = getTriggerLayer(l);
+      uint16_t bitpos = (34 - triggerLayer);
+      layerBits_(bitpos,bitpos) = 1;
       
       numE++;
+      numEW++;
       sumE += e;
-      //ssqE += e * e;
       
-      if (cee)
-	{
-	  //numCee++;
-	  sumCee += e;
-	  //ssqCee += e * e;
-	
-	  if ( l>6 ) sumCeeCore += e;
-	}
-      else if (l<=30) sumCehEarly += e;
-      
-      
-      ap_uint<19> w(e);
+      if (cee){
+        sumCee += e;	
+        if ( triggerLayer>=4 and triggerLayer<=8 ) sumCeeCore += e;
+      }
+      else if (triggerLayer>=14 and triggerLayer<=17) sumCehEarly += e;      
+
+      ap_uint<19>  w = e/(1<<kpower);
+      w = (w.to_uint()<1)?1:w.to_uint();
       
       sumW_ += w;
       sumW2_ += w * w;
       
-      // numX += w;
-      // sumX += w * x;
-      // ssqX += w * w * x * x;
-      
-      // numY += w;
-      // sumY += w * y;
-      // ssqY += w * w * y * y;
-      
-      uint32_t hw_z = (z-302) / 0.05;
-      //sumZ_ += w * hw_z;
-      sumWZ2_ += w * hw_z * hw_z;
-      
-      uint32_t phi = atan2(y, x) + 720/2;
+      sumWRoZ_ += w * roz;
       sumWPhi_ += w * phi;
-      sumWPhi2_ += w * phi * phi;
+      sumWZ_ += w * z;
+
+      sumWRoZ2_ += w * roz * roz ;
+      sumWPhi2_ += w * phi * phi ;
+      sumWZ2_ += w * z * z ;
     }
     
-    // void setSeed(bool b){ _seed = b; }
-    // bool seed() const { return _seed; }
-
-    // double avgX() const { return (numX == 0.0 ? 0.0 : sumX / numX);}
-    // double avgY() const { return (numY == 0.0 ? 0.0 : sumY / numY);}
-
-    //unsigned sumZ() const { return sumZ_; }
-        
-    //int calcPhi() const { return atan2( avgY(), avgX()) * 720 / acos(-1.0); }
-    // unsigned int calcEta() const
-    // {
-    //   return asinh(1.0 / sqrt(avgY() * avgY() + avgX() * avgX())) * 720 / acos(-1.0) - 256;     
-    // }
-
-    void zero()
-    {
+    void zero(){
+      layerBits_ = 0;
       numE = 0;
-      sumE = 0;
       numEW = 0;
-      //ssqE = 0;
-      //numCee = 0;
+      sumE = 0;
       sumCee = 0;
-      //ssqCee = 0;
       sumCeeCore = 0;
       sumCehEarly = 0;
-      layerBits_ = 0;
       sumW_ = 0.0;
       sumW2_ = 0.0;
-      // numX = 0.0;
-      // sumX = 0.0;
-      // ssqX = 0.0;
-      // numY = 0.0;
-      // sumY = 0.0;
-      // ssqY = 0.0;
-      // sumZ_ = 0.0;
-      // ssqZ_ = 0.0;
       sumWZ_ = 0.0;
       sumWZ2_ = 0.0;
       sumWRoZ_ = 0.0;
       sumWRoZ2_ = 0.0;
       sumWPhi_ = 0.0;
       sumWPhi2_ = 0.0;
-      // _seed = false;
       isSatTC_ = false;
       shapeQ_ = false;
-      //clusterId_ = 0;
-    }
-    
-    void calcmax()
-    {
-      // //Max values of W for given k
-      // uint8_t kpower;
-      // ap_uint<19>  maxW;            //19-bits
-      // ap_uint<38>  maxW2;           //38-bits
-      // ap_uint<31>  maxWPhiZ;        //31-bits
-      // ap_uint<32>  maxWRoZ;         //32-bits
-      // ap_uint<43>  maxWPhiZ2;       //43-bits
-      // ap_uint<45>  maxWRoZ2;       //32-bits
-      maxW = 0; for(int i=0;i<(((19-kpower)>1)?(19-kpower):1);i++) maxW[i] = 1;
-      maxW2 = 0; for(int i=0;i<(((38-2*kpower)>1)?(38-2*kpower):1);i++) maxW2[i] = 1;
-      maxWPhiZ = 0; for(int i=0;i<(((31-kpower)>1)?(31-kpower):1);i++) maxWPhiZ[i] = 1;
-      maxWRoZ = 0; for(int i=0;i<(((32-kpower)>1)?(32-kpower):1);i++) maxWRoZ[i] = 1;
-      maxWPhiZ2 = 0; for(int i=0;i<(((43-kpower)>1)?(43-kpower):1);i++) maxWPhiZ2[i] = 1;
-      maxWRoZ2 = 0; for(int i=0;i<(((45-kpower)>1)?(45-kpower):1);i++) maxWRoZ2[i] = 1;
     }
 
     bool isZero() const { return numE == 0; }
 
-    // void addNN(const TcAccumulatorFW *tca)
-    // {
-    //   assert(vNN.size() < 6);
-    //   vNN.push_back(tca);
-    // }
-
-    // bool isLocalMaximum() const
-    // {
-    //   assert(vNN.size() > 0);
-
-    //   const uint64_t e(totE());
-    //   if (e == 0)
-    //     return false;
-
-    //   for (unsigned i(0); i < vNN.size(); i++)
-    //   {
-    //     if (vNN[i]->totE() >= e)
-    //       return false;
-    //   }
-    //   return true;
-    // }
-
-    void print() const
-    {
-      std::cout << "TcAccumulator"
-                << " E = " << totE()
-                << " CE-E E = " << ceeE()
-	// << " x = " << avgX()
-	// << " y = " << avgY()
-	// << " seed = " << (_seed ? "True" : "False")
-                << std::endl;
+    void addNN(const TcAccumulatorFW *tca){
+      assert(vNN.size() < 6);
+      vNN.push_back(tca);
     }
 
+    void clear() { vNN.clear(); }
+    
+    void calcmax(){      
+      maxW = uint32_t(pow(2,(19-kpower)) - 1);
+      maxW2 = uint64_t(pow(2,(38-2*kpower)) - 1);  
+      maxWPhiZ = uint32_t(pow(2,(31-kpower)) - 1); 
+      maxWRoZ = uint32_t(pow(2,(32-kpower)) - 1); 
+      maxWPhiZ2 = uint64_t(pow(2,(43-kpower)) - 1); 
+      maxWRoZ2 = uint64_t(pow(2,(45-kpower)) - 1); 
+    }
+
+    int calcPhi() const{
+      return (sumWPhi()/sumW()) * 720 / acos(-1.0);
+    }
+ 
+    unsigned int calcEta() const{
+      return asinh( sumW() / sumWRoZ() ) * 720 / acos(-1.0) - 256;     
+    }
+    
+    bool isLocalMaximum() const {
+      
+      assert(vNN.size() > 0);
+      
+      const uint64_t e(totE());
+      if (e == 0) return false;
+      
+      for (unsigned i(0); i < vNN.size(); i++){
+        if (vNN[i]->totE() >= e) return false;
+      }
+      return true;
+    }
+    
+    void print() const {
+      std::cout << "TcAccumulatorFW"
+                << " E = " << totE()
+                << " CE-E E = " << ceeE()
+                // << " x = " << avgX()
+                // << " y = " << avgY()
+                // << " seed = " << (_seed ? "True" : "False")
+                << std::endl;
+    }
+    
     void printmaxval() const {
       std::cout << "kpower: " << uint16_t(kpower) << std::endl;
       std::cout << std::hex
@@ -631,53 +583,54 @@ namespace TPGBEDataformat{
       		<< ", maxWRoZ2: " << maxWRoZ2
       		<< std::dec << std::endl;
     }
+    
     void printdetail(bool ishex = true) const
     {
-      // std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
-      // if(ishex)
-      // 	std::cout << std::hex
-      // 		  << " SumET = 0x" << totE()
-      // 		  << ", SumCEE_ET = 0x" << ceeE()
-      // 		  << ", SumCEE_ET_core = 0x" << ceeECore()
-      // 		  << ", SumCEH_ET_early = 0x" << ceHEarly()
-      // 		  << ", sumW = 0x" << sumW()
-      // 		  << ", sumW2 = 0x" << sumW2()
-      // 		  << ", sumWPhi = 0x" << sumWPhi()
-      // 		  << ", sumWRoZ = 0x" << sumWRoZ()
-      // 		  << ", sumWZ = 0x" << sumWZ()
-      // 		  << ", sumWPhi2 = 0x" << sumWPhi2()
-      // 		  << ", sumWRoZ2 = 0x" << sumWRoZ2()
-      // 		  << ", sumWZ2 = 0x" << sumWZ2()
-      // 		  << std::endl
-      // 		  << ", LayerBits = 0x" << layerBits()
-      // 		  << ", issatTC = 0x" << issatTC()
-      // 		  << ", numberOfTcs = 0x" << numberOfTcs()
-      // 		  << ", numberOfTcsW = 0x" << numberOfTcsW()
-      // 		  << ", shapeQ = 0x" << shapeQ()
-      // 		  << std::dec
-      // 		  << std::endl;
-      // else
-      // 	std::cout << std::dec
-      // 		  << " SumET = " << totE()
-      // 		  << ", SumCEE_ET = " << ceeE()
-      // 		  << ", SumCEE_ET_core = " << ceeECore()
-      // 		  << ", SumCEH_ET_early = " << ceHEarly()
-      // 		  << ", sumW = " << sumW()
-      // 		  << ", sumW2 = " << sumW2()
-      // 		  << ", sumWPhi = " << sumWPhi()
-      // 		  << ", sumWRoZ = " << sumWRoZ()
-      // 		  << ", sumWZ = " << sumWZ()
-      // 		  << ", sumWPhi2 = " << sumWPhi2()
-      // 		  << ", sumWRoZ2 = " << sumWRoZ2()
-      // 		  << ", sumWZ2 = " << sumWZ2()
-      // 		  << std::endl
-      // 		  << ", LayerBits = " << layerBits()
-      // 		  << ", issatTC = " << issatTC()
-      // 		  << ", numberOfTcs = " << numberOfTcs()
-      // 		  << ", numberOfTcsW = " << numberOfTcsW()
-      // 		  << ", shapeQ = " << shapeQ()
-      // 		  << std::dec
-      // 		  << std::endl;
+      std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
+      if(ishex)
+      	std::cout << std::hex
+      		  << " SumET = 0x" << totE()
+      		  << ", SumCEE_ET = 0x" << ceeE()
+      		  << ", SumCEE_ET_core = 0x" << ceeECore()
+      		  << ", SumCEH_ET_early = 0x" << ceHEarly()
+      		  << ", sumW = 0x" << sumW()
+      		  << ", sumW2 = 0x" << sumW2()
+      		  << ", sumWPhi = 0x" << sumWPhi()
+      		  << ", sumWRoZ = 0x" << sumWRoZ()
+      		  << ", sumWZ = 0x" << sumWZ()
+      		  << ", sumWPhi2 = 0x" << sumWPhi2()
+      		  << ", sumWRoZ2 = 0x" << sumWRoZ2()
+      		  << ", sumWZ2 = 0x" << sumWZ2()
+      		  << std::endl
+      		  << ", LayerBits = 0x" << layerBits()
+      		  << ", issatTC = 0x" << issatTC()
+      		  << ", numberOfTcs = 0x" << numberOfTcs()
+      		  << ", numberOfTcsW = 0x" << numberOfTcsW()
+      		  << ", shapeQ = 0x" << shapeQ()
+      		  << std::dec
+      		  << std::endl;
+      else
+      	std::cout << std::dec
+      		  << " SumET = " << totE()
+      		  << ", SumCEE_ET = " << ceeE()
+      		  << ", SumCEE_ET_core = " << ceeECore()
+      		  << ", SumCEH_ET_early = " << ceHEarly()
+      		  << ", sumW = " << sumW()
+      		  << ", sumW2 = " << sumW2()
+      		  << ", sumWPhi = " << sumWPhi()
+      		  << ", sumWRoZ = " << sumWRoZ()
+      		  << ", sumWZ = " << sumWZ()
+      		  << ", sumWPhi2 = " << sumWPhi2()
+      		  << ", sumWRoZ2 = " << sumWRoZ2()
+      		  << ", sumWZ2 = " << sumWZ2()
+      		  << std::endl
+      		  << ", LayerBits = " << layerBits()
+      		  << ", issatTC = " << issatTC()
+      		  << ", numberOfTcs = " << numberOfTcs()
+      		  << ", numberOfTcsW = " << numberOfTcsW()
+      		  << ", shapeQ = " << shapeQ()
+      		  << std::dec
+      		  << std::endl;
 	
     }
     
@@ -696,29 +649,47 @@ namespace TPGBEDataformat{
     void setCeHEarly(uint32_t scehe) { sumCehEarly = scehe; }
     uint32_t ceHEarly() const { return sumCehEarly; }
 
-    void setSumW(uint32_t sumW) { sumW_ = (sumW<=uint32_t(maxW))?sumW:uint32_t(maxW); }
+    void setSumW(uint32_t sumW) { sumW_ = sumW & maxW; }
     uint32_t sumW() const { return sumW_; }
-
-    void setSumW2(uint64_t sumW2) { sumW2_ = (sumW2<=uint64_t(maxW2))?sumW2:uint64_t(maxW2); }
+    void setSumW2(uint64_t sumW2) { sumW2_ = sumW2 & maxW2; }
     uint64_t sumW2() const { return sumW2_; }
-
-    void setSumWPhi(uint32_t sumWPhi) { sumWPhi_ = (sumWPhi<=uint32_t(maxWPhiZ))?sumWPhi:uint32_t(maxWPhiZ); }
+    void setSumWPhi(uint32_t sumWPhi) { sumWPhi_ = sumWPhi & maxWPhiZ; }
     uint32_t sumWPhi() const { return sumWPhi_; }
-
-    void setSumWZ(uint32_t sumWZ) { sumWZ_ = (sumWZ<=uint32_t(maxWPhiZ))?sumWZ:uint32_t(maxWPhiZ); }
+    void setSumWZ(uint32_t sumWZ) { sumWZ_ = sumWZ & maxWPhiZ; }
     uint32_t sumWZ() const { return sumWZ_; }
-
-    void setSumWRoZ(uint32_t sumWRoZ) { sumWRoZ_ = (sumWRoZ<=uint32_t(maxWRoZ))?sumWRoZ:uint32_t(maxWRoZ); }
+    void setSumWRoZ(uint32_t sumWRoZ) { sumWRoZ_ = sumWRoZ & maxWRoZ; }
     uint32_t sumWRoZ() const { return sumWRoZ_; }
-
-    void setSumWPhi2(uint64_t sumWPhi2) { sumWPhi2_ = (sumWPhi2<=uint64_t(maxWPhiZ2))?sumWPhi2:uint64_t(maxWPhiZ2); }
+    void setSumWPhi2(uint64_t sumWPhi2) { sumWPhi2_ = sumWPhi2 & maxWPhiZ2; }
     uint64_t sumWPhi2() const { return sumWPhi2_; }
-    
-    void setSumWZ2(uint64_t sumWZ2) { sumWZ2_ = (sumWZ2<=uint64_t(maxWPhiZ2))?sumWZ2:uint64_t(maxWPhiZ2); }
+    void setSumWZ2(uint64_t sumWZ2) { sumWZ2_ = sumWZ2 & maxWPhiZ2; }
     uint64_t sumWZ2() const { return sumWZ2_; }
-
-    void setSumWRoZ2(uint64_t sumWRoZ2) { sumWRoZ2_ = (sumWRoZ2<=uint64_t(maxWRoZ2))?sumWRoZ2:uint64_t(maxWRoZ2); }
+    void setSumWRoZ2(uint64_t sumWRoZ2) { sumWRoZ2_ = sumWRoZ2 & maxWRoZ2; }
     uint64_t sumWRoZ2() const { return sumWRoZ2_; }
+
+    // void setSumW(uint32_t sumW) { sumW_ = sumW; }
+    // uint32_t sumW() const { return sumW_; }
+
+    // void setSumW2(uint64_t sumW2) { sumW2_ = sumW2; }
+    // uint64_t sumW2() const { return sumW2_; }
+
+    // void setSumWPhi(uint32_t sumWPhi) { sumWPhi_ = sumWPhi; }
+    // uint32_t sumWPhi() const { return sumWPhi_; }
+
+    // void setSumWZ(uint32_t sumWZ) { sumWZ_ = sumWZ; }
+    // uint32_t sumWZ() const { return sumWZ_; }
+
+    // void setSumWRoZ(uint32_t sumWRoZ) { sumWRoZ_ = sumWRoZ; }
+    // uint32_t sumWRoZ() const { return sumWRoZ_; }
+
+    // void setSumWPhi2(uint64_t sumWPhi2) { sumWPhi2_ = sumWPhi2; }
+    // uint64_t sumWPhi2() const { return sumWPhi2_; }
+    
+    // void setSumWZ2(uint64_t sumWZ2) { sumWZ2_ = sumWZ2; }
+    // uint64_t sumWZ2() const { return sumWZ2_; }
+
+    // void setSumWRoZ2(uint64_t sumWRoZ2) { sumWRoZ2_ = sumWRoZ2; }
+    // uint64_t sumWRoZ2() const { return sumWRoZ2_; }
+
     
     void setLayerBits(uint64_t layerBits) { layerBits_ = layerBits; }
     uint64_t layerBits() const { return layerBits_; }
@@ -733,10 +704,7 @@ namespace TPGBEDataformat{
     uint16_t numberOfTcsW() const { return numEW; }
 
     void setshapeQ(bool shapeQ) { shapeQ_ = shapeQ; }
-    bool shapeQ() const { return shapeQ_; }
-    
-    // void setclusterId(uint16_t clusterId) { clusterId_ = clusterId; }
-    // uint16_t clusterId() const { return clusterId_;}
+    bool shapeQ() const { return shapeQ_; }    
     
   private:
     
@@ -755,19 +723,21 @@ namespace TPGBEDataformat{
     
     //Max values of W for given k
     uint16_t kpower;
-    ap_uint<19>  maxW;            //19-bits
-    ap_uint<38>  maxW2;           //38-bits
-    ap_uint<31>  maxWPhiZ;        //31-bits
-    ap_uint<32>     maxWRoZ;         //32-bits
-    ap_uint<43>  maxWPhiZ2;       //43-bits
-    ap_uint<45>  maxWRoZ2;       //32-bits
+    uint32_t maxW;            //19-bits for k=0
+    uint64_t  maxW2;           //38-bits for k=0
+    uint32_t  maxWPhiZ;        //31-bits for k=0
+    uint32_t  maxWRoZ;         //32-bits for k=0
+    uint64_t  maxWPhiZ2;       //43-bits for k=0
+    uint64_t  maxWRoZ2;       //45-bits for k=0
     
-    // uint64_t ssqE;
-    // uint64_t numCee, ssqCee;
-    // uint64_t numX, sumX, ssqX, numY, sumY, ssqY, sumZ_, ssqZ_;
-    // bool _seed;
+    // ap_uint<19>  maxW;            //19-bits
+    // ap_uint<38>  maxW2;           //38-bits
+    // ap_uint<31>  maxWPhiZ;        //31-bits
+    // ap_uint<32>  maxWRoZ;         //32-bits
+    // ap_uint<43>  maxWPhiZ2;       //43-bits
+    // ap_uint<45>  maxWRoZ2;       //45-bits
 
-    //std::vector<const TcAccumulatorFW *> vNN;
+    std::vector<const TcAccumulatorFW *> vNN;
   };
 
   class Stage2ToL1TData {
