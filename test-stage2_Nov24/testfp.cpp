@@ -255,7 +255,6 @@ int main(int argc, const char* argv[]) {
   std::cout << "val32: " <<  val32 << " " << val32.to_string() << std::endl;
   std::cout << "val64: " <<  val64 << " " << val64.to_string() << std::hex << val64 << std::endl;
   
-  return true;
   
   float value1 = 1.25;
   //Check rounding cases
@@ -632,6 +631,20 @@ int main(int argc, const char* argv[]) {
   std::cout << "s_sat_sym:            " << s_sat_sym.to_float() << " " << s_sat_sym.to_string() << std::endl;
   std::cout << "s_wrap:               " << s_wrap.to_float() << " " << s_wrap.to_string() << std::endl;
   //===================================
+
+  bool nominalPhi = true;
+  bool saturatedPhi = true; 
+  unsigned int shapeQuality = 0;
+  bool qualFracEarlyCE_H = true;
+  bool qualFracCoreCE_E = false;
+  bool qualFracCE_E = true;
+  bool saturatedTC = false;
+  
+  ap_uint<7> qualitFlag = (ap_uint<1>(nominalPhi), ap_uint<1>(saturatedPhi), ap_uint<1>(shapeQuality), ap_uint<1>(qualFracEarlyCE_H), ap_uint<1>(qualFracCoreCE_E), ap_uint<1>(qualFracCE_E), ap_uint<1>(saturatedTC) );
+
+  std::cout << "qualitFlag : " << qualitFlag.to_string() << std::endl;
+  for(int i = 6 ; i>=0 ; i--)
+    std::cout << "qualitFlag["<<i<<"] : " << qualitFlag[i] << std::endl;
   
   return 0;
 }

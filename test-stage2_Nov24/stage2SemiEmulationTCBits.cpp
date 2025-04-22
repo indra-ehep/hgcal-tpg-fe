@@ -218,7 +218,7 @@ int main(int argc, char** argv)
   TH1D *hPhiDeg = new TH1D("hPhiDeg","hPhiDeg",2*TMath::RadToDeg()*TMath::TwoPi(),-1.0*TMath::RadToDeg()*TMath::TwoPi(),TMath::RadToDeg()*TMath::TwoPi());
   
   uint64_t totalEntries = tr->GetEntries();
-  if(nofEvents==0) nofEvents = totalEntries;
+  if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
   
   std::cout << "Total Entries : " << totalEntries << std::endl;
   std::cout << "Loop for: " << nofEvents << " entries"  << std::endl;
@@ -289,7 +289,16 @@ int main(int argc, char** argv)
   TH2D *hECorrc_electron = new TH2D("hECorrc_electron","hECorrc_electron",50,0.0,50.0,1000,0.0,5.0);
 
   TH2D *hECorrc_pion_HT = new TH2D("hECorrc_pion_HT","hECorrc_pion_HT",50,0.0,50.0,1000,0.0,100.0);
-  
+
+  TH1D *hClusLocalPhiBits[6], *hClusLocalEtaBits[6], *hClusLocalPhi[6],  *hClusGlobalPhi[6], *hClusGlobalEta[6];
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
+    hClusLocalPhiBits[isect] = new TH1D(Form("hClusLocalPhiBits_%u",isect),Form("Local #phi bits for sector %u",isect), 1000,-1000,1000);
+    hClusLocalPhi[isect] = new TH1D(Form("hClusLocalPhi_%u",isect),Form("Local #phi for sector %u",isect), 200*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
+    hClusGlobalPhi[isect] = new TH1D(Form("hClusGlobalPhi_%u",isect),Form("Global #phi for sector %u",isect), 200*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
+    hClusLocalEtaBits[isect] = new TH1D(Form("hClusLocalEtaBits_%u",isect),Form("Local #eta bits for sector %u",isect), 1024, 0, 1024);
+    hClusGlobalEta[isect] = new TH1D(Form("hClusGlobalEta_%u",isect),Form("Global #eta for sector %u",isect), 200*TMath::TwoPi(),-2.0*TMath::TwoPi(),2.0*TMath::TwoPi());
+  }
+
   const auto default_precision{std::cout.precision()};
   //TPGTriggerCellFloats tcf0,tcf1;
   TPGTCFloats tcf0,tcf1;
@@ -298,7 +307,7 @@ int main(int argc, char** argv)
     tr->GetEntry(ievent) ;
     
     if(doPrint) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
-    if(ievent%100==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
+    if(ievent%1==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<int> taudlist,taugdlist;
@@ -488,6 +497,11 @@ int main(int argc, char** argv)
       for(TPGClusterFloats const& clf : vCld[isect]){
   	clusxyOverZ[isect]->Fill(clf.getLocalXOverZF(),clf.getLocalYOverZF());
   	clusxy[isect]->Fill(clf.getGlobalXOverZF(isect),clf.getGlobalYOverZF(isect));
+	hClusLocalPhi[isect]->Fill(clf.getLocalPhiRad());
+	hClusGlobalPhi[isect]->Fill(clf.getGlobalPhiRad(isect));
+	hClusLocalPhiBits[isect]->Fill(clf.getPhi());
+	hClusLocalEtaBits[isect]->Fill(clf.getEta());
+	hClusGlobalEta[isect]->Fill(clf.getGlobalEtaRad(isect));
       }
     }
     for(int ipjet=0; ipjet < jetlist.size() ; ipjet++ ){
@@ -638,6 +652,13 @@ int main(int argc, char** argv)
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcxyOverZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusxyOverZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusxy[isect]->Write();
+
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalPhi[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusGlobalPhi[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalPhiBits[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalEtaBits[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusGlobalEta[isect]->Write();
+
   deltaGenclus->Write();
   deltaGentc->Write();
   hClusE->Write();

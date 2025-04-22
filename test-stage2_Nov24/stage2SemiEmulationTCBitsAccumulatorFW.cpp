@@ -1,5 +1,5 @@
 /**********************************************************************
- Created on : 11/04/2025
+ Created on : 21/04/2025
  Purpose    : Stage2 semi-emulator test
  Author     : Indranil Das, Research Associate, Imperial
  Email      : indranil.das@cern.ch | indra.ehep@gmail.com
@@ -20,14 +20,17 @@
 #include "TParticlePDG.h"
 #include "TDatabasePDG.h"
 
-//#include "TPGTriggerCellFloats.hh"
 #include "Stage2.hh"
 
-//#include "TPGTCBits.hh"
 #include "TPGTCFloats.hh"
+#include "TPGLSBScales.hh"
 
 int main(int argc, char** argv)
 {
+  // TPGLSBScales::TPGStage2ClusterLSB lsbScales;
+  // lsbScales.print();  
+  // return true;
+  
   typedef struct{
     std::string name;
     int index;
@@ -218,7 +221,7 @@ int main(int argc, char** argv)
   TH1D *hPhiDeg = new TH1D("hPhiDeg","hPhiDeg",2*TMath::RadToDeg()*TMath::TwoPi(),-1.0*TMath::RadToDeg()*TMath::TwoPi(),TMath::RadToDeg()*TMath::TwoPi());
   
   uint64_t totalEntries = tr->GetEntries();
-  if(nofEvents==0) nofEvents = totalEntries;
+  if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
   
   std::cout << "Total Entries : " << totalEntries << std::endl;
   std::cout << "Loop for: " << nofEvents << " entries"  << std::endl;
@@ -290,7 +293,43 @@ int main(int argc, char** argv)
 
   TH2D *hECorrc_pion_HT = new TH2D("hECorrc_pion_HT","hECorrc_pion_HT",50,0.0,50.0,1000,0.0,100.0);
   
+  TH2D *hTCPhiCorr = new TH2D("hTCPhiCorr","hTCPhiCorr",750,-375.,375., 750,-375.,375.);
+
+  TH1D *hTCLocalPhiBits[6];
+  TH1D *hClusLocalPhiBits[6], *hClusLocalEtaBits[6], *hClusLocalPhi[6],  *hClusGlobalPhi[6], *hClusGlobalEta[6];
+  TH2D *hTCRoZ2Eta[6], *hTCRoZ2CalcEta[6];
+  TH1D *hTCRozBits[6];
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
+    hTCLocalPhiBits[isect] = new TH1D(Form("hTCLocalPhiBits_%u",isect),Form("Local #phi bits for sector %u",isect), 1000,0,10000);
+    hClusLocalPhiBits[isect] = new TH1D(Form("hClusLocalPhiBits_%u",isect),Form("Local #phi bits for sector %u",isect), 1000,-1000,1000);
+    hClusLocalPhi[isect] = new TH1D(Form("hClusLocalPhi_%u",isect),Form("Local #phi for sector %u",isect), 200*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
+    hClusGlobalPhi[isect] = new TH1D(Form("hClusGlobalPhi_%u",isect),Form("Global #phi for sector %u",isect), 200*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
+    
+    hClusLocalEtaBits[isect] = new TH1D(Form("hClusLocalEtaBits_%u",isect),Form("Local #eta bits for sector %u",isect), 5000, 0, 5000);
+    hClusGlobalEta[isect] = new TH1D(Form("hClusGlobalEta_%u",isect),Form("Global #eta for sector %u",isect), 200*TMath::TwoPi(),-2.0*TMath::TwoPi(),2.0*TMath::TwoPi());
+    
+    hTCRoZ2Eta[isect] = new TH2D(Form("hTCRoZ2Eta_%u",isect),Form("TC RoZ-vs-#eta for sector %u",isect),600, 0.0, 0.6, 1000, 0.0,1000.0);
+    hTCRoZ2CalcEta[isect] = new TH2D(Form("hTCRoZ2CalcEta_%u",isect),Form("TC-Calculated RoZ-vs-#eta for sector %u",isect),600, 0.0, 0.6, 1000, 0.0,1000.0);
+
+    hTCRozBits[isect] = new TH1D(Form("hTCRozBits_%u",isect),Form("Local RoZ bits for sector %u",isect), 1000,0,10000);
+  }
+
+  
   const auto default_precision{std::cout.precision()};
+  
+  // std::string board_config = "../hgcal-tpg-fe-data/local-input/stage2/firmware-data/vbf_Captures/CaptureStage2_250404_1118/Stage2Configuration.yaml" ;
+  // TPGStage2Configuration::Stage2Board sb;
+  // sb.readConfigYaml(board_config.c_str());
+  // sb.print();
+  
+  TPGStage2Configuration::ClusPropLUT cplut;
+  cplut.readMuEtaLUT("input/stage2/configuration/mean_eta_LUT.csv");
+  cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
+
+  TPGStage2Emulation::Stage2 s2Clustering;
+  s2Clustering.setClusPropLUT(&cplut);
+  //s2Clustering.setConfiguration(&sb);
+  
   //TPGTriggerCellFloats tcf0,tcf1;
   TPGTCFloats tcf0,tcf1;
   for (Long64_t ievent = 0 ; ievent < nofEvents ; ievent++ ) {
@@ -298,7 +337,7 @@ int main(int argc, char** argv)
     tr->GetEntry(ievent) ;
     
     if(doPrint) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
-    if(ievent%100==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
+    if(ievent%1==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<int> taudlist,taugdlist;
@@ -397,16 +436,17 @@ int main(int argc, char** argv)
       }//part condition
     }//jet loop
     /////////////////////////////////////////////////////////////////////////////////////////
-    
+
+    /////////////////////////////////////////////////////////////////////////////////////////
+
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
     //std::vector<TPGTriggerCellWord> vTcw[6];
-      std::vector<TPGTCBits> vTcw[6];
+    std::vector<TPGTCBits> vTcw[6];
     for(unsigned itc=0;itc<tc_pt->size();itc++){
       
       double z(fabs(tc_z->at(itc)));
       float phi_deg = TMath::RadToDeg() * tc_phi->at(itc) ;
       uint16_t sec0(7),sec1(7);
-
       
       //The following segmentation is applied for trigger cells
       if(phi_deg>=0. and phi_deg<=60.) {sec0 = 2; sec1 = 0;}
@@ -463,14 +503,26 @@ int main(int argc, char** argv)
   	  tcf0.setLayer(tc_layer->at(itc));
   	  //if(doPrint) tcf0.print();
   	  vTcw[isect+addisect].push_back(tcf0);
+
+	  hTCLocalPhiBits[(isect+addisect)]->Fill(tcf0.getPhi());
+	  hTCRoZ2Eta[(isect+addisect)]->Fill(tcf0.getROverZF(), tc_eta->at(itc)*720/acos(-1));
+	  hTCRoZ2CalcEta[(isect+addisect)]->Fill(tcf0.getROverZF(), asinh(1/tcf0.getROverZF())*720/acos(-1));
+
+	  hTCRozBits[(isect+addisect)]->Fill(tcf0.getROverZ());
   	}
+	if((isect+addisect)==0 and tcf0.getXOverZF()>=0.0)
+	  hTCPhiCorr->Fill((TMath::RadToDeg()*tc_phi->at(itc)), (TMath::RadToDeg() * tcf0.getPhiF()));
+	
+	// if((isect+addisect)==0)
+	//   hTCLocalPhiBits[(isect+addisect)]->Fill(tcf0.getPhi());
       }
       
       tot_tc_pt += tc_pt->at(itc);
       tot_tc_e += tc_energy->at(itc);
       hPhi->Fill(tc_phi->at(itc));
       hPhiDeg->Fill(phi_deg);
-    }//end of TC loop    
+    }//end of TC loop
+    
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
@@ -478,18 +530,29 @@ int main(int argc, char** argv)
       for(TPGTCFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
         //for(TPGTriggerCellFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
     }
-    std::vector<TPGClusterData> vCld[6];    
-    TPGStage2Emulation::Stage2 s2Clustering;
+
+    ///////////////////=========== Emulation ============= ///////////////////////
+    //std::vector<TPGClusterData> vCld[6];
+    std::vector<TPGCluster> vCld[6];    
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
       s2Clustering.run(vTcw[isect],vCld[isect]);
       if(doPrint) std::cout << isect << ", Size of Tcs: " << vTcw[isect].size() << ", Size of Clusters: " << vCld[isect].size() << std::endl;
     }
+    ///////////////////=========== Emulation ============= ///////////////////////
+    
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
-      for(TPGClusterFloats const& clf : vCld[isect]){
+      //for(TPGCluster const& clf : vCld[isect]){
+      for(TPGCluster const& clf : vCld[isect]){
   	clusxyOverZ[isect]->Fill(clf.getLocalXOverZF(),clf.getLocalYOverZF());
   	clusxy[isect]->Fill(clf.getGlobalXOverZF(isect),clf.getGlobalYOverZF(isect));
+	hClusLocalPhi[isect]->Fill(clf.getLocalPhiRad());
+	hClusGlobalPhi[isect]->Fill(clf.getGlobalPhiRad(isect));
+	hClusLocalPhiBits[isect]->Fill(clf.getLocalPhi());
+	hClusLocalEtaBits[isect]->Fill(clf.getEta());
+	hClusGlobalEta[isect]->Fill(clf.getGlobalEtaRad(isect));
       }
     }
+    
     for(int ipjet=0; ipjet < jetlist.size() ; ipjet++ ){
       int ijet = jetlist.at(ipjet).index ;
       if(fabs(genjet_eta->at(ijet))>2.82 or fabs(genjet_eta->at(ijet))<1.72) continue;
@@ -497,7 +560,7 @@ int main(int argc, char** argv)
       double tot_clus_pt_deltaR_0p4 = 0;
       double tot_clus_pt_deltaR_0p2 = 0;
       for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
-  	for(TPGClusterFloats const& clf : vCld[isect]){
+  	for(TPGCluster const& clf : vCld[isect]){
   	  hClusE->Fill(clf.getEnergyGeV());
   	  double deltaR = TMath::Sqrt((clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))*(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))
   				      +
@@ -633,11 +696,22 @@ int main(int argc, char** argv)
   hEt->Write();
   hPhi->Write();
   hPhiDeg->Write();
+  hTCPhiCorr->Write();
   tcxyAll->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcxy[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcxyOverZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusxyOverZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusxy[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalPhi[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusGlobalPhi[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalPhiBits[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalEtaBits[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCLocalPhiBits[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusGlobalEta[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRoZ2Eta[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRoZ2CalcEta[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRozBits[isect]->Write();
+  
   deltaGenclus->Write();
   deltaGentc->Write();
   hClusE->Write();

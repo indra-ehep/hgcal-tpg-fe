@@ -12,7 +12,8 @@
 #include "Stage2.hh"
 
 #include "TPGStage2Configuration.hh"
-
+#include "TPGClusterProperties.hh"
+#include "TPGLSBScales.hh"
 
 int main(int argc, char** argv)
 {
@@ -20,7 +21,8 @@ int main(int argc, char** argv)
   TPGBEDataformat::TcAccumulatorFW accmulInput(3);
   l1thgcfirmware::HGCalCluster_HW L1TOutputEmul;
   l1thgcfirmware::HGCalCluster_HW L1TOutputFW;
-  TPGStage2Emulation::Stage2 s2Clustering;
+  //TPGStage2Emulation::Stage2 s2Clustering;
+  TPGClusterProperties s2Clustering;
   
   std::cout <<"size of TPGStage2Emulation::TcAccumulator : " << sizeof(TPGStage2Emulation::TcAccumulator) << std::endl;
   std::cout <<"size of TPGBEDataformat::TcAccumulatorFW : " << sizeof(TPGBEDataformat::TcAccumulatorFW) << std::endl;
@@ -67,6 +69,8 @@ int main(int argc, char** argv)
   //FW Output
   //012ba0bab028c0e0  000178d3154689e5 4a53912e00038e00 00000003fff7f7c0
 
+  
+    
   //N_TC,E,E_EM,E_EM_core,E_H_early,
   ///W,N_TC_W,W2,Wz,Wphi
   //Wroz, Wz2,Wphi2,Wroz2,LayerBits,Sat_TC,ShapeQ
@@ -80,41 +84,77 @@ int main(int argc, char** argv)
   //muZ saturation W=0x64 (100), Wz=0x6400000 (104857600) , muZ = 1048576 (saturation+1)
   //muZ saturation W=0x64 (100), Wz=0x63FFFCD (104857549) , muZ = 1048575.49 (saturation+rounding)
   //muZ saturation W=0x64 (100), Wz=0x6400031 (104857649) , muZ = 1048576 (saturation+1+rounding)
-  
+
   accmulInput.setNumberOfTcs(0x00000000000000d3);
   accmulInput.setTotE(0x000000000000e025);
   accmulInput.setCeeE(0x000000000000a2c6);
   accmulInput.setCeeECore(0x00000000000065f4);
   accmulInput.setCeHEarly(0x00000000000025c9);
-  //accmulInput.setSumW(0x0000000000001bbe);
-  accmulInput.setSumW(0x0000000000000064);
+  
+  accmulInput.setSumW(0x0000000000001bbe);
   accmulInput.setNumberOfTcsW(0x00000000000000d3);
   accmulInput.setSumW2(0x00000000000b293c);
-  //accmulInput.setSumWZ(0x000000000049aca0);
-  accmulInput.setSumWZ(0x00000000063FFF9C);
+  accmulInput.setSumWZ(0x000000000049aca0);
   accmulInput.setSumWRoZ(0x00000000017911f5);
+  
   accmulInput.setSumWPhi(0x00000000008a6c48);
   accmulInput.setSumWZ2(0x0000000146632bbc);
-  
-  accmulInput.setSumWRoZ2(0x0000001409642eab);
-  
+  accmulInput.setSumWRoZ2(0x0000001409642eab);  
   accmulInput.setSumWPhi2(0x00000002b3487988);
-  
   accmulInput.setLayerBits(0x00000003fff7f7c0);
+  
   accmulInput.setsatTC(0x0000000000000000);
   accmulInput.setshapeQ(0x0000000000000001);
+
+  //000000000000003f, 0000000000002cfa, 00000000000022bd, 0000000000000c7e, 0000000000000a3d,
+  //0000000000000580, 000000000000003f, 00000000000109e2, 00000000000e80c8, 0000000000103d7f,
+  //00000000007b1d49, 000000002cc73f86, 00000000300fc151, 0000000ac5ac785f, 000000013ff60000,
+  //0000000000000000, 0000000000000001
+    
   
+  // accmulInput.setNumberOfTcs(0x000000000000003f);
+  // accmulInput.setTotE(0x0000000000002cfa);
+  // accmulInput.setCeeE(0x00000000000022bd);
+  // accmulInput.setCeeECore(0x0000000000000c7e);
+  // accmulInput.setCeHEarly(0x0000000000000a3d);
+  
+  // accmulInput.setSumW(0x0000000000000580);
+  // accmulInput.setNumberOfTcsW(0x000000000000003f);
+  // accmulInput.setSumW2(0x00000000000109e2);
+  // accmulInput.setSumWZ(0x00000000000e80c8);
+  // accmulInput.setSumWRoZ(0x00000000007b1d49); //swapped phi and roz
+  
+  // accmulInput.setSumWPhi(0x0000000000103d7f);
+  // accmulInput.setSumWZ2(0x000000002cc73f86);
+  // accmulInput.setSumWRoZ2(0x0000000ac5ac785f);
+  // accmulInput.setSumWPhi2(0x00000000300fc151);  
+  // accmulInput.setLayerBits(0x000000013ff60000);
+  
+  // accmulInput.setsatTC(0x0000000000000000);
+  // accmulInput.setshapeQ(0x0000000000000001);
+
   accmulInput.printdetail(0);
-  //accmulInput.printmaxval();
+  accmulInput.printdetail(1);
+  accmulInput.printmaxval();
   
   //Set LUTs
   TPGStage2Configuration::ClusPropLUT cplut;
   cplut.readMuEtaLUT("input/stage2/configuration/mean_eta_LUT.csv");
   cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
   L1TOutputEmul.clear();
+
+  //Set LSBScales
+  TPGLSBScales::TPGStage2ClusterLSB lsbScales;
+  lsbScales.setMaxTCETbits(19);
+  lsbScales.setMaxTCRoZbits(13);
+  
+  //========================================
   //Emulation
+  
+  s2Clustering.setLSBScales(&lsbScales);
   s2Clustering.setClusPropLUT(&cplut);
   s2Clustering.ClusterProperties(accmulInput, L1TOutputEmul);
+  //========================================
   
   // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x04c066a0d5002000;
   // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000ff10080402af;
@@ -179,10 +219,15 @@ int main(int argc, char** argv)
   // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0003807f00032c80 ;
   
   //0139b6c730070024  0000f8357ff40140  0002403600020800
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x0139b6c730070024 ;
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f8357ff40140 ;
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0002403600020800 ;
-  
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x0139b6c730070024 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f8357ff40140 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0002403600020800 ;
+
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x012ba0bab028c0e0 ;
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178d3154689e5 ;
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x4a53912e00038e00 ;
+
+    
   l1thgcfirmware::HGCalCluster_HW::unpack_firstWord(firstw,L1TOutputFW);
   l1thgcfirmware::HGCalCluster_HW::unpack_secondWord(secondw,L1TOutputFW);
   l1thgcfirmware::HGCalCluster_HW::unpack_thirdWord(thirdw,L1TOutputFW);
@@ -192,6 +237,10 @@ int main(int argc, char** argv)
   
   L1TOutputEmul.print();
   L1TOutputFW.print();
-  
+
+  // TPGLSBScales::TPGStage2ClusterLSB lsbScales;
+  lsbScales.print();  
+  return true;
+
   return true;
 }

@@ -280,7 +280,7 @@ int main(int argc, char** argv)
     tr->GetEntry(ievent) ;
     
     if(doPrint) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
-    if(ievent%100==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
+    if(ievent%1==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<int> taudlist,taugdlist;
@@ -459,7 +459,6 @@ int main(int argc, char** argv)
     }//end of TC loop    
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
-    std::cout<<"noftcs : "<< tc_pt->size() << ", mofmissed: " << nofmissedtcs << std::endl;
     
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
       //std::cout << "ievent : " << ievent << ", isect: " << isect << ", size : " << vTcw[isect].size() << std::endl;
@@ -470,6 +469,7 @@ int main(int argc, char** argv)
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
       s2Clustering.run(vTcw[isect],vCld[isect]);
       if(doPrint) std::cout << isect << ", Size of Tcs: " << vTcw[isect].size() << ", Size of Clusters: " << vCld[isect].size() << std::endl;
+      //std::cout << isect << ", Size of Tcs: " << vTcw[isect].size() << ", Size of Clusters: " << vCld[isect].size() << std::endl;
     }
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
       for(TPGClusterFloats const& clf : vCld[isect]){
