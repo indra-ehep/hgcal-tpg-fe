@@ -329,6 +329,7 @@ int main(int argc, char** argv)
   TPGStage2Emulation::Stage2 s2Clustering;
   s2Clustering.setClusPropLUT(&cplut);
   //s2Clustering.setConfiguration(&sb);
+
   
   //TPGTriggerCellFloats tcf0,tcf1;
   TPGTCFloats tcf0,tcf1;
@@ -338,6 +339,7 @@ int main(int argc, char** argv)
     
     if(doPrint) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
     if(ievent%1==0) std::cout<<"Event : "<< ievent <<", nof TCs : "<< tc_pt->size() << std::endl;
+
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     std::vector<int> taudlist,taugdlist;
@@ -373,7 +375,7 @@ int main(int argc, char** argv)
   		  << std::endl;
       }//print condition
     }//gen loop
-    
+
     std::vector<JetPart> partlist;
     for(int ipart=0; ipart<genpart_pt->size(); ipart++ ){
       TParticlePDG *partPDG = TDatabasePDG::Instance()->GetParticle(genpart_pid->at(ipart));
@@ -399,6 +401,7 @@ int main(int argc, char** argv)
   		    << std::endl;
       }
     }//genpart loop
+
     
     std::vector<JetPart> jetlist;
     for(int ijet=0; ijet<genjet_n; ijet++ ){
@@ -437,6 +440,8 @@ int main(int argc, char** argv)
     }//jet loop
     /////////////////////////////////////////////////////////////////////////////////////////
 
+    
+    
     /////////////////////////////////////////////////////////////////////////////////////////
 
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
@@ -522,7 +527,7 @@ int main(int argc, char** argv)
       hPhi->Fill(tc_phi->at(itc));
       hPhiDeg->Fill(phi_deg);
     }//end of TC loop
-    
+
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
@@ -531,6 +536,7 @@ int main(int argc, char** argv)
         //for(TPGTriggerCellFloats const& tcf : vTcw[isect]) tcxyOverZ[isect]->Fill(tcf.getXOverZF(),tcf.getYOverZF());
     }
 
+    
     ///////////////////=========== Emulation ============= ///////////////////////
     //std::vector<TPGClusterData> vCld[6];
     std::vector<TPGCluster> vCld[6];    
@@ -539,6 +545,8 @@ int main(int argc, char** argv)
       if(doPrint) std::cout << isect << ", Size of Tcs: " << vTcw[isect].size() << ", Size of Clusters: " << vCld[isect].size() << std::endl;
     }
     ///////////////////=========== Emulation ============= ///////////////////////
+    
+    return true;
     
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
       //for(TPGCluster const& clf : vCld[isect]){
@@ -552,6 +560,7 @@ int main(int argc, char** argv)
 	hClusGlobalEta[isect]->Fill(clf.getGlobalEtaRad(isect));
       }
     }
+    return true;
     
     for(int ipjet=0; ipjet < jetlist.size() ; ipjet++ ){
       int ijet = jetlist.at(ipjet).index ;

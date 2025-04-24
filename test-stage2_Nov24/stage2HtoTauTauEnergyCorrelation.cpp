@@ -201,7 +201,7 @@ int main(int argc, char** argv)
   TH1D *hPhiDeg = new TH1D("hPhiDeg","hPhiDeg",2*TMath::RadToDeg()*TMath::TwoPi(),-1.0*TMath::RadToDeg()*TMath::TwoPi(),TMath::RadToDeg()*TMath::TwoPi());
   
   uint64_t totalEntries = tr->GetEntries();
-  if(nofEvents==0) nofEvents = totalEntries;
+  if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
   
   std::cout << "Total Entries : " << totalEntries << std::endl;
   std::cout << "Loop for: " << nofEvents << " entries"  << std::endl;
