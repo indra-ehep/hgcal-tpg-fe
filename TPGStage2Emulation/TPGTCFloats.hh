@@ -21,7 +21,7 @@ public:
   double getEnergyGeV() const {
     return getEnergy() * lsbScales.LSB_E_TC();
   }
-
+  
   double getPhiF() const {
     double phi = getPhi()*lsbScales.LSB_phi_TC() ;
     phi -= TMath::Pi()/2.; //shifts the phi
