@@ -272,6 +272,12 @@ int main(int argc, char** argv)
   TH2D *hECorrc_electron = new TH2D("hECorrc_electron","hECorrc_electron",50,0.0,50.0,1000,0.0,5.0);
 
   TH2D *hECorrc_pion_HT = new TH2D("hECorrc_pion_HT","hECorrc_pion_HT",50,0.0,50.0,1000,0.0,100.0);
+
+  TH1D *hClusLocalPhi[6];
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
+    hClusLocalPhi[isect] = new TH1D(Form("hClusLocalPhi_%u",isect),Form("Local #phi for sector %u",isect), 200*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
+  }
+
   
   const auto default_precision{std::cout.precision()};
   TPGTriggerCellFloats tcf0,tcf1;
@@ -513,6 +519,8 @@ int main(int argc, char** argv)
 	  if(clf.getEnergyGeV()>10.0) {
 	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
 	    deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
+	    if(abs(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet))<=0.25 and abs(clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet))<=0.25)
+	      hClusLocalPhi[isect]->Fill(clf.getLocalPhiRad());
 	  }
 	}	
       }//isect loop
@@ -625,6 +633,7 @@ int main(int argc, char** argv)
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcxyOverZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusxyOverZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusxy[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hClusLocalPhi[isect]->Write();
   deltaGenclus->Write();
   deltaGentc->Write();
   hClusE->Write();

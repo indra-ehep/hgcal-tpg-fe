@@ -541,13 +541,13 @@ namespace TPGBEDataformat{
       maxWRoZ2 = uint64_t(pow(2,(45-kpower)) - 1); 
     }
 
-    int calcPhi() const{
-      return (sumWPhi()/sumW()) * 720 / acos(-1.0);
-    }
+    // int calcPhi() const{
+    //   return (sumWPhi()/sumW()) * 720 / acos(-1.0);
+    // }
  
-    unsigned int calcEta() const{
-      return asinh( sumW() / sumWRoZ() ) * 720 / acos(-1.0) - 256;     
-    }
+    // unsigned int calcEta() const{
+    //   return asinh( sumW() / sumWRoZ() ) * 720 / acos(-1.0) - 256;     
+    // }
     
     bool isLocalMaximum() const {
       

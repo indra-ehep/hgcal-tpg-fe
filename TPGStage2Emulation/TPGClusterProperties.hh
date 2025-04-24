@@ -164,19 +164,19 @@ public:
 
   }
   
-  void ClusterProperties(TPGBEDataformat::TcAccumulatorFW& accuInput, l1thgcfirmware::HGCalCluster_HW& l1TOutput, bool isPrint = false){
+  void ClusterProperties(const TPGBEDataformat::TcAccumulatorFW& accuInput, l1thgcfirmware::HGCalCluster_HW& l1TOutput, bool isPrint = false){
     //Collected from HGCalHistoClusterProperties::calcProperties of L1Trigger/L1THGCal/src/backend_emulator/HGCalHistoClusterProperties_SA.cc
     
     l1TOutput.clear();
     
     if(isPrint) std::cout<<"Calculating cluster properties" << std::endl;
     //// ================== First Word ===========================
-    l1TOutput.e = l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.totE());
-    l1TOutput.e_em = l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeE());
+    l1TOutput.e = accuInput.totE() * lsbScales->c_ET_scaler();
+    l1TOutput.e_em = accuInput.ceeE() * lsbScales->c_ET_scaler();
     if(isPrint) std::cout<<"Set Energies" << std::endl;
-    l1TOutput.fractionInCE_E = l1thgcfirmware::Scales::makeL1EFraction(accuInput.ceeE(), accuInput.totE());
-    l1TOutput.fractionInCoreCE_E = l1thgcfirmware::Scales::makeL1EFraction(accuInput.ceeECore(), accuInput.ceeE());
-    l1TOutput.fractionInEarlyCE_E = l1thgcfirmware::Scales::makeL1EFraction(accuInput.ceHEarly(), accuInput.totE());
+    l1TOutput.fractionInCE_E = (accuInput.totE()==0)?0:(lsbScales->c_frac_scaler() * accuInput.ceeE()/accuInput.totE()) ;
+    l1TOutput.fractionInCoreCE_E = (accuInput.ceeE()==0)?0:(lsbScales->c_frac_scaler() * accuInput.ceeECore() / accuInput.ceeE()) ;
+    l1TOutput.fractionInEarlyCE_E = (accuInput.totE()==0)?0:(lsbScales->c_frac_scaler() * accuInput.ceHEarly() /  accuInput.totE()) ;
     if(isPrint) std::cout<<"Set Fractions" << std::endl;
     l1TOutput.setGCTBits();
     if(isPrint) std::cout<<"Set GCT bits" << std::endl;
@@ -198,7 +198,8 @@ public:
     ap_ufixed<32,20, AP_RND> wt_muz_fxp = zratio;
     uint32_t muz = std::round(wt_muz_fxp.to_float());
     l1TOutput.w_z = (muz>0xfff)?0:muz;      
-    l1TOutput.setQualityFlags(l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeECore()), l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceHEarly()), accuInput.issatTC(), accuInput.shapeQ(), saturatedPhi, nominalPhi);
+    //l1TOutput.setQualityFlags(l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceeECore()), l1thgcfirmware::Scales::HGCaltoL1_et(accuInput.ceHEarly()), accuInput.issatTC(), accuInput.shapeQ(), saturatedPhi, nominalPhi);
+    l1TOutput.setQualityFlags(accuInput.ceeECore(), accuInput.ceHEarly(), accuInput.issatTC(), accuInput.shapeQ(), saturatedPhi, nominalPhi);
     //// ================== Second Word ===========================
     if(isPrint) std::cout<<"Completed second word" << std::endl;
 
