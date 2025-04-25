@@ -17,7 +17,7 @@ int main(int argc, char** argv)
   //CaptureStage2_250214_1137 + EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_CP.txt
   //CaptureStage2_250314_1218 + EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2_VBF_ClusProp_2025-03-12.txt
   // ===============================================
-  std::string config = "input/stage2/configuration/Stage2Configuration.yaml" ;
+  std::string board_config = "input/stage2/configuration/Stage2Configuration.yaml" ;
   //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250314_1218/Stage2Configuration.yaml" ;
   //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250328_1136/Stage2Configuration.yaml" ;
   //std::string board_config = "input/stage2/firmware-data/CaptureStage2_250321_1305/Stage2Configuration.yaml" ;

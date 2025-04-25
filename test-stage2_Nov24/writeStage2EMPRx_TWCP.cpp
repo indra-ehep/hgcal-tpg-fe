@@ -23,10 +23,10 @@ int main(int argc, char** argv)
   std::cout << "physdata.size() : " << physdata.size() << std::endl;
   int ievent = 0;
   for(const std::array<uint64_t, 17>& data :  physdata){
-    std::cout << "ievent : " << ievent << std::endl;
-    for(int idata=0;idata<int(data.size());idata++){
-      std::cout<< "\t idata: " << idata << ", data : " << std::hex << data[idata] << std::dec << std::endl;
-    }
+    //std::cout << "ievent : " << ievent << std::endl;
+    // for(int idata=0;idata<int(data.size());idata++){
+    //   std::cout<< "\t idata: " << idata << ", data : " << std::hex << data[idata] << std::dec << std::endl;
+    // }
     ievent++;
   }
   
