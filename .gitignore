@@ -17,6 +17,7 @@ log_old*
 *.txt
 !rx_summary*.txt
 !*LUT*.csv
+!input_fp.csv
 *.root
 *.log 
 .*swp*
