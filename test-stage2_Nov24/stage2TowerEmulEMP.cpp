@@ -17,19 +17,20 @@ int main(int argc, char** argv)
     // ===============================================
     //std::string inputFileName = "EMPStage2Input.txt";
   //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_A.txt";
-  //std::string config = "input/stage2/configuration/Stage2Configuration.yaml" ;
-  std::string config = "/Data/hgcal-tpg-fe/input/stage2/firmware-data/CaptureStage2_250204_1424/Stage2Configuration.yaml" ;
+  std::string config = "input/stage2/configuration/Stage2Configuration.yaml" ;
+  //std::string config = "/Data/hgcal-tpg-fe/input/stage2/firmware-data/CaptureStage2_250204_1424/Stage2Configuration.yaml" ;
   TPGStage2Configuration::Stage2Board sb;
   sb.readConfigYaml(config.c_str());
   sb.print();
 
-  //std::string inputFileName = "EMPStage2Input_6Bxs_96lpGBTs_OneEvent.txt";
-  std::string inputFileName = "/Data/hgcal-tpg-fe/input/stage2/firmware-data/CaptureStage2_250204_1424/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2.txt";
+  std::string inputFileName = "EMPStage2Input.txt";
+  //std::string inputFileName = "/Data/hgcal-tpg-fe/input/stage2/firmware-data/CaptureStage2_250204_1424/EMPStage2Input_6Bxs_96lpGBTs_CEE+1_CEH+2.txt";
     l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
     auto nChannels = inputs.size();
     const size_t numWordsBx = 162;
     const size_t nofBx = 6;
     std::vector<TPGBEDataformat::Stage1ToStage2Data> vS12[nofBx];
+    std::vector<TPGBEDataformat::Stage2DataLong> vS12L[nofBx];
     
     std::cout << "Board data name : " << inputs.name() << ", and number of channels are: " << nChannels  << std::endl;
     for ( const auto& channel : inputs ) {
@@ -64,7 +65,7 @@ int main(int argc, char** argv)
     stage2TowerEmul.setConfiguration(&sb);
     TPGBEDataformat::Stage2ToL1TData s2OutputBx[nofBx] ; 
     for(int ibx=0;ibx<nofBx;ibx++){
-      stage2TowerEmul.run(vS12[ibx]);
+      stage2TowerEmul.run(vS12[ibx],vS12L[ibx]);
       for(unsigned phi(0);phi<24;phi++) {
 	for(unsigned eta(0);eta<20;eta++) {
 	  //std::cout << "stage2TowerEmulEMP.exe:  eta: " << eta << ", phi : " << phi << ", towerdata0:" << stage2TowerEmul.getTowerData(0,eta,phi) << ", towerdata1:" << stage2TowerEmul.getTowerData(1,eta,phi) <<", value: 0x" << std::hex << stage2TowerEmul.getTowerOutput(eta,phi) << std::dec << std::endl;
