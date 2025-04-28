@@ -741,7 +741,9 @@ int main(int argc, char** argv)
   // c1->Update();
   
   //hTrigEff->Scale(1.0/float(nofEvents));
-  hTrigEff->Scale(2.0/hTrigEff->GetEntries()); 
+  //hTrigEff->Scale(200.0/hTrigEff->GetEntries());
+  float eventsPerPt = 50;
+  hTrigEff->Scale(1.0/float(eventsPerPt));
   TFile *fout = new TFile(Form("%s.root",outname.c_str()),"recreate");
   hEt->Write();
   hPtReso->Write();
