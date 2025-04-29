@@ -43,9 +43,9 @@ bool comp(TCOrder x, TCOrder y) {
 
 int main(int argc, char** argv)
 {
-  // TPGLSBScales::TPGStage2ClusterLSB lsbScales;
-  // lsbScales.print();  
-  // return true;
+  TPGLSBScales::TPGStage2ClusterLSB lsbScales;
+  lsbScales.print();  
+  //return true;
   
   bool doPrint = 0;
   std::cout << "========= Run as : ./stage2HtoTauTauEnergyCorrelation.exe $input_file $index $nofevents ==========" << std::endl;
@@ -314,7 +314,7 @@ int main(int argc, char** argv)
   TPGStage2Emulation::Stage2 s2Clustering;
   s2Clustering.setClusPropLUT(&cplut);
   //s2Clustering.setConfiguration(&sb);
-  s2Clustering.setkpower(3);
+  s2Clustering.setkpower(0);
   
   //TPGTriggerCellFloats tcf0,tcf1;
   TPGTCFloats tcf0,tcf1;
@@ -433,18 +433,18 @@ int main(int argc, char** argv)
     }//jet loop
     /////////////////////////////////////////////////////////////////////////////////////////
 
-    // std::vector<TCOrder> rearrgdtcs;
-    // for(unsigned itc=0;itc<tc_pt->size();itc++){
-    //   TCOrder tco;
-    //   tco.tcid = itc;
-    //   tco.layer = uint32_t(tc_layer->at(itc));
-    //   tco.z = tc_z->at(itc);
-    //   tco.eta = tc_eta->at(itc);
-    //   rearrgdtcs.push_back(tco);
-    // }
-    // std::vector<TCOrder>::iterator itstart = rearrgdtcs.begin();
-    // std::vector<TCOrder>::iterator itstop = rearrgdtcs.end();
-    // std::sort(itstart,itstop,comp);
+    std::vector<TCOrder> rearrgdtcs;
+    for(unsigned itc=0;itc<tc_pt->size();itc++){
+      TCOrder tco;
+      tco.tcid = itc;
+      tco.layer = uint32_t(tc_layer->at(itc));
+      tco.z = tc_z->at(itc);
+      tco.eta = tc_eta->at(itc);
+      rearrgdtcs.push_back(tco);
+    }
+    std::vector<TCOrder>::iterator itstart = rearrgdtcs.begin();
+    std::vector<TCOrder>::iterator itstop = rearrgdtcs.end();
+    std::sort(itstart,itstop,comp);
     
     /////////////////////////////////////////////////////////////////////////////////////////
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
@@ -453,9 +453,9 @@ int main(int argc, char** argv)
     double tcXoZposEta = 0.,tcYoZposEta = 0., tcXoZnegEta = 0.,tcYoZnegEta = 0.;
     //std::vector<TPGTriggerCellWord> vTcw[6];
     std::vector<TPGTCBits> vTcw[6];
-    // for(unsigned itco=0;itco<tc_pt->size();itco++){
-    //   unsigned itc = rearrgdtcs.at(itco).tcid ; 
-    for(unsigned itc=0;itc<tc_pt->size();itc++){
+    for(unsigned itco=0;itco<tc_pt->size();itco++){
+      unsigned itc = rearrgdtcs.at(itco).tcid ; 
+      //for(unsigned itc=0;itc<tc_pt->size();itc++){
       double z(fabs(tc_z->at(itc)));
       float phi_deg = TMath::RadToDeg() * tc_phi->at(itc) ;
       uint16_t sec0(7),sec1(7);
@@ -502,10 +502,10 @@ int main(int argc, char** argv)
 		  << ", itc: " << std::setw(5) << itc
 		  << ", layer: " << std::setw(2) << int(tc_layer->at(itc))
 		  <<", (x,y,z): (" << std::setw(7) << tc_x->at(itc) << ", " << std::setw(7) << tc_y->at(itc) << ", " << std::setw(7) << tc_z->at(itc) << ")"
-		  <<", (pt,eta,phi,energy): (" << std::fixed << std::setprecision(2) << std::setw(8) << tc_pt->at(itc)
+		  <<", (pt,eta,phi,energy): (" << std::fixed << std::setprecision(2) << std::setw(8) << tc_pt->at(itc)*1.e3
 		  << ", " << std::setw(8) << tc_eta->at(itc) 
 		  << ", " << std::setw(8) << (TMath::RadToDeg()*tc_phi->at(itc)) 
-		  << ", " << std::setw(8) << tc_energy->at(itc)*1.e6 << ") "
+		  << ", " << std::setw(8) << tc_energy->at(itc)*1.e3 << ") "
 		  << std::defaultfloat
 		  << std::endl;
       }
@@ -555,7 +555,7 @@ int main(int argc, char** argv)
       hPhi->Fill(tc_phi->at(itc));
       hPhiDeg->Fill(phi_deg);
     }//end of TC loop
-    //rearrgdtcs.clear();
+    rearrgdtcs.clear();
     
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
@@ -586,6 +586,7 @@ int main(int argc, char** argv)
 	hClusLocalPhiBits[isect]->Fill(clf.getLocalPhi());
 	hClusLocalEtaBits[isect]->Fill(clf.getEta());
 	hClusGlobalEta[isect]->Fill(clf.getGlobalEtaRad(isect));
+	double tcPtSum = (clf.getGlobalEtaRad(isect) < 0) ? totTCpt_negEta : totTCpt_posEta ;
 	if(doPrint){
 	  std::cout << "iclus-ievent: " << std::fixed << std::setprecision(2) << std::setw(4) << ievent
 		    << ", sector: " << std::setw(5) << isect
@@ -596,6 +597,11 @@ int main(int argc, char** argv)
 		    << ", " << std::setw(8) << clf.getGlobalEtaRad(isect)
 		    << ", " << std::setw(8) << (TMath::RadToDeg()* clf.getGlobalPhiRad(isect))
 	            //<< ", " << std::setw(8) << tc_energy->at(itc)*1.e6
+		    << ") "
+		    <<", (tcPtSum,tcPtSum/lsb,energy,energy*lsb): (" << std::setw(8) << tcPtSum
+		    << ", " << std::setw(8) << uint32_t(tcPtSum/lsbScales.LSB_E_TC()+0.5)
+		    << ", " << std::setw(8) << clf.getEnergy()
+		    << ", " << std::setw(8) << (clf.getEnergy()*lsbScales.LSB_E_TC())
 		    << ") "
 		    << std::defaultfloat
 		    << std::endl;

@@ -95,7 +95,7 @@ public:
     //setPhiF(atan(yl/xl));
   }
 
-  void print() {
+  void print() const {
     std::cout << "TPGTCFloats(" << this << ")::print()"
 	      << std::endl << " ";
     TPGTCBits::print();
