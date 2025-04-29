@@ -24,7 +24,7 @@ public:
 
   int getLocalPhi() const { return cldata.w_phi.to_int(); }
   double getLocalPhiRad() const { return getLocalPhi() * lsbScales.LSB_phi(); }
-
+  
   double getGlobalPhiRad(unsigned s) const {    
     int32_t gPhi;
     if(s<3) gPhi= 4*90+4*120*s    +getLocalPhi();
@@ -41,13 +41,14 @@ public:
 
   double getLocalXOverZF() const { return cos(getLocalPhiRad())/sinh(getEtaRad()); }
   double getLocalYOverZF() const { return sin(getLocalPhiRad())/sinh(getEtaRad()); }
-  double getGlobalXOverZF(unsigned s) const { return cos(getGlobalPhiRad(s))/sinh(getEtaRad()); }
-  double getGlobalYOverZF(unsigned s) const { return sin(getGlobalPhiRad(s))/sinh(getEtaRad()); }
+  double getGlobalXOverZF(unsigned s) const { return cos(getGlobalPhiRad(s))/sinh(getGlobalEtaRad(s)); }
+  double getGlobalYOverZF(unsigned s) const { return sin(getGlobalPhiRad(s))/sinh(getGlobalEtaRad(s)); }
 
   uint32_t getZ() const { return cldata.w_z.to_uint(); }
   double getZCm() const { return getZ() * lsbScales.LSB_z(); } 
   
   double getRhoOverZF() const { return 1.0/sinh(getEtaRad()); }
+  double getGlobalRhoOverZF(unsigned s) const { return 1.0/sinh(getGlobalEtaRad(s)); }
 
 private:
   l1thgcfirmware::HGCalCluster_HW cldata;

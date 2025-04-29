@@ -821,7 +821,6 @@ namespace TPGStage2Emulation
       
       // Accumulate
       _tcaafw->zero();
-      _tcaafw->setkpower(3);
       clusprop.setLSBScales(&lsbScales);
       clusprop.setClusPropLUT(clusPropLUT);
       
@@ -1055,6 +1054,7 @@ namespace TPGStage2Emulation
     void setConfiguration(const TPGStage2Configuration::Stage2Board *scf) { s2bconf = scf;}
     void setClusPropLUT(const TPGStage2Configuration::ClusPropLUT *cplut) { clusPropLUT = cplut;}
     void setAccuOutput(TPGBEDataformat::TcAccumulatorFW *accmulinput) { accmulInput = accmulinput;}
+    void setkpower(const uint16_t kval = 3) { _tcaafw->setkpower(kval);}
     
   private:
     // static const unsigned _nBins;
