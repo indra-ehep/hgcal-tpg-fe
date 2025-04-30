@@ -1081,6 +1081,6 @@ namespace TPGStage2Emulation
     TPGLSBScales::TPGStage2ClusterLSB lsbScales;
   };
   
-  const double Stage2::_rOverZ(0.016 * sqrt(3.0));
+  const double Stage2::_rOverZ(0.03 * sqrt(3.0));
 }
 #endif

@@ -250,16 +250,16 @@ int main(int argc, char** argv)
     clusxyOverZ[isect] = new TH2D(Form("CLUSXYOverZ_%u",isect),Form("x/z and y/z distribution of clusters for sector %u",isect),1000,-0.6,0.6,1000,-0.6,0.6);
     clusxy[isect] = new TH2D(Form("CLUSXY_%u",isect),Form("x-y distribution of clusters for sector %u",isect),1000,-0.6,0.6,1000,-0.6,0.6);
     deltaGenclusSeg[isect] = new TH2D(Form("deltaGenclus_%u",isect),Form("deltaGenclus_%u",isect),100,-0.25,0.25,100,-0.25,0.25);
-    deltaTCclusXYoZSeg[isect] = new TH2D(Form("deltaTCclusXYoZ_%u",isect),Form("deltaTCclusXYoZ_%u",isect),100,-0.25,0.25,100,-0.25,0.25);
-    deltaGenclusXYoZSeg[isect] = new TH2D(Form("deltaGenclusXYoZ_%u",isect),Form("deltaGenclusXYoZ_%u",isect),100,-0.25,0.25,100,-0.25,0.25);
-    deltaGenTCXYoZSeg[isect] = new TH2D(Form("deltaGenTCXYoZ_%u",isect),Form("deltaGenTCXYoZ_%u",isect),100,-0.25,0.25,100,-0.25,0.25);
+    deltaTCclusXYoZSeg[isect] = new TH2D(Form("deltaTCclusXYoZ_%u",isect),Form("deltaTCclusXYoZ_%u",isect),1000,-0.05,0.05,1000,-0.05,0.05);
+    deltaGenclusXYoZSeg[isect] = new TH2D(Form("deltaGenclusXYoZ_%u",isect),Form("deltaGenclusXYoZ_%u",isect),1000,-0.05,0.05,1000,-0.05,0.05);
+    deltaGenTCXYoZSeg[isect] = new TH2D(Form("deltaGenTCXYoZ_%u",isect),Form("deltaGenTCXYoZ_%u",isect),1000,-0.05,0.05,1000,-0.05,0.05);
     genJetXYoZ[isect] = new TH2D(Form("genJetXYoZ_%u",isect),Form("genJetXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
     tcAvgXYoZ[isect] = new TH2D(Form("tcAvgXYoZ_%u",isect),Form("tcAvgXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
     clusXYoZ[isect] = new TH2D(Form("clusXYoZ_%u",isect),Form("clusXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
   }
   TH2D *deltaGenclus = new TH2D("deltaGenclusAll","deltaGenclusAll",100,-0.25,0.25,100,-0.25,0.25);
-  TH2D *deltaTCclus = new TH2D("deltaTcclusAll","deltaTCclusAll",100,-0.25,0.25,100,-0.25,0.25);
-  TH2D *deltaGentc = new TH2D("deltaGentc","deltaGentc",100,-0.25,0.25,100,-0.25,0.25);
+  TH2D *deltaTCclus = new TH2D("deltaTcclusAll","deltaTCclusAll",1000,-0.05,0.05,1000,-0.05,0.05);
+  TH2D *deltaGentc = new TH2D("deltaGentc","deltaGentc",1000,-0.05,0.05,1000,-0.05,0.05);
   TH1D *hClusE = new TH1D("hClusE","hClusE",100,0.0,100.0);
   TH2D *hGenClusE = new TH2D("hGenClusE","hGenClusE",200,0.0,200.0,200,0.0,200.0);
   TH2D *hGenClusE_1 = new TH2D("hGenClusE_1","hGenClusE_1",200,0.0,200.0,200,0.0,200.0);
@@ -433,18 +433,18 @@ int main(int argc, char** argv)
     }//jet loop
     /////////////////////////////////////////////////////////////////////////////////////////
 
-    std::vector<TCOrder> rearrgdtcs;
-    for(unsigned itc=0;itc<tc_pt->size();itc++){
-      TCOrder tco;
-      tco.tcid = itc;
-      tco.layer = uint32_t(tc_layer->at(itc));
-      tco.z = tc_z->at(itc);
-      tco.eta = tc_eta->at(itc);
-      rearrgdtcs.push_back(tco);
-    }
-    std::vector<TCOrder>::iterator itstart = rearrgdtcs.begin();
-    std::vector<TCOrder>::iterator itstop = rearrgdtcs.end();
-    std::sort(itstart,itstop,comp);
+    // std::vector<TCOrder> rearrgdtcs;
+    // for(unsigned itc=0;itc<tc_pt->size();itc++){
+    //   TCOrder tco;
+    //   tco.tcid = itc;
+    //   tco.layer = uint32_t(tc_layer->at(itc));
+    //   tco.z = tc_z->at(itc);
+    //   tco.eta = tc_eta->at(itc);
+    //   rearrgdtcs.push_back(tco);
+    // }
+    // std::vector<TCOrder>::iterator itstart = rearrgdtcs.begin();
+    // std::vector<TCOrder>::iterator itstop = rearrgdtcs.end();
+    // std::sort(itstart,itstop,comp);
     
     /////////////////////////////////////////////////////////////////////////////////////////
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
@@ -453,9 +453,9 @@ int main(int argc, char** argv)
     double tcXoZposEta = 0.,tcYoZposEta = 0., tcXoZnegEta = 0.,tcYoZnegEta = 0.;
     //std::vector<TPGTriggerCellWord> vTcw[6];
     std::vector<TPGTCBits> vTcw[6];
-    for(unsigned itco=0;itco<tc_pt->size();itco++){
-      unsigned itc = rearrgdtcs.at(itco).tcid ; 
-      //for(unsigned itc=0;itc<tc_pt->size();itc++){
+    // for(unsigned itco=0;itco<tc_pt->size();itco++){
+    //   unsigned itc = rearrgdtcs.at(itco).tcid ; 
+    for(unsigned itc=0;itc<tc_pt->size();itc++){
       double z(fabs(tc_z->at(itc)));
       float phi_deg = TMath::RadToDeg() * tc_phi->at(itc) ;
       uint16_t sec0(7),sec1(7);
@@ -555,7 +555,7 @@ int main(int argc, char** argv)
       hPhi->Fill(tc_phi->at(itc));
       hPhiDeg->Fill(phi_deg);
     }//end of TC loop
-    rearrgdtcs.clear();
+    //rearrgdtcs.clear();
     
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
