@@ -19,6 +19,7 @@
 #include <TH2.h>
 #include "TParticlePDG.h"
 #include "TDatabasePDG.h"
+#include "TEfficiency.h"
 
 #include "Stage2.hh"
 
@@ -45,9 +46,11 @@ int main(int argc, char** argv)
 {
   TPGLSBScales::TPGStage2ClusterLSB lsbScales;
   lsbScales.print();  
-  //return true;
+  // return true;
   
   bool doPrint = 0;
+  float pt_clusThresh = 10.; //GeV
+  float pt_TCThresh = 10.; //GeV
   std::cout << "========= Run as : ./stage2HtoTauTauEnergyCorrelation.exe $input_file $index $nofevents ==========" << std::endl;
   
   if(argc < 2){
@@ -67,16 +70,34 @@ int main(int argc, char** argv)
     std::istringstream issnEvents(argv[3]);
     issnEvents >> nofEvents;
   }
+  
+  float sidelength = 0.016;
+  if(argc >= 5){
+    std::istringstream issSidelength(argv[4]);
+    issSidelength >> sidelength;
+  }
+  
+  std::string outputfile_extn = "";
+  if(argc >= 6){
+    std::istringstream issOutputfileExtn(argv[5]);
+    issOutputfileExtn >> outputfile_extn;
+  }
+  
   std::unique_ptr<TFile> fin( TFile::Open(Form(inputfile.c_str())) );
   //TFile *fin = TFile::Open(Form(inputfile.c_str()));
   std::cout<<"Input filename : " << fin->GetName() << std::endl;
   //TTree *tr  = (TTree*)fin->Get("l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple");
   std::unique_ptr<TTree> tr((TTree*)fin->Get("l1tHGCalTriggerNtuplizer/HGCalTriggerNtuple"));  
   tr->SetBranchStatus("*",0);
+
   Int_t event ;
   tr->SetBranchStatus("event",1);
   tr->SetBranchAddress("event"	, &event);
 
+  float vtx_z;
+  tr->SetBranchStatus("vtx_z",1);
+  tr->SetBranchAddress("vtx_z" , &vtx_z);
+  
   Int_t gen_n = 0 ;
   tr->SetBranchStatus("gen_n",1);
   tr->SetBranchAddress("gen_n" , &gen_n);
@@ -227,13 +248,16 @@ int main(int argc, char** argv)
   // tcbit.setUbar(62);
   // tcbit.print();
   
-  TH1D *hEt = new TH1D("hEt","hEt",100,0,1000);
+  TH1D *hEt = new TH1D("hEt","hEt",100,0,200);
   TH1D *hPhi = new TH1D("hPhi","hPhi",2*TMath::TwoPi(),-1.0*TMath::TwoPi(),TMath::TwoPi());
   TH1D *hPhiDeg = new TH1D("hPhiDeg","hPhiDeg",2*TMath::RadToDeg()*TMath::TwoPi(),-1.0*TMath::RadToDeg()*TMath::TwoPi(),TMath::RadToDeg()*TMath::TwoPi());
   TH1D *hPtReso = new TH1D("hPtReso","Energy resolution",200,-100.,100.0);
   TH1D *hPtResoGenTC = new TH1D("hPtResoGenTC","Energy resolution (TC-genJet)",200,-100.,100.0);
   TH1D *hPtResoTCClus = new TH1D("hPtResoTCClus","Energy resolution (Clus-TC)",200,-100.,100.0);
-  TH1D *hTrigEff = new TH1D("hTrigEff","Trigger Efficiency",200, 0.,200.);
+  TH1D *hTrigGen = new TH1D("hTrigGen","Trigger Gen",200, 0.,200.);
+  TH1D *hTrigSelGen = new TH1D("hTrigSelGen","Selected Trigger Gen",200, 0.,200.);
+  TH1D *hTrigClus = new TH1D("hTrigClus","Trigger Clus",200, 0.,200.);
+  TH1D *hLayerE = new TH1D("hLayerE","Layer energy distribution",50, -0.5, 49.5);
   //TH1D *hgenRoZ = new TH1D("hgenRoZ","genJet RoZ",200, 0.,200.);
   
   uint64_t totalEntries = tr->GetEntries();
@@ -241,9 +265,15 @@ int main(int argc, char** argv)
   
   std::cout << "Total Entries : " << totalEntries << std::endl;
   std::cout << "Loop for: " << nofEvents << " entries"  << std::endl;
-  
+
   TH2D *tcxy[6],*tcxyOverZ[6],*clusxyOverZ[6],*clusxy[6],*deltaGenclusSeg[6],*deltaTCclusXYoZSeg[6],*deltaGenclusXYoZSeg[6],*deltaGenTCXYoZSeg[6],*genJetXYoZ[6],*tcAvgXYoZ[6],*clusXYoZ[6];
+  TH2D *deltaGenClusDRoZRDPhioZ[6], *deltaGenTCDRoZRDPhioZ[6], *deltaTCClusDRoZRDPhioZ[6], *deltaGenClusRotatedDRoZRDPhioZ[6];
+  TH2D *deltaGenClusDRoZVz[6];
   TH2D *tcxyAll = new TH2D("TCXYAll","x-y distribution of TCs",1000,-500,500,1000,-500,500);
+  TH2D *tcDxyozsize = new TH2D("tcDxyozsize","Dx/z-Dyz distribution of TCs w.r.t gen",2000,-10.0,10.0,2000,-10.0,10.0);
+  TH1D *tcMaxroz = new TH1D("tcMaxroz",Form("Maximum Maxroz distribution of TCs w.r.t gen (p_{T}>%2.0f)",pt_TCThresh),100,0.0,1.0);
+  TH1D *tcRoz = new TH1D("tcRoz",Form("Roz distribution of TCs w.r.t gen"),1000,0.0,1.0);
+
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) {
     tcxy[isect] = new TH2D(Form("TCXY_%u",isect),Form("x-y distribution of TCs for sector %u",isect),1000,-500,500,1000,-500,500);
     tcxyOverZ[isect] = new TH2D(Form("TCXYOverZ_%u",isect),Form("x/z and y/z distribution of TCs for sector %u",isect),1000,-0.6,0.6,1000,-0.6,0.6);
@@ -253,6 +283,14 @@ int main(int argc, char** argv)
     deltaTCclusXYoZSeg[isect] = new TH2D(Form("deltaTCclusXYoZ_%u",isect),Form("deltaTCclusXYoZ_%u",isect),1000,-0.05,0.05,1000,-0.05,0.05);
     deltaGenclusXYoZSeg[isect] = new TH2D(Form("deltaGenclusXYoZ_%u",isect),Form("deltaGenclusXYoZ_%u",isect),1000,-0.05,0.05,1000,-0.05,0.05);
     deltaGenTCXYoZSeg[isect] = new TH2D(Form("deltaGenTCXYoZ_%u",isect),Form("deltaGenTCXYoZ_%u",isect),1000,-0.05,0.05,1000,-0.05,0.05);
+    
+    deltaGenClusDRoZRDPhioZ[isect] = new TH2D(Form("deltaGenClusDRoZRDPhioZ_%u",isect),Form("deltaGenClusDRoZRDPhioZ_%u",isect),500,-0.025,0.025,500,-0.025,0.025);
+    deltaGenTCDRoZRDPhioZ[isect] = new TH2D(Form("deltaGenTCDRoZRDPhioZ_%u",isect),Form("deltaGenTCDRoZRDPhioZ_%u",isect),500,-0.025,0.025,500,-0.025,0.025);
+    deltaTCClusDRoZRDPhioZ[isect] = new TH2D(Form("deltaTCClusDRoZRDPhioZ_%u",isect),Form("deltaTCClusDRoZRDPhioZ_%u",isect),500,-0.025,0.025,500,-0.025,0.025);
+    deltaGenClusRotatedDRoZRDPhioZ[isect] = new TH2D(Form("deltaGenClusRotatedDRoZRDPhioZ_%u",isect),Form("deltaGenClusRotatedDRoZRDPhioZ_%u",isect),500,-0.055,0.055,500,-0.055,0.055);
+
+    deltaGenClusDRoZVz[isect] = new TH2D(Form("deltaGenClusDRoZVz_%u",isect),Form("deltaGenClusDRoZVz_%u",isect),600,-30.,30.,500,-0.025,0.025);
+    
     genJetXYoZ[isect] = new TH2D(Form("genJetXYoZ_%u",isect),Form("genJetXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
     tcAvgXYoZ[isect] = new TH2D(Form("tcAvgXYoZ_%u",isect),Form("tcAvgXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
     clusXYoZ[isect] = new TH2D(Form("clusXYoZ_%u",isect),Form("clusXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
@@ -311,10 +349,12 @@ int main(int argc, char** argv)
   cplut.readMuEtaLUT("input/stage2/configuration/mean_eta_LUT.csv");
   cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
 
+  TPGStage2Emulation::Stage2::_rOverZ = sidelength * sqrt(3.0) ;
   TPGStage2Emulation::Stage2 s2Clustering;
   s2Clustering.setClusPropLUT(&cplut);
   //s2Clustering.setConfiguration(&sb);
   s2Clustering.setkpower(0);
+  std::cout << " Stage2::_rOverZ : " << s2Clustering.getROverZ() << std::endl;
   
   //TPGTriggerCellFloats tcf0,tcf1;
   TPGTCFloats tcf0,tcf1;
@@ -388,14 +428,16 @@ int main(int argc, char** argv)
 		    << std::endl;
       // }
     }//genpart loop
-    
+
+    double xoz_posEta = -10., yoz_posEta = -10.;
+    double xoz_negEta = -10., yoz_negEta = -10.;
+    double pt_posEta =  -1., pt_negEta = -1.;
     std::vector<JetPart> jetlist;
     for(int ijet=0; ijet<genjet_n; ijet++ ){
       JetPart jet;
       // jet.name = "";
       // jet.index = ijet ;
       // jetlist.push_back(jet);
-      
       float minDeltaR = 1.0; int minDeltaRindex = -1;
       for(int ipart=0; ipart<partlist.size(); ipart++){
 	int refpart = partlist.at(ipart).index;
@@ -412,9 +454,18 @@ int main(int argc, char** argv)
 	  jet.name = p.name;
 	  jet.index = ijet ;
 	  jetlist.push_back(jet);
+
 	  double roz = 1/sinh(genjet_eta->at(ijet)) ; //tan(2*atan(exp(-1.0*genjet_eta->at(ijet))));
 	  double xoz = roz*cos(genjet_phi->at(ijet));
 	  double yoz = roz*sin(genjet_phi->at(ijet));
+	  if(genjet_eta->at(ijet)>0){
+	    xoz_posEta = xoz; yoz_posEta = yoz;
+	    pt_posEta = genjet_pt->at(ijet);
+	  }else{
+	    xoz_negEta = xoz; yoz_negEta = yoz;
+	    pt_negEta = genjet_pt->at(ijet);
+	  }
+	  
 	  if(doPrint)
 	    std::cout << "ijet-ievent: " << std::setprecision(default_precision) << std::setw(4) <<ievent << ", ijet: " << std::setw(4) << ijet
 		      <<", Name: " << std::setw(10) << p.name << ", deltaR : " << std::setprecision(3) << std::setw(8) << minDeltaR
@@ -451,6 +502,8 @@ int main(int argc, char** argv)
     double totTCpt_posEta = 0.,totTCpt_negEta = 0.;
     uint32_t nofPosEtaTCs = 0, nofNegEtaTCs = 0;
     double tcXoZposEta = 0.,tcYoZposEta = 0., tcXoZnegEta = 0.,tcYoZnegEta = 0.;
+    double maxroz_posEta = -1.0, maxroz_negEta = -1.0;
+    double tcPhi_posEta = 0.,tcPhi_negEta = 0.;
     //std::vector<TPGTriggerCellWord> vTcw[6];
     std::vector<TPGTCBits> vTcw[6];
     // for(unsigned itco=0;itco<tc_pt->size();itco++){
@@ -542,20 +595,33 @@ int main(int argc, char** argv)
 	totTCpt_negEta += tc_pt->at(itc);
 	tcXoZnegEta += tc_pt->at(itc)*tc_x->at(itc)/tc_z->at(itc) ;
 	tcYoZnegEta += tc_pt->at(itc)*tc_y->at(itc)/tc_z->at(itc) ;
+	tcPhi_negEta += tc_pt->at(itc)*tc_phi->at(itc) ;
 	nofNegEtaTCs++;
+	tcDxyozsize->Fill( (tc_x->at(itc)/tc_z->at(itc)-xoz_negEta), (tc_y->at(itc)/tc_z->at(itc)-yoz_negEta) );
+	double droz = sqrt( (tc_x->at(itc)/tc_z->at(itc)-xoz_negEta)*(tc_x->at(itc)/tc_z->at(itc)-xoz_negEta) + (tc_y->at(itc)/tc_z->at(itc)-yoz_negEta)*(tc_y->at(itc)/tc_z->at(itc)-yoz_negEta) );
+	if(droz>maxroz_negEta) maxroz_negEta = droz;
+	tcRoz->Fill(droz,tc_pt->at(itc));
       }else{
 	totTCpt_posEta += tc_pt->at(itc);
 	tcXoZposEta += tc_pt->at(itc)*tc_x->at(itc)/tc_z->at(itc) ;
 	tcYoZposEta += tc_pt->at(itc)*tc_y->at(itc)/tc_z->at(itc) ;
+	tcPhi_posEta += tc_pt->at(itc)*tc_phi->at(itc) ;
 	nofPosEtaTCs++;
+	tcDxyozsize->Fill( (tc_x->at(itc)/tc_z->at(itc)-xoz_posEta), (tc_y->at(itc)/tc_z->at(itc)-yoz_posEta) );
+	double droz = sqrt( (tc_x->at(itc)/tc_z->at(itc)-xoz_posEta)*(tc_x->at(itc)/tc_z->at(itc)-xoz_posEta) + (tc_y->at(itc)/tc_z->at(itc)-yoz_posEta)*(tc_y->at(itc)/tc_z->at(itc)-yoz_posEta) );
+	if(droz>maxroz_posEta) maxroz_posEta = droz;
+	tcRoz->Fill(droz,tc_pt->at(itc));
       }
       
       tot_tc_pt += tc_pt->at(itc);
       tot_tc_e += tc_energy->at(itc);
       hPhi->Fill(tc_phi->at(itc));
       hPhiDeg->Fill(phi_deg);
+      hLayerE->Fill(tc_layer->at(itc), tc_pt->at(itc));
     }//end of TC loop
     //rearrgdtcs.clear();
+    if(pt_negEta>pt_TCThresh) tcMaxroz->Fill(maxroz_negEta,totTCpt_negEta);
+    if(pt_posEta>pt_TCThresh) tcMaxroz->Fill(maxroz_posEta,totTCpt_posEta);
     
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
@@ -591,7 +657,7 @@ int main(int argc, char** argv)
 	  std::cout << "iclus-ievent: " << std::fixed << std::setprecision(2) << std::setw(4) << ievent
 		    << ", sector: " << std::setw(5) << isect
 		    << ", iclus: " << std::setw(5) << iclus++
-		    <<", (x,y,z): (" << std::setw(7) << (clf.getGlobalXOverZF(isect) * clf.getZCm()) << ", " << std::setw(7) << (clf.getGlobalYOverZF(isect) * clf.getZCm()) << ", " << std::setw(7) << clf.getZCm() << ")"
+		    <<", (x,y,z): (" << std::setw(7) << (clf.getGlobalXOverZF(isect) * clf.getZCm()) << ", " << std::setw(7) << (clf.getGlobalYOverZF(isect) * clf.getZCm()) << ", " << std::setw(7) << clf.getGlobalZCm(isect) << ")"
 		    <<", (xoz,yoz,roz): (" << std::setw(5) << clf.getGlobalXOverZF(isect) << ", " << std::setw(5) << clf.getGlobalYOverZF(isect) << ", " << std::setw(5) << clf.getGlobalRhoOverZF(isect) << ")"
 		    <<", (pt,eta,phi): (" << std::fixed << std::setprecision(2) << std::setw(8) << clf.getEnergyGeV()
 		    << ", " << std::setw(8) << clf.getGlobalEtaRad(isect)
@@ -621,9 +687,13 @@ int main(int argc, char** argv)
       double tcPtSum = (genjet_eta->at(ijet) < 0) ? totTCpt_negEta : totTCpt_posEta ;
       double avgXoZ = (genjet_eta->at(ijet) < 0) ? tcXoZnegEta/tcPtSum : tcXoZposEta/tcPtSum ;
       double avgYoZ = (genjet_eta->at(ijet) < 0) ? tcYoZnegEta/tcPtSum : tcYoZposEta/tcPtSum ;
+      double avgPhi = (genjet_eta->at(ijet) < 0) ? tcPhi_negEta/tcPtSum : tcPhi_posEta/tcPtSum ;
       double gjroz = 1/sinh(genjet_eta->at(ijet)) ; //tan(2*atan(exp(-1.0*genjet_eta->at(ijet))));
       double gjxoz = gjroz*cos(genjet_phi->at(ijet));
       double gjyoz = gjroz*sin(genjet_phi->at(ijet));
+      double avgRoZ = sqrt((avgXoZ-gjxoz)*(avgXoZ-gjxoz) + (avgYoZ-gjyoz)*(avgYoZ-gjyoz));
+      
+      hTrigGen->Fill(genjet_pt->at(ijet));
       for (uint32_t isect = minsect ; isect < maxsect ; isect++ ){
 	for(TPGCluster const& clf : vCld[isect]){
 	  hClusE->Fill(clf.getEnergyGeV());
@@ -649,7 +719,7 @@ int main(int argc, char** argv)
 	  }
 	  if(deltaR<0.4) tot_clus_pt_deltaR_0p4 += clf.getEnergyGeV() ;
 	  if(deltaR<0.2) tot_clus_pt_deltaR_0p2 += clf.getEnergyGeV() ;	  
-	  if(clf.getEnergyGeV()>10.0) {
+	  if(clf.getEnergyGeV()>pt_clusThresh) {
 	    //===============
 	    hGenClusE->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	    hGenTCE->Fill(genjet_pt->at(ijet), tcPtSum);
@@ -658,8 +728,6 @@ int main(int argc, char** argv)
 	    hPtReso->Fill( (clf.getEnergyGeV() - genjet_pt->at(ijet)) );
 	    hPtResoGenTC->Fill( (tcPtSum - genjet_pt->at(ijet)) );
 	    hPtResoTCClus->Fill( (clf.getEnergyGeV() - tcPtSum) );
-	    //===============
-	    hTrigEff->Fill( genjet_pt->at(ijet) );
 	    //===============
 	    hPtCorrGenjetvsClus->Fill(genjet_pt->at(ijet), clf.getEnergyGeV());
 	    hPtCorrGenjetvsTC->Fill(genjet_pt->at(ijet), tcPtSum);
@@ -674,6 +742,15 @@ int main(int argc, char** argv)
 	    clusXYoZ[isect]->Fill( clf.getGlobalXOverZF(isect), clf.getGlobalYOverZF(isect) );
 	    genJetXYoZ[isect]->Fill( (cos(genjet_phi->at(ijet))/sinh(genjet_phi->at(ijet))), (sin(genjet_phi->at(ijet))/sinh(genjet_phi->at(ijet))) ); 
 	    //===============
+	    deltaGenClusDRoZRDPhioZ[isect]->Fill( gjroz*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)), (clf.getGlobalRhoOverZF(isect) - gjroz)  );
+	    deltaGenClusRotatedDRoZRDPhioZ[isect]->Fill( gjroz*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)), (clf.getGlobalRhoOverZF(isect)*clf.getGlobalPhiRad(isect) - gjroz*genjet_phi->at(ijet)) );
+	    deltaGenTCDRoZRDPhioZ[isect]->Fill( gjroz*(avgPhi-genjet_phi->at(ijet)), (avgRoZ - gjroz)  );
+	    deltaTCClusDRoZRDPhioZ[isect]->Fill( avgRoZ*(clf.getGlobalPhiRad(isect)-avgPhi), (clf.getGlobalRhoOverZF(isect) - avgRoZ)  );
+	    //===============	    
+	    deltaGenClusDRoZVz[isect]->Fill( vtx_z, (clf.getGlobalRhoOverZF(isect) - gjroz)  );
+	    //===============
+	    hTrigSelGen->Fill(genjet_pt->at(ijet));
+	    hTrigClus->Fill(clf.getEnergyGeV());
 	  }
 	}	
       }//isect loop
@@ -728,23 +805,29 @@ int main(int argc, char** argv)
     
   }//event loop
   
-  std::string outname = "stage2SemiEmulator_" + index;
-  // hEt->SetTitle(outname.c_str());
-  // hEt->GetXaxis()->SetTitle("total p_{T} trigger cells (in GeV)");
-  // TCanvas *c1 = new TCanvas("c1",outname.c_str());
-  // hEt->Draw();
-  // c1->Update();
+  std::string outname = "stage2SemiEmulator_" + outputfile_extn + "_" + index;
   
-  //hTrigEff->Scale(1.0/float(nofEvents));
-  //hTrigEff->Scale(200.0/hTrigEff->GetEntries());
-  float eventsPerPt = 50;
-  hTrigEff->Scale(1.0/float(eventsPerPt));
+  TH1D *hTrigEff = (TH1D *) hTrigSelGen->Clone("hTrigEff");
+  hTrigEff->Divide(hTrigGen);
+  TH1D *hTrigEffClusE = (TH1D *) hTrigClus->Clone("hTrigEffClusE");
+  hTrigEffClusE->Divide(hTrigGen);
+  
+  TH1D *tcMaxroz_cumul = (TH1D *)tcMaxroz->GetCumulative(kTRUE,"_cumul");
+  tcMaxroz_cumul->Scale(1./tcMaxroz_cumul->GetBinContent(tcMaxroz_cumul->GetMaximumBin()));
+  TH1D *tcRoz_cumul = (TH1D *)tcRoz->GetCumulative(kTRUE,"_cumul");
+  tcRoz_cumul->Scale(1./tcRoz_cumul->GetBinContent(tcRoz_cumul->GetMaximumBin()));
+  
   TFile *fout = new TFile(Form("%s.root",outname.c_str()),"recreate");
   hEt->Write();
   hPtReso->Write();
   hPtResoGenTC->Write();
   hPtResoTCClus->Write();
+  hTrigGen->Write();
+  hTrigSelGen->Write();
+  hTrigClus->Write();
   hTrigEff->Write();
+  hTrigEffClusE->Write();
+  hLayerE->Write();
   hPhi->Write();
   hPhiDeg->Write();
   hTCPhiCorr->Write();
@@ -762,7 +845,7 @@ int main(int argc, char** argv)
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRoZ2Eta[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRoZ2CalcEta[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRozBits[isect]->Write();
-
+  
   deltaGenclus->Write();
   deltaGentc->Write();
   hClusE->Write();
@@ -789,7 +872,16 @@ int main(int argc, char** argv)
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) genJetXYoZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcAvgXYoZ[isect]->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) clusXYoZ[isect]->Write();
-
+  tcDxyozsize->Write();
+  tcMaxroz->Write();
+  tcMaxroz_cumul->Write();
+  tcRoz->Write();
+  tcRoz_cumul->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) deltaGenClusDRoZRDPhioZ[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) deltaGenClusRotatedDRoZRDPhioZ[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) deltaGenTCDRoZRDPhioZ[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) deltaTCClusDRoZRDPhioZ[isect]->Write();
+  for (uint32_t isect = 0 ; isect < 6 ; isect++ ) deltaGenClusDRoZVz[isect]->Write();
   fout->Close();
   delete fout;
 

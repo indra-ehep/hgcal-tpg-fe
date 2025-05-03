@@ -445,7 +445,7 @@ namespace TPGStage2Emulation
     
     Stage2()
     {
-
+      
       _ca = new CentreArray<_nBins>;
 
       // Set up clustering array (here hexagons)
@@ -1055,10 +1055,11 @@ namespace TPGStage2Emulation
     void setClusPropLUT(const TPGStage2Configuration::ClusPropLUT *cplut) { clusPropLUT = cplut;}
     void setAccuOutput(TPGBEDataformat::TcAccumulatorFW *accmulinput) { accmulInput = accmulinput;}
     void setkpower(const uint16_t kval = 3) { _tcaafw->setkpower(kval);}
-    
+    float getROverZ() const { return _rOverZ ;}
+
+    static double _rOverZ; //it was private member taken out to change from outside 
   private:
     // static const unsigned _nBins;
-    static const double _rOverZ;
     
     std::vector<TPGTriggerCellWord> _vTriggerCellWord;
 
@@ -1081,6 +1082,6 @@ namespace TPGStage2Emulation
     TPGLSBScales::TPGStage2ClusterLSB lsbScales;
   };
   
-  const double Stage2::_rOverZ(0.03 * sqrt(3.0));
+  double Stage2::_rOverZ(0.03 * sqrt(3.0));
 }
 #endif
