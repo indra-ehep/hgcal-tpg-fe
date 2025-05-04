@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "1"
+iloop= "3"
 
 samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 ntuple_path_ideal = ["pt100GeV_10K", "flatpt_10K"]
@@ -15,7 +15,8 @@ samplelist_PU0 = ["SinglePi_realistic_PU0", "SingleEle_realistic_PU0", "VBFHToIn
 samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realiztic_PU200", "MinBias_realistic_PU200"]
 ntuple_path = ["ntuples"]
 
-triangle_side_list = ["0.016", "0.03", "0.045"]
+#triangle_side_list = ["0.016", "0.03", "0.045"]
+triangle_side_list = ["0.06", "0.075", "0.090", "0.105"]
 
 #----------------------------------------
 #Create run and log directory
@@ -101,31 +102,6 @@ for sample in samplelist_Ideal:
             findex  = 0
             for fname in filelist:
                 print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
-                fsidelen = float(findex)
-                fsidelen_index = int(fsidelen*1000)
-                ofextn = '%s_%s'%(ntuplepath,fsidelen_index)
-                jdlName = 'submitJobs_%s_%s_%s_%s.jdl'%(sample,ntuplepath,fsidelen_index,findex)
-                jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
-                jdlFile.write(common_command)
-                run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
-                jdlFile.write(run_command)        
-                jdlFile.close()
-                subFile.write("condor_submit %s\n"%jdlName)
-                findex = findex + 1
-
-for sample in samplelist_PU0:
-    for ntuplepath in ntuple_path:
-        for sidelength in triangle_side_list:
-            dirpath = '%s/stage2_emulator_tests/%s/%s/'%(os.environ["HOME"],sample,ntuplepath)
-            findarg = '%s -name \"*.root\"'%(dirpath)
-            p = subprocess.Popen([("find %s "%findarg)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
-            filelist, errors = p.communicate()
-            filelist = filelist.split('\n')
-            filelist.remove("")
-            nFiles = len(filelist)
-            findex  = 0
-            for fname in filelist:
-                print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
                 fsidelen = float(sidelength)
                 fsidelen_index = int(fsidelen*1000)
                 ofextn = '%s_%s'%(ntuplepath,fsidelen_index)
@@ -137,6 +113,31 @@ for sample in samplelist_PU0:
                 jdlFile.close()
                 subFile.write("condor_submit %s\n"%jdlName)
                 findex = findex + 1
+
+# for sample in samplelist_PU0:
+#     for ntuplepath in ntuple_path:
+#         for sidelength in triangle_side_list:
+#             dirpath = '%s/stage2_emulator_tests/%s/%s/'%(os.environ["HOME"],sample,ntuplepath)
+#             findarg = '%s -name \"*.root\"'%(dirpath)
+#             p = subprocess.Popen([("find %s "%findarg)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+#             filelist, errors = p.communicate()
+#             filelist = filelist.split('\n')
+#             filelist.remove("")
+#             nFiles = len(filelist)
+#             findex  = 0
+#             for fname in filelist:
+#                 print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
+#                 fsidelen = float(sidelength)
+#                 fsidelen_index = int(fsidelen*1000)
+#                 ofextn = '%s_%s'%(ntuplepath,fsidelen_index)
+#                 jdlName = 'submitJobs_%s_%s_%s_%s.jdl'%(sample,ntuplepath,fsidelen_index,findex)
+#                 jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
+#                 jdlFile.write(common_command)
+#                 run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
+#                 jdlFile.write(run_command)        
+#                 jdlFile.close()
+#                 subFile.write("condor_submit %s\n"%jdlName)
+#                 findex = findex + 1
                 
                 
 subFile.close()

@@ -259,9 +259,16 @@ int main(int argc, char** argv)
   TH1D *hTrigClus = new TH1D("hTrigClus","Trigger Clus",200, 0.,200.);
   TH1D *hLayerE = new TH1D("hLayerE","Layer energy distribution",50, -0.5, 49.5);
   //TH1D *hgenRoZ = new TH1D("hgenRoZ","genJet RoZ",200, 0.,200.);
+  TH1D *hDeltaRGenClus = new TH1D("hDeltaRGenClus","hDeltaRGenClus",500,0,1.0);
+  // TH1D *hDeltaRGenTC = new TH1D("hDeltaRGenTC","hDeltaRGenTC",200,0,1.0);
+  // TH1D *hDeltaRTCClus = new TH1D("hDeltaRTCClus","hDeltaRTCClus",200,0,1.0);
+  TH2D *hDeltaRGCPt = new TH2D("hDeltaRGCPt","hDeltaRGCPt",100,0,200.0, 200,0,0.5);
+  TH2D *hDeltaRGCEta = new TH2D("hDeltaRGCEta","hDeltaRGCEta",100,1.5,3.1, 200,0,0.5);
+  TProfile *hDeltaRGCPtProf = new TProfile("hDeltaRGCPtProf","#DeltaR vs genJet-p_{T}",100,0.,200.,0.,1.0);
+  TProfile *hDeltaRGCEtaProf = new TProfile("hDeltaRGCEtaProf","#DeltaR vs genJet-#eta",100,1.5,3.1,0.,1.0);
   
   uint64_t totalEntries = tr->GetEntries();
-  if(nofEvents==0 or nofEvents>totalEntries or ) nofEvents = totalEntries;
+  if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
   
   std::cout << "Total Entries : " << totalEntries << std::endl;
   std::cout << "Loop for: " << nofEvents << " entries"  << std::endl;
@@ -573,7 +580,7 @@ int main(int argc, char** argv)
 	tcf0.setROverZPhiF(tc_x->at(itc)/z,tc_y->at(itc)/z,isect+addisect);
 	if(tcf0.getXOverZF()>=0.0){
 	  float scale = 1.0;
-	  if(tc_layer->at(itc)==27 or tc_layer->at(itc)==29) scale = 1.5;
+	  //if(tc_layer->at(itc)==27 or tc_layer->at(itc)==29) scale = 1.5;
 	  tcf0.setEnergyGeV(scale * tc_pt->at(itc));
 	  tcf0.setLayer(tc_layer->at(itc));
 	  //if(doPrint) tcf0.print();
@@ -749,6 +756,12 @@ int main(int argc, char** argv)
 	    //===============	    
 	    deltaGenClusDRoZVz[isect]->Fill( vtx_z, (clf.getGlobalRhoOverZF(isect) - gjroz)  );
 	    //===============
+	    hDeltaRGenClus->Fill(deltaR); 
+	    hDeltaRGCPt->Fill(genjet_pt->at(ijet), deltaR); 
+	    hDeltaRGCEta->Fill(abs(genjet_eta->at(ijet)), deltaR); 
+	    hDeltaRGCPtProf->Fill(genjet_pt->at(ijet), deltaR); 
+	    hDeltaRGCEtaProf->Fill(abs(genjet_eta->at(ijet)), deltaR); 
+	    //===============
 	    hTrigSelGen->Fill(genjet_pt->at(ijet));
 	    hTrigClus->Fill(clf.getEnergyGeV());
 	  }
@@ -830,6 +843,11 @@ int main(int argc, char** argv)
   hLayerE->Write();
   hPhi->Write();
   hPhiDeg->Write();
+  hDeltaRGenClus->Write();
+  hDeltaRGCPt->Write();
+  hDeltaRGCEta->Write();
+  hDeltaRGCPtProf->Write();
+  hDeltaRGCEtaProf->Write();
   hTCPhiCorr->Write();
   tcxyAll->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcxy[isect]->Write();
