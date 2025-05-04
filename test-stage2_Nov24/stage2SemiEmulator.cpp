@@ -51,7 +51,7 @@ int main(int argc, char** argv)
   bool doPrint = 0;
   float pt_clusThresh = 10.; //GeV
   float pt_TCThresh = 10.; //GeV
-  std::cout << "========= Run as : ./stage2HtoTauTauEnergyCorrelation.exe $input_file $index $nofevents ==========" << std::endl;
+  std::cout << "========= Run as : ./stage2SemiEmulator.exe $input_file $index $nofevents ==========" << std::endl;
   
   if(argc < 2){
     std::cerr << argv[0] << ": no input file has been specified specified" << std::endl;
@@ -261,7 +261,7 @@ int main(int argc, char** argv)
   //TH1D *hgenRoZ = new TH1D("hgenRoZ","genJet RoZ",200, 0.,200.);
   
   uint64_t totalEntries = tr->GetEntries();
-  if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
+  if(nofEvents==0 or nofEvents>totalEntries or ) nofEvents = totalEntries;
   
   std::cout << "Total Entries : " << totalEntries << std::endl;
   std::cout << "Loop for: " << nofEvents << " entries"  << std::endl;

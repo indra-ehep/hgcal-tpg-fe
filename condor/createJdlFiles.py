@@ -1,0 +1,145 @@
+import itertools
+import os
+import sys
+import subprocess
+import time
+
+#IMPORT MODULES FROM OTHER DIR
+
+iloop= "1"
+
+samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
+ntuple_path_ideal = ["pt100GeV_10K", "flatpt_10K"]
+
+samplelist_PU0 = ["SinglePi_realistic_PU0", "SingleEle_realistic_PU0", "VBFHToInvisible_realiztic_PU0", "MinBias_realistic_PU0"]
+samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realiztic_PU200", "MinBias_realistic_PU200"]
+ntuple_path = ["ntuples"]
+
+triangle_side_list = ["0.016", "0.03", "0.045"]
+
+#----------------------------------------
+#Create run and log directory
+#----------------------------------------
+jdlDir = 'tmpLog_s2emu_iter%s'%iloop
+if not os.path.exists("%s/log"%jdlDir):
+    os.makedirs("%s/log"%jdlDir)
+condorLogDir = "log"
+os.system("cp runStage2Emul.sh %s/"%jdlDir)
+
+# lxsetup
+common_command = \
+'executable = runStage2Emul.sh\n\
++MaxRuntime = 10799\n\
+request_memory = 4000\n\
+output = %s/log_$(cluster)_$(process).stdout\n\
+error  = %s/log_$(cluster)_$(process).stderr\n\
+log    = %s/log_$(cluster)_$(process).condor\n\n'%(condorLogDir, condorLogDir, condorLogDir)
+
+# lxplus setup
+# common_command = \
+# 'Universe   = vanilla\n\
+# should_transfer_files = YES\n\
+# when_to_transfer_output = ON_EXIT\n\
+# Transfer_Input_Files = local.tar.gz, runStage2Emul.sh\n\
+# x509userproxy = $ENV(X509_USER_PROXY)\n\
+# use_x509userproxy = true\n\
+# +BenchmarkJob = True\n\
+# +MaxRuntime = 10799\n\
+# notification = never\n\
+# max_transfer_input_mb = 4096\n\
+# max_transfer_output_mb = 4096\n\
+# request_disk = 4000000\n\
+# Output = %s/log_$(cluster)_$(process).stdout\n\
+# Error  = %s/log_$(cluster)_$(process).stderr\n\
+# Log    = %s/log_$(cluster)_$(process).condor\n\n'%(condorLogDir, condorLogDir, condorLogDir)
+
+
+#----------------------------------------
+#Create tar file
+#----------------------------------------
+tarFile = "local.tar.gz"
+if os.path.exists(tarFile):
+    os.system("rm %s"%tarFile)
+os.system("tar --exclude-from='../.tarexclude' --exclude-backups -zcvf %s ../../hgcal-tpg-fe "%tarFile)
+os.system("cp local.tar.gz %s/"%jdlDir)
+
+year=2026
+ofindex=0
+infile='/vols/cms/idas/PiPlusMinus/PU0/Pion_test2/SingleEle/pt100GeV_10K/ntuple_Thresh.root'
+nevents=1000
+sidelength=0.016
+ofextn='SinglePi_Ideal'
+sampletype='Result_iter%s/SinglePi_Ideal_PU0'%iloop
+# iloop=$7
+# clusproc=$8
+
+# ----------------------------------------
+# Create jdl files
+# ----------------------------------------
+subFile = open('%s/condorSubmit.sh'%jdlDir,'w')
+
+# jdlName = 'submitJobs_%s.jdl'%(year)
+# jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
+# jdlFile.write(common_command)
+# #nqueue = subprocess.Popen(['grep -i queue local/%s/%s/Cat1_Inc/Mass%s/condor_run.sub | awk \'{print $2}\''%(year,channel,mass)],shell=True,stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
+# run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(infile,ofindex,nevents,sidelength,ofextn,sampletype,iloop)
+# jdlFile.write(run_command)        
+# jdlFile.close()
+# subFile.write("condor_submit %s\n"%jdlName)
+
+nevents=0
+for sample in samplelist_Ideal:
+    for ntuplepath in ntuple_path_ideal:
+        for sidelength in triangle_side_list:
+            dirpath = '%s/stage2_emulator_tests/%s/%s/'%(os.environ["HOME"],sample,ntuplepath)
+            findarg = '%s -name \"ntuple_Thresh_cmstwk.root\"'%(dirpath)
+            p = subprocess.Popen([("find %s "%findarg)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+            filelist, errors = p.communicate()
+            filelist = filelist.split('\n')
+            filelist.remove("")
+            nFiles = len(filelist)
+            findex  = 0
+            for fname in filelist:
+                print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
+                fsidelen = float(findex)
+                fsidelen_index = int(fsidelen*1000)
+                ofextn = '%s_%s'%(ntuplepath,fsidelen_index)
+                jdlName = 'submitJobs_%s_%s_%s_%s.jdl'%(sample,ntuplepath,fsidelen_index,findex)
+                jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
+                jdlFile.write(common_command)
+                run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
+                jdlFile.write(run_command)        
+                jdlFile.close()
+                subFile.write("condor_submit %s\n"%jdlName)
+                findex = findex + 1
+
+for sample in samplelist_PU0:
+    for ntuplepath in ntuple_path:
+        for sidelength in triangle_side_list:
+            dirpath = '%s/stage2_emulator_tests/%s/%s/'%(os.environ["HOME"],sample,ntuplepath)
+            findarg = '%s -name \"*.root\"'%(dirpath)
+            p = subprocess.Popen([("find %s "%findarg)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+            filelist, errors = p.communicate()
+            filelist = filelist.split('\n')
+            filelist.remove("")
+            nFiles = len(filelist)
+            findex  = 0
+            for fname in filelist:
+                print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
+                fsidelen = float(sidelength)
+                fsidelen_index = int(fsidelen*1000)
+                ofextn = '%s_%s'%(ntuplepath,fsidelen_index)
+                jdlName = 'submitJobs_%s_%s_%s_%s.jdl'%(sample,ntuplepath,fsidelen_index,findex)
+                jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
+                jdlFile.write(common_command)
+                run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
+                jdlFile.write(run_command)        
+                jdlFile.close()
+                subFile.write("condor_submit %s\n"%jdlName)
+                findex = findex + 1
+                
+                
+subFile.close()
+
+print ("Now run from directory : %s/"%jdlDir)
+

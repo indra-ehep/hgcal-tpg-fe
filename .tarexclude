@@ -1,0 +1,9 @@
+condor
+*.git*
+*.root
+*.log
+AutoDict*
+input/stage2/firmware-data
+input/stage2/EMPinputs
+input/stage1-PRR
+input/arhitecture
