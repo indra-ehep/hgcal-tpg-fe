@@ -257,15 +257,20 @@ int main(int argc, char** argv)
   TH1D *hTrigGen = new TH1D("hTrigGen","Trigger Gen",200, 0.,200.);
   TH1D *hTrigSelGen = new TH1D("hTrigSelGen","Selected Trigger Gen",200, 0.,200.);
   TH1D *hTrigClus = new TH1D("hTrigClus","Trigger Clus",200, 0.,200.);
+  TEfficiency* effTrigGen = new TEfficiency("effTrigGen","Trigger efficiency;p_{T}(GeV);#epsilon",200,0,200);
+  TEfficiency* effTrigClus = new TEfficiency("effTrigClus","Trigger efficiency;p_{T}(GeV);#epsilon",200,0,200);
   TH1D *hLayerE = new TH1D("hLayerE","Layer energy distribution",50, -0.5, 49.5);
   //TH1D *hgenRoZ = new TH1D("hgenRoZ","genJet RoZ",200, 0.,200.);
-  TH1D *hDeltaRGenClus = new TH1D("hDeltaRGenClus","hDeltaRGenClus",500,0,1.0);
+  TH1D *hDeltaRGenClus = new TH1D("hDeltaRGenClus","hDeltaRGenClus",500,0,0.2);
   // TH1D *hDeltaRGenTC = new TH1D("hDeltaRGenTC","hDeltaRGenTC",200,0,1.0);
   // TH1D *hDeltaRTCClus = new TH1D("hDeltaRTCClus","hDeltaRTCClus",200,0,1.0);
-  TH2D *hDeltaRGCPt = new TH2D("hDeltaRGCPt","hDeltaRGCPt",100,0,200.0, 200,0,0.5);
-  TH2D *hDeltaRGCEta = new TH2D("hDeltaRGCEta","hDeltaRGCEta",100,1.5,3.1, 200,0,0.5);
-  TProfile *hDeltaRGCPtProf = new TProfile("hDeltaRGCPtProf","#DeltaR vs genJet-p_{T}",100,0.,200.,0.,1.0);
-  TProfile *hDeltaRGCEtaProf = new TProfile("hDeltaRGCEtaProf","#DeltaR vs genJet-#eta",100,1.5,3.1,0.,1.0);
+  TH2D *hDeltaRGCPt = new TH2D("hDeltaRGCPt","hDeltaRGCPt",100,0,200.0, 100,0,0.1);
+  TH2D *hDeltaRGCEta = new TH2D("hDeltaRGCEta","hDeltaRGCEta",100,1.2,3.3, 100,0,0.1);
+  TH2D *hDeltaRGCPhi = new TH2D("hDeltaRGCPhi","hDeltaRGCPhi",100,-4.,4., 100,0,0.1);
+  TH2D *hDeltaRGCPtEta = new TH2D("hDeltaRGCPtEtai","hDeltaRGCPtEta",100,0.,200., 100, 1.2,3.3);
+  TProfile *hDeltaRGCPtProf = new TProfile("hDeltaRGCPtProf","#DeltaR vs genJet-p_{T}",100,0.,200.,0.,0.2);
+  TProfile *hDeltaRGCEtaProf = new TProfile("hDeltaRGCEtaProf","#DeltaR vs genJet-#eta",100,1.2,3.3,0.,0.2);
+  TProfile *hDeltaRGCPhiProf = new TProfile("hDeltaRGCPhiProf","#DeltaR vs genJet-#phi",100,-4.,4.,0.,0.2);
   
   uint64_t totalEntries = tr->GetEntries();
   if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
@@ -302,9 +307,10 @@ int main(int argc, char** argv)
     tcAvgXYoZ[isect] = new TH2D(Form("tcAvgXYoZ_%u",isect),Form("tcAvgXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
     clusXYoZ[isect] = new TH2D(Form("clusXYoZ_%u",isect),Form("clusXYoZ_%u",isect),100,-1.25,1.25,100,-1.25,1.25);
   }
-  TH2D *deltaGenclus = new TH2D("deltaGenclusAll","deltaGenclusAll",100,-0.25,0.25,100,-0.25,0.25);
-  TH2D *deltaTCclus = new TH2D("deltaTcclusAll","deltaTCclusAll",1000,-0.05,0.05,1000,-0.05,0.05);
-  TH2D *deltaGentc = new TH2D("deltaGentc","deltaGentc",1000,-0.05,0.05,1000,-0.05,0.05);
+  TH2D *deltaGenclus = new TH2D("deltaGenclusAll","deltaGenclusAll",200,-0.25,0.25,200,-0.25,0.25);
+  TH2D *deltaTCclus = new TH2D("deltaTcclusAll","deltaTCclusAll",200,-0.25,0.25,200,-0.25,0.25);
+  TH2D *deltaGenTC = new TH2D("deltaGenTCAll","deltaGenTCAll",200,-0.25,0.25,200,-0.25,0.25);
+  
   TH1D *hClusE = new TH1D("hClusE","hClusE",100,0.0,100.0);
   TH2D *hGenClusE = new TH2D("hGenClusE","hGenClusE",200,0.0,200.0,200,0.0,200.0);
   TH2D *hGenClusE_1 = new TH2D("hGenClusE_1","hGenClusE_1",200,0.0,200.0,200,0.0,200.0);
@@ -507,10 +513,12 @@ int main(int argc, char** argv)
     /////////////////////////////////////////////////////////////////////////////////////////
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
     double totTCpt_posEta = 0.,totTCpt_negEta = 0.;
+    double totTCpt_posEta_layer1 = 0.,totTCpt_negEta_layer1 = 0.;
     uint32_t nofPosEtaTCs = 0, nofNegEtaTCs = 0;
     double tcXoZposEta = 0.,tcYoZposEta = 0., tcXoZnegEta = 0.,tcYoZnegEta = 0.;
     double maxroz_posEta = -1.0, maxroz_negEta = -1.0;
     double tcPhi_posEta = 0.,tcPhi_negEta = 0.;
+    double tcEta_posEta = 0.,tcEta_negEta = 0.;
     //std::vector<TPGTriggerCellWord> vTcw[6];
     std::vector<TPGTCBits> vTcw[6];
     // for(unsigned itco=0;itco<tc_pt->size();itco++){
@@ -603,6 +611,7 @@ int main(int argc, char** argv)
 	tcXoZnegEta += tc_pt->at(itc)*tc_x->at(itc)/tc_z->at(itc) ;
 	tcYoZnegEta += tc_pt->at(itc)*tc_y->at(itc)/tc_z->at(itc) ;
 	tcPhi_negEta += tc_pt->at(itc)*tc_phi->at(itc) ;
+	tcEta_negEta += tc_pt->at(itc)*tc_eta->at(itc) ;
 	nofNegEtaTCs++;
 	tcDxyozsize->Fill( (tc_x->at(itc)/tc_z->at(itc)-xoz_negEta), (tc_y->at(itc)/tc_z->at(itc)-yoz_negEta) );
 	double droz = sqrt( (tc_x->at(itc)/tc_z->at(itc)-xoz_negEta)*(tc_x->at(itc)/tc_z->at(itc)-xoz_negEta) + (tc_y->at(itc)/tc_z->at(itc)-yoz_negEta)*(tc_y->at(itc)/tc_z->at(itc)-yoz_negEta) );
@@ -613,6 +622,7 @@ int main(int argc, char** argv)
 	tcXoZposEta += tc_pt->at(itc)*tc_x->at(itc)/tc_z->at(itc) ;
 	tcYoZposEta += tc_pt->at(itc)*tc_y->at(itc)/tc_z->at(itc) ;
 	tcPhi_posEta += tc_pt->at(itc)*tc_phi->at(itc) ;
+	tcEta_posEta += tc_pt->at(itc)*tc_eta->at(itc) ;
 	nofPosEtaTCs++;
 	tcDxyozsize->Fill( (tc_x->at(itc)/tc_z->at(itc)-xoz_posEta), (tc_y->at(itc)/tc_z->at(itc)-yoz_posEta) );
 	double droz = sqrt( (tc_x->at(itc)/tc_z->at(itc)-xoz_posEta)*(tc_x->at(itc)/tc_z->at(itc)-xoz_posEta) + (tc_y->at(itc)/tc_z->at(itc)-yoz_posEta)*(tc_y->at(itc)/tc_z->at(itc)-yoz_posEta) );
@@ -629,7 +639,7 @@ int main(int argc, char** argv)
     //rearrgdtcs.clear();
     if(pt_negEta>pt_TCThresh) tcMaxroz->Fill(maxroz_negEta,totTCpt_negEta);
     if(pt_posEta>pt_TCThresh) tcMaxroz->Fill(maxroz_posEta,totTCpt_posEta);
-    
+
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
@@ -695,11 +705,13 @@ int main(int argc, char** argv)
       double avgXoZ = (genjet_eta->at(ijet) < 0) ? tcXoZnegEta/tcPtSum : tcXoZposEta/tcPtSum ;
       double avgYoZ = (genjet_eta->at(ijet) < 0) ? tcYoZnegEta/tcPtSum : tcYoZposEta/tcPtSum ;
       double avgPhi = (genjet_eta->at(ijet) < 0) ? tcPhi_negEta/tcPtSum : tcPhi_posEta/tcPtSum ;
+      double avgEta = (genjet_eta->at(ijet) < 0) ? tcEta_negEta/tcPtSum : tcEta_posEta/tcPtSum ;
       double gjroz = 1/sinh(genjet_eta->at(ijet)) ; //tan(2*atan(exp(-1.0*genjet_eta->at(ijet))));
       double gjxoz = gjroz*cos(genjet_phi->at(ijet));
       double gjyoz = gjroz*sin(genjet_phi->at(ijet));
       double avgRoZ = sqrt((avgXoZ-gjxoz)*(avgXoZ-gjxoz) + (avgYoZ-gjyoz)*(avgYoZ-gjyoz));
-      
+      bool hasFound = false;
+      double cluspt = genjet_pt->at(ijet);
       hTrigGen->Fill(genjet_pt->at(ijet));
       for (uint32_t isect = minsect ; isect < maxsect ; isect++ ){
 	for(TPGCluster const& clf : vCld[isect]){
@@ -742,6 +754,8 @@ int main(int argc, char** argv)
 	    //===============
 	    deltaGenclus->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
 	    deltaGenclusSeg[isect]->Fill(clf.getGlobalEtaRad(isect)-genjet_eta->at(ijet), clf.getGlobalPhiRad(isect) - genjet_phi->at(ijet));
+	    deltaGenTC->Fill( (avgEta - genjet_eta->at(ijet)), (avgPhi - genjet_phi->at(ijet)));
+	    deltaTCclus->Fill( (clf.getGlobalEtaRad(isect) - avgEta) , (clf.getGlobalPhiRad(isect) - avgPhi));	    
 	    deltaGenclusXYoZSeg[isect]->Fill( (clf.getGlobalXOverZF(isect) - gjxoz), (clf.getGlobalYOverZF(isect) - gjyoz) );
 	    deltaGenTCXYoZSeg[isect]->Fill( (avgXoZ - gjxoz), (avgYoZ - gjyoz) );
 	    deltaTCclusXYoZSeg[isect]->Fill( (clf.getGlobalXOverZF(isect) - avgXoZ), (clf.getGlobalYOverZF(isect) - avgYoZ) );
@@ -751,7 +765,7 @@ int main(int argc, char** argv)
 	    //===============
 	    deltaGenClusDRoZRDPhioZ[isect]->Fill( gjroz*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)), (clf.getGlobalRhoOverZF(isect) - gjroz)  );
 	    deltaGenClusRotatedDRoZRDPhioZ[isect]->Fill( gjroz*(clf.getGlobalPhiRad(isect)-genjet_phi->at(ijet)), (clf.getGlobalRhoOverZF(isect)*clf.getGlobalPhiRad(isect) - gjroz*genjet_phi->at(ijet)) );
-	    deltaGenTCDRoZRDPhioZ[isect]->Fill( gjroz*(avgPhi-genjet_phi->at(ijet)), (avgRoZ - gjroz)  );
+	    deltaGenTCDRoZRDPhioZ[isect]->Fill( gjroz*(avgPhi-genjet_phi->at(ijet)), avgRoZ  );
 	    deltaTCClusDRoZRDPhioZ[isect]->Fill( avgRoZ*(clf.getGlobalPhiRad(isect)-avgPhi), (clf.getGlobalRhoOverZF(isect) - avgRoZ)  );
 	    //===============	    
 	    deltaGenClusDRoZVz[isect]->Fill( vtx_z, (clf.getGlobalRhoOverZF(isect) - gjroz)  );
@@ -760,14 +774,20 @@ int main(int argc, char** argv)
 	    hDeltaRGCPt->Fill(genjet_pt->at(ijet), deltaR); 
 	    hDeltaRGCEta->Fill(abs(genjet_eta->at(ijet)), deltaR); 
 	    hDeltaRGCPtProf->Fill(genjet_pt->at(ijet), deltaR); 
-	    hDeltaRGCEtaProf->Fill(abs(genjet_eta->at(ijet)), deltaR); 
+	    hDeltaRGCEtaProf->Fill(abs(genjet_eta->at(ijet)), deltaR);
+	    hDeltaRGCPhi->Fill(genjet_phi->at(ijet), deltaR); 
+	    hDeltaRGCPhiProf->Fill(genjet_phi->at(ijet), deltaR);
+	    hDeltaRGCPtEta->Fill(genjet_pt->at(ijet), abs(genjet_eta->at(ijet)), deltaR);
 	    //===============
 	    hTrigSelGen->Fill(genjet_pt->at(ijet));
 	    hTrigClus->Fill(clf.getEnergyGeV());
+	    hasFound = true;
+	    cluspt = clf.getEnergyGeV();
 	  }
 	}	
       }//isect loop
-      
+      effTrigGen->Fill(hasFound,genjet_pt->at(ijet));
+      effTrigClus->Fill(hasFound,cluspt);
     }//jet from decay of pions from tau
     
     hEt->Fill(tot_tc_pt);
@@ -819,9 +839,13 @@ int main(int argc, char** argv)
   }//event loop
   
   std::string outname = "stage2SemiEmulator_" + outputfile_extn + "_" + index;
+
+  effTrigGen->SetStatisticOption(TEfficiency::kBJeffrey);
+  effTrigClus->SetStatisticOption(TEfficiency::kBJeffrey);
   
   TH1D *hTrigEff = (TH1D *) hTrigSelGen->Clone("hTrigEff");
   hTrigEff->Divide(hTrigGen);
+
   TH1D *hTrigEffClusE = (TH1D *) hTrigClus->Clone("hTrigEffClusE");
   hTrigEffClusE->Divide(hTrigGen);
   
@@ -840,14 +864,20 @@ int main(int argc, char** argv)
   hTrigClus->Write();
   hTrigEff->Write();
   hTrigEffClusE->Write();
+  effTrigGen->Write();
+  effTrigClus->Write();
   hLayerE->Write();
   hPhi->Write();
   hPhiDeg->Write();
   hDeltaRGenClus->Write();
   hDeltaRGCPt->Write();
   hDeltaRGCEta->Write();
+  hDeltaRGCPhi->Write();
   hDeltaRGCPtProf->Write();
   hDeltaRGCEtaProf->Write();
+  hDeltaRGCPhiProf->Write();
+  hDeltaRGCPtEta->Write();
+  
   hTCPhiCorr->Write();
   tcxyAll->Write();
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) tcxy[isect]->Write();
@@ -865,7 +895,8 @@ int main(int argc, char** argv)
   for (uint32_t isect = 0 ; isect < 6 ; isect++ ) hTCRozBits[isect]->Write();
   
   deltaGenclus->Write();
-  deltaGentc->Write();
+  deltaGenTC->Write();
+  deltaTCclus->Write();
   hClusE->Write();
   hGenClusE->Write();
   hGenTCE->Write();

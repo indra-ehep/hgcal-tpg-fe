@@ -16,7 +16,7 @@ samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VB
 ntuple_path = ["ntuples"]
 
 #triangle_side_list = ["0.016", "0.03", "0.045"]
-triangle_side_list = ["0.06", "0.075", "0.090", "0.105"]
+triangle_side_list = ["0.016", "0.03", "0.045", "0.06", "0.075", "0.090", "0.105"]
 
 #----------------------------------------
 #Create run and log directory
@@ -113,7 +113,7 @@ for sample in samplelist_Ideal:
                 jdlFile.close()
                 subFile.write("condor_submit %s\n"%jdlName)
                 findex = findex + 1
-
+                
 # for sample in samplelist_PU0:
 #     for ntuplepath in ntuple_path:
 #         for sidelength in triangle_side_list:
