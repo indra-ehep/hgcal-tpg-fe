@@ -90,8 +90,8 @@ ls -lah
 ##########################################################
 # run
 ##########################################################
-echo "./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn > out_${$sampletype}_${ofextn}_${clusproc}.log 2>&1"
-./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn > out_${sampletype}_${ofextn}_${clusproc}.log 2>&1
+echo "./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype > out_${$sampletype}_${ofextn}_${clusproc}.log 2>&1"
+./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype > out_${sampletype}_${ofextn}_${clusproc}.log 2>&1
 ##########################################################
 
 
@@ -99,6 +99,7 @@ echo "./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn > o
 # transfer output file
 ##########################################################
 rsync -avP  stage2SemiEmulator_${ofextn}_${ofindex}.root $condorOutDir
+rsync -avP  local.tar.gz $condorOutDir/../
 rsync -avP  out_${sampletype}_${ofextn}_${clusproc}.log $HOME/EmulatorChain/hgcal-tpg-fe/condor/tmpLog_s2emu_iter$iloop/logs/
 printf "Done transfer: ";/bin/date
 cd $testdir
