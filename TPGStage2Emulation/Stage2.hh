@@ -430,7 +430,8 @@ namespace TPGStage2Emulation
 
     enum
     {
-      _nBins = 49
+      //_nBins = 49
+      _nBins = 74
     };
 
     ~Stage2(){

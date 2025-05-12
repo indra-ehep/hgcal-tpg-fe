@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "26"
+iloop= "2"
 
 #samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 samplelist_Ideal = ["SingleEle_Ideal_PU0"]
@@ -20,47 +20,43 @@ samplelist_PU0_Emyr = ["singlePion_PU0"]
 
 samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realistic_PU200", "MinBias_realistic_PU140"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "vbfHInv_200PU"]
-#samplelist_PU200_Emyr = ["doubleElectron_PU200"]
+samplelist_PU200_Emyr = ["doubleElectron_PU200"]
 #samplelist_PU200_Emyr = ["singlePion_PU200", "vbfHInv_200PU"]
-samplelist_PU200_Emyr = ["vbfHInv_200PU"]
-#samplelist_PU200_Emyr = ["vbfHInv_200PU", "singlePion_PU200"]
+#samplelist_PU200_Emyr = ["vbfHInv_200PU"]
 
 ntuple_path = ["ntuples"]
 
 #triangle_side_list = ["0.016", "0.03", "0.045", "0.06", "0.075", "0.090", "0.105"]
-#triangle_side_list = ["0.016", "0.03", "0.045"]
+triangle_side_list = ["0.016", "0.03", "0.045"]
 #triangle_side_list = ["0.0113", "0.016", "0.0226"]
 #triangle_side_list = ["0.03", "0.045"]
 #triangle_side_list = ["0.0113"]
-triangle_side_list = ["0.016"]
+#triangle_side_list = ["0.016"]
 
 #----------------------------------------
 #Create run and log directory
 #----------------------------------------
-jdlDir = 'tmpLog_s2emu_iter%s'%iloop
+jdlDir = 'tmpLog_s2reso_iter%s'%iloop
 if not os.path.exists("%s/logs"%jdlDir):
     os.makedirs("%s/logs"%jdlDir)
 condorLogDir = "logs"
-os.system("cp runStage2Emul.sh %s/"%jdlDir)
+os.system("cp runStage2Reso.sh %s/"%jdlDir)
 
 # lxsetup
 common_command = \
-'executable = runStage2Emul.sh\n\
-+MaxRuntime = 17999\n\
+'executable = runStage2Reso.sh\n\
++MaxRuntime = 10799\n\
 request_memory = 4000\n\
 output = %s/log_$(cluster)_$(process).stdout\n\
 error  = %s/log_$(cluster)_$(process).stderr\n\
 log    = %s/log_$(cluster)_$(process).condor\n\n'%(condorLogDir, condorLogDir, condorLogDir)
 
-# +MaxRuntime = 18000\n\ 5hours
-# +MaxRuntime = 10799\n\ <3hours
-    
 # lxplus setup
 # common_command = \
 # 'Universe   = vanilla\n\
 # should_transfer_files = YES\n\
 # when_to_transfer_output = ON_EXIT\n\
-# Transfer_Input_Files = local.tar.gz, runStage2Emul.sh\n\
+# Transfer_Input_Files = local.tar.gz, runStage2Reso.sh\n\
 # x509userproxy = $ENV(X509_USER_PROXY)\n\
 # use_x509userproxy = true\n\
 # +BenchmarkJob = True\n\
@@ -184,31 +180,7 @@ nevents=0
 #                 findex = findex + 1
 
 ########## Ntuples from Emyr
-# for sample in samplelist_PU0_Emyr:
-#     for sidelength in triangle_side_list:
-#         dirpath = '%s/stage2_emulator_tests/Emyr/%s/'%(os.environ["HOME"],sample)
-#         findarg = '%s -name \"*.root\"'%(dirpath)
-#         p = subprocess.Popen([("find %s "%findarg)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
-#         filelist, errors = p.communicate()
-#         filelist = filelist.split('\n')
-#         filelist.remove("")
-#         nFiles = len(filelist)
-#         findex  = 0
-#         for fname in filelist:
-#             print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
-#             fsidelen = float(sidelength)
-#             fsidelen_index = int(fsidelen*1000)
-#             ofextn = 'ntuples_%s'%(fsidelen_index)
-#             jdlName = 'submitJobs_%s_ntuples_%s_%s.jdl'%(sample,fsidelen_index,findex)
-#             jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
-#             jdlFile.write(common_command)
-#             run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
-#             jdlFile.write(run_command)        
-#             jdlFile.close()
-#             subFile.write("condor_submit %s\n"%jdlName)
-#             findex = findex + 1
-
-for sample in samplelist_PU200_Emyr:
+for sample in samplelist_PU0_Emyr:
     for sidelength in triangle_side_list:
         dirpath = '%s/stage2_emulator_tests/Emyr/%s/'%(os.environ["HOME"],sample)
         findarg = '%s -name \"*.root\"'%(dirpath)
@@ -231,7 +203,31 @@ for sample in samplelist_PU200_Emyr:
             jdlFile.close()
             subFile.write("condor_submit %s\n"%jdlName)
             findex = findex + 1
-            
+                
+# for sample in samplelist_PU200_Emyr:
+#     for sidelength in triangle_side_list:
+#         dirpath = '%s/stage2_emulator_tests/Emyr/%s/'%(os.environ["HOME"],sample)
+#         findarg = '%s -name \"*.root\"'%(dirpath)
+#         p = subprocess.Popen([("find %s "%findarg)], stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+#         filelist, errors = p.communicate()
+#         filelist = filelist.split('\n')
+#         filelist.remove("")
+#         nFiles = len(filelist)
+#         findex  = 0
+#         for fname in filelist:
+#             print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
+#             fsidelen = float(sidelength)
+#             fsidelen_index = int(fsidelen*1000)
+#             ofextn = 'ntuples_%s'%(fsidelen_index)
+#             jdlName = 'submitJobs_%s_ntuples_%s_%s.jdl'%(sample,fsidelen_index,findex)
+#             jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
+#             jdlFile.write(common_command)
+#             run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
+#             jdlFile.write(run_command)        
+#             jdlFile.close()
+#             subFile.write("condor_submit %s\n"%jdlName)
+#             findex = findex + 1
+                
 subFile.close()
 
 print ("Now run from directory : %s/"%jdlDir)

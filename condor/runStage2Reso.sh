@@ -60,7 +60,7 @@ random=${RANDOM}
 # Set the output and running/execution directory
 ###########################################################
 outdir=$sampletype
-outpath=Result_iter$iloop/$outdir
+outpath=Reso_iter$iloop/$outdir
 condorOutDir=$HOME/stage2_emulation_results/$outpath
 testdir=$rundir/$outpath
 
@@ -81,7 +81,7 @@ fi
 ##########################################################
 #mv local.tar.gz $testdir/
 cd $testdir
-rsync -avP  $HOME/EmulatorChain/hgcal-tpg-fe/condor/tmpLog_s2emu_iter$iloop/local.tar.gz .
+rsync -avP  $HOME/EmulatorChain/hgcal-tpg-fe/condor/tmpLog_s2reso_iter$iloop/local.tar.gz .
 tar --strip-components=1 -zxf local.tar.gz
 ls -lah
 ##########################################################
@@ -90,17 +90,17 @@ ls -lah
 ##########################################################
 # run
 ##########################################################
-echo "stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype \> out_${$sampletype}_${ofextn}_${clusproc}.log "
-./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype > out_${sampletype}_${ofextn}_${clusproc}.log 2>&1
+echo "Args : $infile $ofindex $nevents $sidelength $ofextn $sampletype"
+./CalcResolution.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype > out_${sampletype}_${ofextn}_${clusproc}.log 2>&1
 ##########################################################
 
 
 ##########################################################
 # transfer output file
 ##########################################################
-rsync -avP  stage2SemiEmulator_${ofextn}_${ofindex}.root $condorOutDir
+rsync -avP  CalcResolution_${ofextn}_${ofindex}.root $condorOutDir
 rsync -avP  local.tar.gz $condorOutDir/../
-rsync -avP  out_${sampletype}_${ofextn}_${clusproc}.log $HOME/EmulatorChain/hgcal-tpg-fe/condor/tmpLog_s2emu_iter$iloop/logs/
+rsync -avP  out_${sampletype}_${ofextn}_${clusproc}.log $HOME/EmulatorChain/hgcal-tpg-fe/condor/tmpLog_s2reso_iter$iloop/logs/
 printf "Done transfer: ";/bin/date
 cd $testdir
 printf "Job Done at: ";/bin/date
