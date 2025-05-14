@@ -34,7 +34,8 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
         nStream = iChn % 2;
         nTC = (iChn - nStream) / 2;
       }
-      theTCVec.emplace_back(1, 1, 0, up.channelNumber(nStream, nTC), 0, up.unpackedChannelEnergy(nStream, nTC));
+      //theTCVec.emplace_back(1, 1, 0, up.channelNumber(nStream, nTC), 0, up.unpackedChannelEnergy(nStream, nTC));
+      theTCVec.emplace_back(1, 1, 0, up.channelNumber(nStream, nTC), 0, up.channelEnergy(nStream, nTC));//FW output gives packed channel energy
       theTCVec.back().setModuleId(theModId_);
     }
   }
@@ -159,19 +160,24 @@ int main(int argc, char** argv) {
 
   l1t::demo::BoardData boardData("ExampleBoard");
   for (auto theEmpOutput : empRx) {
-    unsigned firstnr = theEmpOutput.first;
+    unsigned firstnr = theEmpOutput.first;//First link number
     l1t::demo::BoardData::Channel channelData_1;
     l1t::demo::BoardData::Channel channelData_2;
     bool isFirstEvent = true;
+    unsigned eventNumber = 0;
     for (auto theData : theEmpOutput.second) {
       unsigned iFr = 0;
       for (unsigned i = 0; i < 7; i++) {
         l1t::demo::Frame frame;
-        frame.data = theData[i];
-        frame.valid = true;
         frame.startOfPacket = (iFr == 0);
         frame.startOfOrbit = (isFirstEvent == true && iFr == 0);
         frame.endOfPacket = (iFr == 6);
+        unsigned thisFramesData = 0;
+        if(iFr==0 && isFirstEvent == true) thisFramesData = ((15<<28)|theData[i]);//Addition of the BX counter metadata if the event is not the first
+        else if(iFr==0) thisFramesData = (((eventNumber%8)<<28)|theData[i]);//Addition of the BX counter metadata if the event is not the first
+        else thisFramesData = theData[i];
+        frame.data = thisFramesData;
+        frame.valid = true;
         channelData_1.push_back(frame);
         iFr++;
       }
@@ -185,11 +191,11 @@ int main(int argc, char** argv) {
       iFr = 0;
       for (unsigned i = 7; i < 14; i++) {
         l1t::demo::Frame frame;
-        frame.data = theData[i];
-        frame.valid = true;
         frame.startOfPacket = (iFr == 0);
         frame.endOfPacket = (iFr == 6);
         frame.startOfOrbit = (isFirstEvent == true && iFr == 0);
+        frame.data = theData[i];
+        frame.valid = true;
         channelData_2.push_back(frame);
         iFr++;
       }
@@ -201,11 +207,12 @@ int main(int argc, char** argv) {
         channelData_2.push_back(frame);
       }
       isFirstEvent = false;
+      eventNumber ++;
     }
     boardData.add(theEmpOutput.first * 2, channelData_1);
     boardData.add(theEmpOutput.first * 2 + 1, channelData_2);
   }
-  write(boardData, "stage1-PRR/RandomlyGenerated.txt.gz", l1t::demo::FileFormat::EMPv2);
+  write(boardData, "stage1-PRR/RandomlyGenerated.txt", l1t::demo::FileFormat::EMPv2);
 
   return total_error_code;
 }
