@@ -38,4 +38,6 @@ In the FW root trees, we store the 'output event' = the bunch crossing found in 
 ## Other notes
 To run an EMP capture using the EMP input file (for producing FW output tx file), see the instructions provided during the HGCAL BE meetings.
 
+Note that at the moment, the EMP output tx file (produced when running on hardware) is produced with a capture sequence in which we do not use the PlayLoop setting (ie we run only once). When running with PlayLoop, more differences between the emulator and FW output may be spotted due to the wrapping procedure (ie there will be nonempty events in the output file at bunch crossings before the data from input bx 0 start arriving in the output file)
+
 Tests so far have been performed with this version of the firmware: `stage1_tc_chain_18mar_llrgrhgtrig_in2p3_fr_250325_1022`
