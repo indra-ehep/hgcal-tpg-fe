@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
 
   //The following loop largely copied from GenerateEmpRxFile, to get some random data
   unsigned bxi;
-  unsigned obx(8);
+  unsigned obx(0);
 
   for (unsigned ibx(0); ibx < 128; ibx++) {
     std::vector<TPGBEDataformat::UnpackerOutputStreamPair> theOutputStreams;
@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
           unsigned nTc = fwCfg.numberOfTCs(lp, up);
 
           TPGFEModuleEmulation::ECONTEmulation::generateRandomTcRawData(ibx, type, nTc, vTc);
-
+          
           TPGFEModuleEmulation::ECONTEmulation::convertToElinkData(bxi, vTc, vEl.data() + fwCfg.firstElink(lp, up));
 
           //Now pass the randomly created data to the unpacker.
@@ -172,11 +172,7 @@ int main(int argc, char** argv) {
         frame.startOfPacket = (iFr == 0);
         frame.startOfOrbit = (isFirstEvent == true && iFr == 0);
         frame.endOfPacket = (iFr == 6);
-        unsigned thisFramesData = 0;
-        if(iFr==0 && isFirstEvent == true) thisFramesData = ((15<<28)|theData[i]);//Addition of the BX counter metadata if the event is not the first
-        else if(iFr==0) thisFramesData = (((eventNumber%8)<<28)|theData[i]);//Addition of the BX counter metadata if the event is not the first
-        else thisFramesData = theData[i];
-        frame.data = thisFramesData;
+        frame.data = theData[i];
         frame.valid = true;
         channelData_1.push_back(frame);
         iFr++;
