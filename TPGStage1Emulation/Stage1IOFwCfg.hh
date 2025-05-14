@@ -22,7 +22,7 @@ public:
 
     // Defaults here temporarily
     for(unsigned lp(0);lp<MaximumLpgbtPairs;lp++) {
-      if(lp==10 || lp==11 || lp==14 || lp==15) {
+      if(lp==0 || lp==1 || lp==62 || lp==63) {
 	for(unsigned j(0);j<MaximumUnpackersPerLpgbtPair;j++) {
 	  _unpackerType[lp][j]=TPGFEDataformat::Unknown;
 	  _unpackerElink0[lp][j]=14;

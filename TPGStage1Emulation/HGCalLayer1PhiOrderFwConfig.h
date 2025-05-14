@@ -169,11 +169,8 @@ namespace l1thgcfirmware {
             tdaq_slots_per_bin_per_mod_[i + iModGroup * 5].push_back(std::make_pair(j, 0));
           }
         }
-        for (unsigned j = 0; j < 7; j++) {  //STC4 (mod 2) - 7 bins, 2TC/bin bin 1-5; 1TC/bin rest
+        for (unsigned j = 0; j < 4; j++) {  //STC4 (mod 2) - 4 bins, 1TC/bin (NB this only retrieves a part of the TCs that are in the input)
           tdaq_slots_per_bin_per_mod_[2 + iModGroup * 5].push_back(std::make_pair(j, 0));
-          if (j < 5) {
-            tdaq_slots_per_bin_per_mod_[2 + iModGroup * 5].push_back(std::make_pair(j, 1));
-          }
         }
       } 
     }

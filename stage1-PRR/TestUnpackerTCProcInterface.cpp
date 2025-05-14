@@ -37,7 +37,8 @@ l1thgcfirmware::HGCalTriggerCellSACollection convertOSPToTCs(std::vector<TPGBEDa
             nStream = iChn%2;
             nTC = (iChn-nStream)/2;
         }
-        theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.unpackedChannelEnergy(nStream,nTC));
+        //theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.unpackedChannelEnergy(nStream,nTC));
+        theTCVec.emplace_back(1,1,0,up.channelNumber(nStream,nTC),0,up.channelEnergy(nStream,nTC));//FW saves packed channel energy so use that here too
         theTCVec.back().setModuleId(theModId_);
 
       }
@@ -66,7 +67,7 @@ int main(int argc, char** argv) {
   evtstree.Branch("Energy", &energy_,"energy_/L");
 
   //std::string inputFileName = "data_v11_rx_MsCounter/rx_summary.txt";
-  std::string inputFileName = "stage1-PRR/RandomlyGenerated.txt";
+  std::string inputFileName = "stage1-PRR/RandomGenWithBXBits_Corrected.txt";
 
   l1t::demo::BoardData inputs = l1t::demo::read( inputFileName, l1t::demo::FileFormat::EMPv2 );
 
