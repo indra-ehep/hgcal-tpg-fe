@@ -21,7 +21,6 @@
 #include "Stage2.hh"
 #include "CMSSWCode/DataFormats/L1THGCal/interface/HGCalCluster_HW.h"
 
-
 int main(int argc, char** argv)
 {
   

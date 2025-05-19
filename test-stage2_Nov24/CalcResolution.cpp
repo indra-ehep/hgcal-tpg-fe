@@ -44,11 +44,12 @@ bool comp(TCOrder x, TCOrder y) {
 
 bool GetHistoBin(TH2F *h, float eta, float et, int& binX, int& binY)
 {
+  eta = abs(eta);
   double minX = h->GetXaxis()->GetBinCenter(1);
   double maxX = h->GetXaxis()->GetBinCenter(h->GetNbinsX());
   double minY = h->GetYaxis()->GetBinCenter(1);
   double maxY = h->GetYaxis()->GetBinCenter(h->GetNbinsY());
-
+  
   binX = -1;
   if(eta <= minX)
     binX = 1;
@@ -56,7 +57,7 @@ bool GetHistoBin(TH2F *h, float eta, float et, int& binX, int& binY)
     binX = h->GetXaxis()->FindBin(maxX);
   else
     binX = h->GetXaxis()->FindBin(eta);
-
+  
   binY = -1;
   if(et <= minY)
     binY = 1;
@@ -64,7 +65,7 @@ bool GetHistoBin(TH2F *h, float eta, float et, int& binX, int& binY)
     binY = h->GetYaxis()->FindBin(maxY);
   else
     binY = h->GetYaxis()->FindBin(et);
-
+  
   return true;
 }
 
@@ -281,10 +282,35 @@ int main(int argc, char** argv)
   std::vector<float>  *tc_data = 0 ;
   tr->SetBranchStatus("tc_data",1);
   tr->SetBranchAddress("tc_data" , &tc_data);
+
+  std::vector<float>  *tc_subdet = 0 ;
+  tr->SetBranchStatus("tc_subdet",1);
+  tr->SetBranchAddress("tc_subdet" , &tc_subdet);
   
+  std::vector<float>  *tc_wafertype = 0 ;
+  tr->SetBranchStatus("tc_wafertype",1);
+  tr->SetBranchAddress("tc_wafertype" , &tc_wafertype);
+
   std::vector<float>  *tc_uncompressedCharge = 0 ;
   tr->SetBranchStatus("tc_uncompressedCharge",1);
   tr->SetBranchAddress("tc_uncompressedCharge" , &tc_uncompressedCharge);
+
+  Int_t cl3d_n = 0 ;
+  tr->SetBranchStatus("cl3d_n",1);
+  tr->SetBranchAddress("cl3d_n" , &cl3d_n);
+
+  std::vector<float>  *cl3d_pt = 0 ;
+  tr->SetBranchStatus("cl3d_pt",1);
+  tr->SetBranchAddress("cl3d_pt" , &cl3d_pt);
+  
+  std::vector<float>  *cl3d_eta = 0 ;
+  tr->SetBranchStatus("cl3d_eta",1);
+  tr->SetBranchAddress("cl3d_eta" , &cl3d_eta);
+  
+  std::vector<float>  *cl3d_phi = 0 ;
+  tr->SetBranchStatus("cl3d_phi",1);
+  tr->SetBranchAddress("cl3d_phi" , &cl3d_phi);
+
   
   std::cout << "Total number of Events: " << tr->GetEntries() << std::endl;
   
@@ -308,19 +334,32 @@ int main(int argc, char** argv)
   // 	               220., 240., 260., 280., 300.,
   // 	               330., 360., 390., 420.,
   //                      440., 480., 520.}; 
-
+  
+  // const int nJetEtaBins = 31;
+  // Float_t jetEtaBin[32] = { -3.212,
+  //                           -3.034, -2.856, -2.678, -2.500, -2.322, 
+  // 			    -2.172, -2.043, -1.930, -1.830, -1.740, 
+  // 			    -1.653, -1.566, -1.479, -1.392, -1.305, 
+  // 			    1.305, 1.392, 1.479, 1.566, 1.653, 
+  // 			    1.740, 1.830, 1.930, 2.043, 2.172, 
+  // 			    2.322, 2.5, 2.678, 2.856, 3.034,
+  // 			    3.212};
+  // const int nJetPtBins = 43;
+  // Float_t jetPtBin[44] = {0, 15., 16., 18., 20., 22., 25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 75., 80., 85., 90., 95., 100.,  
+  //                      110., 120., 130., 140., 150., 160., 170., 180., 190., 200.,
+  // 	               220., 240., 260., 280., 300.,
+  // 	               330., 360., 390., 420.,
+  //                      440., 480., 520.};
   
   //Eta : outermost(Sci) = 1.321, innermost(Si) =  3.152
-  
-  const int nJetEtaBins = 31;
-  Float_t jetEtaBin[32] = { -3.212,
-                            -3.034, -2.856, -2.678, -2.500, -2.322, 
-			    -2.172, -2.043, -1.930, -1.830, -1.740, 
-			    -1.653, -1.566, -1.479, -1.392, -1.305, 
-			    1.305, 1.392, 1.479, 1.566, 1.653, 
-			    1.740, 1.830, 1.930, 2.043, 2.172, 
-			    2.322, 2.5, 2.678, 2.856, 3.034,
-			    3.212};
+  //use delta-Eta = 0.0873 (or mutltiple) and make range for |\eta|
+  float deltaEta = 0.0873;
+  const int nJetEtaBins = 21;
+  Float_t jetEtaBin[22];
+  jetEtaBin[0] = 1.321;
+  for(int ieta=1;ieta<=nJetEtaBins;ieta++)
+    jetEtaBin[ieta] = jetEtaBin[0] + ieta*deltaEta;
+  //jetEtaBin[21] would be 3.1543;
   
   const int nJetPtBins = 43;
   Float_t jetPtBin[44] = {0, 15., 16., 18., 20., 22., 25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 75., 80., 85., 90., 95., 100.,  
@@ -329,11 +368,10 @@ int main(int argc, char** argv)
 	               330., 360., 390., 420.,
                        440., 480., 520.};
   
-  int nPtResoBins = 200;
-  
-  TH1F ***hGenClusPtReso, ***hTCClusPtReso;
-  TH1F **hGenClusPtReso1D, **hGenTCPtReso1D, **hTCClusPtReso1D;
-  
+  int nPtResoBins = 400;
+
+  //////////////// 2D pt,eta histos ////////////////////////////
+  TH1F ***hGenClusPtReso, ***hTCClusPtReso;  
   hGenClusPtReso = new TH1F**[nJetEtaBins];
   hTCClusPtReso = new TH1F**[nJetEtaBins];
   for(int ieta=0;ieta<nJetEtaBins;ieta++){
@@ -342,30 +380,165 @@ int main(int argc, char** argv)
     for(int ipt=0;ipt<nJetPtBins;ipt++){
       hGenClusPtReso[ieta][ipt] = new TH1F(Form("hGenClusPtReso_%d_%d",ieta,ipt),
 					   Form("hGenClusPtReso #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
-					   nPtResoBins,-200.,200.);
+					   nPtResoBins,-400.,400.);
       hTCClusPtReso[ieta][ipt] = new TH1F(Form("hTCClusPtReso_%d_%d",ieta,ipt),
 					  Form("hTCClusPtReso #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
-					  nPtResoBins,-200.,200.);
+					  nPtResoBins,-400.,400.);
     }// jet et
   }//jet eta
+  //////////////////////////////////////////////////////////
+
+  //////////////// 2D pt,eta TC ELoss ////////////////////////////
+  TH1F ***hTCElossCE_E,***hTCElossCE_H;
+  hTCElossCE_E = new TH1F**[nJetEtaBins];
+  hTCElossCE_H = new TH1F**[nJetEtaBins];
+  for(int ieta=0;ieta<nJetEtaBins;ieta++){
+    hTCElossCE_E[ieta] = new TH1F*[nJetPtBins];
+    hTCElossCE_H[ieta] = new TH1F*[nJetPtBins];
+    for(int ipt=0;ipt<nJetPtBins;ipt++){
+      hTCElossCE_E[ieta][ipt] = new TH1F(Form("hTCElossCE_E_%d_%d",ieta,ipt),
+					   Form("hTCElossCE_E #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+					   nPtResoBins,-400.,400.);
+      hTCElossCE_H[ieta][ipt] = new TH1F(Form("hTCElossCE_H_%d_%d",ieta,ipt),
+					  Form("hTCElossCE_H #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+					  nPtResoBins,-400.,400.);
+    }// jet et
+  }//jet eta
+  //////////////////////////////////////////////////////////
+
+  //////////////// 3D pt,eta TC ELoss ////////////////////////////
+  TH1F ****hTCElossCE_E_3D,****hTCElossCE_H_3D;
+  hTCElossCE_E_3D = new TH1F***[7];
+  hTCElossCE_H_3D = new TH1F***[7];
+  for(int idet=0;idet<7;idet++){
+    hTCElossCE_E_3D[idet] = new TH1F**[nJetEtaBins];
+    hTCElossCE_H_3D[idet] = new TH1F**[nJetEtaBins];
+    for(int ieta=0;ieta<nJetEtaBins;ieta++){
+      hTCElossCE_E_3D[idet][ieta] = new TH1F*[nJetPtBins];
+      hTCElossCE_H_3D[idet][ieta] = new TH1F*[nJetPtBins];
+      for(int ipt=0;ipt<nJetPtBins;ipt++){
+	hTCElossCE_E_3D[idet][ieta][ipt] = new TH1F(Form("hTCElossCE_E_3D_%d_%d_%d",idet,ieta,ipt),
+						 Form("hTCElossCE_E_3D det:%d, #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",idet,jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+						 nPtResoBins,-400.,400.);
+	hTCElossCE_H_3D[idet][ieta][ipt] = new TH1F(Form("hTCElossCE_H_3D_%d_%d_%d",idet,ieta,ipt),
+						    Form("hTCElossCE_H_3D det:%d, #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",idet,jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+						    nPtResoBins,-400.,400.);
+      }// jet et
+    }//jet eta
+  }//idet loop
+  //////////////////////////////////////////////////////////
+
+  //////////////// 2D pt,eta TC ELoss ////////////////////////////
+  TH1F **hTCElossCEEID, **hTCElossCEHID ;
+  hTCElossCEEID = new TH1F*[nJetEtaBins];
+  hTCElossCEHID = new TH1F*[nJetEtaBins];
+  for(int ieta=0;ieta<nJetEtaBins;ieta++){
+    hTCElossCEEID[ieta] = new TH1F(Form("hTCElossCEEID_%d",ieta),
+				   Form("hTCElossCEEID #eta:(%4.3f-%4.3f)",jetEtaBin[ieta],jetEtaBin[ieta+1]),
+				   nPtResoBins,-400.,400.);
+    hTCElossCEHID[ieta] = new TH1F(Form("hTCElossCEHID_%d",ieta),
+				   Form("hTCElossCEHID #eta:(%4.3f-%4.3f)",jetEtaBin[ieta],jetEtaBin[ieta+1]),
+				   nPtResoBins,-400.,400.);
+  }//jet eta
+  //////////////////////////////////////////////////////////
+
+  //////////////// 1D pt //////////////////////////////////
+  TH1F **hGenClusPtReso1D, **hGenTCPtReso1D, **hTCClusPtReso1D;
   hGenClusPtReso1D = new TH1F*[nJetPtBins];
   hGenTCPtReso1D = new TH1F*[nJetPtBins];
   hTCClusPtReso1D = new TH1F*[nJetPtBins];
   for(int ipt=0;ipt<nJetPtBins;ipt++){
     hGenClusPtReso1D[ipt] = new TH1F(Form("hGenClusPtReso1D_%d",ipt),
 				     Form("hGenClusPtReso1D p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
-				     nPtResoBins,-200.,200.);
+				     nPtResoBins,-400.,400.);
     hGenTCPtReso1D[ipt] = new TH1F(Form("hGenTCPtReso1D_%d",ipt),
 				     Form("hGenTCPtReso1D p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
-				     nPtResoBins,-200.,200.);
+				     nPtResoBins,-400.,400.);
     hTCClusPtReso1D[ipt] = new TH1F(Form("hTCClusPtReso1D_%d",ipt),
 				    Form("hTCClusPtReso1D p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
-				    nPtResoBins,-200.,200.);
-  }// jet et
-  
+				    nPtResoBins,-400.,400.);
+  }// jet pt
+  ////////////////////////////////////////////////////////
+
+  /////////////////// 1D pt CEH only correction /////////////////
+  TH1F **hHadGenClusPtReso1D, **hHadGenTCPtReso1D, **hHadTCClusPtReso1D;
+  hHadGenClusPtReso1D = new TH1F*[nJetPtBins];
+  hHadGenTCPtReso1D = new TH1F*[nJetPtBins];
+  hHadTCClusPtReso1D = new TH1F*[nJetPtBins];
+  for(int ipt=0;ipt<nJetPtBins;ipt++){
+    hHadGenClusPtReso1D[ipt] = new TH1F(Form("hHadGenClusPtReso1D_%d",ipt),
+				     Form("hHadGenClusPtReso1D p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
+				     nPtResoBins,-400.,400.);
+    hHadGenTCPtReso1D[ipt] = new TH1F(Form("hHadGenTCPtReso1D_%d",ipt),
+				     Form("hHadGenTCPtReso1D p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
+				     nPtResoBins,-400.,400.);
+    hHadTCClusPtReso1D[ipt] = new TH1F(Form("hHadTCClusPtReso1D_%d",ipt),
+				    Form("hHadTCClusPtReso1D p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
+				    nPtResoBins,-400.,400.);
+  }// jet pt
+  ////////////////////////////////////////////////////////
+
+  /////////////////// 2D CEH only correction /////////////////
+  TH1F ***hHadGenClusPtReso2D;
+  hHadGenClusPtReso2D = new TH1F**[nJetEtaBins];
+  for(int ieta=0;ieta<nJetEtaBins;ieta++){
+    hHadGenClusPtReso2D[ieta] = new TH1F*[nJetPtBins];
+    for(int ipt=0;ipt<nJetPtBins;ipt++){
+      hHadGenClusPtReso2D[ieta][ipt] = new TH1F(Form("hHadGenClusPtReso2D_%d_%d",ieta,ipt),
+					   Form("hHadGenClusPtReso2D #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+					   nPtResoBins,-400.,400.);
+    }// jet et
+  }//jet eta
+  ////////////////////////////////////////////////////////
+
+  /////////////////// 3D CEH only correction /////////////////
+  TH1F ****hHadGenClusPtReso3D;
+  hHadGenClusPtReso3D = new TH1F***[7];
+  for(int idet=0;idet<7;idet++){
+    hHadGenClusPtReso3D[idet] = new TH1F**[nJetEtaBins];
+    for(int ieta=0;ieta<nJetEtaBins;ieta++){
+      hHadGenClusPtReso3D[idet][ieta] = new TH1F*[nJetPtBins];
+      for(int ipt=0;ipt<nJetPtBins;ipt++){
+	hHadGenClusPtReso3D[idet][ieta][ipt] = new TH1F(Form("hHadGenClusPtReso3D_%d_%d_%d",idet,ieta,ipt),
+						 Form("hHadGenClusPtReso3D det:%d, #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",idet,jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+						 nPtResoBins,-400.,400.);
+      }// jet et
+    }//jet eta
+  }//idet loop
+  ////////////////////////////////////////////////////////
+
+  //////////////// 3D pt,eta histos ////////////////////////////
+  TH1F ****hGenClusPtReso3D; 
+  hGenClusPtReso3D = new TH1F***[7];
+  for(int idet=0;idet<7;idet++){
+    hGenClusPtReso3D[idet] = new TH1F**[nJetEtaBins];
+    for(int ieta=0;ieta<nJetEtaBins;ieta++){
+      hGenClusPtReso3D[idet][ieta] = new TH1F*[nJetPtBins];
+      for(int ipt=0;ipt<nJetPtBins;ipt++){
+	hGenClusPtReso3D[idet][ieta][ipt] = new TH1F(Form("hGenClusPtReso3D_%d_%d_%d",idet,ieta,ipt),
+						 Form("hGenClusPtReso3D det:%d, #eta:(%4.3f-%4.3f) p_{T}:(%2.0f-%2.0f) GeV",idet,jetEtaBin[ieta],jetEtaBin[ieta+1],jetPtBin[ipt],jetPtBin[ipt+1]),
+						 nPtResoBins,-400.,400.);
+      }// jet et
+    }//jet eta
+  }//idet loop
+  //////////////////////////////////////////////////////////
+
+  ///////////Energy correction for Cl3d cluster //////////
+  TH1F **hGenClusPtReso1Dcl3d;
+  hGenClusPtReso1Dcl3d = new TH1F*[nJetPtBins];
+  for(int ipt=0;ipt<nJetPtBins;ipt++){
+    hGenClusPtReso1Dcl3d[ipt] = new TH1F(Form("hGenClusPtReso1Dcl3d_%d",ipt),
+				     Form("hGenClusPtReso1Dcl3d p_{T}:(%2.0f-%2.0f) GeV",jetPtBin[ipt],jetPtBin[ipt+1]),
+				     nPtResoBins,-400.,400.);
+  }// jet pt
+  ////////////////////////////////////////////////////////
+
   TH2F *hJetEtaPtBin = new TH2F("hJetEtaPtBin","hJetEtaPtBin", nJetEtaBins, jetEtaBin, nJetPtBins, jetPtBin);
   TH2F *hJetEtaPtBinDet = new TH2F("hJetEtaPtBinDet","hJetEtaPtBinDEt", nJetEtaBins, jetEtaBin, nJetPtBins, jetPtBin);
-    
+
+  TH1D *hMaxLayerE = new TH1D("hMaxLayerE","Layer with maximum energy",50, -0.5, 49.5);
+  TH1D *hMaxDetE = new TH1D("hMaxDetE","dettype with maximum energy",10, -0.5, 9.5);
+  
   uint64_t totalEntries = tr->GetEntries();
   if(nofEvents==0 or nofEvents>totalEntries) nofEvents = totalEntries;
   
@@ -383,7 +556,7 @@ int main(int argc, char** argv)
   TPGStage2Configuration::ClusPropLUT cplut;
   cplut.readMuEtaLUT("input/stage2/configuration/mean_eta_LUT.csv");
   cplut.readSigmaEtaLUT("input/stage2/configuration/sigma_eta_LUT.csv");
-
+  
   TPGStage2Emulation::Stage2::_rOverZ = sidelength * sqrt(3.0) ;
   TPGStage2Emulation::Stage2 s2Clustering;
   s2Clustering.setClusPropLUT(&cplut);
@@ -535,12 +708,18 @@ int main(int argc, char** argv)
     /////////////////////////////////////////////////////////////////////////////////////////
     float tot_tc_pt = 0.0, tot_tc_e = 0.0;
     double totTCpt_posEta = 0.,totTCpt_negEta = 0.;
+    double totTCpt_posEta_CEE = 0.,totTCpt_negEta_CEE = 0.;
     double totTCpt_posEta_layer1 = 0.,totTCpt_negEta_layer1 = 0.;
     uint32_t nofPosEtaTCs = 0, nofNegEtaTCs = 0, nofTCsTrigL2 = 0, nofTCsTrigL9 = 0;
     double tcXoZposEta = 0.,tcYoZposEta = 0., tcXoZnegEta = 0.,tcYoZnegEta = 0.;
     double maxroz_posEta = -1.0, maxroz_negEta = -1.0;
     double tcPhi_posEta = 0.,tcPhi_negEta = 0.;
     double tcEta_posEta = 0.,tcEta_negEta = 0.;
+    double maxTCPt_posEta = -1.0, maxTCPt_negEta = -1.0;
+    int maxTCPt_posEta_layer = -1, maxTCPt_negEta_layer = -1;
+    int maxTCPt_posEta_detType = -1, maxTCPt_negEta_detType = -1;
+    int detType = -1;
+    int subdet = -1, wafertype = -1;
     //std::vector<TPGTriggerCellWord> vTcw[6];
     std::vector<TPGTCBits> vTcw[6];
     // for(unsigned itco=0;itco<tc_pt->size();itco++){
@@ -586,7 +765,17 @@ int main(int argc, char** argv)
 	  ;
 	}	
       }
-      
+      detType = -1;
+      subdet = tc_subdet->at(itc);
+      wafertype = tc_wafertype->at(itc);
+      if(subdet==1 and wafertype==0) detType = 1;
+      else if(subdet==1 and wafertype==1) detType = 2;
+      else if(subdet==1 and wafertype==2) detType = 3;
+      else if(subdet==2 and wafertype==0) detType = 4;
+      else if(subdet==2 and wafertype==1) detType = 5;
+      else if(subdet==2 and wafertype==2) detType = 6;
+      else if(subdet==10) detType = 7;
+
       if(doPrint){
 	std::cout << "itc-ievent: " << std::fixed << std::setprecision(2) << std::setw(4) << ievent
 		  << ", itc: " << std::setw(5) << itc
@@ -614,8 +803,13 @@ int main(int argc, char** argv)
 	  vTcw[isect+addisect].push_back(tcf0);
 	}
       }
+      // bool hgcalEta = (fabs(tc_eta->at(itc))>1.321 and fabs(tc_eta->at(itc))<3.152) ? true : false;
+      // bool hgcalInnerEta = (fabs(tc_eta->at(itc))>1.6 and fabs(tc_eta->at(itc))<3.0) ? true : false;
       if(tc_eta->at(itc)<0){
+	//if(hgcalInnerEta){
 	totTCpt_negEta += tc_pt->at(itc);
+	if(tc_layer->at(itc)<=26) totTCpt_negEta_CEE += tc_pt->at(itc);
+	//}
 	tcXoZnegEta += tc_pt->at(itc)*tc_x->at(itc)/tc_z->at(itc) ;
 	tcYoZnegEta += tc_pt->at(itc)*tc_y->at(itc)/tc_z->at(itc) ;
 	tcPhi_negEta += tc_pt->at(itc)*tc_phi->at(itc) ;
@@ -623,8 +817,18 @@ int main(int argc, char** argv)
 	nofNegEtaTCs++;
 	double droz = sqrt( (tc_x->at(itc)/tc_z->at(itc)-xoz_negEta)*(tc_x->at(itc)/tc_z->at(itc)-xoz_negEta) + (tc_y->at(itc)/tc_z->at(itc)-yoz_negEta)*(tc_y->at(itc)/tc_z->at(itc)-yoz_negEta) );
 	if(droz>maxroz_negEta) maxroz_negEta = droz;
+	if(tc_pt->at(itc)>maxTCPt_negEta){
+	  //if(tc_uncompressedCharge->at(itc)>maxTCPt_negEta){
+	  //maxTCPt_negEta = tc_uncompressedCharge->at(itc);//tc_pt->at(itc);
+	  maxTCPt_negEta = tc_pt->at(itc);
+	  maxTCPt_negEta_layer = tc_layer->at(itc);
+	  maxTCPt_negEta_detType = detType;
+	}
       }else{
+	//if(hgcalInnerEta){
 	totTCpt_posEta += tc_pt->at(itc);
+	if(tc_layer->at(itc)<=26) totTCpt_posEta_CEE += tc_pt->at(itc);
+	//}
 	tcXoZposEta += tc_pt->at(itc)*tc_x->at(itc)/tc_z->at(itc) ;
 	tcYoZposEta += tc_pt->at(itc)*tc_y->at(itc)/tc_z->at(itc) ;
 	tcPhi_posEta += tc_pt->at(itc)*tc_phi->at(itc) ;
@@ -632,6 +836,13 @@ int main(int argc, char** argv)
 	nofPosEtaTCs++;
 	double droz = sqrt( (tc_x->at(itc)/tc_z->at(itc)-xoz_posEta)*(tc_x->at(itc)/tc_z->at(itc)-xoz_posEta) + (tc_y->at(itc)/tc_z->at(itc)-yoz_posEta)*(tc_y->at(itc)/tc_z->at(itc)-yoz_posEta) );
 	if(droz>maxroz_posEta) maxroz_posEta = droz;
+	if(tc_pt->at(itc)>maxTCPt_posEta){
+	  //if(tc_uncompressedCharge->at(itc)>maxTCPt_posEta){
+	  //maxTCPt_posEta = tc_uncompressedCharge->at(itc);//tc_pt->at(itc);
+	  maxTCPt_posEta = tc_pt->at(itc);
+	  maxTCPt_posEta_layer = tc_layer->at(itc);
+	  maxTCPt_posEta_detType = detType;
+	}
       }
       
       tot_tc_pt += tc_pt->at(itc);
@@ -640,6 +851,13 @@ int main(int argc, char** argv)
       if(tc_layer->at(itc)==9) nofTCsTrigL9++;
     }//end of TC loop
     //rearrgdtcs.clear();
+    
+    if(totTCpt_posEta>50. and totTCpt_negEta>50.){
+      hMaxLayerE->Fill(maxTCPt_posEta_layer,totTCpt_posEta);
+      hMaxLayerE->Fill(maxTCPt_negEta_layer,totTCpt_negEta);
+      hMaxDetE->Fill(maxTCPt_posEta_detType,totTCpt_posEta);
+      hMaxDetE->Fill(maxTCPt_negEta_detType, totTCpt_negEta);
+    }
     
     //if(doPrint)
     //std::cout<<"tot_tc_pt : "<< tot_tc_pt << std::endl;
@@ -705,6 +923,8 @@ int main(int argc, char** argv)
       int minsect = (genjet_eta->at(ijet) < 0) ? 0 : 3;
       int maxsect = (genjet_eta->at(ijet) < 0) ? 3 : 6;
       double tcPtSum = (genjet_eta->at(ijet) < 0) ? totTCpt_negEta : totTCpt_posEta ;
+      double tcPtSum_CEE = (genjet_eta->at(ijet) < 0) ? totTCpt_negEta_CEE : totTCpt_posEta_CEE ;
+      int tcDetType = (genjet_eta->at(ijet) < 0) ? maxTCPt_negEta_detType : maxTCPt_posEta_detType ;
       double avgXoZ = (genjet_eta->at(ijet) < 0) ? tcXoZnegEta/tcPtSum : tcXoZposEta/tcPtSum ;
       double avgYoZ = (genjet_eta->at(ijet) < 0) ? tcYoZnegEta/tcPtSum : tcYoZposEta/tcPtSum ;
       double avgPhi = (genjet_eta->at(ijet) < 0) ? tcPhi_negEta/tcPtSum : tcPhi_posEta/tcPtSum ;
@@ -730,25 +950,66 @@ int main(int argc, char** argv)
 	  }//minRoZ condition
 	  totClusE += clf.getEnergyGeV() ; 
 	}//cluster loop
-      }//sector loop      
+      }//sector loop
+      double minRoz_cl3d = 1., closestClusE_cl3d= 100.;
+      for(int icl3=0;icl3<cl3d_n;icl3++){	  
+	if(cl3d_pt->at(icl3)<3.0) continue;
+	double clusXoZ = cos(cl3d_phi->at(icl3))/sinh(cl3d_eta->at(icl3)) ; 
+	double clusYoZ = sin(cl3d_phi->at(icl3))/sinh(cl3d_eta->at(icl3)); 
+	double dClusGenRoz = sqrt( (clusXoZ - gjxoz)*(clusXoZ - gjxoz) + (clusYoZ - gjyoz)*(clusYoZ - gjyoz) );
+	if(dClusGenRoz<minRoz_cl3d){
+	  minRoz_cl3d = dClusGenRoz;
+	  closestClusE_cl3d = cl3d_pt->at(icl3);
+	}//minRoZ condition
+      }//cluster loop
+      
       bool hasClosestFound = (minRoz<1.)?true:false;
-      bool hasClosestFoundPt = (hasClosestFound and closestClusE>pt_clusThresh)?true:false;
-      bool hasClosestFoundPtTot = (hasClosestFound and totClusE>pt_clusThresh)?true:false;
+      bool hasClosestFound_cl3d = (minRoz_cl3d<1.)?true:false;
+      // bool hasClosestFoundPt = (hasClosestFound and closestClusE>pt_clusThresh)?true:false;
+      // bool hasClosestFoundPtTot = (hasClosestFound and totClusE>pt_clusThresh)?true:false;
       //Eta : outermost(Sci) = 1.321, innermost(Si) =  3.152
       bool hgcalEta = (fabs(genjet_eta->at(ijet))>1.321 and fabs(genjet_eta->at(ijet))<3.152) ? true : false;
-      // bool hgcalInnerEta = (fabs(genjet_eta->at(ijet))>1.58 and fabs(genjet_eta->at(ijet))<2.82) ? true : false;
+      bool hgcalInnerEta = (fabs(genjet_eta->at(ijet))>1.6 and fabs(genjet_eta->at(ijet))<3.0) ? true : false;
       // bool hgcalOuterEta = (fabs(genjet_eta->at(ijet))>1.6 and fabs(genjet_eta->at(ijet))<3.05) ? true : false;
       
       hJetEtaPtBin->Fill(genjet_eta->at(ijet), genjet_pt->at(ijet));
+      GetHistoBin(hJetEtaPtBin,genjet_eta->at(ijet), genjet_pt->at(ijet), binEta, binPt);
       if(hgcalEta and hasClosestFound) {
-	hJetEtaPtBinDet->Fill(genjet_eta->at(ijet), genjet_pt->at(ijet));
-	GetHistoBin(hJetEtaPtBin, genjet_eta->at(ijet), genjet_pt->at(ijet), binEta, binPt);
+	hJetEtaPtBinDet->Fill( abs(genjet_eta->at(ijet)), genjet_pt->at(ijet));
 	
 	hGenClusPtReso[binEta-1][binPt-1]->Fill( (genjet_pt->at(ijet) - closestClusE) );
 	hTCClusPtReso[binEta-1][binPt-1]->Fill( (tcPtSum - closestClusE) );
-	hGenClusPtReso1D[binPt-1]->Fill( (genjet_pt->at(ijet) - closestClusE) );
-	hGenTCPtReso1D[binPt-1]->Fill( (genjet_pt->at(ijet) - tcPtSum) );
-	hTCClusPtReso1D[binPt-1]->Fill( (tcPtSum - closestClusE) );
+	hGenClusPtReso3D[tcDetType-1][binEta-1][binPt-1]->Fill( (genjet_pt->at(ijet) - closestClusE) );
+	
+	if(tcDetType<=3){
+	  hTCElossCEEID[binEta-1]->Fill( tcPtSum_CEE );
+	  hTCElossCE_E[binEta-1][binPt-1]->Fill( tcPtSum_CEE );
+	  // hTCElossCE_E_3D[tcDetType-1][binEta-1][binPt-1]->Fill( tcPtSum_CEE );
+	}else{
+	  hTCElossCEHID[binEta-1]->Fill( (tcPtSum-tcPtSum_CEE) );
+	  hTCElossCE_H[binEta-1][binPt-1]->Fill( (tcPtSum-tcPtSum_CEE) );
+	  // hTCElossCE_H_3D[tcDetType-1][binEta-1][binPt-1]->Fill( (tcPtSum-tcPtSum_CEE) );
+
+	  hHadGenClusPtReso2D[binEta-1][binPt-1]->Fill( ((genjet_pt->at(ijet)-tcPtSum_CEE) - closestClusE) );
+	  // hHadGenClusPtReso3D[tcDetType-1][binEta-1][binPt-1]->Fill( ((genjet_pt->at(ijet)-tcPtSum_CEE) - closestClusE) );
+	}
+	
+	if(hgcalInnerEta){
+	  hGenClusPtReso1D[binPt-1]->Fill( (genjet_pt->at(ijet) - closestClusE) );
+	  hGenTCPtReso1D[binPt-1]->Fill( (genjet_pt->at(ijet) - tcPtSum) );
+	  hTCClusPtReso1D[binPt-1]->Fill( (tcPtSum - closestClusE) );
+
+	  
+	  if(tcDetType>=4)  hHadGenClusPtReso1D[binPt-1]->Fill( ((genjet_pt->at(ijet)-tcPtSum_CEE) - closestClusE) );
+	  hHadGenTCPtReso1D[binPt-1]->Fill( ((genjet_pt->at(ijet)-tcPtSum_CEE) - closestClusE) );
+	  hHadTCClusPtReso1D[binPt-1]->Fill( ((tcPtSum-tcPtSum_CEE) - closestClusE) );
+	  // hHadGenClusPtReso1D[binPt-1]->Fill((genjet_pt->at(ijet)-tcPtSum_CEE));
+	  // hHadGenTCPtReso1D[binPt-1]->Fill( tcPtSum - tcPtSum_CEE );
+	  // hHadTCClusPtReso1D[binPt-1]->Fill( tcPtSum_CEE );
+	}
+      }
+      if(hgcalInnerEta and hasClosestFound_cl3d) {
+	hGenClusPtReso1Dcl3d[binPt-1]->Fill( (genjet_pt->at(ijet) - closestClusE_cl3d) );
       }
       
     }//jet from decay of pions from tau
@@ -764,7 +1025,7 @@ int main(int argc, char** argv)
     taugdlist.clear();
     partlist.clear();
     jetlist.clear();
-    
+
     gen_pt->clear();
     gen_eta->clear();
     gen_phi->clear();
@@ -797,8 +1058,12 @@ int main(int argc, char** argv)
     tc_z->clear();
     tc_energy->clear();
     tc_data->clear();
+    tc_subdet->clear();
+    tc_wafertype->clear();
     tc_uncompressedCharge->clear();
-    
+    cl3d_pt->clear();
+    cl3d_phi->clear();
+    cl3d_eta->clear();
   }//event loop
   
   std::string outname = "CalcResolution_" + outputfile_extn + "_" + index;
@@ -806,9 +1071,22 @@ int main(int argc, char** argv)
   TFile *fout = new TFile(Form("%s.root",outname.c_str()),"recreate");
   hJetEtaPtBin->Write();
   hJetEtaPtBinDet->Write();
+  //=============================================
+  TDirectory *dir = fout->mkdir("Reso_1D");
+  dir->cd();
   for(int ipt=0;ipt<nJetPtBins;ipt++) hGenClusPtReso1D[ipt]->Write();
   for(int ipt=0;ipt<nJetPtBins;ipt++) hGenTCPtReso1D[ipt]->Write();
   for(int ipt=0;ipt<nJetPtBins;ipt++) hTCClusPtReso1D[ipt]->Write();
+  for(int ipt=0;ipt<nJetPtBins;ipt++) hHadGenClusPtReso1D[ipt]->Write();
+  for(int ipt=0;ipt<nJetPtBins;ipt++) hHadGenTCPtReso1D[ipt]->Write();
+  for(int ipt=0;ipt<nJetPtBins;ipt++) hHadTCClusPtReso1D[ipt]->Write();
+  for(int ipt=0;ipt<nJetPtBins;ipt++) hGenClusPtReso1Dcl3d[ipt]->Write();
+  for(int ieta=0;ieta<nJetEtaBins;ieta++) hTCElossCEEID[ieta]->Write();
+  for(int ieta=0;ieta<nJetEtaBins;ieta++) hTCElossCEHID[ieta]->Write();
+  fout->cd();
+  //=============================================
+  dir = fout->mkdir("Reso_2D");
+  dir->cd();
   for(int ieta=0;ieta<nJetEtaBins;ieta++){
     for(int ipt=0;ipt<nJetPtBins;ipt++){
       hGenClusPtReso[ieta][ipt]->Write();
@@ -819,6 +1097,72 @@ int main(int argc, char** argv)
       hTCClusPtReso[ieta][ipt]->Write();
     }// jet et
   }//jet eta
+  
+  for(int ieta=0;ieta<nJetEtaBins;ieta++){
+    for(int ipt=0;ipt<nJetPtBins;ipt++){
+      hTCElossCE_E[ieta][ipt]->Write();
+    }// jet et
+  }//jet eta
+  
+  for(int ieta=0;ieta<nJetEtaBins;ieta++){
+    for(int ipt=0;ipt<nJetPtBins;ipt++){
+      hTCElossCE_H[ieta][ipt]->Write();
+    }// jet et
+  }//jet eta
+  
+  for(int ieta=0;ieta<nJetEtaBins;ieta++){
+    for(int ipt=0;ipt<nJetPtBins;ipt++){
+      hHadGenClusPtReso2D[ieta][ipt]->Write();
+    }// jet et
+  }//jet eta
+  
+  fout->cd();
+  //=============================================
+  dir = fout->mkdir("Reso_3D");
+  dir->cd();
+  // for(int idet=0;idet<7;idet++){
+  //   for(int ieta=0;ieta<nJetEtaBins;ieta++){
+  //     for(int ipt=0;ipt<nJetPtBins;ipt++){
+  // 	hHadGenClusPtReso3D[idet][ieta][ipt]->Write();
+  //     }// jet et
+  //   }//jet eta
+  // }//idet
+
+  for(int idet=0;idet<7;idet++){
+    for(int ieta=0;ieta<nJetEtaBins;ieta++){
+      for(int ipt=0;ipt<nJetPtBins;ipt++){
+	hGenClusPtReso3D[idet][ieta][ipt]->Write();
+      }// jet et
+    }//jet eta
+  }//idet
+  
+  fout->cd();
+  // //=============================================
+  // dir = fout->mkdir("CEE_3D");
+  // dir->cd();
+  // for(int idet=0;idet<7;idet++){
+  //   for(int ieta=0;ieta<nJetEtaBins;ieta++){
+  //     for(int ipt=0;ipt<nJetPtBins;ipt++){
+  // 	hTCElossCE_E_3D[idet][ieta][ipt]->Write();
+  //     }// jet et
+  //   }//jet eta
+  // }//idet
+  
+  // fout->cd();
+  // dir = fout->mkdir("CEH_3D");
+  // dir->cd();
+  // for(int idet=0;idet<7;idet++){
+  //   for(int ieta=0;ieta<nJetEtaBins;ieta++){
+  //     for(int ipt=0;ipt<nJetPtBins;ipt++){
+  // 	hTCElossCE_H_3D[idet][ieta][ipt]->Write();
+  //     }// jet et
+  //   }//jet eta
+  // }//idet  
+  // fout->cd();
+  // //=============================================
+  hMaxLayerE->Write();
+  hMaxDetE->Write();
+  
   fout->Close();
   delete fout;
 

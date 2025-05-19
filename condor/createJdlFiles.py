@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "26"
+iloop= "33"
 
 #samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 samplelist_Ideal = ["SingleEle_Ideal_PU0"]
@@ -21,8 +21,9 @@ samplelist_PU0_Emyr = ["singlePion_PU0"]
 samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realistic_PU200", "MinBias_realistic_PU140"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "vbfHInv_200PU"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200"]
-#samplelist_PU200_Emyr = ["singlePion_PU200", "vbfHInv_200PU"]
-samplelist_PU200_Emyr = ["vbfHInv_200PU"]
+samplelist_PU200_Emyr = ["singlePion_PU200", "vbfHInv_200PU"]
+#samplelist_PU200_Emyr = ["singlePion_PU0"]#, "vbfHInv_200PU", "singlePion_PU200"]
+#samplelist_PU200_Emyr = ["vbfHInv_200PU"]
 #samplelist_PU200_Emyr = ["vbfHInv_200PU", "singlePion_PU200"]
 
 ntuple_path = ["ntuples"]
@@ -218,20 +219,20 @@ for sample in samplelist_PU200_Emyr:
         filelist.remove("")
         nFiles = len(filelist)
         findex  = 0
+        fsidelen = float(sidelength)
+        fsidelen_index = int(fsidelen*1000)
+        jdlName = 'submitJobs_%s_ntuples_%s_%s.jdl'%(sample,fsidelen_index,findex)
+        jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
+        jdlFile.write(common_command)
         for fname in filelist:
             print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
-            fsidelen = float(sidelength)
-            fsidelen_index = int(fsidelen*1000)
             ofextn = 'ntuples_%s'%(fsidelen_index)
-            jdlName = 'submitJobs_%s_ntuples_%s_%s.jdl'%(sample,fsidelen_index,findex)
-            jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
-            jdlFile.write(common_command)
             run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
             jdlFile.write(run_command)        
-            jdlFile.close()
-            subFile.write("condor_submit %s\n"%jdlName)
             findex = findex + 1
-            
+        jdlFile.close()
+        subFile.write("condor_submit %s\n"%jdlName)
+        
 subFile.close()
 
 print ("Now run from directory : %s/"%jdlDir)
