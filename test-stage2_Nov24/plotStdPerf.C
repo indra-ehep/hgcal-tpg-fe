@@ -21,6 +21,8 @@ int plotStdPerf(int index = 5)
   void PlotRozGenTCCumul(TFile *fin1, TFile *fin2, const char* histName, const char* plotTitle, const char* xaxisTitle, TCanvas*& cPtReso);
   void PlotRozClusGen(TFile *fin1, TFile *fin2, TFile *fin3, const char* histName, const char* plotTitle, const char* xaxisTitle, TCanvas*& c1, TCanvas*& c2);
   void PlotTrigEff(TFile *fin[], bool ishist, const char* histName, const char* plotTitle, const char* xaxisTitle, TCanvas*& cPtReso);
+  void PlotCompareTrigEff(TFile *fin[], const char* histName1, const char* histName2, const char* plotTitle, const char* xaxisTitle, TCanvas*& cPtReso);
+  void PlotCompareTrigEffTwo(TFile *fin1[], TFile *fin2[], const char* histName1, const char* histName2, const char* plotTitle, const char* xaxisTitle, TCanvas*& cPtReso);
   void PlotDR(TFile *fin1, const char* h2histName, const char* profName, const char* plotTitle, const char* xaxisTitle, TCanvas*& cPtReso);
   void PlotNofClus(TFile *fin1, TFile *fin2, TFile *fin3, const char* histName, const char* plotTitle, const char* xaxisTitle, TCanvas*& c1);
   ////////////////////////////////////////////////////////
@@ -94,38 +96,57 @@ int plotStdPerf(int index = 5)
   // PlotTrigEff(fin2, "hTrigEff", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-}", "p_{T} (GeV}", cTrigEffPiIdeal);
   // ////////////////////////////////////////////////////////
   
-  // ///////////////////Efficiency plots PU200 ////////////////////
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter6/SinglePi_realistic_PU200/";
-  // // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter6/SingleEle_realistic_PU200/";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU0/";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/vbfHInv_200PU/";
-  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter10/doubleElectron_PU200/";
-  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU200/";
-  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter12/vbfHInv_200PU/";
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter14/doubleElectron_PU200/";
-  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter15/doubleElectron_PU200/";
+  ///////////////////Efficiency plots PU200 ////////////////////
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter6/SinglePi_realistic_PU200/";
+  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter6/SingleEle_realistic_PU200/";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU0/";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/vbfHInv_200PU/";
+  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter10/doubleElectron_PU200/";
+  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU200/";
+  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter12/vbfHInv_200PU/";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter20/doublePhoton_PU0/";
+  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter20/doubleElectron_PU200/";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter19/singlePion_PU0/";
+  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter19/singlePion_PU0/";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU200/";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter24/singlePion_PU200/";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU0/";
+  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
+  inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter27/singlePion_PU0/";
+  inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter33/singlePion_PU0/";
   
-  // std::string aval[7] = {"16", "30", "45", "60", "75", "90", "105"};
-  // TFile *fin1[7],*fin2[7];
-  // for(int idroz=0;idroz<3;idroz++){
-  //   std::cout << "idroz : " << idroz << ", aval: "<< aval[idroz]<< std::endl;
-  //   std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
-  //   std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
-  //   fin1[idroz] = TFile::Open(infile1.c_str());
-  //   fin2[idroz] = TFile::Open(infile2.c_str());
-  // }
-  // TCanvas *cTrigEffPiIdeal,*cTrigEffEleIdeal;
+  std::string aval[7] = {"16", "30", "45", "60", "75", "90", "105"};
+  //std::string aval[7] = {"11", "16", "22", "45", "60", "75", "90"};
+  TFile *fin1[7],*fin2[7];
+  for(int idroz=0;idroz<1;idroz++){
+    std::cout << "idroz : " << idroz << ", aval: "<< aval[idroz]<< std::endl;
+    std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
+    std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
+    fin1[idroz] = TFile::Open(infile1.c_str());
+    fin2[idroz] = TFile::Open(infile2.c_str());
+  }
+  TCanvas *cTrigEffPiIdeal,*cTrigEffEleIdeal;
   
-  // //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} PU0 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // //PlotTrigEff(fin2, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} PU200 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // // PlotTrigEff(fin1, 0, "effTrigGenPU", "Trigger Efficiencies of VBFtoInv PU200 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // // PlotTrigEff(fin2, 0, "effTrigGenPU", "Trigger Efficiencies of VBFtoInv PU200 (150 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // //PlotTrigEff(fin2, 0, "effTrigGen", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-} PU0", "p_{T} (GeV}", cTrigEffEleIdeal);
-  // //PlotTrigEff(fin1, 1, "hTrigEff", "Trigger Efficiencies of #pi^{+}#pi^{-}", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // //PlotTrigEff(fin2, 1, "hTrigEff", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-}", "p_{T} (GeV}", cTrigEffEleIdeal);
-  // //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-} PU200 (#Delta(R/Z)<0.02)", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // PlotTrigEff(fin2, 0, "effTrigGen", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-} PU200 (#Delta(R/Z)<0.05)", "p_{T} (GeV}", cTrigEffPiIdeal);
-  // ////////////////////////////////////////////////////////
+  //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} PU0 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
+  //PlotTrigEff(fin2, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} PU200 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
+  // PlotTrigEff(fin1, 0, "effTrigGenPU", "Trigger Efficiencies of VBFtoInv PU200 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of VBFtoInv PU200 (150 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
+  //PlotTrigEff(fin2, 0, "effTrigGen", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-} PU0", "p_{T} (GeV}", cTrigEffEleIdeal);
+  //PlotTrigEff(fin1, 1, "hTrigEff", "Trigger Efficiencies of #pi^{+}#pi^{-}", "p_{T} (GeV}", cTrigEffPiIdeal);
+  //PlotTrigEff(fin2, 1, "hTrigEff", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-}", "p_{T} (GeV}", cTrigEffEleIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-} PU200 (#Delta(R/Z)<0.02)", "p_{T} (GeV}", cTrigEffPiIdeal);
+  //PlotTrigEff(fin2, 0, "effTrigGenClstPt", "Trigger Efficiencies of #it{e}/#gamma for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  //PlotTrigEff(fin2, 0, "effTrigGenClstPt", "Trigger Efficiencies of #it{e}/#gamma for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGenClstEta", "Trigger Efficiencies of #it{e}/#gamma for PU0", "|#eta|", cTrigEffPiIdeal);
+  //PlotTrigEff(fin2, 0, "effTrigGenClstEta", "Trigger Efficiencies of #it{e}/#gamma for PU200", "|#eta|", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGenClstEta", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "|#eta|", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  PlotCompareTrigEffTwo(fin1, fin2, "effTrigGenClstPt", "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of VBF for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
+  //PlotTrigEff(fin1, "effTrigGenClstPt", "effTrigGenClstPtTot", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  ////////////////////////////////////////////////////////
   
   // /////////////////////Jet cone DeltaR //////////////
   // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter7/SingleEle_Ideal_PU0";
@@ -143,23 +164,23 @@ int plotStdPerf(int index = 5)
   // PlotDR(fin2,"hDeltaRGCPt","hDeltaRGCPtProf","#DeltaR (cluster-genJet) distribution of #pi^{+}#pi^{-} jets", "genJet p_{T} (GeV)",rozGenTCPi);
   // ///////////////////////////////////////////////
 
-  /////////////////////Nof Clusters //////////////
-  inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter14/SingleEle_Ideal_PU0/";
-  inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter14/doubleElectron_PU200/";
+  // /////////////////////Nof Clusters //////////////
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter14/SingleEle_Ideal_PU0/";
+  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter14/doubleElectron_PU200/";
   
-  // std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_flatpt_10K_16_0.root";
-  // std::string infile2 = inpath1 + "/" + "stage2SemiEmulator_flatpt_10K_30_0.root";
-  // std::string infile3 = inpath1 + "/" + "stage2SemiEmulator_flatpt_10K_45_0.root";
-  std::string infile1 = inpath2 + "/" + "stage2SemiEmulator_ntuples_16_merged.root";
-  std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_30_merged.root";
-  std::string infile3 = inpath2 + "/" + "stage2SemiEmulator_ntuples_45_merged.root";
-  TFile *fin1 = TFile::Open(infile1.c_str());
-  TFile *fin2 = TFile::Open(infile2.c_str());
-  TFile *fin3 = TFile::Open(infile3.c_str());
-  TCanvas *cNofClus;
-  PlotNofClus(fin1,fin2,fin3,"hNClus1GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>1", "Number of clusters",cNofClus);
-  //PlotNofClus(fin1,fin2,fin3,"hNClus3GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>3", "Number of clusters",cNofClus);
-  ///////////////////////////////////////////////
+  // // std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_flatpt_10K_16_0.root";
+  // // std::string infile2 = inpath1 + "/" + "stage2SemiEmulator_flatpt_10K_30_0.root";
+  // // std::string infile3 = inpath1 + "/" + "stage2SemiEmulator_flatpt_10K_45_0.root";
+  // std::string infile1 = inpath2 + "/" + "stage2SemiEmulator_ntuples_16_merged.root";
+  // std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_30_merged.root";
+  // std::string infile3 = inpath2 + "/" + "stage2SemiEmulator_ntuples_45_merged.root";
+  // TFile *fin1 = TFile::Open(infile1.c_str());
+  // TFile *fin2 = TFile::Open(infile2.c_str());
+  // TFile *fin3 = TFile::Open(infile3.c_str());
+  // TCanvas *cNofClus;
+  // PlotNofClus(fin1,fin2,fin3,"hNClus1GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>1", "Number of clusters",cNofClus);
+  // //PlotNofClus(fin1,fin2,fin3,"hNClus3GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>3", "Number of clusters",cNofClus);
+  // ///////////////////////////////////////////////
 
   
   return true;
@@ -398,6 +419,7 @@ void PlotRozClusGen(TFile *fin1, TFile *fin2, TFile *fin3, const char* histName,
 void PlotTrigEff(TFile *fin[], bool ishist, const char* histName, const char* plotTitle, const char* xaxisTitle, TCanvas*& c1){
 
   std::string avalf[7] = {"0.016", "0.03", "0.045", "60", "75", "90", "105"};
+  //std::string avalf[7] = {"0.0113", "0.016", "0.0226", "0.045", "60", "75", "90"};
 
   //TH1D *hTrigEff[7];
   TEfficiency *hTrigEff[7];
@@ -405,12 +427,15 @@ void PlotTrigEff(TFile *fin[], bool ishist, const char* histName, const char* pl
   TH1D *hTrigEffPass[7];
   TH1D *hTrigEffTotal[7];
   
-  int maxid = 3;
-  int rebin = 5;
+  int maxid = 1;
+  int rebin = 2;
   for(int idroz=0;idroz<maxid;idroz++){
 
     //hTrigEff[idroz] = (TH1D *)fin[idroz]->Get(histName) ;
     hTrigEff[idroz] = (TEfficiency *)fin[idroz]->Get(histName) ;
+
+    //cout <<"idroz : " << idroz << ", pointer " << hTrigEff[idroz] << std::endl;
+
     
     hTrigEff[idroz]->SetLineColor(GetColor(idroz));
     hTrigEff[idroz]->SetLineWidth(2.0);
@@ -421,18 +446,23 @@ void PlotTrigEff(TFile *fin[], bool ishist, const char* histName, const char* pl
     
     hTrigEffPass[idroz] = (TH1D *) hTrigEff[idroz]->GetCopyPassedHisto();
     hTrigEffTotal[idroz] = (TH1D *) hTrigEff[idroz]->GetCopyTotalHisto();
+    hTrigEffPass[idroz]->Rebin(rebin);
+    hTrigEffTotal[idroz]->Rebin(rebin);
     hTrigEffReCalc[idroz] = (TH1D *)hTrigEffPass[idroz]->Clone(Form("h1d_eff_%d",idroz));
     hTrigEffReCalc[idroz]->SetTitle(plotTitle);
     hTrigEffReCalc[idroz]->Divide(hTrigEffTotal[idroz]);
     hTrigEffReCalc[idroz]->SetLineColor(GetColor(idroz));
     hTrigEffReCalc[idroz]->SetLineWidth(2.0);
-    hTrigEffReCalc[idroz]->GetXaxis()->SetRangeUser(0,100.);
+    hTrigEffReCalc[idroz]->GetXaxis()->SetRangeUser(0,200.);
+    //hTrigEffReCalc[idroz]->GetXaxis()->SetRangeUser(1.2,3.5);
+    hTrigEffReCalc[idroz]->GetYaxis()->SetRangeUser(0,1.2);
     hTrigEffReCalc[idroz]->GetXaxis()->SetTitle(xaxisTitle);
     hTrigEffReCalc[idroz]->GetYaxis()->SetTitle("Efficiency");
   }
   
   hTrigEff[0]->SetTitle(plotTitle);
-  
+
+ 
   
   // if(ishist){
   //   hTrigEff[0]->GetXaxis()->SetTitle(xaxisTitle);
@@ -454,11 +484,13 @@ void PlotTrigEff(TFile *fin[], bool ishist, const char* histName, const char* pl
   TF1 *func[7];
   //func[0] = new TF1(Form("func%d",gindex), "0.5 * (1.0 + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., 200.);
   for(int idroz=0;idroz<maxid;idroz++){
-    func[idroz] = new TF1(Form("func%d",gindex), "[2] * ([3] + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., hTrigEffReCalc[idroz]->GetXaxis()->GetXmax());
+    func[idroz] = new TF1(Form("func%d",gindex), "[3] * ([2] + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., hTrigEffReCalc[idroz]->GetXaxis()->GetXmax());
     //func[idroz] = new TF1(Form("func%d",gindex++), "TMath::ATan((x - [0]) / [1]) / TMath::Pi() + 0.5", 0., 400.); // CDF
     //func[idroz] = new TF1(Form("func%d",gindex), "[1]*TMath::TanH(x - [0])", 0., 100.);
-    func[idroz]->SetParNames("mean", "sigma","par3","par4");
-    func[idroz]->SetParameters(30., 1.5, 1, 1);
+    func[idroz]->SetParNames("mean", "sigma","par3", "par4");
+    func[idroz]->SetParameters(150., 100.5, 0.5, 0.9);
+    // func[idroz]->SetParNames("mean", "sigma");
+    // func[idroz]->SetParameters(150., 10.5);
     func[idroz]->SetNpx(1000);
     func[idroz]->SetLineColor(GetColor(idroz));
   }
@@ -477,7 +509,7 @@ void PlotTrigEff(TFile *fin[], bool ishist, const char* histName, const char* pl
     hTrigEffReCalc[idroz]->Fit(func[idroz]);
   for(int idroz=0;idroz<maxid;idroz++){
     if(idroz==0)
-      hTrigEffReCalc[idroz]->Draw();
+      hTrigEffReCalc[idroz]->Draw("");
     else
       hTrigEffReCalc[idroz]->Draw("same");
   }
@@ -569,4 +601,249 @@ void PlotNofClus(TFile *fin1, TFile *fin2, TFile *fin3, const char* histName, co
   c1->Update();
   
   
+}
+
+void PlotCompareTrigEff(TFile *fin[], const char* histName1, const char* histName2, const char* plotTitle, const char* xaxisTitle, TCanvas*& c1){
+
+  std::string avalf[7] = {"0.016", "0.03", "0.045", "60", "75", "90", "105"};
+  //std::string avalf[7] = {"0.0113", "0.016", "0.0226", "0.045", "60", "75", "90"};
+  
+  TEfficiency *hTrigEff1[7];
+  TEfficiency *hTrigEff2[7];
+  TH1D *hTrigEffReCalc1[7];
+  TH1D *hTrigEffReCalc2[7];
+  TH1D *hTrigEffPass1[7];
+  TH1D *hTrigEffPass2[7];
+  TH1D *hTrigEffTotal1[7];
+  TH1D *hTrigEffTotal2[7];
+  
+  int maxid = 1;
+  int rebin = 2;
+  float xmin = 0, xmax = 200.;
+  for(int idroz=0;idroz<maxid;idroz++){
+
+    hTrigEff1[idroz] = (TEfficiency *)fin[idroz]->Get(histName1) ;
+    hTrigEff1[idroz]->SetLineColor(GetColor(idroz));
+    hTrigEff1[idroz]->SetLineWidth(2.0);
+
+    hTrigEff2[idroz] = (TEfficiency *)fin[idroz]->Get(histName2) ;
+    hTrigEff2[idroz]->SetLineColor(GetColor(idroz));
+    hTrigEff2[idroz]->SetLineWidth(2.0);
+
+    hTrigEffPass1[idroz] = (TH1D *) hTrigEff1[idroz]->GetCopyPassedHisto();
+    hTrigEffTotal1[idroz] = (TH1D *) hTrigEff1[idroz]->GetCopyTotalHisto();
+    hTrigEffPass1[idroz]->Rebin(rebin);
+    hTrigEffTotal1[idroz]->Rebin(rebin);
+    hTrigEffReCalc1[idroz] = (TH1D *)hTrigEffPass1[idroz]->Clone(Form("h1d_eff_%d_1",idroz));
+    hTrigEffReCalc1[idroz]->SetTitle(plotTitle);
+    hTrigEffReCalc1[idroz]->Divide(hTrigEffTotal1[idroz]);
+    hTrigEffReCalc1[idroz]->SetLineColor(GetColor(idroz));
+    hTrigEffReCalc1[idroz]->SetLineWidth(2.0);
+    hTrigEffReCalc1[idroz]->GetXaxis()->SetRangeUser(xmin, xmax);
+    hTrigEffReCalc1[idroz]->GetYaxis()->SetRangeUser(0,1.2);
+    hTrigEffReCalc1[idroz]->GetXaxis()->SetTitle(xaxisTitle);
+    hTrigEffReCalc1[idroz]->GetYaxis()->SetTitle("Efficiency");
+
+    hTrigEffPass2[idroz] = (TH1D *) hTrigEff2[idroz]->GetCopyPassedHisto();
+    hTrigEffTotal2[idroz] = (TH1D *) hTrigEff2[idroz]->GetCopyTotalHisto();
+    hTrigEffPass2[idroz]->Rebin(rebin);
+    hTrigEffTotal2[idroz]->Rebin(rebin);
+    hTrigEffReCalc2[idroz] = (TH1D *)hTrigEffPass2[idroz]->Clone(Form("h1d_eff_%d_2",idroz));
+    hTrigEffReCalc2[idroz]->SetTitle(plotTitle);
+    hTrigEffReCalc2[idroz]->Divide(hTrigEffTotal2[idroz]);
+    hTrigEffReCalc2[idroz]->SetLineColor(GetColor(idroz+2));
+    hTrigEffReCalc2[idroz]->SetLineWidth(2.0);
+    hTrigEffReCalc2[idroz]->GetXaxis()->SetRangeUser(xmin, xmax);
+    hTrigEffReCalc2[idroz]->GetYaxis()->SetRangeUser(0,1.2);
+    hTrigEffReCalc2[idroz]->GetXaxis()->SetTitle(xaxisTitle);
+    hTrigEffReCalc2[idroz]->GetYaxis()->SetTitle("Efficiency");
+
+  }
+  
+  hTrigEff1[0]->SetTitle(plotTitle);
+  
+  auto legend = new TLegend(0.47,0.21,0.83,0.45);
+  legend->SetTextSize(0.028);
+  legend->SetHeader("Triangle side length");
+  for(int idroz=0;idroz<maxid;idroz++){
+    //legend->AddEntry(hTrigEff[idroz],Form("a = %s",avalf[idroz].c_str()),"lp");
+    legend->AddEntry(hTrigEffReCalc1[idroz],Form("a = %s: closest cluster energy",avalf[idroz].c_str()),"lp");
+    legend->AddEntry(hTrigEffReCalc2[idroz],Form("a = %s: Total cluster energy",avalf[idroz].c_str()),"lp");
+  }
+  legend->SetShadowColor(kWhite);
+
+  TF1 *func1[7], *func2[7];
+  //func[0] = new TF1(Form("func%d",gindex), "0.5 * (1.0 + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., 200.);
+  for(int idroz=0;idroz<maxid;idroz++){
+    func1[idroz] = new TF1(Form("func1%d",gindex), "[3] * ([2] + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., hTrigEffReCalc1[idroz]->GetXaxis()->GetXmax());
+    //func[idroz] = new TF1(Form("func%d",gindex++), "TMath::ATan((x - [0]) / [1]) / TMath::Pi() + 0.5", 0., 400.); // CDF
+    //func[idroz] = new TF1(Form("func%d",gindex), "[1]*TMath::TanH(x - [0])", 0., 100.);
+    func1[idroz]->SetParNames("mean", "sigma","par3", "par4");
+    func1[idroz]->SetParameters(150., 100.5, 0.5, 0.9);
+    // func[idroz]->SetParNames("mean", "sigma");
+    // func[idroz]->SetParameters(150., 10.5);
+    func1[idroz]->SetNpx(1000);
+    func1[idroz]->SetLineColor(GetColor(idroz));
+
+    func2[idroz] = new TF1(Form("func2%d",gindex), "[3] * ([2] + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., hTrigEffReCalc1[idroz]->GetXaxis()->GetXmax());
+    //func[idroz] = new TF1(Form("func%d",gindex++), "TMath::ATan((x - [0]) / [1]) / TMath::Pi() + 0.5", 0., 400.); // CDF
+    //func[idroz] = new TF1(Form("func%d",gindex), "[1]*TMath::TanH(x - [0])", 0., 100.);
+    func2[idroz]->SetParNames("mean", "sigma","par3", "par4");
+    func2[idroz]->SetParameters(150., 100.5, 0.5, 0.9);
+    // func[idroz]->SetParNames("mean", "sigma");
+    // func[idroz]->SetParameters(150., 10.5);
+    func2[idroz]->SetNpx(1000);
+    func2[idroz]->SetLineColor(GetColor(idroz+2));
+
+  }
+  
+  c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  SetCanvasStyle(c1);
+  // for(int idroz=0;idroz<maxid;idroz++)
+  //   hTrigEff[idroz]->Fit(func[idroz]);
+  // for(int idroz=0;idroz<maxid;idroz++){
+  //   if(idroz==0)
+  //     hTrigEff[idroz]->Draw();
+  //   else
+  //     hTrigEff[idroz]->Draw("same");
+  // }
+  for(int idroz=0;idroz<maxid;idroz++){
+    hTrigEffReCalc1[idroz]->Fit(func1[idroz],"+");
+    hTrigEffReCalc2[idroz]->Fit(func2[idroz],"+");
+  }
+  for(int idroz=0;idroz<maxid;idroz++){
+    if(idroz==0){
+      hTrigEffReCalc1[idroz]->Draw("");
+      hTrigEffReCalc2[idroz]->Draw("same");
+    }else{
+      hTrigEffReCalc1[idroz]->Draw("same");
+      hTrigEffReCalc2[idroz]->Draw("same");
+    }
+  }
+  legend->Draw();
+  c1->Update();
+
+}
+
+void PlotCompareTrigEffTwo(TFile *fin1[], TFile *fin2[], const char* histName1, const char* histName2, const char* plotTitle, const char* xaxisTitle, TCanvas*& c1){
+
+  std::string avalf[7] = {"0.016", "0.03", "0.045", "60", "75", "90", "105"};
+  //std::string avalf[7] = {"0.0113", "0.016", "0.0226", "0.045", "60", "75", "90"};
+  
+  TEfficiency *hTrigEff1[7];
+  TEfficiency *hTrigEff2[7];
+  TH1D *hTrigEffReCalc1[7];
+  TH1D *hTrigEffReCalc2[7];
+  TH1D *hTrigEffPass1[7];
+  TH1D *hTrigEffPass2[7];
+  TH1D *hTrigEffTotal1[7];
+  TH1D *hTrigEffTotal2[7];
+  
+  int maxid = 1;
+  int rebin = 2;
+  float xmin = 0, xmax = 200.;
+  for(int idroz=0;idroz<maxid;idroz++){
+
+    hTrigEff1[idroz] = (TEfficiency *)fin1[idroz]->Get(histName1) ;
+    hTrigEff1[idroz]->SetLineColor(GetColor(idroz));
+    hTrigEff1[idroz]->SetLineWidth(2.0);
+
+    hTrigEff2[idroz] = (TEfficiency *)fin2[idroz]->Get(histName2) ;
+    hTrigEff2[idroz]->SetLineColor(GetColor(idroz));
+    hTrigEff2[idroz]->SetLineWidth(2.0);
+
+    hTrigEffPass1[idroz] = (TH1D *) hTrigEff1[idroz]->GetCopyPassedHisto();
+    hTrigEffTotal1[idroz] = (TH1D *) hTrigEff1[idroz]->GetCopyTotalHisto();
+    hTrigEffPass1[idroz]->Rebin(rebin);
+    hTrigEffTotal1[idroz]->Rebin(rebin);
+    hTrigEffReCalc1[idroz] = (TH1D *)hTrigEffPass1[idroz]->Clone(Form("h1d_eff_%d_1",idroz));
+    hTrigEffReCalc1[idroz]->SetTitle(plotTitle);
+    hTrigEffReCalc1[idroz]->Divide(hTrigEffTotal1[idroz]);
+    hTrigEffReCalc1[idroz]->SetLineColor(GetColor(idroz));
+    hTrigEffReCalc1[idroz]->SetLineWidth(2.0);
+    hTrigEffReCalc1[idroz]->GetXaxis()->SetRangeUser(xmin, xmax);
+    hTrigEffReCalc1[idroz]->GetYaxis()->SetRangeUser(0,1.2);
+    hTrigEffReCalc1[idroz]->GetXaxis()->SetTitle(xaxisTitle);
+    hTrigEffReCalc1[idroz]->GetYaxis()->SetTitle("Efficiency");
+
+    hTrigEffPass2[idroz] = (TH1D *) hTrigEff2[idroz]->GetCopyPassedHisto();
+    hTrigEffTotal2[idroz] = (TH1D *) hTrigEff2[idroz]->GetCopyTotalHisto();
+    hTrigEffPass2[idroz]->Rebin(rebin);
+    hTrigEffTotal2[idroz]->Rebin(rebin);
+    hTrigEffReCalc2[idroz] = (TH1D *)hTrigEffPass2[idroz]->Clone(Form("h1d_eff_%d_2",idroz));
+    hTrigEffReCalc2[idroz]->SetTitle(plotTitle);
+    hTrigEffReCalc2[idroz]->Divide(hTrigEffTotal2[idroz]);
+    hTrigEffReCalc2[idroz]->SetLineColor(GetColor(idroz+2));
+    hTrigEffReCalc2[idroz]->SetLineWidth(2.0);
+    hTrigEffReCalc2[idroz]->GetXaxis()->SetRangeUser(xmin, xmax);
+    hTrigEffReCalc2[idroz]->GetYaxis()->SetRangeUser(0,1.2);
+    hTrigEffReCalc2[idroz]->GetXaxis()->SetTitle(xaxisTitle);
+    hTrigEffReCalc2[idroz]->GetYaxis()->SetTitle("Efficiency");
+
+  }
+  
+  hTrigEff1[0]->SetTitle(plotTitle);
+  
+  auto legend = new TLegend(0.47,0.21,0.83,0.45);
+  legend->SetTextSize(0.028);
+  legend->SetHeader("Triangle side length");
+  for(int idroz=0;idroz<maxid;idroz++){
+    // legend->AddEntry(hTrigEffReCalc1[idroz],Form("a = %s: closest cluster energy",avalf[idroz].c_str()),"lp");
+    // legend->AddEntry(hTrigEffReCalc2[idroz],Form("a = %s: Total cluster energy",avalf[idroz].c_str()),"lp");
+    legend->AddEntry(hTrigEffReCalc1[idroz],Form("a = %s: Cluster energy correction",avalf[idroz].c_str()),"lp");
+    legend->AddEntry(hTrigEffReCalc2[idroz],Form("a = %s: TC energy correction",avalf[idroz].c_str()),"lp");
+  }
+  legend->SetShadowColor(kWhite);
+
+  TF1 *func1[7], *func2[7];
+  //func[0] = new TF1(Form("func%d",gindex), "0.5 * (1.0 + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., 200.);
+  for(int idroz=0;idroz<maxid;idroz++){
+    func1[idroz] = new TF1(Form("func1%d",gindex), "[3] * ([2] + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., hTrigEffReCalc1[idroz]->GetXaxis()->GetXmax());
+    //func[idroz] = new TF1(Form("func%d",gindex++), "TMath::ATan((x - [0]) / [1]) / TMath::Pi() + 0.5", 0., 400.); // CDF
+    //func[idroz] = new TF1(Form("func%d",gindex), "[1]*TMath::TanH(x - [0])", 0., 100.);
+    func1[idroz]->SetParNames("mean", "sigma","par3", "par4");
+    func1[idroz]->SetParameters(150., 100.5, 0.5, 0.9);
+    // func[idroz]->SetParNames("mean", "sigma");
+    // func[idroz]->SetParameters(150., 10.5);
+    func1[idroz]->SetNpx(1000);
+    func1[idroz]->SetLineColor(GetColor(idroz));
+
+    func2[idroz] = new TF1(Form("func2%d",gindex), "[3] * ([2] + TMath::Erf((x - [0]) / [1] / TMath::Sqrt2()))", 0., hTrigEffReCalc1[idroz]->GetXaxis()->GetXmax());
+    //func[idroz] = new TF1(Form("func%d",gindex++), "TMath::ATan((x - [0]) / [1]) / TMath::Pi() + 0.5", 0., 400.); // CDF
+    //func[idroz] = new TF1(Form("func%d",gindex), "[1]*TMath::TanH(x - [0])", 0., 100.);
+    func2[idroz]->SetParNames("mean", "sigma","par3", "par4");
+    func2[idroz]->SetParameters(150., 100.5, 0.5, 0.9);
+    // func[idroz]->SetParNames("mean", "sigma");
+    // func[idroz]->SetParameters(150., 10.5);
+    func2[idroz]->SetNpx(1000);
+    func2[idroz]->SetLineColor(GetColor(idroz+2));
+
+  }
+  
+  c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  SetCanvasStyle(c1);
+  // for(int idroz=0;idroz<maxid;idroz++)
+  //   hTrigEff[idroz]->Fit(func[idroz]);
+  // for(int idroz=0;idroz<maxid;idroz++){
+  //   if(idroz==0)
+  //     hTrigEff[idroz]->Draw();
+  //   else
+  //     hTrigEff[idroz]->Draw("same");
+  // }
+  for(int idroz=0;idroz<maxid;idroz++){
+    hTrigEffReCalc1[idroz]->Fit(func1[idroz],"+");
+    hTrigEffReCalc2[idroz]->Fit(func2[idroz],"+");
+  }
+  for(int idroz=0;idroz<maxid;idroz++){
+    if(idroz==0){
+      hTrigEffReCalc1[idroz]->Draw("");
+      hTrigEffReCalc2[idroz]->Draw("same");
+    }else{
+      hTrigEffReCalc1[idroz]->Draw("same");
+      hTrigEffReCalc2[idroz]->Draw("same");
+    }
+  }
+  legend->Draw();
+  c1->Update();
+
 }
