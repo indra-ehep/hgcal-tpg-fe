@@ -27,12 +27,12 @@ int plotStdPerf(int index = 5)
   void PlotNofClus(TFile *fin1, TFile *fin2, TFile *fin3, const char* histName, const char* plotTitle, const char* xaxisTitle, TCanvas*& c1);
   ////////////////////////////////////////////////////////
   
-  //////////////////// global ROOT settings //////////////
-  gStyle->SetOptFit(0010);
-  gStyle->SetOptStat(1);
-  gStyle->SetOptFit(0);
-  gStyle->SetOptStat(0);
-  ////////////////////////////////////////////////////////
+  // //////////////////// global ROOT settings //////////////
+  //gStyle->SetOptFit(0010);
+  // gStyle->SetOptStat(1);
+  // gStyle->SetOptFit(0);
+  // gStyle->SetOptStat(0);
+  // ////////////////////////////////////////////////////////
   
   // /////////////////////Cluster size: TC level //////////////
   // std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_pt100GeV_10K_16_0.root";
@@ -113,20 +113,20 @@ int plotStdPerf(int index = 5)
   //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter24/singlePion_PU200/";
   // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU0/";
   // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
-  inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter27/singlePion_PU0/";
-  inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter33/singlePion_PU0/";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter27/singlePion_PU0/";
+  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter33/singlePion_PU0/";
   
-  std::string aval[7] = {"16", "30", "45", "60", "75", "90", "105"};
-  //std::string aval[7] = {"11", "16", "22", "45", "60", "75", "90"};
-  TFile *fin1[7],*fin2[7];
-  for(int idroz=0;idroz<1;idroz++){
-    std::cout << "idroz : " << idroz << ", aval: "<< aval[idroz]<< std::endl;
-    std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
-    std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
-    fin1[idroz] = TFile::Open(infile1.c_str());
-    fin2[idroz] = TFile::Open(infile2.c_str());
-  }
-  TCanvas *cTrigEffPiIdeal,*cTrigEffEleIdeal;
+  // std::string aval[7] = {"16", "30", "45", "60", "75", "90", "105"};
+  // //std::string aval[7] = {"11", "16", "22", "45", "60", "75", "90"};
+  // TFile *fin1[7],*fin2[7];
+  // for(int idroz=0;idroz<1;idroz++){
+  //   std::cout << "idroz : " << idroz << ", aval: "<< aval[idroz]<< std::endl;
+  //   std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
+  //   std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
+  //   fin1[idroz] = TFile::Open(infile1.c_str());
+  //   fin2[idroz] = TFile::Open(infile2.c_str());
+  // }
+  // TCanvas *cTrigEffPiIdeal,*cTrigEffEleIdeal;
   
   //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} PU0 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
   //PlotTrigEff(fin2, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} PU200 (100 GeV)", "p_{T} (GeV}", cTrigEffPiIdeal);
@@ -142,7 +142,7 @@ int plotStdPerf(int index = 5)
   //PlotTrigEff(fin2, 0, "effTrigGenClstEta", "Trigger Efficiencies of #it{e}/#gamma for PU200", "|#eta|", cTrigEffPiIdeal);
   //PlotTrigEff(fin1, 0, "effTrigGenClstEta", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "|#eta|", cTrigEffPiIdeal);
   //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
-  PlotCompareTrigEffTwo(fin1, fin2, "effTrigGenClstPt", "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // PlotCompareTrigEffTwo(fin1, fin2, "effTrigGenClstPt", "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
   //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
   //PlotTrigEff(fin1, 0, "effTrigGenClstPt", "Trigger Efficiencies of VBF for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
   //PlotTrigEff(fin1, "effTrigGenClstPt", "effTrigGenClstPtTot", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
@@ -181,7 +181,25 @@ int plotStdPerf(int index = 5)
   // PlotNofClus(fin1,fin2,fin3,"hNClus1GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>1", "Number of clusters",cNofClus);
   // //PlotNofClus(fin1,fin2,fin3,"hNClus3GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>3", "Number of clusters",cNofClus);
   // ///////////////////////////////////////////////
-
+  
+  ////////////////////// Calibration plots //////////////////////////////////////
+  void PlotPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& cPtReso);
+  void PlotTCPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& cPtReso);
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter16/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter16/doublePhoton_PU0";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter18/doublePhoton_PU0";
+  inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter18/doublePhoton_PU0";
+  std::string infile1 = inpath1 + "/" + "CalcResolution_ntuples_16_merged.root";
+  TCanvas *cPtReso;
+  TFile *fin = TFile::Open(infile1.c_str());
+  //PlotPtReso1D(fin,"Reso_1D/hGenClusPtReso1D","(Genjet-Cluster) vs Genjet","p_{T}^{Genjet}-p_{T}^{Cluster}  (GeV)",cPtReso);
+  //PlotPtReso1D(fin,"Reso_1D/hGenClusPtReso1D","GenClus p_{T} resolution vs Genjet","#frac{p_{T}^{Genjet}-p_{T}^{Cluster}}{p_{T}^{Genjet}} ",cPtReso);
+  //PlotPtReso1D(fin,"Reso_1D/hGenTCPtReso1D","Genjet-TC vs Genjet","(p_{T}^{Genjet}-p_{T}^{TC}) (GeV)",cPtReso);
+  //PlotPtReso1D(fin,"Reso_1D/hGenTCPtReso1D","GenTC p_{T} resolution vs Genjet","#frac{p_{T}^{Genjet}-p_{T}^{TC}}{p_{T}^{Genjet}} ",cPtReso);
+  //PlotPtReso1D(fin,"Reso_1D/hTCClusPtReso1D","TC-Clus vs Genjet","(p_{T}^{TC}-p_{T}^{Clus}) (GeV)",cPtReso);
+  //PlotPtReso1D(fin,"Reso_1D/hTCClusPtReso1D","TCClus p_{T} resolution vs Genjet","#frac{p_{T}^{TC}-p_{T}^{Clus}}{p_{T}^{Genjet}} ",cPtReso);
+  
+  PlotTCPtReso1D(fin,"Reso_1D/hGenTCPtResovsTCPt1D","GenTC p_{T} resolution vs p_{T}^{maxTC} (e/#gamma)","#frac{p_{T}^{Genjet}-p_{T}^{TCPtsum}}{p_{T}^{maxTC}} ",cPtReso);
   
   return true;
 }
@@ -843,6 +861,193 @@ void PlotCompareTrigEffTwo(TFile *fin1[], TFile *fin2[], const char* histName1, 
       hTrigEffReCalc2[idroz]->Draw("same");
     }
   }
+  legend->Draw();
+  c1->Update();
+
+}
+
+void PlotPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& c1)
+{
+  // //Eta : outermost(Sci) = 1.321, innermost(Si) =  3.152
+  // //use delta-Eta = 0.0873 (or mutltiple) and make range for |\eta|
+  // float deltaEta = 0.0873;
+  // const int nJetEtaBins = 21;
+  // Float_t jetEtaBin[22];
+  // jetEtaBin[0] = 1.321;
+  // for(int ieta=1;ieta<=nJetEtaBins;ieta++)
+  //   jetEtaBin[ieta] = jetEtaBin[0] + ieta*deltaEta;
+  // //jetEtaBin[21] would be 3.1543;
+
+  float x, xerror, y, yerror;
+  TGraphErrors *gr = new TGraphErrors();
+  int i=0;
+
+  const int nJetPtBins = 43;
+  Float_t jetPtBin[44] = {0, 15., 16., 18., 20., 22., 25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 75., 80., 85., 90., 95., 100.,  
+			  110., 120., 130., 140., 150., 160., 170., 180., 190., 200.,
+			  220., 240., 260., 280., 300.,
+			  330., 360., 390., 420.,
+			  440., 480., 520.};
+  for(int ipt=0;ipt<nJetPtBins;ipt++){
+    TH1F *h1  = (TH1F *)fin->Get(Form("%s_%d",histName,ipt));
+    y = h1->GetXaxis()->GetBinCenter(h1->GetMaximumBin());
+    double y1 = h1->GetXaxis()->GetBinCenter(h1->GetMaximumBin()+1);
+    yerror = 0.5*abs(y1-y);
+    y = h1->GetMean();
+    //yerror = h1->GetRMS();
+    x = 0.5*abs(jetPtBin[ipt+1]+jetPtBin[ipt]);
+    xerror = 0.5*abs(jetPtBin[ipt+1]-jetPtBin[ipt]);
+    double rerror = sqrt((yerror/y)*(yerror/y)+(xerror/x)*(xerror/x));
+    y = y/x;
+    yerror = y*rerror;
+    if(x<10.) continue;
+    std::cout<<"x : "<<x<<", xerror "<<xerror<<", y : "<<y<<", yerror "<<yerror<<std::endl;
+    gr->SetPoint(i,x,y);
+    gr->SetPointError(i,xerror,yerror);
+    i++;
+  }
+  gr->SetTitle(plotTitle);
+  gr->GetXaxis()->SetTitle("p_{T}^{Genjet} (GeV)");
+  gr->GetYaxis()->SetTitle(yaxisTitle);
+  gr->GetXaxis()->SetTitleOffset(1.2);
+  gr->GetYaxis()->SetTitleOffset(1.6);
+  gr->SetMinimum(0.0);
+  gr->SetMaximum(1.0);
+
+  
+  auto f1 = new TF1(Form("func%d",gindex),"[0]*([1]+[2]/(x+[3]))",-100,100);
+  f1->SetParameters(0.729,0.199,25.4,80);
+  f1->SetNpx(1000);
+  gr->Fit(f1);
+  
+  auto legend = new TLegend(0.31,0.75,0.85,0.86);
+  legend->SetTextSize(0.028);
+  //legend->SetHeader("");
+  legend->AddEntry(f1,"N[a+b/(x+x0)]","lp");
+  legend->AddEntry((TObject *)0x0,Form("N: %4.2f #pm %4.2f, a: %4.2f #pm %4.2f",
+				       f1->GetParameter(0), f1->GetParError(0),
+				       f1->GetParameter(1),f1->GetParError(1)),"");
+  legend->AddEntry((TObject *)0x0,Form("b: %4.2f #pm %4.2f, x0: %4.2f #pm %4.2f",
+				       f1->GetParameter(2), f1->GetParError(2),
+				       f1->GetParameter(3), f1->GetParError(3)),"");
+  legend->SetShadowColor(kWhite);
+
+  c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  SetCanvasStyle(c1);
+
+  gr->Draw("APE1");
+  legend->Draw();
+  c1->Update();
+
+}
+
+
+void PlotTCPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& c1)
+{
+
+  float x, xerror, y, yerror;
+  TGraphErrors *gr = new TGraphErrors();
+  int i=0;
+  
+  const int nTCPtBins = 100;
+  TH1F *h1[nTCPtBins];
+  TF1 *fh1[nTCPtBins];
+  for(int ipt=0;ipt<nTCPtBins;ipt++){
+    h1[ipt]  = (TH1F *)fin->Get(Form("%s_%d",histName,ipt));
+    if(h1[ipt]->GetEntries()<10) continue;
+    fh1[ipt] = new TF1(Form("funch%d",gindex++),"gaus",-15,15);
+    double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+    fh1[ipt]->SetNpx(1000);
+    fh1[ipt]->SetParameters(norm,1,2.);
+    h1[ipt]->Fit(fh1[ipt],"NQLR");
+    i++;
+  }
+  // int imax = (i<10)?i:10;
+  // std::cout << "i: " << i <<", imax :" << imax <<  std::endl;
+  
+  // c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  // c1->Divide(5,2);
+  // SetCanvasStyle(c1);
+  // for(int ipt=0;ipt<imax;ipt++){
+  //   c1->cd(ipt+1);
+  //   h1[ipt]->GetXaxis()->SetRangeUser(-15.,15.);
+  //   double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+  //   h1[ipt]->SetMaximum(1.1*norm);
+  //   h1[ipt]->GetYaxis()->SetTitle("Entries");
+  //   h1[ipt]->GetXaxis()->SetTitle("[p_{T}^{Genjet}-p_{T}^{TCPtsum_{CEE}}] (GeV)");
+  //   h1[ipt]->Draw();
+  // }
+  // int offset = imax;
+  // imax = (i<(10+offset))?i:(10+offset);
+  // c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  // c1->Divide(5,2);
+  // SetCanvasStyle(c1);
+  // for(int ipt=0+offset;ipt<imax;ipt++){
+  //   c1->cd((ipt-offset)+1);
+  //   double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+  //   h1[ipt]->SetMaximum(1.1*norm);
+  //   h1[ipt]->GetXaxis()->SetRangeUser(-15.,15.);
+  //   h1[ipt]->GetYaxis()->SetTitle("Entries");
+  //   h1[ipt]->GetXaxis()->SetTitle("[p_{T}^{Genjet}-p_{T}^{TCPtsum_{CEE}}] (GeV)");
+  //   h1[ipt]->Draw();
+  // }
+  
+  int nof1DHists = i;
+  i = 0;
+  for(int ipt=0;ipt<nof1DHists;ipt++){
+    
+    y = fh1[ipt]->GetParameter(1);
+    //yerror = 0.5*abs(fh1[ipt]->GetParError(1));
+    yerror = 0.5*abs(fh1[ipt]->GetParameter(2));
+    
+    x = 0.5*abs(float(ipt+1)+float(ipt));
+    xerror = 0.5*abs(float(ipt+1)-float(ipt));
+    
+    double rerror = sqrt((yerror/y)*(yerror/y)+(xerror/x)*(xerror/x));
+    y = y/x;
+    yerror = abs(y*rerror);
+    
+    std::cout<<"x : "<<x<<", xerror "<<xerror<<", y : "<<y<<", yerror "<<yerror<<std::endl;
+    
+    gr->SetPoint(i,x,y);
+    gr->SetPointError(i,xerror,yerror);
+    i++;
+  }
+  
+  gr->SetTitle(plotTitle);
+  gr->GetXaxis()->SetTitle("p_{T}^{maxTC} (GeV)");
+  gr->GetYaxis()->SetTitle(yaxisTitle);
+  gr->GetXaxis()->SetTitleOffset(1.2);
+  gr->GetYaxis()->SetTitleOffset(2);
+  gr->SetMinimum(-1.0);
+  gr->SetMaximum(1.0);
+
+  
+  //auto f1 = new TF1(Form("func%d",gindex++),"[0]*([1]-[2]*pow(x-[3],2))",-100,100);
+  // auto f1 = new TF1(Form("func%d",gindex++),"[3]*sqrt((x-[0])*(x-[0])+[1]*2*(x-[0]))*pow(([2]-(x-[0])),2)-1",1,17);
+  // f1->SetParameters(-0.620,0.0001,30,0.001);
+  auto f1 = new TF1(Form("func%d",gindex++),"[0]*sqrt((x-[1])*(x-[1])+[2]*(x-[1]))*pow(([3]-(x-[1])),2)-1",0,40);
+  //f1->SetParameters(3.68427e-05,0.056964,2.7018,41.9545);
+  f1->SetParameters(1.75139e-05,-0.191719,290.217,45.1571);
+  //f1->SetParameters(1.73055e-05,-0.361961,299.341,45.1033);
+  //f1->SetParameters(1.09185e-05,0.166938,890.269,43.8177);
+  f1->SetNpx(1000);
+  //gr->Fit(f1,"R");
+  
+  auto legend = new TLegend(0.31,0.75,0.85,0.86);
+  legend->SetTextSize(0.028);
+  //legend->SetHeader("");
+  //legend->AddEntry(f1,"N[a+b/(x+x0)]","lp");
+  legend->AddEntry(f1,"N#times#sqrt{(x-x0)^{2}+a*(x-x0)}#times(b-(x-x0))^{2}-c","lp");
+  legend->AddEntry((TObject *)0x0,Form("N: %4.2e, x0: %4.2f,",f1->GetParameter(0), f1->GetParameter(1)),"");
+  legend->AddEntry((TObject *)0x0,Form("a: %4.2f, b: %4.2f, c: 1", f1->GetParameter(2), f1->GetParameter(3)),"");
+  legend->SetShadowColor(kWhite);
+
+  gr->GetXaxis()->SetLimits(0,40.);
+  c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  SetCanvasStyle(c1);
+  gr->Draw("APE1 same");
+  f1->Draw("same");
   legend->Draw();
   c1->Update();
 
