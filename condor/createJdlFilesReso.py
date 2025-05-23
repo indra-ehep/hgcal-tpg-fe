@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "15"
+iloop= "31"
 
 #samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 #samplelist_Ideal = ["SingleEle_Ideal_PU0"]
@@ -18,11 +18,12 @@ ntuple_path_ideal = ["ntuples"]
 
 samplelist_PU0 = ["SinglePi_realistic_PU0", "SingleEle_realistic_PU0", "VBFHToInvisible_realistic_PU0", "MinBias_realistic_PU0"]
 
-#samplelist_PU0_Emyr = ["doublePhoton_PU0", "singlePion_PU0"]
+#samplelist_PU0_Emyr = ["singlePion_PU0"]
 #samplelist_PU0_Emyr = ["doublePhoton_PU0"]
 #samplelist_PU0_Emyr = ["singlePion_PU0", "singlePion_PU0", "doublePhoton_PU0", "vbfHInv_0PU"]
+samplelist_PU0_Emyr = ["vbfHInv_0PU"]
 #samplelist_PU0_Emyr = ["singlePion_PU0_Ideal"]
-samplelist_PU0_Emyr = ["singlePion_PU0_Realistic"]
+#samplelist_PU0_Emyr = ["singlePion_PU0_Realistic"]
 
 samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realistic_PU200", "MinBias_realistic_PU140"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "vbfHInv_200PU"]
@@ -277,6 +278,7 @@ for sample in samplelist_PU0_Emyr:
         jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
         jdlFile.write(common_command)
         for fname in filelist:
+            #if findex < 200:
             print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
             ofextn = 'ntuples_%s'%(fsidelen_index)
             run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
