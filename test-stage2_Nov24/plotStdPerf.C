@@ -5,6 +5,17 @@
  Author     : Indranil Das, Research Associate, Imperial
  Email      : indranil.das@cern.ch | indra.ehep@gmail.com
 **********************************************************************/
+//#include <TROOT.h>
+//#include <TChain.h>
+#include <TProfile.h>
+#include <TFile.h>
+#include <TCanvas.h>
+#include <TMath.h>
+#include <TH2.h>
+#include <TF1.h>
+#include "TEfficiency.h"
+#include "TLegend.h"
+#include "TGraphErrors.h"
 
 int gindex = 1;
 int plotStdPerf(int index = 5)
@@ -185,10 +196,24 @@ int plotStdPerf(int index = 5)
   ////////////////////// Calibration plots //////////////////////////////////////
   void PlotPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& cPtReso);
   void PlotTCPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& cPtReso);
+  void PlotTCPtReso1DLog(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& cPtReso);
   //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter16/singlePion_PU0_Ideal";
   //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter16/doublePhoton_PU0";
   //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter18/doublePhoton_PU0";
-  inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter18/doublePhoton_PU0";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter18/doublePhoton_PU0";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter28/doublePhoton_PU0";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter27/vbfHInv_0PU";
+  //  inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter30/vbfHInv_0PU";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter32/vbfHInv_0PU";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter33/vbfHInv_200PU";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter34/vbfHInv_0PU";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter35/vbfHInv_200PU";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter36/vbfHInv_200PU";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter37/vbfHInv_200PU"; //iter1
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter38/vbfHInv_200PU"; //iter2
+  
+  inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter39/vbfHInv_0PU"; //cluster reso
+  
   std::string infile1 = inpath1 + "/" + "CalcResolution_ntuples_16_merged.root";
   TCanvas *cPtReso;
   TFile *fin = TFile::Open(infile1.c_str());
@@ -199,8 +224,23 @@ int plotStdPerf(int index = 5)
   //PlotPtReso1D(fin,"Reso_1D/hTCClusPtReso1D","TC-Clus vs Genjet","(p_{T}^{TC}-p_{T}^{Clus}) (GeV)",cPtReso);
   //PlotPtReso1D(fin,"Reso_1D/hTCClusPtReso1D","TCClus p_{T} resolution vs Genjet","#frac{p_{T}^{TC}-p_{T}^{Clus}}{p_{T}^{Genjet}} ",cPtReso);
   
-  PlotTCPtReso1D(fin,"Reso_1D/hGenTCPtResovsTCPt1D","GenTC p_{T} resolution vs p_{T}^{maxTC} (e/#gamma)","#frac{p_{T}^{Genjet}-p_{T}^{TCPtsum}}{p_{T}^{maxTC}} ",cPtReso);
+  //PlotTCPtReso1D(fin,"Reso_1D/hGenTCPtResovsTCPt1D","GenTC p_{T} resolution vs p_{T}^{maxTC} (e/#gamma)","#frac{p_{T}^{Genjet}-p_{T}^{TCPtsum}}{p_{T}^{maxTC}} ",cPtReso);
   
+  //PlotTCPtReso1DLog(fin,"Reso_1D/hGenTCPtResovsTCPt1DLog", "Genjet-TC p_{T} resolution vs p_{T}^{TC} (VBF)","#frac{p_{T}^{Genjet}-p_{T}^{TCPtsum}}{p_{T}^{TC}} ",cPtReso);
+  
+  //PlotTCPtReso1DLog(fin,"Reso_1D/hGenjetByTCPtSumVsTCPt1DLog", "Genjet/TC p_{T} resolution vs p_{T}^{TC} (VBF PU0)","#frac{p_{T}^{Genjet}}{p_{T}^{TCPtsum}} ",cPtReso);
+  //PlotTCPtReso1DLog(fin,"Reso_1D/hGenjetByTCPtSumVsTCPt1DLog", "Genjet/#Sigmap_{T}^{TC} vs p_{T}^{TC} (VBF PU0)","#frac{p_{T}^{Genjet}}{#Sigmap_{T}^{TC}} ",cPtReso);
+  //PlotTCPtReso1DLog(fin,"Reso_1D/hGenjetByTCPtSumVsTCPt1DLog", "Genjet/#Sigmap_{T}^{TC} vs p_{T}^{TC} (VBF PU200)","#frac{p_{T}^{Genjet}}{#Sigmap_{T}^{TC}} ",cPtReso);
+  //PlotTCPtReso1DLog(fin,"Reso_1D/hGenjetByTCPtSumVsTCPt1DLog", "Genjet/#Sigmap_{T}^{TC} vs p_{T}^{TC} (VBF PU0 p_{T}-scaled)","#frac{p_{T}^{Genjet}}{#Sigmap_{T}^{TC}} ",cPtReso);
+  //PlotTCPtReso1DLog(fin,"Reso_1D/hGenjetByTCPtSumVsTCPt1DLog", "Genjet/#Sigmap_{T}^{TC} vs p_{T}^{TC} (VBF PU200 p_{T}-scaled iteration 1)","#frac{p_{T}^{Genjet}}{#Sigmap_{T}^{TC}} ",cPtReso);
+  
+  
+  //PlotPtReso1D(fin,"Reso_1D/hGenClusPtReso1D","(Genjet/Cluster) vs Cluster","p_{T}^{Genjet}/p_{T}^{Cluster}",cPtReso);
+
+  //PlotTCPtReso1D(fin,"Reso_1D/hGenTCPtReso1D","(Genjet/#Sigmap_{T}^{TC}) vs Cluster","#frac{p_{T}^{Genjet}}{#Sigmap_{T}^{TC}}",cPtReso);
+  //PlotTCPtReso1D(fin,"Reso_1D/hTCClusPtReso1D","(#Sigmap_{T}^{TC}/Cluster) vs Cluster","#frac{#Sigmap_{T}^{TC}}{p_{T}^{Cluster}}",cPtReso);
+  PlotTCPtReso1D(fin,"Reso_1D/hGenClusPtReso1D","(Genjet/Cluster) vs Cluster","#frac{p_{T}^{Genjet}}{p_{T}^{Cluster}}",cPtReso);
+
   return true;
 }
 
@@ -210,7 +250,7 @@ Color_t GetColor(int iset){
   int maxindex = 12;
   iset=iset%maxindex;
   
-  Color_t color;
+  Color_t color = kBlack;
   switch(iset){
 
   case 0:  
@@ -898,8 +938,8 @@ void PlotPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const
     x = 0.5*abs(jetPtBin[ipt+1]+jetPtBin[ipt]);
     xerror = 0.5*abs(jetPtBin[ipt+1]-jetPtBin[ipt]);
     double rerror = sqrt((yerror/y)*(yerror/y)+(xerror/x)*(xerror/x));
-    y = y/x;
-    yerror = y*rerror;
+    // y = y/x;
+    // yerror = y*rerror;
     if(x<10.) continue;
     std::cout<<"x : "<<x<<", xerror "<<xerror<<", y : "<<y<<", yerror "<<yerror<<std::endl;
     gr->SetPoint(i,x,y);
@@ -907,105 +947,249 @@ void PlotPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const
     i++;
   }
   gr->SetTitle(plotTitle);
-  gr->GetXaxis()->SetTitle("p_{T}^{Genjet} (GeV)");
+  gr->GetXaxis()->SetTitle("p_{T}^{Cluster} (GeV)");
   gr->GetYaxis()->SetTitle(yaxisTitle);
   gr->GetXaxis()->SetTitleOffset(1.2);
   gr->GetYaxis()->SetTitleOffset(1.6);
   gr->SetMinimum(0.0);
-  gr->SetMaximum(1.0);
+  gr->SetMaximum(10.0);
 
   
-  auto f1 = new TF1(Form("func%d",gindex),"[0]*([1]+[2]/(x+[3]))",-100,100);
-  f1->SetParameters(0.729,0.199,25.4,80);
+  //auto f1 = new TF1(Form("func%d",gindex),"[0]*([1]+[2]/(x+[3]))",7,500);
+  auto f1 = new TF1(Form("func%d",gindex),"([0]+[1]/(x+[2]))",7,500);
+  //f1->SetParameters(0.729,0.199,25.4,80);
+  //f1->SetParameters(1.04829, 1.08593, 59.014, 19.3879);
+  f1->SetParameters(1.138, 61.86, 19.39);
   f1->SetNpx(1000);
   gr->Fit(f1);
   
   auto legend = new TLegend(0.31,0.75,0.85,0.86);
   legend->SetTextSize(0.028);
   //legend->SetHeader("");
-  legend->AddEntry(f1,"N[a+b/(x+x0)]","lp");
-  legend->AddEntry((TObject *)0x0,Form("N: %4.2f #pm %4.2f, a: %4.2f #pm %4.2f",
+  legend->AddEntry(f1,"a+b/(x+x0)","lp");
+  legend->AddEntry((TObject *)0x0,Form("a: %4.2f #pm %4.2f, b: %4.2f #pm %4.2f",
 				       f1->GetParameter(0), f1->GetParError(0),
 				       f1->GetParameter(1),f1->GetParError(1)),"");
-  legend->AddEntry((TObject *)0x0,Form("b: %4.2f #pm %4.2f, x0: %4.2f #pm %4.2f",
-				       f1->GetParameter(2), f1->GetParError(2),
-				       f1->GetParameter(3), f1->GetParError(3)),"");
+  legend->AddEntry((TObject *)0x0,Form("x0: %4.2f #pm %4.2f",
+				       f1->GetParameter(2), f1->GetParError(2)),"");
   legend->SetShadowColor(kWhite);
 
   c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
   SetCanvasStyle(c1);
-
+  
   gr->Draw("APE1");
   legend->Draw();
   c1->Update();
 
 }
 
+Double_t CrystallBall(Double_t *x, Double_t *par)
+{
+  //parameters
+  //par[0] : norm
+  //par[1] : mean
+  //par[2] : sigma
+  //par[3] : alpha
+  //par[4] : n
+  double N = par[0];
+  double x0 = par[1];
+  double sigma = par[2];
+  double alpha = par[3];
+  double n = par[4];
+  
+  double A = pow(n/fabs(alpha),n) * exp(-(alpha*alpha/2.));
+  double B = n/fabs(alpha) - fabs(alpha);
+  
+  double nSig = (x[0] - x0)/sigma ;
+  double ret = 0;
+  if(nSig<=alpha)
+    ret = N*exp(-0.5*nSig*nSig);
+  else
+    ret = N*A/pow((B+nSig),n);
+  
+  return ret;
+}
+
+Double_t DoubleCrystallBall2G(Double_t *x, Double_t *par)
+{
+  //parameters
+  //par[0] : norm
+  //par[1] : mean
+  //par[2] : sigmaL
+  //par[3] : sigmaR
+  //par[4] : alphaL
+  //par[5] : alphaR
+  //par[6] : nL
+  //par[7] : nR
+  
+  double N = par[0];
+  double x0 = par[1];
+  double sigmaL = par[2];
+  double sigmaR = par[3];
+  double alphaL = par[4];
+  double alphaR = par[5];
+  double nL = par[6];
+  double nR = par[7];
+  
+  double AL = pow(nL/fabs(alphaL),nL) * exp(-(alphaL*alphaL/2.));
+  double BL = nL/fabs(alphaL) - fabs(alphaL);
+  double AR = pow(nR/fabs(alphaR),nR) * exp(-(alphaR*alphaR/2.));
+  double BR = nR/fabs(alphaR) - fabs(alphaR);
+  
+  double nSigL = (x[0] - x0)/sigmaL ;
+  double nSigR = (x[0] - x0)/sigmaR ;
+  double ret = 0;
+  if(nSigL<alphaL)
+    ret = N*AL/pow((BL-nSigL),nL);
+  else if(nSigL<=0.)
+    ret = N*exp(-0.5*nSigL*nSigL);
+  else if(nSigR<=alphaR)
+    ret = N*exp(-0.5*nSigR*nSigR);
+  else
+    ret = N*AR/pow((BR+nSigR),nR);
+  
+  return ret;
+}
+
+Double_t DoubleCrystallBallSC(Double_t *x, Double_t *par)
+{
+  //parameters
+  //par[0] : norm
+  //par[1] : mean
+  //par[2] : sigma
+  //par[3] : alphaL
+  //par[4] : alphaR
+  //par[5] : nL
+  //par[6] : nR
+  
+  double N = par[0];
+  double x0 = par[1];
+  double sigma = par[2];
+  double alphaL = par[3];
+  double alphaR = par[4];
+  double nL = par[5];
+  double nR = par[6];
+  
+  double AL = pow(nL/fabs(alphaL),nL) * exp(-(alphaL*alphaL/2.));
+  double BL = nL/fabs(alphaL) - fabs(alphaL);
+  double AR = pow(nR/fabs(alphaR),nR) * exp(-(alphaR*alphaR/2.));
+  double BR = nR/fabs(alphaR) - fabs(alphaR);
+  
+  double nSig = (x[0] - x0)/sigma ;
+  double ret = 0;
+  if(nSig<alphaL)
+    ret = N*AL/pow((BL-nSig),nL);
+  else if(nSig>alphaR)
+    ret = N*AR/pow((BR-nSig),nR);
+  else
+    ret = N*exp(-0.5*nSig*nSig);
+  
+  return ret;
+}
+
+Double_t Lorentzian(Double_t *x, Double_t *par)
+{
+  return (0.5*par[0]*par[1]/TMath::Pi()) / TMath::Max(1.e-10,(x[0]-par[2])*(x[0]-par[2])+ .25*par[1]*par[1]);
+}
 
 void PlotTCPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& c1)
 {
+
+  const int nJetPtBins = 43;
+  Float_t jetPtBin[44] = {0, 15., 16., 18., 20., 22., 25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 75., 80., 85., 90., 95., 100.,  
+			  110., 120., 130., 140., 150., 160., 170., 180., 190., 200.,
+			  220., 240., 260., 280., 300.,
+			  330., 360., 390., 420.,
+			  440., 480., 520.};
 
   float x, xerror, y, yerror;
   TGraphErrors *gr = new TGraphErrors();
   int i=0;
   
-  const int nTCPtBins = 100;
+  double xmin = 0., xmax = 8.;
+  int rebin = 8;
+  const int nTCPtBins = 43;
   TH1F *h1[nTCPtBins];
   TF1 *fh1[nTCPtBins];
   for(int ipt=0;ipt<nTCPtBins;ipt++){
     h1[ipt]  = (TH1F *)fin->Get(Form("%s_%d",histName,ipt));
-    if(h1[ipt]->GetEntries()<10) continue;
-    fh1[ipt] = new TF1(Form("funch%d",gindex++),"gaus",-15,15);
+    if(h1[ipt]->GetEntries()<8) continue;
+    h1[ipt]->Rebin(rebin);
     double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+    
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),Lorentzian,xmin,xmax,3);
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),"crystalball",xmin,xmax);
+    
+    // fh1[ipt] = new TF1(Form("funch%d",gindex++),"gaus",xmin,xmax); //crystalball
+    // fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS());
+    
+    if(ipt==0){
+      fh1[ipt] = new TF1(Form("funch%d",gindex++),"landau",xmin,xmax);
+      fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS());
+    }else{
+      fh1[ipt] = new TF1(Form("funch%d",gindex++),CrystallBall,xmin,xmax,5);
+      fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS(), 1.2, 9);
+    }
+    
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),DoubleCrystallBall2G,xmin,xmax,8);
     fh1[ipt]->SetNpx(1000);
-    fh1[ipt]->SetParameters(norm,1,2.);
-    h1[ipt]->Fit(fh1[ipt],"NQLR");
+    //fh1[ipt]->SetParameters(norm,1,2.);
+    //fh1[ipt]->SetParameters(1, 0, 1, 2, 0.5);
+    //fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS());
+    //fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), 0.1*h1[ipt]->GetRMS(), h1[ipt]->GetRMS(), 0.12, 1.2, 8, 10);
+    //fh1[ipt]->Print();
+    h1[ipt]->Fit(fh1[ipt],"QLR");
     i++;
   }
-  // int imax = (i<10)?i:10;
-  // std::cout << "i: " << i <<", imax :" << imax <<  std::endl;
   
-  // c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
-  // c1->Divide(5,2);
-  // SetCanvasStyle(c1);
-  // for(int ipt=0;ipt<imax;ipt++){
-  //   c1->cd(ipt+1);
-  //   h1[ipt]->GetXaxis()->SetRangeUser(-15.,15.);
-  //   double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
-  //   h1[ipt]->SetMaximum(1.1*norm);
-  //   h1[ipt]->GetYaxis()->SetTitle("Entries");
-  //   h1[ipt]->GetXaxis()->SetTitle("[p_{T}^{Genjet}-p_{T}^{TCPtsum_{CEE}}] (GeV)");
-  //   h1[ipt]->Draw();
-  // }
-  // int offset = imax;
-  // imax = (i<(10+offset))?i:(10+offset);
-  // c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
-  // c1->Divide(5,2);
-  // SetCanvasStyle(c1);
-  // for(int ipt=0+offset;ipt<imax;ipt++){
-  //   c1->cd((ipt-offset)+1);
-  //   double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
-  //   h1[ipt]->SetMaximum(1.1*norm);
-  //   h1[ipt]->GetXaxis()->SetRangeUser(-15.,15.);
-  //   h1[ipt]->GetYaxis()->SetTitle("Entries");
-  //   h1[ipt]->GetXaxis()->SetTitle("[p_{T}^{Genjet}-p_{T}^{TCPtsum_{CEE}}] (GeV)");
-  //   h1[ipt]->Draw();
-  // }
+  int nCvs = (i%10==0) ? (i/10) : ((i/10)+1) ;
+  std::cout << "i: " << i <<", nCvs :" << nCvs <<  std::endl;
+  int imax = i;
   
-  int nof1DHists = i;
   i = 0;
-  for(int ipt=0;ipt<nof1DHists;ipt++){
+  for(int ipt=0;ipt<imax;ipt++){
+    //if(h1[ipt]->GetEntries()<10) continue;
+    if(ipt%10==0){
+      c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),1920,1080); gindex++;
+      c1->Divide(5,2);
+      SetCanvasStyle(c1);
+      i=0;
+    }
+    c1->cd((ipt%10)+1);
+    h1[ipt]->GetXaxis()->SetRangeUser(xmin,xmax);
+    double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+    h1[ipt]->SetMaximum(1.3*norm);
+    h1[ipt]->GetYaxis()->SetTitle("Entries");
+    //h1[ipt]->GetXaxis()->SetTitle("[p_{T}^{Genjet}-p_{T}^{TCPtsum}] (GeV)");
+
+    //h1[ipt]->GetXaxis()->SetTitle("p_{T}^{Genjet}/#Sigmap_{T}^{TC}");
+    h1[ipt]->GetXaxis()->SetTitle("p_{T}^{Genjet}/p_{T}^{Cluster}");
+    //h1[ipt]->GetXaxis()->SetTitle("#Sigmap_{T}^{TC}//p_{T}^{Cluster}");
+    
+    h1[ipt]->Draw();
+    i++;
+    if(i%10==0 or ipt==(imax-1)){
+      c1->SaveAs(Form("~/temp/%s.pdf",c1->GetName()));
+      c1->SaveAs(Form("~/temp/%s.png",c1->GetName()));
+    }
+  }  
+
+  
+  i = 0;
+  for(int ipt=0;ipt<imax;ipt++){
     
     y = fh1[ipt]->GetParameter(1);
     //yerror = 0.5*abs(fh1[ipt]->GetParError(1));
     yerror = 0.5*abs(fh1[ipt]->GetParameter(2));
     
-    x = 0.5*abs(float(ipt+1)+float(ipt));
-    xerror = 0.5*abs(float(ipt+1)-float(ipt));
+    // x = 0.5*abs(float(ipt+1)+float(ipt));
+    // xerror = 0.5*abs(float(ipt+1)-float(ipt));
+    x = 0.5*abs(jetPtBin[ipt+1]+jetPtBin[ipt]);
+    xerror = 0.5*abs(jetPtBin[ipt+1]-jetPtBin[ipt]);
     
     double rerror = sqrt((yerror/y)*(yerror/y)+(xerror/x)*(xerror/x));
-    y = y/x;
-    yerror = abs(y*rerror);
+    // y = y/x;
+    // yerror = abs(y*rerror);
     
     std::cout<<"x : "<<x<<", xerror "<<xerror<<", y : "<<y<<", yerror "<<yerror<<std::endl;
     
@@ -1015,40 +1199,179 @@ void PlotTCPtReso1D(TFile *fin, const char* histName, const char* plotTitle, con
   }
   
   gr->SetTitle(plotTitle);
-  gr->GetXaxis()->SetTitle("p_{T}^{maxTC} (GeV)");
+  gr->GetXaxis()->SetTitle("p_{T}^{Cluster} (GeV)");
   gr->GetYaxis()->SetTitle(yaxisTitle);
   gr->GetXaxis()->SetTitleOffset(1.2);
-  gr->GetYaxis()->SetTitleOffset(2);
-  gr->SetMinimum(-1.0);
-  gr->SetMaximum(1.0);
-
+  gr->GetYaxis()->SetTitleOffset(1.4);
+  gr->SetMinimum(0.0);
+  gr->SetMaximum(8.0);
   
-  //auto f1 = new TF1(Form("func%d",gindex++),"[0]*([1]-[2]*pow(x-[3],2))",-100,100);
-  // auto f1 = new TF1(Form("func%d",gindex++),"[3]*sqrt((x-[0])*(x-[0])+[1]*2*(x-[0]))*pow(([2]-(x-[0])),2)-1",1,17);
-  // f1->SetParameters(-0.620,0.0001,30,0.001);
-  auto f1 = new TF1(Form("func%d",gindex++),"[0]*sqrt((x-[1])*(x-[1])+[2]*(x-[1]))*pow(([3]-(x-[1])),2)-1",0,40);
-  //f1->SetParameters(3.68427e-05,0.056964,2.7018,41.9545);
-  f1->SetParameters(1.75139e-05,-0.191719,290.217,45.1571);
-  //f1->SetParameters(1.73055e-05,-0.361961,299.341,45.1033);
-  //f1->SetParameters(1.09185e-05,0.166938,890.269,43.8177);
+  auto f1 = new TF1(Form("func%d",gindex),"[0]+[1]/(x+[2])",7,500);
+  f1->SetParameters(1.138, 61.86, 19.39);
+  //auto f1 = new TF1(Form("func%d",gindex),"[0]+[1]*x",7,500);
+  //f1->SetParameters(1.0, 1.e-6);
+  
   f1->SetNpx(1000);
-  //gr->Fit(f1,"R");
+  gr->Fit(f1,"R");
   
   auto legend = new TLegend(0.31,0.75,0.85,0.86);
   legend->SetTextSize(0.028);
-  //legend->SetHeader("");
-  //legend->AddEntry(f1,"N[a+b/(x+x0)]","lp");
-  legend->AddEntry(f1,"N#times#sqrt{(x-x0)^{2}+a*(x-x0)}#times(b-(x-x0))^{2}-c","lp");
-  legend->AddEntry((TObject *)0x0,Form("N: %4.2e, x0: %4.2f,",f1->GetParameter(0), f1->GetParameter(1)),"");
-  legend->AddEntry((TObject *)0x0,Form("a: %4.2f, b: %4.2f, c: 1", f1->GetParameter(2), f1->GetParameter(3)),"");
+  //legend->SetHeader(Form("%s",f1->GetTitle()));
+  legend->AddEntry(f1,"a+b/(x+x0)","lp");
+  // legend->AddEntry(f1,"N#times#sqrt{(x-x0)^{2}+a*(x-x0)}#times(b-(x-x0))^{2}-c","lp");
+  legend->AddEntry((TObject *)0x0,Form("a: %4.2f, b: %4.2f, x0 : %4.2f", f1->GetParameter(0), f1->GetParameter(1),f1->GetParameter(2)),"");
+  //legend->AddEntry((TObject *)0x0,Form("N: %4.2e, x0: %4.2f,",f1->GetParameter(0), f1->GetParameter(1)),"");
+
   legend->SetShadowColor(kWhite);
 
-  gr->GetXaxis()->SetLimits(0,40.);
+  //gr->GetXaxis()->SetLimits(0,40.);
   c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
   SetCanvasStyle(c1);
   gr->Draw("APE1 same");
-  f1->Draw("same");
+  //f1->Draw("same");
   legend->Draw();
   c1->Update();
 
+}
+
+void PlotTCPtReso1DLog(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& c1)
+{
+
+  double xm1 = -3;
+  std::vector<double> logbins;
+  int logmax = 1e6;
+  logbins.push_back(0.0);
+  for(int itcpt=1 ; itcpt < logmax ; itcpt++){
+    double y = 0.1*itcpt;
+    double x = log(itcpt);
+    if(x-xm1>=0.1){
+      //std::cout << "nlog_tcptbins: " << nlog_tcptbins << ", itcpt: " << itcpt << ", x : " << x << std::endl;
+      xm1 = x;
+      logbins.push_back(y);      
+    }
+  }
+
+  float x, xerror, y, yerror;
+  TGraphErrors *gr = new TGraphErrors();
+  int i=0;
+  double xmin = 0., xmax = 4.;
+  int rebin = 4;
+  int nTCPtBins = int(logbins.size()-1);
+  TH1F **h1 = new TH1F*[nTCPtBins];
+  TF1 **fh1 = new TF1*[nTCPtBins];
+  std::cout << "fin : " << fin << ", fname : " << fin->GetName() << std::endl;
+  for(int ipt=0;ipt<nTCPtBins;ipt++){    
+    h1[ipt]  = (TH1F *)fin->Get(Form("%s_%d",histName,ipt));
+    //std::cout << "histname : " << Form("%s_%d",histName,ipt) << ", h1[ipt] : " << h1[ipt] << std::endl;
+    if(h1[ipt]->GetEntries()<10) continue;
+    //std::cout << "histname : " << Form("%s_%d",histName,ipt) << ", Entries : " << h1[ipt]->GetEntries() << std::endl;
+    h1[ipt]->Rebin(rebin);
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),"gaus",xmin,xmax);
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),"landau",xmin,xmax);
+    fh1[ipt] = new TF1(Form("funch%d",gindex++),"crystalball",xmin,xmax);
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),"crystalball",xmin,0.8);
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),CrystallBall,xmin,xmax,5);
+    //fh1[ipt] = new TF1(Form("funch%d",gindex++),DoubleCrystallBall2G,xmin,xmax,8);
+    double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+    fh1[ipt]->SetNpx(1000);
+    // fh1[ipt]->SetParNames("Norm", "#mu", "#sigma");
+    //fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS());
+    // fh1[ipt]->SetParNames("Norm", "#mu", "#sigma","#alpha", "#it{n}");
+    fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS(), 1.2, 9);
+    //fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), h1[ipt]->GetRMS());
+    //fh1[ipt]->SetParameters(norm, h1[ipt]->GetMean(), 0.1*h1[ipt]->GetRMS(), h1[ipt]->GetRMS(), 0.12, 1.2, 8, 10);
+    h1[ipt]->Fit(fh1[ipt],"QLR");
+    i++;
+  }
+  int nCvs = (i%10==0) ? (i/10) : ((i/10)+1) ;
+  std::cout << "i: " << i <<", nCvs :" << nCvs <<  std::endl;
+  int imax = i;
+  
+  i = 0;
+  for(int ipt=0;ipt<imax;ipt++){
+    //if(h1[ipt]->GetEntries()<10) continue;
+    if(ipt%10==0){
+      c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),1920,1080); gindex++;
+      c1->Divide(5,2);
+      SetCanvasStyle(c1);
+      i=0;
+    }
+    c1->cd((ipt%10)+1);
+    h1[ipt]->GetXaxis()->SetRangeUser(xmin,xmax);
+    double norm = h1[ipt]->GetBinContent(h1[ipt]->GetMaximumBin());
+    h1[ipt]->SetMaximum(1.1*norm);
+    h1[ipt]->GetYaxis()->SetTitle("Entries");
+    //h1[ipt]->GetXaxis()->SetTitle("[p_{T}^{Genjet}-p_{T}^{TCPtsum}] (GeV)");
+    h1[ipt]->GetXaxis()->SetTitle("p_{T}^{Genjet}/#Sigmap_{T}^{TC}");
+    h1[ipt]->Draw();
+    i++;
+    if(i%10==0 or ipt==(imax-1)){
+      c1->SaveAs(Form("~/temp/%s.pdf",c1->GetName()));
+      c1->SaveAs(Form("~/temp/%s.png",c1->GetName()));
+    }
+  }  
+  
+  i = 0;
+  for(int ipt=0;ipt<imax;ipt++){
+    
+    if(h1[ipt]->GetEntries()<10) continue;
+    
+    y = fh1[ipt]->GetParameter(1);
+    //yerror = 0.5*fabs(fh1[ipt]->GetParError(1));
+    yerror = 0.5*fabs(fh1[ipt]->GetParameter(2));
+    
+    x = 0.5*fabs(logbins.at(ipt)+logbins.at(ipt+1));
+    xerror = 0.5*fabs(logbins.at(ipt+1)-logbins.at(ipt));
+    
+    //std::cout<<"x : "<<x<<", xerror "<<xerror<<", y : "<<y<<", yerror "<<yerror<<std::endl;
+    
+    gr->SetPoint(i,x,y);
+    gr->SetPointError(i,xerror,yerror);
+    i++;
+  }  
+  gr->SetTitle(plotTitle);
+  gr->GetXaxis()->SetTitle("p_{T}^{TC} (MeV)");
+  gr->GetYaxis()->SetTitle(yaxisTitle);
+  gr->GetXaxis()->SetTitleOffset(1.2);
+  gr->GetYaxis()->SetTitleOffset(1.6);
+  gr->SetMinimum(0.0);
+  gr->SetMaximum(3.0);
+  
+  //auto f1 = new TF1(Form("func%d",gindex++),"[0] - [1]/pow(x,1/3) - [2]/pow(x,4/3) + [3]/pow(x,2) - [4]*x ",3.0,7.5e4);
+  //auto f1 = new TF1(Form("func%d",gindex++),"[0] - [1]/pow(x,1/3) - [2]/pow(x,4/3) + [3]/pow(x,2) - [4]*x ",0.1,7.5e4);
+  //auto f1 = new TF1(Form("func%d",gindex++),"[0] - [1]/pow(x,1/3) - [2]/pow(x,4/3) + [3]/pow(x,2) - [4]*log (x-[5]) + [6]*x - [7]/x ",0.1,7.5e4);
+  //auto f1 = new TF1(Form("func%d",gindex++),"[0] + [1]*x ",0.1,7.5e4);
+  //auto f1 = new TF1(Form("func%d",gindex++),"[0] + [1]*x - [2]/x + (x-[3])*(x-[3])",0.8e3,12.e3);
+  auto f1 = new TF1(Form("func%d",gindex++),"[0] * log (x-[1]) + [2] + [3]*x",0.5e3,12.e3);
+  f1->SetNpx(1000);
+  //f1->SetParameters(1., 1., 0., 1., 1.);
+  //f1->SetParameters(1.58371, 0.406349, 0.374516, 0.636789, 2.9813e-06);
+  //f1->SetParameters(1.07448, 0.915572, 0.320687, 0.657203, -2.58768e-05); ////PU200 using crystall ball
+  //f1->SetParameters(1.07448, 0.915572, 0.320687, 0.657203, 0.166198, -11.3154, 7.78113e-05, 137); ////PU200 using crystall ball with log
+  //f1->SetParameters(0.816674, 1.17338, -136.175, 0.498167, -0.0698533, -1362.15, 9.2412e-06, 136.382); ////PU200 using crystall ball with log
+  //f1->SetParameters(1.06036,0.929694,0.0856354,0.214887,-1.56907e-05); ////PU200 using Landau
+  //f1->SetParameters(1.0, 0.00001);
+  //f1->SetParameters(1.4,7.45e-5,136.0);
+  f1->SetParameters(0.0538316, 459.772, 0.935318, 7.96371e-05);
+  // f1->FixParameter(0,1.389);
+  // f1->FixParameter(1,7.78113e-05);
+  // f1->FixParameter(2,137);
+  gr->Fit(f1,"R");
+  //f1->SetRange(0,6.e4);
+  std::cout<<"x : "<<3<<", y : "<< f1->Eval(3) <<std::endl;
+  
+  auto legend = new TLegend(0.16,0.76,0.83,0.84);
+  legend->SetTextSize(0.028);
+  legend->SetHeader(Form("%s",f1->GetTitle()));
+  legend->SetShadowColor(kWhite);
+
+  // gr->GetXaxis()->SetLimits(0,40.);
+  c1 = new TCanvas(Form("c%d",gindex),Form("c%d",gindex),900,900); gindex++;
+  SetCanvasStyle(c1);
+  c1->SetLogx();
+  gr->Draw("APE1 same");
+  //f1->Draw("same");
+  legend->Draw();
+  c1->Update();
+  
 }
