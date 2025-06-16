@@ -410,7 +410,7 @@ namespace TPGStage2Emulation
     }
 
   };
-
+  
   class Stage2
   {
   public:
@@ -427,13 +427,13 @@ namespace TPGStage2Emulation
         //return (32 + 2 * m + 1) << (e - 2);
 	return (32 + 2 * m ) << (e - 2);
     }
-
+    
     enum
     {
-      //_nBins = 49
-      _nBins = 74
+      _nBins = 49
+      //_nBins = 74
     };
-
+    
     ~Stage2(){
       delete _ca;
 
@@ -782,13 +782,14 @@ namespace TPGStage2Emulation
       // l1thgcfirmware::HGCalClusterSAPtrCollection vClusterSumsCMSSW;
 
       for (unsigned c(0); c < 3; c++)
-      {
+      {	
+	std::cout<<"c: " << c << std::endl;
         for (unsigned i(0); i < _nBins; i++)
         {
           for (unsigned j(0); j < _nBins; j++)
           {
             double phiNorm(6.0 * atan2(_ca->centre[c][i][j][1], _ca->centre[c][i][j][0]) / acos(-1));
-
+	    
             if (phiNorm >= -2.0 && phiNorm < 2.0 && _tcaa->vTca[c][i][j].isLocalMaximum())
             {
               TPGClusterData tcd;
@@ -869,7 +870,8 @@ namespace TPGStage2Emulation
 
       // Find local maxima
       vCld.resize(0);
-
+      
+      constexpr double epsilon = 1e-6;
       for (unsigned c(0); c < 3; c++)
       {
         for (unsigned i(0); i < _nBins; i++)
@@ -877,9 +879,15 @@ namespace TPGStage2Emulation
           for (unsigned j(0); j < _nBins; j++)
           {
             double phiNorm(6.0 * atan2(_ca->centre[c][i][j][1], _ca->centre[c][i][j][0]) / acos(-1));
+	    
 
-            if (phiNorm >= -2.0 && phiNorm < 2.0 && _tcaafw->vTca[c][i][j].isLocalMaximum())
-            {
+            if (phiNorm >= (-2.0 - epsilon) && phiNorm < (2. - epsilon) && _tcaafw->vTca[c][i][j].isLocalMaximum())
+	    //if (phiNorm >= -2.11 && phiNorm < 1.89 && _tcaafw->vTca[c][i][j].isLocalMaximum())
+	      {
+	      // if(_tcaafw->vTca[c][i][j].totE()>40){
+	      // 	std::cout<<"c: " << c <<", i: " << i << ", j: " << j ;	    
+	      // 	std::cout<<", Energy: " << _tcaafw->vTca[c][i][j].totE() <<", phiNorm: " << phiNorm << std::endl;
+	      // }
 
 	      clusprop.ClusterProperties(_tcaafw->vTca[c][i][j], L1TOutputEmul);
 	      TPGCluster tcd(&L1TOutputEmul);

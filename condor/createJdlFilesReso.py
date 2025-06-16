@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "39"
+iloop= "82"
 
 #samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 #samplelist_Ideal = ["SingleEle_Ideal_PU0"]
@@ -18,12 +18,16 @@ ntuple_path_ideal = ["ntuples"]
 
 samplelist_PU0 = ["SinglePi_realistic_PU0", "SingleEle_realistic_PU0", "VBFHToInvisible_realistic_PU0", "MinBias_realistic_PU0"]
 
-#samplelist_PU0_Emyr = ["singlePion_PU0"]
-#samplelist_PU0_Emyr = ["doublePhoton_PU0"]
-#samplelist_PU0_Emyr = ["singlePion_PU0", "singlePion_PU0", "doublePhoton_PU0", "vbfHInv_0PU"]
-samplelist_PU0_Emyr = ["vbfHInv_0PU"]
 #samplelist_PU0_Emyr = ["singlePion_PU0_Ideal"]
-#samplelist_PU0_Emyr = ["singlePion_PU0_Realistic"]
+#samplelist_PU0_Emyr = ["doublePhoton_PU0", "singleElectron_PU0_Ideal"]
+#samplelist_PU0_Emyr = ["singlePion_PU0", "singlePion_PU0", "doublePhoton_PU0", "vbfHInv_0PU"] #"doubleElectron_PU200", "singlePion_PU200", "singlePion_PU0_Ideal", "singleElectron_PU0_Ideal", 
+#samplelist_PU0_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "singlePion_PU0_Ideal", "singleElectron_PU0_Ideal", "vbfHInv_0PU", "vbfHInv_200PU"]
+#samplelist_PU0_Emyr = ["vbfHInv_0PU", "vbfHInv_0PU_ID", "singlePion_PU0", "singlePion_PU0_Realistic", "singlePion_PU0_Ideal"]
+samplelist_PU0_Emyr = ["singlePion_PU0_Realistic"]
+#samplelist_PU0_Emyr = ["vbfHInv_0PU", "vbfHInv_0PU_ID", "singlePion_PU0", "singlePion_PU0_Ideal", "singlePion_PU0_Realistic"] #"vbfHInv_0PU", "vbfHInv_0PU_ID", 
+#"vbfHInv_0PU", "vbfHInv_200PU" "doubleElectron_PU200", "singlePion_PU200", "singlePion_PU0_Ideal", "singleElectron_PU0_Ideal"
+#samplelist_PU0_Emyr = ["vbfHInv_0PU", "doublePhoton_PU0", "singlePion_PU0", "singleElectron_PU0_Ideal", "singlePion_PU0_Ideal", "singlePion_PU0_Realistic"]
+#samplelist_PU0_Emyr = ["doublePhoton_PU0", "singleElectron_PU0_Ideal", "vbfHInv_0PU", "singlePion_PU0_Ideal", "singlePion_PU0_Realistic"]
 
 samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realistic_PU200", "MinBias_realistic_PU140"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "vbfHInv_200PU"]
@@ -75,7 +79,6 @@ log    = %s/log_$(cluster)_$(process).condor\n\n'%(condorLogDir, condorLogDir, c
 # Output = %s/log_$(cluster)_$(process).stdout\n\
 # Error  = %s/log_$(cluster)_$(process).stderr\n\
 # Log    = %s/log_$(cluster)_$(process).condor\n\n'%(condorLogDir, condorLogDir, condorLogDir)
-
 
 #----------------------------------------
 #Create tar file

@@ -90,6 +90,8 @@ ls -lah
 ##########################################################
 # run
 ##########################################################
+make clean
+make
 echo "stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype \> out_${$sampletype}_${ofextn}_${clusproc}.log "
 ./stage2SemiEmulator.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype > out_${sampletype}_${ofextn}_${clusproc}.log 2>&1
 ##########################################################

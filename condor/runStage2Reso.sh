@@ -90,6 +90,8 @@ ls -lah
 ##########################################################
 # run
 ##########################################################
+make clean
+make
 echo "Args : $infile $ofindex $nevents $sidelength $ofextn $sampletype"
 ./CalcResolution.exe $infile $ofindex $nevents $sidelength $ofextn $sampletype > out_${sampletype}_${ofextn}_${clusproc}.log 2>&1
 ##########################################################

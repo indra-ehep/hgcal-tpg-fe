@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "33"
+iloop= "38"
 
 #samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 samplelist_Ideal = ["SingleEle_Ideal_PU0"]
@@ -21,10 +21,10 @@ samplelist_PU0_Emyr = ["singlePion_PU0"]
 samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VBFHToInvisible_realistic_PU200", "MinBias_realistic_PU140"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "vbfHInv_200PU"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200"]
-samplelist_PU200_Emyr = ["singlePion_PU200", "vbfHInv_200PU"]
+#samplelist_PU200_Emyr = ["vbfHInv_0PU", "vbfHInv_200PU"]
 #samplelist_PU200_Emyr = ["singlePion_PU0"]#, "vbfHInv_200PU", "singlePion_PU200"]
+samplelist_PU200_Emyr = ["singlePion_PU0_Realistic"]
 #samplelist_PU200_Emyr = ["vbfHInv_200PU"]
-#samplelist_PU200_Emyr = ["vbfHInv_200PU", "singlePion_PU200"]
 
 ntuple_path = ["ntuples"]
 
@@ -34,6 +34,8 @@ ntuple_path = ["ntuples"]
 #triangle_side_list = ["0.03", "0.045"]
 #triangle_side_list = ["0.0113"]
 triangle_side_list = ["0.016"]
+#triangle_side_list = ["0.03"]
+#triangle_side_list = ["0.045"]
 
 #----------------------------------------
 #Create run and log directory
@@ -47,7 +49,7 @@ os.system("cp runStage2Emul.sh %s/"%jdlDir)
 # lxsetup
 common_command = \
 'executable = runStage2Emul.sh\n\
-+MaxRuntime = 17999\n\
++MaxRuntime = 10799\n\
 request_memory = 4000\n\
 output = %s/log_$(cluster)_$(process).stdout\n\
 error  = %s/log_$(cluster)_$(process).stderr\n\
@@ -225,6 +227,7 @@ for sample in samplelist_PU200_Emyr:
         jdlFile = open('%s/%s'%(jdlDir,jdlName),'w')
         jdlFile.write(common_command)
         for fname in filelist:
+            #if findex < 200:
             print ("fname: %s, sidelength: %s, index: %s"%(fname,sidelength,findex))
             ofextn = 'ntuples_%s'%(fsidelen_index)
             run_command =  'Arguments  = %s %s %s %s %s %s %s $(process) \nQueue 1\n\n' %(fname,findex,nevents,sidelength,ofextn,sample,iloop)
