@@ -6,7 +6,7 @@ import time
 
 #IMPORT MODULES FROM OTHER DIR
 
-iloop= "38"
+iloop= "40"
 
 #samplelist_Ideal = ["SingleEle_Ideal_PU0","SinglePi_Ideal_PU0"]
 samplelist_Ideal = ["SingleEle_Ideal_PU0"]
@@ -22,9 +22,9 @@ samplelist_PU200 = ["SinglePi_realistic_PU200", "SingleEle_realistic_PU200", "VB
 #samplelist_PU200_Emyr = ["doubleElectron_PU200", "singlePion_PU200", "vbfHInv_200PU"]
 #samplelist_PU200_Emyr = ["doubleElectron_PU200"]
 #samplelist_PU200_Emyr = ["vbfHInv_0PU", "vbfHInv_200PU"]
-#samplelist_PU200_Emyr = ["singlePion_PU0"]#, "vbfHInv_200PU", "singlePion_PU200"]
-samplelist_PU200_Emyr = ["singlePion_PU0_Realistic"]
-#samplelist_PU200_Emyr = ["vbfHInv_200PU"]
+#samplelist_PU200_Emyr = ["singlePion_PU200"]#, "vbfHInv_200PU", "singlePion_PU200"]
+#samplelist_PU200_Emyr = ["singlePion_PU0_Realistic"]
+samplelist_PU200_Emyr = ["vbfHInv_200PU"]
 
 ntuple_path = ["ntuples"]
 
@@ -33,9 +33,9 @@ ntuple_path = ["ntuples"]
 #triangle_side_list = ["0.0113", "0.016", "0.0226"]
 #triangle_side_list = ["0.03", "0.045"]
 #triangle_side_list = ["0.0113"]
-triangle_side_list = ["0.016"]
+#triangle_side_list = ["0.016"]
 #triangle_side_list = ["0.03"]
-#triangle_side_list = ["0.045"]
+triangle_side_list = ["0.045"]
 
 #----------------------------------------
 #Create run and log directory
