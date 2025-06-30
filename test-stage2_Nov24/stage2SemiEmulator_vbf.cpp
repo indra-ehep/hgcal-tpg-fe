@@ -454,6 +454,10 @@ int main(int argc, char** argv)
   TH1D *hBkgRateSingle2D = new TH1D("hBkgRateSingle2D","hBkgRateSingle2D", nRateBins, 0., float(nRateBins));
   TH1D *hBkgRateSingle_Uncorr = new TH1D("hBkgRateSingle_Uncorr","hBkgRateSingle_Uncorr", nRateBins, 0., float(nRateBins));
   
+  TH1D *hBkgRateSingle1D_MaxPt = new TH1D("hBkgRateSingle1D_MaxPt","hBkgRateSingle1D_MaxPt", nRateBins, 0., float(nRateBins));
+  TH1D *hBkgRateSingle2D_MaxPt = new TH1D("hBkgRateSingle2D_MaxPt","hBkgRateSingle2D_MaxPt", nRateBins, 0., float(nRateBins));  
+  TH1D *hBkgRateSingle_Uncorr_MaxPt = new TH1D("hBkgRateSingle_Uncorr_MaxPt","hBkgRateSingle_Uncorr_MaxPt", nRateBins, 0., float(nRateBins));
+  
   
   TH1D *hSelEvents = new TH1D("hSelEvents","hSelEvents", 10,-0.5,9.5);
   TH1D *hTotClus = new TH1D("hTotClus","hTotClus", 600,0,600.);
@@ -1123,9 +1127,26 @@ int main(int argc, char** argv)
       // 	hNClus10GeV->Fill(nofClus10GeV);
       // }
     }//sector loop
-    for(uint32_t ipt=0;ipt<pt_uncorr.size();ipt++)  hBkgRateSingle_Uncorr->Fill(pt_uncorr.at(ipt));    
-    for(uint32_t ipt=0;ipt<pt1d.size();ipt++) hBkgRateSingle1D->Fill(pt1d.at(ipt));
-    for(uint32_t ipt=0;ipt<pt2d.size();ipt++) hBkgRateSingle2D->Fill(pt2d.at(ipt));
+    float maxpt = 0;
+    for(uint32_t ipt=0;ipt<pt_uncorr.size();ipt++)  {
+      hBkgRateSingle_Uncorr->Fill(pt_uncorr.at(ipt));
+      if(pt_uncorr.at(ipt)>maxpt) maxpt = pt_uncorr.at(ipt);
+    }
+    hBkgRateSingle_Uncorr_MaxPt->Fill(maxpt);
+
+    maxpt = 0;
+    for(uint32_t ipt=0;ipt<pt1d.size();ipt++) {
+      hBkgRateSingle1D->Fill(pt1d.at(ipt));
+      if(pt1d.at(ipt)>maxpt) maxpt = pt1d.at(ipt);
+    }
+    hBkgRateSingle1D_MaxPt->Fill(maxpt);
+
+    maxpt = 0;
+    for(uint32_t ipt=0;ipt<pt2d.size();ipt++) {
+      hBkgRateSingle2D->Fill(pt2d.at(ipt));
+      if(pt2d.at(ipt)>maxpt) maxpt = pt2d.at(ipt);
+    }
+    hBkgRateSingle2D_MaxPt->Fill(maxpt);
     
     // for(uint32_t ipt=0;ipt<pt2d.size();ipt++) {
     //   std::cout << "ievent : " << ievent  << ", size: " << pt2d.size() << ", ipt: " << ipt << ", val : " <<  pt2d.at(ipt) << std::endl;
@@ -1379,6 +1400,9 @@ int main(int argc, char** argv)
   hBkgRateSingle1D->Write();
   hBkgRateSingle2D->Write();
   hBkgRateSingle_Uncorr->Write();
+  hBkgRateSingle1D_MaxPt->Write();
+  hBkgRateSingle2D_MaxPt->Write();
+  hBkgRateSingle_Uncorr_MaxPt->Write();
   fout->Close();
   delete fout;
   
