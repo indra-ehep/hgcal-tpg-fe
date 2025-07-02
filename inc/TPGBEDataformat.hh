@@ -527,7 +527,7 @@ namespace TPGBEDataformat{
 
     bool isZero() const { return numE == 0; }
 
-    void addNN(const TcAccumulatorFW *tca){
+    void addNN(TcAccumulatorFW *tca){
       assert(vNN.size() < 6);
       vNN.push_back(tca);
     }
@@ -562,6 +562,12 @@ namespace TPGBEDataformat{
         if (vNN[i]->totE() >= e) return false;
       }
       return true;
+    }
+    
+    void zeroNNs() {
+      for ( const auto& nn : vNN ) {
+        nn->zero();
+      }
     }
     
     void print() const {
@@ -739,7 +745,7 @@ namespace TPGBEDataformat{
     // ap_uint<43>  maxWPhiZ2;       //43-bits
     // ap_uint<45>  maxWRoZ2;       //45-bits
 
-    std::vector<const TcAccumulatorFW *> vNN;
+    std::vector<TcAccumulatorFW *> vNN;
   };
 
   class Stage2ToL1TData {

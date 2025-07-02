@@ -872,32 +872,48 @@ namespace TPGStage2Emulation
       vCld.resize(0);
       
       constexpr double epsilon = 1e-6;
-      for (unsigned c(0); c < 3; c++)
-      {
-        for (unsigned i(0); i < _nBins; i++)
+
+      constexpr unsigned nPasses = 2;
+      for ( unsigned iPass(0); iPass < nPasses; iPass++ ) {
+        // First, find and store local maxima
+        std::vector<std::tuple<unsigned, unsigned, unsigned>> localMaxima;
+        for (unsigned c(0); c < 3; c++)
         {
-          for (unsigned j(0); j < _nBins; j++)
+          for (unsigned i(0); i < _nBins; i++)
           {
-            double phiNorm(6.0 * atan2(_ca->centre[c][i][j][1], _ca->centre[c][i][j][0]) / acos(-1));
-	    
+            for (unsigned j(0); j < _nBins; j++)
+            {
+              double phiNorm(6.0 * atan2(_ca->centre[c][i][j][1], _ca->centre[c][i][j][0]) / acos(-1));
+        
+              if ( _tcaafw->vTca[c][i][j].isLocalMaximum() ) {
+                localMaxima.emplace_back(c, i, j);
+              }
 
-            if (phiNorm >= (-2.0 - epsilon) && phiNorm < (2. - epsilon) && _tcaafw->vTca[c][i][j].isLocalMaximum())
-	    //if (phiNorm >= -2.11 && phiNorm < 1.89 && _tcaafw->vTca[c][i][j].isLocalMaximum())
-	      {
-	      // if(_tcaafw->vTca[c][i][j].totE()>40){
-	      // 	std::cout<<"c: " << c <<", i: " << i << ", j: " << j ;	    
-	      // 	std::cout<<", Energy: " << _tcaafw->vTca[c][i][j].totE() <<", phiNorm: " << phiNorm << std::endl;
-	      // }
+              if (phiNorm >= (-2.0 - epsilon) && phiNorm < (2. - epsilon) && _tcaafw->vTca[c][i][j].isLocalMaximum())
+              //if (phiNorm >= -2.11 && phiNorm < 1.89 && _tcaafw->vTca[c][i][j].isLocalMaximum())
+              {
+                // if(_tcaafw->vTca[c][i][j].totE()>40){
+                // 	std::cout<<"c: " << c <<", i: " << i << ", j: " << j ;	    
+                // 	std::cout<<", Energy: " << _tcaafw->vTca[c][i][j].totE() <<", phiNorm: " << phiNorm << std::endl;
+                // }
 
-	      clusprop.ClusterProperties(_tcaafw->vTca[c][i][j], L1TOutputEmul);
-	      TPGCluster tcd(&L1TOutputEmul);
-              vCld.push_back(tcd);
-	      
+                clusprop.ClusterProperties(_tcaafw->vTca[c][i][j], L1TOutputEmul);
+                TPGCluster tcd(&L1TOutputEmul);
+                tcd.setMaxFinderPass(iPass);
+
+                vCld.push_back(tcd);  
+              }
             }
           }
         }
+        // Now zero out local maxima and their NNs
+        for (const auto& idx : localMaxima) {
+          unsigned c, i, j;
+          std::tie(c, i, j) = idx;
+          _tcaafw->vTca[c][i][j].zero();
+          _tcaafw->vTca[c][i][j].zeroNNs();
+        }
       }
-
     }
 
     const CentreArray<_nBins> &centreArray() const
