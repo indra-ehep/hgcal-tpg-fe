@@ -43,9 +43,10 @@ public:
   double getLocalYOverZF() const { return sin(getLocalPhiRad())/sinh(getEtaRad()); }
   double getGlobalXOverZF(unsigned s) const { return cos(getGlobalPhiRad(s))/sinh(getGlobalEtaRad(s)); }
   double getGlobalYOverZF(unsigned s) const { return sin(getGlobalPhiRad(s))/sinh(getGlobalEtaRad(s)); }
-
+  
   uint32_t getZ() const { return cldata.w_z.to_uint(); }
-  double getZCm() const { return getZ() * lsbScales.LSB_z(); } 
+  double getZCm() const { return (lsbScales.abs_z_global_min_cm() + getZ() * lsbScales.LSB_z()/10.); }
+  double getGlobalZCm(unsigned s) const { return (s<3) ? (-getZCm()) : getZCm() ; }
   
   double getRhoOverZF() const { return 1.0/sinh(getEtaRad()); }
   double getGlobalRhoOverZF(unsigned s) const { return 1.0/sinh(getGlobalEtaRad(s)); }

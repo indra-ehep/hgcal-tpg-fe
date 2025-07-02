@@ -108,6 +108,8 @@ namespace TPGLSBScales{
     void setMaxTCRoZbits(uint16_t maxTCRoZbits) { maxTCRoZbits_ = maxTCRoZbits ; }
     
     float getZcm(uint16_t l)            const   { return (l>0 and l<48)?_zLayer[l-1]:0.0; }
+    float abs_z_global_min_cm()		const	{ return abs_z_global_min_/10.; }
+    float abs_z_global_max_cm()		const	{ return abs_z_global_max_/10.; }
     float roz_global_min()		const	{ return roz_global_min_; }
     float roz_global_max()		const	{ return roz_global_max_; }
     

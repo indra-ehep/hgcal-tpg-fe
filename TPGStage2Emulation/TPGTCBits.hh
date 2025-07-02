@@ -77,7 +77,7 @@ public:
   ap_int<6>	getU() const { return _data.range(46,41); }
   ap_uint<6>	getUbar() const {  return _data.range(52,47); }	
   ap_uint<18>	getEnergy() const { return _data.range(70,53); }
-  bool          getBypassFlag() { return (_data.range(71,71) == 1)?true:false; }
+  bool          getBypassFlag() const { return (_data.range(71,71) == 1)?true:false; }
   
   void setROverZ(uint16_t roz) { _data(11,0) = (roz>0xfff)?0xfff:roz;}
   void setPhi(uint16_t phi) { _data(23,12) = (phi>0xfff)?0xfff:phi;}  
@@ -87,13 +87,13 @@ public:
   void setEnergy(uint32_t e) { _data(70,53) = (e>0x3ffff)?0x3ffff:e;}
   void setBypassFlag(bool flag) { _data(71,71) = (flag)?1:0;}
   
-  void print() {
+  void print() const {
     std::cout << "TPGTCBits(" << this << ")::print() = " ; 
 	      // << std::hex << std::setfill('0')
 	      // << std::setw(18) << _data
 	      // << std::dec << std::setfill(' ')
 	      // << std::endl;
-
+    
     std::cout << " Energy " << getEnergy() << " *2^-9 GeV" 
 	      << ", (r/z, phi) = (" << getROverZ() << " *1.4e-4"
 	      << ", " << getPhi() << " *0.8 mrad)"

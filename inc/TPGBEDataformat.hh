@@ -460,7 +460,9 @@ namespace TPGBEDataformat{
   public:
     TcAccumulatorFW(uint16_t kval = 0) : kpower(kval) { zero(); calcmax();}
     void accumulate(const TPGTCFloats &t){
+      //t.print();
       accumulate(t.getEnergy(), t.getROverZ(), t.getPhi(), t.getZ(), t.getLayer());
+      //printdetail(false);
     }    
     uint16_t  getTriggerLayer(const uint16_t  layer) const { //assuming 1<=layer<=47
       bool iscee = (layer<=26)?true:false;
@@ -586,7 +588,7 @@ namespace TPGBEDataformat{
     
     void printdetail(bool ishex = true) const
     {
-      std::cout << "TPGStage2Emulation::TcAccumulator" << std::endl;
+      std::cout << "======TPGStage2Emulation::TcAccumulator" << std::endl;
       if(ishex)
       	std::cout << std::hex
       		  << " SumET = 0x" << totE()

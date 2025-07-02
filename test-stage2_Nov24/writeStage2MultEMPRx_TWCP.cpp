@@ -20,7 +20,8 @@ int main(int argc, char** argv)
   //std::string infile = "input/stage2/EMPinputs/test_2025-03-12/input_fp.csv";
   std::vector<std::string> infilelist;
   for(int findex=0;findex<6;findex++){
-    std::string infile = "input/stage2/EMPinputs/test_2025-03-12/id_tb_stimuli_for_PC_s180_"+ std::to_string(findex) + "_vbf_jet_k_3.csv" ;
+    //std::string infile = "input/stage2/EMPinputs/test_2025-03-12/id_tb_stimuli_for_PC_s180_"+ std::to_string(findex) + "_vbf_jet_k_3.csv" ;
+    std::string infile = "input/stage2/EMPinputs/test_2025-04-30/id_tb_stimuli_for_PC_s180_"+ std::to_string(findex) + "_vbf_jet_k_3.csv" ;
     infilelist.push_back(infile);
   }
   std::cout << "infilelist.size() : " << infilelist.size() << std::endl;

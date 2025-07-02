@@ -39,4 +39,6 @@ TPGStage2Emulation/CMSSWCode
 TPGStage2Emulation/CMSSWCode/*
 mapping/*
 mapping
+condor/tmpLog_*
+condor/*.tar.gz
 data_v11_rx_MsCounter
