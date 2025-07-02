@@ -14,9 +14,12 @@
 //Class to access cluster information
 class TPGCluster{
 public:
-  TPGCluster() {}
+  TPGCluster() : maxFinderPass_(0) {}
   TPGCluster(const l1thgcfirmware::HGCalCluster_HW *clus) : cldata(*clus) {}
   void setHGCalCluster_HW(const l1thgcfirmware::HGCalCluster_HW *clus) { cldata = *clus ; }
+
+  void setMaxFinderPass(unsigned int pass) { maxFinderPass_ = pass; }
+  unsigned int getMaxFinderPass() const { return maxFinderPass_; }
 
   uint32_t getEnergy() const { return cldata.e.to_uint(); }
   double getEnergyGeV() const { return getEnergy() * lsbScales.LSB_E(); }
@@ -54,6 +57,9 @@ public:
 private:
   l1thgcfirmware::HGCalCluster_HW cldata;
   TPGLSBScales::TPGStage2ClusterLSB lsbScales;
+
+  unsigned int maxFinderPass_; // Which pass of the local maxima finding this cluster was found in
+
 };
 
 // double TPGClusterFloats::_eScale=4.0;
