@@ -109,61 +109,61 @@ int plotStdPerf(int index = 5)
   // PlotTrigEff(fin2, "hTrigEff", "Trigger Efficiencies of #it{e}^{+}#it{e}^{-}", "p_{T} (GeV}", cTrigEffPiIdeal);
   // ////////////////////////////////////////////////////////
   
-  ///////////////////Efficiency plots PU200 ////////////////////
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter6/SinglePi_realistic_PU200/";
-  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter6/SingleEle_realistic_PU200/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU0/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/vbfHInv_200PU/";
-  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter10/doubleElectron_PU200/";
-  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU200/";
-  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter12/vbfHInv_200PU/";
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter20/doublePhoton_PU0/";
-  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter20/doubleElectron_PU200/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter19/singlePion_PU0/";
-  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter19/singlePion_PU0/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU200/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter24/singlePion_PU200/";
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU0/";
-  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter27/singlePion_PU0/";
-  // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter33/singlePion_PU0/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter35/vbfHInv_0PU/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter35/vbfHInv_0PU_ID/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter36/vbfHInv_0PU/";
-  //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter35/vbfHInv_200PU/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter37/vbfHInv_0PU/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter37/vbfHInv_0PU_ID/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter37/vbfHInv_200PU/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38/singlePion_PU0_Realistic/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38/singlePion_PU0_Realistic100GeV/";
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38//singlePion_PU200/";
-  //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38/vbfHInv_0PU_ID/";
+  // ///////////////////Efficiency plots PU200 ////////////////////
+  // // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter6/SinglePi_realistic_PU200/";
+  // // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter6/SingleEle_realistic_PU200/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU0/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter11/vbfHInv_200PU/";
+  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter10/doubleElectron_PU200/";
+  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter11/singlePion_PU200/";
+  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter12/vbfHInv_200PU/";
+  // // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter20/doublePhoton_PU0/";
+  // // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter20/doubleElectron_PU200/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter19/singlePion_PU0/";
+  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter19/singlePion_PU0/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU200/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter24/singlePion_PU200/";
+  // // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter17/singlePion_PU0/";
+  // // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter26/vbfHInv_200PU/";
+  // // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter27/singlePion_PU0/";
+  // // inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter33/singlePion_PU0/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter35/vbfHInv_0PU/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter35/vbfHInv_0PU_ID/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter36/vbfHInv_0PU/";
+  // //inpath2 = "/Data/root_files/stage2_emulation_results/Result_iter35/vbfHInv_200PU/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter37/vbfHInv_0PU/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter37/vbfHInv_0PU_ID/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter37/vbfHInv_200PU/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38/singlePion_PU0_Realistic/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38/singlePion_PU0_Realistic100GeV/";
+  // // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38//singlePion_PU200/";
+  // //inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter38/vbfHInv_0PU_ID/";
 
   
-  std::string aval[7] = {"16", "30", "45", "60", "75", "90", "105"};
-  //std::string aval[7] = {"11", "16", "22", "45", "60", "75", "90"};
-  TFile *fin1[7],*fin2[7];
-  for(int idroz=0;idroz<3;idroz++){
-    std::cout << "idroz : " << idroz << ", aval: "<< aval[idroz]<< std::endl;
-    std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
-    //std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
-    fin1[idroz] = TFile::Open(infile1.c_str());
-    //fin2[idroz] = TFile::Open(infile2.c_str());
-  }
-  TCanvas *cTrigEffPiIdeal,*cTrigEffEleIdeal;
+  // std::string aval[7] = {"16", "30", "45", "60", "75", "90", "105"};
+  // //std::string aval[7] = {"11", "16", "22", "45", "60", "75", "90"};
+  // TFile *fin1[7],*fin2[7];
+  // for(int idroz=0;idroz<3;idroz++){
+  //   std::cout << "idroz : " << idroz << ", aval: "<< aval[idroz]<< std::endl;
+  //   std::string infile1 = inpath1 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
+  //   //std::string infile2 = inpath2 + "/" + "stage2SemiEmulator_ntuples_" + aval[idroz] + "_merged.root";
+  //   fin1[idroz] = TFile::Open(infile1.c_str());
+  //   //fin2[idroz] = TFile::Open(infile2.c_str());
+  // }
+  // TCanvas *cTrigEffPiIdeal,*cTrigEffEleIdeal;
   
-  //PlotTrigEff(fin1, 1, "effTrigGenTDR_UnCorr", "Trigger Efficiencies of VBF for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
-  //PlotTrigEff(fin1, 1, "effTrigGenTDR", "Trigger Efficiencies of VBF for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
-  PlotTrigEff(fin1, 1, "effTrigGenTDR", "Trigger Efficiencies of VBF for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
-  //PlotTrigEff(fin1, 1, "effTrigGenTDR1D", "Trigger Efficiencies of VBF for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
-  //PlotTrigEff(fin1, 0, "effTrigGenTDR_cl3d", "Trigger Efficiencies of VBF for PU0 (old)", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // //PlotTrigEff(fin1, 1, "effTrigGenTDR_UnCorr", "Trigger Efficiencies of VBF for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // //PlotTrigEff(fin1, 1, "effTrigGenTDR", "Trigger Efficiencies of VBF for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // PlotTrigEff(fin1, 1, "effTrigGenTDR", "Trigger Efficiencies of VBF for PU200", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // //PlotTrigEff(fin1, 1, "effTrigGenTDR1D", "Trigger Efficiencies of VBF for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // //PlotTrigEff(fin1, 0, "effTrigGenTDR_cl3d", "Trigger Efficiencies of VBF for PU0 (old)", "p_{T} (GeV)", cTrigEffPiIdeal);
   
-  //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffEleIdeal);
-  //PlotTrigEff(fin1, 0, "effTrigGenEta", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "|#eta|", cTrigEffPiIdeal);
-  //PlotTrigEff(fin1, 0, "effTrigGenPhi", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "#phi", cTrigEffPiIdeal);
-  //PlotTrigEff(fin1, "effTrigGenClstPt", "effTrigGenClstPtTot", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
-  ////////////////////////////////////////////////////////
+  // //PlotTrigEff(fin1, 0, "effTrigGen", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffEleIdeal);
+  // //PlotTrigEff(fin1, 0, "effTrigGenEta", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "|#eta|", cTrigEffPiIdeal);
+  // //PlotTrigEff(fin1, 0, "effTrigGenPhi", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "#phi", cTrigEffPiIdeal);
+  // //PlotTrigEff(fin1, "effTrigGenClstPt", "effTrigGenClstPtTot", "Trigger Efficiencies of #pi^{+}#pi^{-} for PU0", "p_{T} (GeV)", cTrigEffPiIdeal);
+  // ////////////////////////////////////////////////////////
   
   // /////////////////////Jet cone DeltaR //////////////
   // inpath1 = "/Data/root_files/stage2_emulation_results/Result_iter7/SingleEle_Ideal_PU0";
@@ -202,51 +202,54 @@ int plotStdPerf(int index = 5)
   // //PlotNofClus(fin1,fin2,fin3,"hNClus3GeV","Nof clusters #it{e}^{+}#it{e}^{-} PU200 for p_{T}>3", "Number of clusters",cNofClus);
   // ///////////////////////////////////////////////
 
-  // ////////////////////// Correlation plots //////////////////////////////////////
-  // void Plot2DCorr(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, const char* xaxisTitle, TCanvas*& cPtReso);
-  // void Plot2DCorr(TFile *fin, const char* histName, const char* profName, const char* plotTitle, const char* yaxisTitle, const char* xaxisTitle, TCanvas*& cPtReso);
+  ////////////////////// Correlation plots //////////////////////////////////////
+  void Plot2DCorr(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, const char* xaxisTitle, TCanvas*& cPtReso);
+  void Plot2DCorr(TFile *fin, const char* histName, const char* profName, const char* plotTitle, const char* yaxisTitle, const char* xaxisTitle, TCanvas*& cPtReso);
   
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter61/singlePion_PU0_Ideal";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter69/vbfHInv_0PU";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter70/vbfHInv_0PU";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/doublePhoton_PU0";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/singleElectron_PU0_Ideal";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/vbfHInv_0PU_ID";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/singlePion_PU0_Ideal";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter72/singleElectron_PU0_Ideal";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter72/singlePion_PU0_Ideal";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter72/vbfHInv_0PU_ID";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter73/singlePion_PU0_Ideal";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter73/vbfHInv_0PU_ID";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter74/singlePion_PU0_Ideal";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter74/vbfHInv_0PU_ID";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter75/singlePion_PU0_Ideal";
-  // // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter75/singlePion_PU0_Realistic";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter78/singlePion_PU0_Ideal";
-  // //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter78/vbfHInv_0PU_ID";
-  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter79/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter61/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter69/vbfHInv_0PU";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter70/vbfHInv_0PU";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/doublePhoton_PU0";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/singleElectron_PU0_Ideal";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/vbfHInv_0PU_ID";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter71/singlePion_PU0_Ideal";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter72/singleElectron_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter72/singlePion_PU0_Ideal";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter72/vbfHInv_0PU_ID";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter73/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter73/vbfHInv_0PU_ID";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter74/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter74/vbfHInv_0PU_ID";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter75/singlePion_PU0_Ideal";
+  // inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter75/singlePion_PU0_Realistic";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter78/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter78/vbfHInv_0PU_ID";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter79/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter79/singlePion_PU0_Ideal";
+  //inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter81/singlePion_PU0_Ideal";
+  inpath1 = "/Data/root_files/stage2_emulation_results/Reso_iter82/singlePion_PU0_Realistic";
   
-  // std::string infile1 = inpath1 + "/" + "CalcResolution_ntuples_16_merged.root";
-  // TCanvas *cPtReso;
-  // TFile *fin = TFile::Open(infile1.c_str());
+  std::string infile1 = inpath1 + "/" + "CalcResolution_ntuples_16_merged.root";
+  TCanvas *cPtReso;
+  TFile *fin = TFile::Open(infile1.c_str());
   
-  // //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt","#Sigmap_{T}^{TC} vs p_{T}^{Genjet}","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CoreEta","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (1.7<#eta<2.9)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CEE_CoreEta","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (CEE:1.7<#eta<2.9)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CoreEta_rozcut0p15","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (1.7<#eta<2.9 and roz<0.15)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CoreEta_mpptcut2","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (1.7<#eta<2.9 and roz<0.15)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt","#Sigmap_{T}^{TC} vs p_{T}^{Genjet}","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CoreEta","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (1.7<#eta<2.9)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CEE_CoreEta","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (CEE:1.7<#eta<2.9)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CoreEta_rozcut0p15","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (1.7<#eta<2.9 and roz<0.15)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"TC_Scale/h2TCvsGenPt_CoreEta_mpptcut2","#Sigmap_{T}^{TC} vs p_{T}^{Genjet} for (1.7<#eta<2.9 and roz<0.15)","#Sigmap_{T}^{TC} (GeV)","p_{T}^{Genjet} (GeV)",cPtReso);
   
-  // //Plot2DCorr(fin,"Clus/h2ClusVsTCPt","p_{T}^{Cluster} vs #Sigmap_{T}^{TC}","p_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"Clus/h2ClusVsTCPt_CoreEta","p_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0)","p_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"Clus/h2ClusVsTCPt_CoreEta_rozcut0p15","p_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0 and roz<0.15)","p_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"Clus/h2TotClusVsTCPt","#Sigmap_{T}^{Cluster} vs #Sigmap_{T}^{TC}","#Sigmap_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
-  // Plot2DCorr(fin,"Clus/h2TotClusVsTCPt_CoreEta","#Sigmap_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0)","#Sigmap_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
-  // //Plot2DCorr(fin,"Clus/h2TotClusVsTCPt_CoreEta_rozcut0p15","#Sigmap_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0 and roz<0.15)","#Sigmap_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
+  Plot2DCorr(fin,"Clus/h2ClusVsTCPt","p_{T}^{Cluster} vs #Sigmap_{T}^{TC}","p_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"Clus/h2ClusVsTCPt_CoreEta","p_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0)","p_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"Clus/h2ClusVsTCPt_CoreEta_rozcut0p15","p_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0 and roz<0.15)","p_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"Clus/h2TotClusVsTCPt","#Sigmap_{T}^{Cluster} vs #Sigmap_{T}^{TC}","#Sigmap_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"Clus/h2TotClusVsTCPt_CoreEta","#Sigmap_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0)","#Sigmap_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"Clus/h2TotClusVsTCPt_CoreEta_rozcut0p15","#Sigmap_{T}^{Cluster} vs #Sigmap_{T}^{TC} (1.6<#eta<3.0 and roz<0.15)","#Sigmap_{T}^{Cluster} (GeV)","#Sigmap_{T}^{TC} (GeV)",cPtReso);
 
 
-  // //Plot2DCorr(fin,"TC_Scale/h2GenjetTCPtsumvsGenEta","TC_Scale/pGenjetTCPtsumvsGenEta","p_{T}^{Genjet}/#Sigmap_{T}^{TC} vs #eta^{Genjet}","p_{T}^{Genjet}/#Sigmap_{T}^{TC}","#eta^{Genjet} (GeV)",cPtReso);
+  //Plot2DCorr(fin,"TC_Scale/h2GenjetTCPtsumvsGenEta","TC_Scale/pGenjetTCPtsumvsGenEta","p_{T}^{Genjet}/#Sigmap_{T}^{TC} vs #eta^{Genjet}","p_{T}^{Genjet}/#Sigmap_{T}^{TC}","#eta^{Genjet} (GeV)",cPtReso);
   
-  // ///////////////////////////////////////////////////////////////////////////////
+  ///////////////////////////////////////////////////////////////////////////////
   
   // ////////////////////// Calibration plots //////////////////////////////////////
   // void PlotPtReso1D(TFile *fin, const char* histName, const char* plotTitle, const char* yaxisTitle, TCanvas*& cPtReso);
