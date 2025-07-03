@@ -132,6 +132,9 @@ int main(int argc, char** argv)
     pt_clusThresh_etaeff = 200.; 
     // pt_clusThresh = 150.; 
     // pt_clusThresh_etaeff = 200.; 
+  }else if(sampleType.find("minbias")!=std::string::npos){
+    pt_clusThresh = 150.; 
+    pt_clusThresh_etaeff = 200.; 
   }
   
   ////////////////// ============= cuts ===========///////////////////////
@@ -314,21 +317,21 @@ int main(int argc, char** argv)
   tr->SetBranchStatus("tc_uncompressedCharge",1);
   tr->SetBranchAddress("tc_uncompressedCharge" , &tc_uncompressedCharge);
 
-  Int_t cl3d_n = 0 ;
-  tr->SetBranchStatus("cl3d_n",1);
-  tr->SetBranchAddress("cl3d_n" , &cl3d_n);
+  // Int_t cl3d_n = 0 ;
+  // tr->SetBranchStatus("cl3d_n",1);
+  // tr->SetBranchAddress("cl3d_n" , &cl3d_n);
 
-  std::vector<float>  *cl3d_pt = 0 ;
-  tr->SetBranchStatus("cl3d_pt",1);
-  tr->SetBranchAddress("cl3d_pt" , &cl3d_pt);
+  // std::vector<float>  *cl3d_pt = 0 ;
+  // tr->SetBranchStatus("cl3d_pt",1);
+  // tr->SetBranchAddress("cl3d_pt" , &cl3d_pt);
   
-  std::vector<float>  *cl3d_eta = 0 ;
-  tr->SetBranchStatus("cl3d_eta",1);
-  tr->SetBranchAddress("cl3d_eta" , &cl3d_eta);
+  // std::vector<float>  *cl3d_eta = 0 ;
+  // tr->SetBranchStatus("cl3d_eta",1);
+  // tr->SetBranchAddress("cl3d_eta" , &cl3d_eta);
   
-  std::vector<float>  *cl3d_phi = 0 ;
-  tr->SetBranchStatus("cl3d_phi",1);
-  tr->SetBranchAddress("cl3d_phi" , &cl3d_phi);
+  // std::vector<float>  *cl3d_phi = 0 ;
+  // tr->SetBranchStatus("cl3d_phi",1);
+  // tr->SetBranchAddress("cl3d_phi" , &cl3d_phi);
 
   std::cout << "Total number of Events: " << tr->GetEntries() << std::endl;
   // std::cout << "Sizeof: " << sizeof(TPGTCBits) << std::endl;
@@ -386,20 +389,20 @@ int main(int argc, char** argv)
   TF1* fcl3d = new TF1("fcl3d","[0]+[1]/(x+[2])",7,500);
   fcl3d->SetParameters(1.17576, 19.7599, 0.908577); //PU0 VBF
 
-  // //VBF correction 16
-  // float par0[nJetEtaBins] = {1.07956, 1.2916, 1.18022, 1.14248, 1.12945, 0.976157};
-  // float par1[nJetEtaBins] = {68.9515, 51.967, 52.3593, 47.0961, 39.7107, 32.1626};
-  // float par2[nJetEtaBins] = {18.5932, 5.89004, 8.34816, 10.0994, 9.27638, 16.5888};
+  //VBF correction 16
+  float par0[nJetEtaBins] = {1.07956, 1.2916, 1.18022, 1.14248, 1.12945, 0.976157};
+  float par1[nJetEtaBins] = {68.9515, 51.967, 52.3593, 47.0961, 39.7107, 32.1626};
+  float par2[nJetEtaBins] = {18.5932, 5.89004, 8.34816, 10.0994, 9.27638, 16.5888};
 
   // //VBF correction 30
   // float par0[6] = {1.03452, 1.17763, 1.04363, 1.11672, 1.11673, 1.00139};
   // float par1[6] = {41.6436, 34.3258, 47.9796, 26.7711, 20.9924, 27.4734};
   // float par2[6] = {16.7377, 1.34016, 16.0725, 4.91101, 3.39069, 24.9721};
 
-  //VBF correction 45
-  float par0[6] = {0.9205, 1.09595, 1.01855, 1.09636, 1.06454, 0.91201};
-  float par1[6] = {53.1531, 28.7612, 35.9239, 18.509, 18.412, 24.4667};
-  float par2[6] = {30.0757, 4.80461, 13.5817, 1.28464, 6.60814, 20.6122};
+  // //VBF correction 45
+  // float par0[6] = {0.9205, 1.09595, 1.01855, 1.09636, 1.06454, 0.91201};
+  // float par1[6] = {53.1531, 28.7612, 35.9239, 18.509, 18.412, 24.4667};
+  // float par2[6] = {30.0757, 4.80461, 13.5817, 1.28464, 6.60814, 20.6122};
 
   // //Poin correction (pt150) [size =16]
   // float par0[nJetEtaBins] = {1.07567, 1.17335, 1.18182, 1.19163, 1.17032, 1.1243};
@@ -486,6 +489,24 @@ int main(int argc, char** argv)
   //s2Clustering.setConfiguration(&sb);
   s2Clustering.setkpower(0);
   std::cout << " Stage2::_rOverZ : " << s2Clustering.getROverZ() << std::endl;
+  
+  std::string outtreefname = "TPGReco_tree_" + outputfile_extn + "_" + index;
+  TDirectory *savedir = gDirectory;
+  //std::vector<TPGCluster> tpgClus;
+  std::vector<float> clus_pt,clus_eta,clus_phi;
+  std::vector<float> clus_pt_corr1D, clus_pt_corr2D;
+  std::vector<unsigned int> clus_pass;
+  TFile *foutTree = new TFile(Form("%s.root",outtreefname.c_str()),"recreate");
+  TTree *outputTree = new TTree("TPG_Reco","TPG_Reco");
+  outputTree->SetAutoSave();
+  //outputTree->Branch("tpgClus", &tpgClus);
+  outputTree->Branch("clus_pass", &clus_pass);
+  outputTree->Branch("clus_pt", &clus_pt);
+  outputTree->Branch("clus_pt_corr1D", &clus_pt_corr1D);
+  outputTree->Branch("clus_pt_corr2D", &clus_pt_corr2D);
+  outputTree->Branch("clus_eta", &clus_eta);
+  outputTree->Branch("clus_phi", &clus_phi);
+  savedir->cd();
   
   //TPGTriggerCellFloats tcf0,tcf1;
   TPGTCFloats tcf0,tcf1;
@@ -974,8 +995,7 @@ int main(int argc, char** argv)
       double ptcorr = (tc_layer->at(itc)<=26)?1.07:1.14;//1.07:1.13f2->Eval(tcpt);
       tcpt = ptcorr*tc_pt->at(itc);
       tcptMeV = tcpt*1.e3;
-      
-      
+            
       if(doPrint){
 	std::cout << "itc-ievent: " << std::fixed << std::setprecision(2) << std::setw(4) << ievent
 		  << ", itc: " << std::setw(5) << itc
@@ -1051,7 +1071,14 @@ int main(int argc, char** argv)
     int nofClus3GeV = 0;
     int nofClus5GeV = 0;
     int nofClus10GeV = 0;
-    
+
+    //tpgClus.clear();
+    clus_pass.clear();
+    clus_pt.clear();
+    clus_pt_corr1D.clear();
+    clus_pt_corr2D.clear();
+    clus_eta.clear();
+    clus_phi.clear();
     std::vector<int> pt_uncorr, pt1d, pt2d;
     for (uint32_t isect = 0 ; isect < 6 ; isect++ ){
       //for(TPGCluster const& clf : vCld[isect]){
@@ -1070,6 +1097,7 @@ int main(int argc, char** argv)
 	// hClusLocalPhiBits[isect]->Fill(clf.getLocalPhi());
 	// hClusLocalEtaBits[isect]->Fill(clf.getEta());
 	// hClusGlobalEta[isect]->Fill(clf.getGlobalEtaRad(isect));
+	//tpgClus.push_back(clf);
 	double tcPtSum = (clf.getGlobalEtaRad(isect) < 0) ? totTCpt_negEta : totTCpt_posEta ;
 	int binPtClus = -1, binEtaClus = -1;
 	GetHistoBin(hJetEtaPtBin,clf.getGlobalEtaRad(isect), clf.getEnergyGeV(), binEtaClus, binPtClus);
@@ -1114,6 +1142,13 @@ int main(int argc, char** argv)
 		    << std::endl;
 	}
 	
+	clus_pass.push_back(clf.getMaxFinderPass());
+	clus_pt.push_back(clf.getEnergyGeV());
+	clus_pt_corr1D.push_back(ClusE1D);
+	clus_pt_corr2D.push_back(ClusE);
+	clus_eta.push_back(clf.getGlobalEtaRad(isect));
+	clus_phi.push_back(clf.getGlobalPhiRad(isect));
+	
 	if(clf.getEnergyGeV()>1.0) nofClus1GeV++;
 	if(clf.getEnergyGeV()>3.0) nofClus3GeV++;	
 	if(clf.getEnergyGeV()>5.0) nofClus5GeV++;
@@ -1127,38 +1162,40 @@ int main(int argc, char** argv)
       // 	hNClus10GeV->Fill(nofClus10GeV);
       // }
     }//sector loop
-    float maxpt = 0;
-    for(uint32_t ipt=0;ipt<pt_uncorr.size();ipt++)  {
-      hBkgRateSingle_Uncorr->Fill(pt_uncorr.at(ipt));
-      if(pt_uncorr.at(ipt)>maxpt) maxpt = pt_uncorr.at(ipt);
-    }
-    hBkgRateSingle_Uncorr_MaxPt->Fill(maxpt);
-
-    maxpt = 0;
-    for(uint32_t ipt=0;ipt<pt1d.size();ipt++) {
-      hBkgRateSingle1D->Fill(pt1d.at(ipt));
-      if(pt1d.at(ipt)>maxpt) maxpt = pt1d.at(ipt);
-    }
-    hBkgRateSingle1D_MaxPt->Fill(maxpt);
-
-    maxpt = 0;
-    for(uint32_t ipt=0;ipt<pt2d.size();ipt++) {
-      hBkgRateSingle2D->Fill(pt2d.at(ipt));
-      if(pt2d.at(ipt)>maxpt) maxpt = pt2d.at(ipt);
-    }
-    hBkgRateSingle2D_MaxPt->Fill(maxpt);
+    outputTree->Fill();
     
-    // for(uint32_t ipt=0;ipt<pt2d.size();ipt++) {
-    //   std::cout << "ievent : " << ievent  << ", size: " << pt2d.size() << ", ipt: " << ipt << ", val : " <<  pt2d.at(ipt) << std::endl;
-    //   for(int ir=pt2d.at(ipt);ir>=0;ir--){
-    // 	//hBkgRateSingle2D->Fill(ir);
-    // 	std::cout << "\t ir: " << ir  << std::endl;
-    //   }
+    // float maxpt = 0;
+    // for(uint32_t ipt=0;ipt<pt_uncorr.size();ipt++)  {
+    //   hBkgRateSingle_Uncorr->Fill(pt_uncorr.at(ipt));
+    //   if(pt_uncorr.at(ipt)>maxpt) maxpt = pt_uncorr.at(ipt);
     // }
+    // hBkgRateSingle_Uncorr_MaxPt->Fill(maxpt);
+
+    // maxpt = 0;
+    // for(uint32_t ipt=0;ipt<pt1d.size();ipt++) {
+    //   hBkgRateSingle1D->Fill(pt1d.at(ipt));
+    //   if(pt1d.at(ipt)>maxpt) maxpt = pt1d.at(ipt);
+    // }
+    // hBkgRateSingle1D_MaxPt->Fill(maxpt);
+
+    // maxpt = 0;
+    // for(uint32_t ipt=0;ipt<pt2d.size();ipt++) {
+    //   hBkgRateSingle2D->Fill(pt2d.at(ipt));
+    //   if(pt2d.at(ipt)>maxpt) maxpt = pt2d.at(ipt);
+    // }
+    // hBkgRateSingle2D_MaxPt->Fill(maxpt);
     
-    pt_uncorr.clear();
-    pt1d.clear();
-    pt2d.clear();
+    // // for(uint32_t ipt=0;ipt<pt2d.size();ipt++) {
+    // //   std::cout << "ievent : " << ievent  << ", size: " << pt2d.size() << ", ipt: " << ipt << ", val : " <<  pt2d.at(ipt) << std::endl;
+    // //   for(int ir=pt2d.at(ipt);ir>=0;ir--){
+    // // 	//hBkgRateSingle2D->Fill(ir);
+    // // 	std::cout << "\t ir: " << ir  << std::endl;
+    // //   }
+    // // }
+    
+    // pt_uncorr.clear();
+    // pt1d.clear();
+    // pt2d.clear();
     ///////////////////=========== Fill Cluster only details ============= ///////////////////////
     
     hSelEvents->Fill(5);
@@ -1343,68 +1380,69 @@ int main(int argc, char** argv)
     tc_uncompressedCharge->clear();
     tc_subdet->clear();
     tc_wafertype->clear();
-    cl3d_pt->clear();
-    cl3d_phi->clear();
-    cl3d_eta->clear();
+    // cl3d_pt->clear();
+    // cl3d_phi->clear();
+    // cl3d_eta->clear();
 
   }//event loop
+  foutTree->Write();
   
-  std::string outname = "stage2SemiEmulator_" + outputfile_extn + "_" + index;
+  // std::string outname = "stage2SemiEmulator_" + outputfile_extn + "_" + index;
   
-  effTrigGen->SetStatisticOption(TEfficiency::kBJeffrey);
-  effTrigGenEta->SetStatisticOption(TEfficiency::kBJeffrey);
-  effTrigGenPhi->SetStatisticOption(TEfficiency::kBJeffrey);
-  //effTrigGenPhi->GetPaintedGraph()->SetMinimum(0.0);
+  // effTrigGen->SetStatisticOption(TEfficiency::kBJeffrey);
+  // effTrigGenEta->SetStatisticOption(TEfficiency::kBJeffrey);
+  // effTrigGenPhi->SetStatisticOption(TEfficiency::kBJeffrey);
+  // //effTrigGenPhi->GetPaintedGraph()->SetMinimum(0.0);
  
-  hSelEvents->GetXaxis()->SetBinLabel(1,"NoCut");
-  hSelEvents->GetXaxis()->SetBinLabel(2,"NGJEvts");
-  hSelEvents->GetXaxis()->SetBinLabel(3,"NTrk=(1 or 2)");
-  hSelEvents->GetXaxis()->SetBinLabel(4,"Pre-emul");
-  hSelEvents->GetXaxis()->SetBinLabel(5,"Post-emul");
-  hSelEvents->GetXaxis()->SetBinLabel(6,"Post-ratecalc");
-  hSelEvents->GetXaxis()->SetBinLabel(7,"hasAnyClus");
-  hSelEvents->GetXaxis()->SetBinLabel(8,"hasMatchClus");
+  // hSelEvents->GetXaxis()->SetBinLabel(1,"NoCut");
+  // hSelEvents->GetXaxis()->SetBinLabel(2,"NGJEvts");
+  // hSelEvents->GetXaxis()->SetBinLabel(3,"NTrk=(1 or 2)");
+  // hSelEvents->GetXaxis()->SetBinLabel(4,"Pre-emul");
+  // hSelEvents->GetXaxis()->SetBinLabel(5,"Post-emul");
+  // hSelEvents->GetXaxis()->SetBinLabel(6,"Post-ratecalc");
+  // hSelEvents->GetXaxis()->SetBinLabel(7,"hasAnyClus");
+  // hSelEvents->GetXaxis()->SetBinLabel(8,"hasMatchClus");
   
   
-  TFile *fout = new TFile(Form("%s.root",outname.c_str()),"recreate");
-  //////=== yardstick to match calibration ===////////
-  hSelEvents->Write();
-  h2GenVsClusPt->Write();
-  h2GenVsTCPt->Write();
-  h2TCVsClusPt->Write();
-  h2GenVsClusPtcl3d->Write();
-  h2NewVsOldPtcl3d->Write();
-  hNJets->Write();
-  hNJetsF1->Write();
-  //////////////////////////////////////////////  
-  hTotClus->Write();
-  hClusPtNoCut->Write();
-  hClusPt1D->Write();
-  hClusPt2D->Write();
-  hClusPt_Uncorr->Write();      
-  //////=== trigger efficiency histos ===////////
-  effTrigGen->Write();
-  effTrigGenTDR->Write();
-  effTrigGenTDR1D->Write();
-  effTrigGenTDR_UnCorr->Write();
-  effTrigGenTDR_cl3d->Write();
-  effTrigGenTDR_cl3d_UnCorr->Write();
-  //////////////////////////////////////////////  
-  effTrigGenEta->Write();
-  effTrigGenPhi->Write();
-  //////////////////////////////////////////////  
-  rateSingles1D->Write();
-  rateSingles2D->Write();
-  rateSingles_Uncorr->Write();
-  //////////////////////////////////////////////
-  hBkgRateSingle1D->Write();
-  hBkgRateSingle2D->Write();
-  hBkgRateSingle_Uncorr->Write();
-  hBkgRateSingle1D_MaxPt->Write();
-  hBkgRateSingle2D_MaxPt->Write();
-  hBkgRateSingle_Uncorr_MaxPt->Write();
-  fout->Close();
-  delete fout;
+  // TFile *fout = new TFile(Form("%s.root",outname.c_str()),"recreate");
+  // //////=== yardstick to match calibration ===////////
+  // hSelEvents->Write();
+  // h2GenVsClusPt->Write();
+  // h2GenVsTCPt->Write();
+  // h2TCVsClusPt->Write();
+  // h2GenVsClusPtcl3d->Write();
+  // h2NewVsOldPtcl3d->Write();
+  // hNJets->Write();
+  // hNJetsF1->Write();
+  // //////////////////////////////////////////////  
+  // hTotClus->Write();
+  // hClusPtNoCut->Write();
+  // hClusPt1D->Write();
+  // hClusPt2D->Write();
+  // hClusPt_Uncorr->Write();      
+  // //////=== trigger efficiency histos ===////////
+  // effTrigGen->Write();
+  // effTrigGenTDR->Write();
+  // effTrigGenTDR1D->Write();
+  // effTrigGenTDR_UnCorr->Write();
+  // effTrigGenTDR_cl3d->Write();
+  // effTrigGenTDR_cl3d_UnCorr->Write();
+  // //////////////////////////////////////////////  
+  // effTrigGenEta->Write();
+  // effTrigGenPhi->Write();
+  // //////////////////////////////////////////////  
+  // rateSingles1D->Write();
+  // rateSingles2D->Write();
+  // rateSingles_Uncorr->Write();
+  // //////////////////////////////////////////////
+  // hBkgRateSingle1D->Write();
+  // hBkgRateSingle2D->Write();
+  // hBkgRateSingle_Uncorr->Write();
+  // hBkgRateSingle1D_MaxPt->Write();
+  // hBkgRateSingle2D_MaxPt->Write();
+  // hBkgRateSingle_Uncorr_MaxPt->Write();
+  // fout->Close();
+  // delete fout;
   
   // fin->Close();
   // delete fin;
