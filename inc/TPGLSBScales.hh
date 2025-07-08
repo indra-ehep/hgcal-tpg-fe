@@ -59,7 +59,7 @@ namespace TPGLSBScales{
       for(int il=0;il<47;il++) _zLayer[il] = zLayer[il];
       
       maxTCET_	       = 512.;	//in GeV
-      maxTCETbits_     = 18; //19 used in FW, 18 in current setup
+      maxTCETbits_     = 18; //19 used in FW, 18 in current TPGTCbits setup
       maxTCRoZbits_    = 12; //13 used in FW, 12 in current setup
       //maxTCRoZbits_    = 10;
       maxTCHistoColNo_ = 108;

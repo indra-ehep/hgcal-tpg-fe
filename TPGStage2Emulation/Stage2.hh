@@ -994,8 +994,8 @@ namespace TPGStage2Emulation
       //========================================
 
       
-      lsbScales.setMaxTCETbits(19);
-      lsbScales.setMaxTCRoZbits(13);
+      // lsbScales.setMaxTCETbits(19);
+      // lsbScales.setMaxTCRoZbits(13);
       clusprop.setLSBScales(&lsbScales);
       clusprop.setClusPropLUT(clusPropLUT);
       //for (unsigned w = 0; w < 132; w++){

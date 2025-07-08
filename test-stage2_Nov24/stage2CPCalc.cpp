@@ -84,28 +84,152 @@ int main(int argc, char** argv)
   //muZ saturation W=0x64 (100), Wz=0x6400000 (104857600) , muZ = 1048576 (saturation+1)
   //muZ saturation W=0x64 (100), Wz=0x63FFFCD (104857549) , muZ = 1048575.49 (saturation+rounding)
   //muZ saturation W=0x64 (100), Wz=0x6400031 (104857649) , muZ = 1048576 (saturation+1+rounding)
+  
+  // accmulInput.setNumberOfTcs(0x00000000000000d3);
+  // accmulInput.setTotE(0x000000000000e025);
+  // accmulInput.setCeeE(0x000000000000a2c6);
+  // accmulInput.setCeeECore(0x00000000000065f4);
+  // accmulInput.setCeHEarly(0x00000000000025c9);
+  
+  // accmulInput.setSumW(0x0000000000001bbe);
+  // accmulInput.setNumberOfTcsW(0x00000000000000d3);
+  // accmulInput.setSumW2(0x00000000000b293c);
+  // accmulInput.setSumWZ(0x000000000049aca0);
+  // accmulInput.setSumWRoZ(0x00000000017911f5);
+  
+  // accmulInput.setSumWPhi(0x00000000008a6c48);
+  // accmulInput.setSumWZ2(0x0000000146632bbc);
+  // accmulInput.setSumWRoZ2(0x0000001409642eab);  
+  // accmulInput.setSumWPhi2(0x00000002b3487988);
+  // accmulInput.setLayerBits(0x00000003fff7f7c0);
+  
+  // accmulInput.setsatTC(0x0000000000000000);
+  // accmulInput.setshapeQ(0x0000000000000001);
 
-  accmulInput.setNumberOfTcs(0x00000000000000d3);
-  accmulInput.setTotE(0x000000000000e025);
-  accmulInput.setCeeE(0x000000000000a2c6);
-  accmulInput.setCeeECore(0x00000000000065f4);
-  accmulInput.setCeHEarly(0x00000000000025c9);
+  /////////////////// input 1 //////////////////
+  //Frame 0000    8000000000000029  8000000000000003 800000000000000b 8000000000000013 8000000000000007 8000000000000016 8000000000000011 80000000000000c0 800000000000000f 8000000000000456 800000000000000e 8000000000000452 8000000000000005 8000005800091c1f 8000000000000409 8000000000000000 8000000000000000
+  accmulInput.setNumberOfTcs(0x0000000000000029);
+  accmulInput.setTotE(0x0000000000000003);
+  accmulInput.setCeeE(0x000000000000000b);
+  accmulInput.setCeeECore(0x0000000000000013);
+  accmulInput.setCeHEarly(0x0000000000000007);
   
-  accmulInput.setSumW(0x0000000000001bbe);
-  accmulInput.setNumberOfTcsW(0x00000000000000d3);
-  accmulInput.setSumW2(0x00000000000b293c);
-  accmulInput.setSumWZ(0x000000000049aca0);
-  accmulInput.setSumWRoZ(0x00000000017911f5);
+  accmulInput.setSumW(0x0000000000000016);
+  accmulInput.setNumberOfTcsW(0x0000000000000011);
+  accmulInput.setSumW2(0x00000000000000c0);
+  accmulInput.setSumWZ(0x000000000000000f);
+  accmulInput.setSumWRoZ(0x0000000000000456);
   
-  accmulInput.setSumWPhi(0x00000000008a6c48);
-  accmulInput.setSumWZ2(0x0000000146632bbc);
-  accmulInput.setSumWRoZ2(0x0000001409642eab);  
-  accmulInput.setSumWPhi2(0x00000002b3487988);
-  accmulInput.setLayerBits(0x00000003fff7f7c0);
+  accmulInput.setSumWPhi(0x000000000000000e);
+  accmulInput.setSumWZ2(0x0000000000000452);
+  accmulInput.setSumWRoZ2(0x0000000000000005);  
+  accmulInput.setSumWPhi2(0x0000005800091c1f);
+  accmulInput.setLayerBits(0x0000000000000409);
   
   accmulInput.setsatTC(0x0000000000000000);
-  accmulInput.setshapeQ(0x0000000000000001);
+  accmulInput.setshapeQ(0x0000000000000000);
+  ///////////////////////////////////////////
+  
+  // /////////////////// input 2 //////////////////
+  // //Frame 0001   8000000000000083 8000000000000022 8000000000000003 8000000000000012 8000000000000016 8000000000000010 8000000000000002 800000000000000f 800000000000003a 8000000000000038 8000000000000097 800000000000062d 8000000000000014 8000000000e30383 80000000000e8002 8000000000000000 8000000000000000
+  
+  // accmulInput.setNumberOfTcs(0x0000000000000083);
+  // accmulInput.setTotE(0x0000000000000022);
+  // accmulInput.setCeeE(0x0000000000000003);
+  // accmulInput.setCeeECore(0x0000000000000012);
+  // accmulInput.setCeHEarly(0x0000000000000016);
+  
+  // accmulInput.setSumW(0x0000000000000010);
+  // accmulInput.setNumberOfTcsW(0x0000000000000002);
+  // accmulInput.setSumW2(0x000000000000000f);
+  // accmulInput.setSumWZ(0x000000000000003a);
+  // accmulInput.setSumWRoZ(0x0000000000000038);
+  
+  // accmulInput.setSumWPhi(0x0000000000000097);
+  // accmulInput.setSumWZ2(0x000000000000062d);
+  // accmulInput.setSumWRoZ2(0x0000000000000014);  
+  // accmulInput.setSumWPhi2(0x0000000000e30383);
+  // accmulInput.setLayerBits(0x00000000000e8002);
+  
+  // accmulInput.setsatTC(0x0000000000000000);
+  // accmulInput.setshapeQ(0x0000000000000000);
+  // ///////////////////////////////////////////
+  
+  // /////////////////// input 3 //////////////////
+  // //Frame 0002   800000000000000e 800000000000003a 800000000000002f 8000000000000014 8000000000000032 8000000000000002 8000000000000008 80000000000000cf 80000000000000c8 800000000000f002 8000000000000f04 800000000003e03b 800000000000000b 8000000000000106 8000000000000345 8000000000000000 8000000000000000
+  
+  // accmulInput.setNumberOfTcs(0x000000000000000e);
+  // accmulInput.setTotE(0x000000000000003a);
+  // accmulInput.setCeeE(0x000000000000002f);
+  // accmulInput.setCeeECore(0x0000000000000014);
+  // accmulInput.setCeHEarly(0x0000000000000032);
+  
+  // accmulInput.setSumW(0x0000000000000002);
+  // accmulInput.setNumberOfTcsW(0x0000000000000008);
+  // accmulInput.setSumW2(0x00000000000000cf);
+  // accmulInput.setSumWZ(0x00000000000000c8);
+  // accmulInput.setSumWRoZ(0x000000000000f002);
+  
+  // accmulInput.setSumWPhi(0x0000000000000f04);
+  // accmulInput.setSumWZ2(0x000000000003e03b);
+  // accmulInput.setSumWRoZ2(0x000000000000000b);  
+  // accmulInput.setSumWPhi2(0x0000000000000106);
+  // accmulInput.setLayerBits(0x0000000000000345);
+  
+  // accmulInput.setsatTC(0x0000000000000000);
+  // accmulInput.setshapeQ(0x0000000000000000);
+  // ///////////////////////////////////////////
 
+  // /////////////////// input 4 //////////////////
+  // //Frame 0003   8000000000000008 8000000000000027 8000000000000127 80000000000000c2 8000000000000026 8000000000000004 8000000000000003 80000000000005f9 8000000000000005 80000000000700ed 8000000000000402 8000000000440604 800000000000019b 8000000000004401 800000000000400c 8000000000000001 8000000000000001
+   
+  // accmulInput.setNumberOfTcs(0x0000000000000008);
+  // accmulInput.setTotE(0x0000000000000027);
+  // accmulInput.setCeeE(0x0000000000000127);
+  // accmulInput.setCeeECore(0x00000000000000c2);
+  // accmulInput.setCeHEarly(0x0000000000000026);
+  
+  // accmulInput.setSumW(0x0000000000000004);
+  // accmulInput.setNumberOfTcsW(0x0000000000000003);
+  // accmulInput.setSumW2(0x00000000000005f9);
+  // accmulInput.setSumWZ(0x0000000000000005);
+  // accmulInput.setSumWRoZ(0x00000000000700ed);
+  
+  // accmulInput.setSumWPhi(0x0000000000000402);
+  // accmulInput.setSumWZ2(0x0000000000440604);
+  // accmulInput.setSumWRoZ2(0x000000000000019b);  
+  // accmulInput.setSumWPhi2(0x0000000000004401);
+  // accmulInput.setLayerBits(0x000000000000400c);
+  
+  // accmulInput.setsatTC(0x0000000000000001);
+  // accmulInput.setshapeQ(0x0000000000000001);
+  // ///////////////////////////////////////////
+
+  // /////////////////// input 5 //////////////////
+  // //Frame 0004   8000000000000081 8000000000000002 80000000000001ee 8000000000000034 800000000000016f 8000000000000020 800000000000000c 8000000000007005 800000000000000d 8000000000800802 80000000000000fd 800000000002403a 8000000000000285 8000000000000005 80000000000d8007 8000000000000000 8000000000000001
+   
+  // accmulInput.setNumberOfTcs(0x0000000000000081);
+  // accmulInput.setTotE(0x0000000000000002);
+  // accmulInput.setCeeE(0x00000000000001ee);
+  // accmulInput.setCeeECore(0x0000000000000034);
+  // accmulInput.setCeHEarly(0x000000000000016f);
+  
+  // accmulInput.setSumW(0x0000000000000020);
+  // accmulInput.setNumberOfTcsW(0x000000000000000c);
+  // accmulInput.setSumW2(0x0000000000007005);
+  // accmulInput.setSumWZ(0x000000000000000d);
+  // accmulInput.setSumWRoZ(0x0000000000800802);
+  
+  // accmulInput.setSumWPhi(0x00000000000000fd);
+  // accmulInput.setSumWZ2(0x000000000002403a);
+  // accmulInput.setSumWRoZ2(0x0000000000000285);  
+  // accmulInput.setSumWPhi2(0x0000000000000005);
+  // accmulInput.setLayerBits(0x00000000000d8007);
+  
+  // accmulInput.setsatTC(0x0000000000000000);
+  // accmulInput.setshapeQ(0x0000000000000001);
+  // ///////////////////////////////////////////
+  
   //000000000000003f, 0000000000002cfa, 00000000000022bd, 0000000000000c7e, 0000000000000a3d,
   //0000000000000580, 000000000000003f, 00000000000109e2, 00000000000e80c8, 0000000000103d7f,
   //00000000007b1d49, 000000002cc73f86, 00000000300fc151, 0000000ac5ac785f, 000000013ff60000,
@@ -146,7 +270,7 @@ int main(int argc, char** argv)
   //Set LSBScales
   TPGLSBScales::TPGStage2ClusterLSB lsbScales;
   lsbScales.setMaxTCETbits(19);
-  lsbScales.setMaxTCRoZbits(13);
+  // lsbScales.setMaxTCRoZbits(13);
   
   //========================================
   //Emulation
@@ -223,9 +347,41 @@ int main(int argc, char** argv)
   // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000f8357ff40140 ;
   // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0002403600020800 ;
 
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x012ba0bab028c0e0 ;
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178d3154689e5 ;
-  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x4a53912e00038e00 ;
+  //Frame 0251    0001 1855ffff30000000  0001 0000b829000c02af  0001 25f0400100017100  
+  //Frame 0252    0001 0fa6001740000000  0001 0000b883002402af  0001 c1e0c00100027080  
+  //Frame 0253    0001 19dd6dcf50000000  0001 0001380e0326626b  0001 0000801c00015100  
+  //Frame 0254    0001 14f9a8ff70004000  0001 00017c08000feaaf  0001 000080570001b000  
+  //Frame 0255    0001 0fff1bff50008000  0001 000178810007eeaf  0001 0000c00600029100  
+  
+  ///////////////////////////////////// Output 1 //////////////////////////////////////////
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x1855ffff30000000 ;
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000b829000c02af ;
+  ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x25f0400100017100 ;
+  /////////////////////////////////////////////////////////////////////////////////////////
+  
+  // ///////////////////////////////////// Output 2 //////////////////////////////////////////
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x0fa6001740000000 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0000b883002402af ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0xc1e0c00100027080 ;
+  // /////////////////////////////////////////////////////////////////////////////////////////
+
+  // ///////////////////////////////////// Output 3 //////////////////////////////////////////
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x19dd6dcf50000000 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x0001380e0326626b ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0000801c00015100 ;
+  // /////////////////////////////////////////////////////////////////////////////////////////
+
+  // ///////////////////////////////////// Output 4 //////////////////////////////////////////
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x14f9a8ff70004000 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x00017c08000feaaf ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x000080570001b000 ;
+  // /////////////////////////////////////////////////////////////////////////////////////////
+
+  // ///////////////////////////////////// Output 5 //////////////////////////////////////////
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_FIRSTWORD> firstw = 0x0fff1bff50008000 ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_SECONDWORD> secondw = 0x000178810007eeaf ;
+  // ap_uint<l1thgcfirmware::HGCalCluster_HW::BITWIDTH_THIRDWORD> thirdw = 0x0000c00600029100 ;
+  // /////////////////////////////////////////////////////////////////////////////////////////
 
     
   l1thgcfirmware::HGCalCluster_HW::unpack_firstWord(firstw,L1TOutputFW);
