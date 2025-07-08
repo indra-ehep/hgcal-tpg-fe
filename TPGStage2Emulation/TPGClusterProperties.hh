@@ -171,12 +171,17 @@ public:
     
     if(isPrint) std::cout<<"Calculating cluster properties" << std::endl;
     //// ================== First Word ===========================
-    l1TOutput.e = accuInput.totE() * lsbScales->c_ET_scaler();
-    l1TOutput.e_em = accuInput.ceeE() * lsbScales->c_ET_scaler();
+    ap_ufixed<14,14, AP_RND, AP_SAT> etot =  accuInput.totE() * lsbScales->c_ET_scaler();
+    ap_ufixed<14,14, AP_RND, AP_SAT> e_em =  accuInput.ceeE() * lsbScales->c_ET_scaler();
+    l1TOutput.e = uint32_t(etot);
+    l1TOutput.e_em = uint32_t(e_em);
     if(isPrint) std::cout<<"Set Energies" << std::endl;
-    l1TOutput.fractionInCE_E = (accuInput.totE()==0)?0:(lsbScales->c_frac_scaler() * accuInput.ceeE()/accuInput.totE()) ;
-    l1TOutput.fractionInCoreCE_E = (accuInput.ceeE()==0)?0:(lsbScales->c_frac_scaler() * accuInput.ceeECore() / accuInput.ceeE()) ;
-    l1TOutput.fractionInEarlyCE_E = (accuInput.totE()==0)?0:(lsbScales->c_frac_scaler() * accuInput.ceHEarly() /  accuInput.totE()) ;
+    ap_ufixed<8,8, AP_RND, AP_SAT> fracCE_E = (lsbScales->c_frac_scaler() * accuInput.ceeE()/accuInput.totE()) ;
+    ap_ufixed<8,8, AP_RND, AP_SAT> fracCECore_E = (lsbScales->c_frac_scaler() * accuInput.ceeECore() / accuInput.ceeE());
+    ap_ufixed<8,8, AP_RND, AP_SAT>  fracCEH_E = (lsbScales->c_frac_scaler() * accuInput.ceHEarly() /  accuInput.totE());
+    l1TOutput.fractionInCE_E = (accuInput.totE()==0)?0:uint32_t(fracCE_E) ;
+    l1TOutput.fractionInCoreCE_E = (accuInput.ceeE()==0)?0:uint32_t(fracCECore_E);
+    l1TOutput.fractionInEarlyCE_E = (accuInput.totE()==0)?0:uint32_t(fracCEH_E);
     if(isPrint) std::cout<<"Set Fractions" << std::endl;
     l1TOutput.setGCTBits();
     if(isPrint) std::cout<<"Set GCT bits" << std::endl;
@@ -213,13 +218,13 @@ public:
     if(isPrint) std::cout<<"Completed sigma_Z" << std::endl;    
     
     uint32_t sigmaPhi = sigma_coordinate(accuInput.sumW(), accuInput.sumWPhi2(), accuInput.sumWPhi(), lsbScales->c_sigma_phi_scaler());
-    l1TOutput.sigma_phi = (sigmaPhi>0x7f)?0x7f:sigmaPhi;
+    l1TOutput.sigma_phi = (sigmaPhi>0x7f)?0x0:sigmaPhi;
     if(isPrint) std::cout<<"Completed sigma_phi" << std::endl;
       
     unsigned int sigma_roz = sigma_coordinate(accuInput.sumW(), accuInput.sumWRoZ2(),  accuInput.sumWRoZ(), lsbScales->c_sigma_roz_scaler_1());
     l1TOutput.sigma_roz = (sigma_roz<127)?sigma_roz:127;
     if(isPrint) std::cout<<"Completed sigma_roz" << std::endl;
-
+    
     uint32_t sigmaEta = convertSigmaRozRozToSigmaEtaEta( accuInput.sumWRoZ2(), accuInput.sumWRoZ(), accuInput.sumW());
     l1TOutput.sigma_eta = (sigmaEta>0x1f)?0x1f:sigmaEta;
     //// ================== Third Word ===========================
