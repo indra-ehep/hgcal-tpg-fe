@@ -270,7 +270,7 @@ int main(int argc, char** argv)
   //Set LSBScales
   TPGLSBScales::TPGStage2ClusterLSB lsbScales;
   lsbScales.setMaxTCETbits(19);
-  // lsbScales.setMaxTCRoZbits(13);
+  lsbScales.setMaxTCRoZbits(13);
   
   //========================================
   //Emulation
