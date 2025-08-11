@@ -67,6 +67,7 @@ namespace TPGFEModuleEmulation{
     pck.setModId(moduleId);    
     const std::map<std::tuple<uint32_t,uint32_t,uint32_t>,std::string>& modNameMap = configs.getModIdxToName();
     const std::string& modName = modNameMap.at(std::make_tuple(pck.getDetType(),pck.getSelTC4(),pck.getModule()));
+    if(ievent==refEvent) std::cout << "TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: modName: " << modName << std::endl;
     const std::map<std::string,std::vector<uint32_t>>& modTClist = (pck.getDetType()==0)?configs.getSiModTClist():configs.getSciModTClist();
     const std::vector<uint32_t>& tclist = modTClist.at(modName) ;
     const std::map<std::pair<std::string,uint32_t>,std::vector<uint32_t>>& tcPinMap = (pck.getDetType()==0)?configs.getSiTCToROCpin():configs.getSciTCToROCpin();
@@ -95,7 +96,7 @@ namespace TPGFEModuleEmulation{
 	  std::cerr << "TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: HalfRoc not found in data for Event "<< ievent <<", Tcch: "<< tcch << ", rocn: " << rocn << ", half: " << half << ", rocpin: " << rocpin << std::endl;
 	  continue ; 
 	}
-	if(ievent==refEvent) std::cout<<"TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: TC : " << itc << ", tcch: " << tcch <<", rocpin : "<<rocpin<<", rocid: "<<rocid<<", rocn: "<<rocn<<", half: "<<half<<std::endl;
+	if(ievent==refEvent) std::cout<<"TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: TC : " << itc <<", rocid: "<<rocid<< ", tcch: " << tcch <<", rocpin : "<<rocpin<<", rocn: "<<rocn<<", half: "<<half<<std::endl;
 	TPGFEDataformat::HalfHgcrocChannelData& chdata = rocdata.at(rocid).getChannelData(rocpin);
 	bx = rocdata.at(rocid).getBx();
 	if(chdata.getTcTp()==1) isTcTp1 = true;
@@ -105,7 +106,7 @@ namespace TPGFEModuleEmulation{
 	if(!isSim){ //if not simulation, assumed beamtest data
 	  const TPGFEConfiguration::ConfigHfROC& rocpara = configs.getRocPara().at(rocid);
 	  uint32_t ped = configs.getChPara().at(pck.packChId(rocid,rocpin)).getAdcpedestal();
-	  if(ievent==refEvent) rocpara.print();
+	  //if(ievent==refEvent) rocpara.print();
 	  if(!chdata.isTot()){
 	    unsigned thr = rocpara.getAdcTH();
 	    uint32_t adc = chdata.getAdc();
@@ -113,7 +114,7 @@ namespace TPGFEModuleEmulation{
 	    //   if(itc!=20 or rocid!=770) adc = 0;
 	    adc = (adc>(ped+thr) and !(rocpara.isChMasked(rocpin)) and (ped<0xFF)) ? adc-ped : 0 ;
 	    totadc += adc;
-	    if(ievent==refEvent) std::cout<<"\t TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: ped: " << ped << ", thr: " << thr <<", adc : "<<adc<<", rocpara.isChMasked(rocpin): "<< rocpara.isChMasked(rocpin) <<std::endl;
+	    if(ievent==refEvent) std::cout<<"\t TPGFEModuleEmulation::HGCROCTPGEmulation::Emulate: ped: " << ped << ", thr: " << thr <<", adcs0 : "<<chdata.getAdc()<<", adcs1 : "<<adc<<", rocpara.isChMasked(rocpin): "<< rocpara.isChMasked(rocpin) <<std::endl;
 	  }else{
 	    uint32_t tot = chdata.getTot(); //+7 for totup
 	    uint32_t tot1 = (tot>=rocpara.getTotTH(rocpin)) ? (tot-rocpara.getTotP(rocpin)) : (rocpara.getTotTH(rocpin)-rocpara.getTotP(rocpin)) ;

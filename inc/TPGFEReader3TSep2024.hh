@@ -316,7 +316,7 @@ namespace TPGFEReader{
 			 <<"M:(flag,adc,tot,toa) : (" << trigflagM <<", " << adcM << ", " << totM <<", " << toaM << ")" << std::endl;
 	      }
 	    }
-	      
+	    
 	    if(seqToRocpin.find(std::make_pair(modName,std::make_tuple(rocn,half,seqM)))!=seqToRocpin.end()){
 	      uint32_t rocpin = seqToRocpin.at(std::make_pair(modName,std::make_tuple(rocn,half,seqM))) ;
 	      ch = rocpin%36 ; //36 for halfroc

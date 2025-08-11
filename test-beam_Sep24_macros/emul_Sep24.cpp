@@ -266,7 +266,7 @@ int main(int argc, char** argv)
     econTPar[it.first].print();
   }//econt loop
   //===============================================================================================================================
-
+  
   //===============================================================================================================================
   //Modify the HGCROC parameters for special cases
   //===============================================================================================================================
@@ -398,7 +398,7 @@ int main(int argc, char** argv)
 	if(hrocdata.hasTcTp(3) and (std::find(TcTp3Events.begin(),TcTp3Events.end(),ievent) == TcTp3Events.end())) TcTp3Events.push_back(ievent);
       }
     }
-
+    
     uint32_t maxTestEvent = (refEvents.size()>0)?refEvents.size():nloopEvent;
     FindBxShift(dir_diff, eventList, maxTestEvent, pck, econTPar, hrocarray, econtarray, rocTPGEmul, econtEmul);
     
@@ -413,7 +413,7 @@ int main(int argc, char** argv)
     //// The following part should be in a loop over modules
     /////////////////////////////////////////////////////////////
     std::cout<<"eventList size: " << eventList.size() <<std::endl;
-
+    
     for(uint64_t ievt = 0 ; ievt < eventList.size(); ievt++ ){
       uint64_t event = eventList[ievt] ;
       
@@ -423,7 +423,7 @@ int main(int argc, char** argv)
 	continue;
       }
       //if(econtarray.find(event) == econtarray.end()) break;
-
+      
       //bool eventCondn = (event<1000 or event==1560 or event==2232 or event==2584 or event==2968 or event==3992);
       //bool eventCondn = (event<1000);
       bool eventCondn = (refEvents.size()==0) ? (ievt<10) : (ievt<refEvents.size());

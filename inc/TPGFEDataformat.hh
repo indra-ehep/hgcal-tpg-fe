@@ -54,7 +54,10 @@ namespace TPGFEDataformat{
       assert(a<0x1000 and tctp<0x4);
       _data=tctp<<12|a|0x8000;
     }
-
+    
+    uint16_t getData() const { return _data; }
+    void setData(uint16_t data) { _data = data; }
+    
     void print() const {
       std::cout << "HalfHgcrocChannelData(" << this << ")::print()" << std::endl;
 
@@ -80,20 +83,20 @@ namespace TPGFEDataformat{
     enum {
       NumberOfChannels=36
     };
-  
+    
     HalfHgcrocData() : _bx(0xFFFF) {
       setZero();
     }
-
+    
     void setZero() {
       std::memset(_data,0,sizeof(HalfHgcrocChannelData)*NumberOfChannels);
     }
-
+    
     void setBx(uint16_t bx) { _bx = bx;}
     const uint32_t getBx() const {return uint32_t(_bx);}
     void setSlinkBx(uint16_t bx) { _bxId = bx;}
     const uint32_t getSlinkBx() const {return uint32_t(_bxId);}
-
+    
     const HalfHgcrocChannelData* getChannels() const {
       return _data;
     }
@@ -117,6 +120,11 @@ namespace TPGFEDataformat{
     // HalfHgcrocChannelData* setChannels() {
     //   return _data;
     // }
+    void setChannel(int ch, HalfHgcrocChannelData chdata) {
+      assert(ch>=0 and ch<=35);
+      _data[ch] = chdata;
+    }
+    
     void setChannels(const HalfHgcrocChannelData* data) {
       for(unsigned i(0);i<=NumberOfChannels;i++)
 	_data[i] = data[i];
@@ -485,7 +493,7 @@ namespace TPGFEDataformat{
       for(uint32_t itc=0;itc<lhs.size();itc++) if(lhs.getTc(itc)!=rhs.getTc(itc)) return false;
       return true;
     }
-
+    
     void print() const {
       std::cout << "TPGFEDataformat::TcRawDataPacket(" << this << ")::print(): "
 		<< "type = " << type()
@@ -513,6 +521,7 @@ namespace TPGFEDataformat{
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawData>> TcRawDataPacket;
   typedef std::pair<uint32_t,TPGFEDataformat::TcRawDataPacket> TcModulePacket;  
+  typedef std::pair<uint32_t,std::vector<TPGFEDataformat::TcRawDataPacket>> TcModuleBxPackets;
   
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   class HgcrocTcData {
@@ -643,7 +652,7 @@ namespace TPGFEDataformat{
     }
   
     void print() const {
-      std::cout << "ModuleTriggerCellData(" << this << ")::print() : NumberOfTCs :" << NumberOfTCs << ", isTcTp1 : " << isTcTp1() << ", isTcTp2 : " << isTcTp2() << ", isTcTp3 : " << isTcTp3() << std::endl;
+      std::cout << "ModuleTriggerCellData(" << this << ")::print() : NumberOfTCs :" << NumberOfTCs << ", bx: " << getBx() << ", isTcTp1 : " << isTcTp1() << ", isTcTp2 : " << isTcTp2() << ", isTcTp3 : " << isTcTp3() << std::endl;
       
       for(uint16_t i(0);i<NumberOfTCs;i++) {
 	std::cout << " TC " << std::setw(2) << i << ": compressed = "
